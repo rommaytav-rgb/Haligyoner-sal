@@ -1,0 +1,13 @@
+{
+  "name": "haligyoner-sal-checks",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check:hebrew": "node tools/check-hebrew.mjs",
+    "check:dom": "node tools/check-dom.mjs",
+    "check:assets": "node tools/check-assets.mjs"
+  },
+  "devDependencies": {
+    "playwright": "1.56.0"
+  }
+}
