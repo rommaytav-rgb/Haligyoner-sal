@@ -139,6 +139,30 @@ describe('productIntelligence', () => {
   it('returns null for an unknown product', () => {
     expect(productIntelligence(db, 'nope')).toBeNull();
   });
+
+  it('scopes the baseline to the chains the user actually shops at', () => {
+    run(db, `INSERT INTO supermarket_chains (id, name_he, name_en, updated_at) VALUES ('other','אחר','Other', ?)`, [NOW]);
+    run(db, `INSERT INTO store_branches (id, chain_id, name, updated_at) VALUES ('b9','other','b9', ?)`, [NOW]);
+    // A cheap chain the user excluded must not drag their "usual price" down.
+    for (let week = 6; week >= 0; week -= 1) {
+      seedPrice(db, 'b1', 3000, daysAgo(week * 7));
+      run(
+        db,
+        `INSERT INTO price_history (id, product_id, chain_id, branch_id, price_agorot, currency, observed_at, source, provider_id, is_member_price, availability, confidence)
+         VALUES (?,?,'other','b9',1000,'ILS',?,'test','test',0,'unknown',1)`,
+        [`ph-other-${week}`, PRODUCT, daysAgo(week * 7)],
+      );
+    }
+    setCurrent(db, 'b1', 3000, daysAgo(0));
+
+    const scoped = productIntelligence(db, PRODUCT, { chainIds: ['rami-levy'], now: NOW });
+    expect(scoped?.scopedChainIds).toEqual(['rami-levy']);
+    expect(scoped?.baseline.usualPriceAgorot).toBe(3000);
+    expect(scoped?.baseline.lowestObservedAgorot).toBe(3000);
+
+    const unscoped = productIntelligence(db, PRODUCT, { now: NOW });
+    expect(unscoped?.baseline.lowestObservedAgorot).toBe(1000);
+  });
 });
 
 describe('aggregateMovement', () => {

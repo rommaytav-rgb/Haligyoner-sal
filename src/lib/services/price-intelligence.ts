@@ -31,6 +31,12 @@ export interface HistoryQuery {
   productId: string;
   /** Restrict to one chain, or compare across all of them when null. */
   chainId?: string | null;
+  /**
+   * Restrict to the chains the user actually shops at. This is what makes the
+   * baseline *personal*: a price at a chain the user excluded is not part of
+   * their normal price.
+   */
+  chainIds?: readonly string[] | null;
   branchId?: string | null;
   sinceDays?: number;
   limit?: number;
@@ -42,6 +48,10 @@ export function loadHistory(db: DatabaseSync, query: HistoryQuery, now = nowIso(
   if (query.chainId) {
     conditions.push('h.chain_id = ?');
     params.push(query.chainId);
+  }
+  if (query.chainIds && query.chainIds.length > 0) {
+    conditions.push(`h.chain_id IN (${query.chainIds.map(() => '?').join(',')})`);
+    params.push(...query.chainIds);
   }
   if (query.branchId) {
     conditions.push('h.branch_id = ?');
@@ -107,6 +117,8 @@ export function buildTimeline(history: readonly HistoricalPoint[]): TimelinePoin
 export interface ProductIntelligence {
   productId: string;
   displayName: string;
+  /** Chains the baseline and comparisons were computed over. */
+  scopedChainIds: string[] | null;
   /** Cheapest currently verified price across the branches we hold data for. */
   currentBestPriceAgorot: Agorot | null;
   currentBestChainId: string | null;
@@ -127,21 +139,38 @@ export interface ProductIntelligence {
 export function productIntelligence(
   db: DatabaseSync,
   productId: string,
-  options: { chainId?: string | null; now?: string } = {},
+  options: { chainId?: string | null; chainIds?: readonly string[] | null; now?: string } = {},
 ): ProductIntelligence | null {
   const now = options.now ?? nowIso();
   const productRow = get<Row>(db, 'SELECT id, name_he FROM products WHERE id = ?', [productId]);
   if (!productRow) return null;
 
-  const history = loadHistory(db, { productId, chainId: options.chainId ?? null, sinceDays: 180 }, now);
+  const scopedChainIds = options.chainIds && options.chainIds.length > 0 ? [...options.chainIds] : null;
+  const history = loadHistory(
+    db,
+    { productId, chainId: options.chainId ?? null, chainIds: scopedChainIds, sinceDays: 180 },
+    now,
+  );
   const baseline = computeBaseline(history);
 
+  // The "current" price is the cheapest verified price within the same scope, so
+  // the baseline and the price being judged against it are like for like.
+  const currentConditions = ['product_id = ?'];
+  const currentParams: Array<string | number> = [productId];
+  if (options.chainId) {
+    currentConditions.push('chain_id = ?');
+    currentParams.push(options.chainId);
+  }
+  if (scopedChainIds) {
+    currentConditions.push(`chain_id IN (${scopedChainIds.map(() => '?').join(',')})`);
+    currentParams.push(...scopedChainIds);
+  }
   const currentRow = get<Row>(
     db,
     `SELECT price_agorot, chain_id, observed_at FROM prices
-      WHERE product_id = ? ${options.chainId ? 'AND chain_id = ?' : ''}
-      ORDER BY price_agorot ASC LIMIT 1`,
-    options.chainId ? [productId, options.chainId] : [productId],
+      WHERE ${currentConditions.join(' AND ')}
+      ORDER BY price_agorot ASC, branch_id ASC LIMIT 1`,
+    currentParams,
   );
 
   const sevenDays = priceAsOf(history, 7, now);
@@ -162,6 +191,7 @@ export function productIntelligence(
   return {
     productId,
     displayName: str(productRow.name_he),
+    scopedChainIds,
     currentBestPriceAgorot: currentPrice,
     currentBestChainId: currentRow ? str(currentRow.chain_id) : null,
     currentObservedAt: currentRow ? str(currentRow.observed_at) : null,

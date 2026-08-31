@@ -36,7 +36,7 @@ product shows is produced:
 | `normalize.ts` | Product identity, aliases and match scoring. |
 | `promotions.ts` | Effective line cost under 1+1, N-for-X, percentage, fixed, member and quantity-gated promotions. |
 | `optimizer.ts` | Single-store, multi-store and mode-specific plans, with travel and delivery priced explicitly. |
-| `baseline.ts` | Personal price baseline and the "should I buy now?" judgement. |
+| `baseline.ts` | Personal price baseline and the "should I buy now?" judgement. The baseline is scoped to the chains the user actually shops at (their preferred chains, or every chain they have not excluded), so "your usual price" means the price at *their* stores; promotional observations are excluded from it so a run of sale prices cannot make the regular price look like a hike. |
 | `savings.ts` | Savings with an explicit baseline and potential/confirmed separation. |
 | `alerts.ts` | Alert rule evaluation. |
 | `budget.ts` | Budget proposals, each requiring user approval. |

@@ -3,6 +3,8 @@ import { ChangePill } from '@/components/PriceChange';
 import { formatAgorot } from '@/lib/domain/money';
 import { createTranslator, formatDate, formatPercent, formatShortDate, type TranslationKey } from '@/lib/i18n';
 import { productIntelligence } from '@/lib/services/price-intelligence';
+import { loadChainRegistry } from '@/lib/providers/chain-registry';
+import { getPreferences } from '@/lib/services/users';
 import { requireUser } from '@/lib/server/context';
 
 const VERDICT_KEY: Record<string, TranslationKey> = {
@@ -13,10 +15,21 @@ const VERDICT_KEY: Record<string, TranslationKey> = {
 };
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
-  const { db, locale } = await requireUser();
+  const { db, user, locale } = await requireUser();
   const t = createTranslator(locale);
   const { id } = await params;
-  const intel = productIntelligence(db, id);
+
+  // "Your usual price" must mean the price at stores this user would actually
+  // shop at, so the baseline is scoped to their preferred chains, or to every
+  // chain they have not excluded.
+  const preferences = getPreferences(db, user.id);
+  const allChainIds = loadChainRegistry().chains.map((chain) => chain.id);
+  const scopedChainIds =
+    preferences.preferredChainIds.length > 0
+      ? preferences.preferredChainIds
+      : allChainIds.filter((chainId) => !preferences.excludedChainIds.includes(chainId));
+
+  const intel = productIntelligence(db, id, { chainIds: scopedChainIds });
   if (!intel) notFound();
 
   const current = intel.currentBestPriceAgorot;
