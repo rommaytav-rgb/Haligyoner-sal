@@ -1,0 +1,162 @@
+@import 'tailwindcss';
+
+/*
+ * Design tokens.
+ *
+ * Direction-neutral: the layout uses logical properties throughout, so the same
+ * markup renders correctly in Hebrew (RTL) and English (LTR).
+ */
+@theme {
+  --color-ink: #0f1720;
+  --color-ink-soft: #47576b;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f5f7fa;
+  --color-line: #e2e8f0;
+  --color-brand: #10715a;
+  --color-brand-soft: #e6f4ef;
+  --color-rise: #b42318;
+  --color-rise-soft: #fef3f2;
+  --color-fall: #067647;
+  --color-fall-soft: #ecfdf3;
+  --color-flat: #667085;
+  --color-warn: #b54708;
+  --color-warn-soft: #fffaeb;
+
+  --font-sans: 'Segoe UI', 'Arial Hebrew', 'Noto Sans Hebrew', 'Heebo', system-ui, -apple-system, sans-serif;
+}
+
+:root {
+  color-scheme: light;
+}
+
+html {
+  background: var(--color-surface-muted);
+}
+
+body {
+  background: var(--color-surface-muted);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  margin: 0;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numbers stay left-to-right even inside a right-to-left sentence. */
+.num {
+  unicode-bidi: isolate;
+  direction: ltr;
+  display: inline-block;
+  font-variant-numeric: tabular-nums;
+}
+
+.card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-line);
+  border-radius: 14px;
+  padding: 1rem;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 999px;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  padding: 0.6rem 1rem;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  cursor: pointer;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+
+.btn-primary {
+  background: var(--color-brand);
+  color: #fff;
+}
+.btn-primary:hover:not(:disabled) {
+  background: #0b5946;
+}
+.btn-secondary {
+  background: var(--color-surface);
+  border-color: var(--color-line);
+  color: var(--color-ink);
+}
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-surface-muted);
+}
+.btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.field {
+  width: 100%;
+  border: 1px solid var(--color-line);
+  border-radius: 10px;
+  padding: 0.6rem 0.75rem;
+  font-size: 1rem;
+  font-family: inherit;
+  background: var(--color-surface);
+  color: var(--color-ink);
+}
+.field:focus {
+  outline: 2px solid var(--color-brand);
+  outline-offset: 1px;
+}
+
+.label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-ink-soft);
+  margin-block-end: 0.3rem;
+}
+
+/* Wide content scrolls inside its own container; the page never scrolls sideways. */
+.scroll-x {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+  }
+  html,
+  body {
+    background: #0c1118;
+  }
+  body {
+    color: #e6edf5;
+  }
+  @theme {
+    --color-ink: #e6edf5;
+  }
+  .card {
+    background: #131a24;
+    border-color: #26313f;
+  }
+  .field,
+  .btn-secondary {
+    background: #131a24;
+    border-color: #26313f;
+    color: #e6edf5;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background: #1a2432;
+  }
+}

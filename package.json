@@ -1,0 +1,42 @@
+{
+  "name": "personal-shopping-optimizer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI Personal Grocery Shopping Optimizer for Israel",
+  "type": "module",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "db:reset": "node --experimental-strip-types --import ./scripts/register-loader.mjs scripts/reset-db.ts",
+    "db:seed": "node --experimental-strip-types --import ./scripts/register-loader.mjs scripts/seed-demo.ts",
+    "verify": "npm run typecheck && npm run lint && npm run test && npm run build",
+    "data:generate-demo": "node --experimental-strip-types --import ./scripts/register-loader.mjs scripts/generate-demo-dataset.ts",
+    "prices:sync": "node --experimental-strip-types --import ./scripts/register-loader.mjs scripts/sync-prices.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.122.0",
+    "next": "16.3.3",
+    "react": "19.2.8",
+    "react-dom": "19.2.8",
+    "zod": "^4.1.13"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/node": "^22.10.0",
+    "@types/react": "^19.2.0",
+    "@types/react-dom": "^19.2.0",
+    "eslint": "^9.18.0",
+    "eslint-config-next": "16.3.3",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.7.0",
+    "vitest": "^4.1.11"
+  }
+}

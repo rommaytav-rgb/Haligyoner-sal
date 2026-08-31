@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Root>
+  <ChainId>7290058140886</ChainId>
+  <Stores>
+    <Store>
+      <StoreId>042</StoreId>
+      <StoreName>סניף תל אביב מרכז</StoreName>
+      <City>תל אביב</City>
+      <Address>אבן גבירול 1</Address>
+      <Latitude>32.0800</Latitude>
+      <Longitude>34.7800</Longitude>
+    </Store>
+    <Store>
+      <StoreId>043</StoreId>
+      <StoreName>סניף רמת גן</StoreName>
+      <City>רמת גן</City>
+    </Store>
+    <Store>
+      <StoreName>סניף ללא מזהה</StoreName>
+    </Store>
+  </Stores>
+</Root>

@@ -1,0 +1,78 @@
+{
+  "$comment": "Dynamic supermarket registry. Chains are configuration, not code: adding one here (plus a portal entry) makes it available to the price pipeline without touching the application. `endpointVerified` is false wherever the publishing endpoint has not been confirmed against the live portal from this environment — see docs/DATA_SOURCES.md.",
+  "version": 1,
+  "portals": [
+    {
+      "id": "cerberus",
+      "name": "Cerberus published-prices portal",
+      "baseUrl": "https://url.publishedprices.co.il",
+      "protocol": "cerberus-login",
+      "notes": "Shared portal used by many chains under the Israeli food price transparency law. Requires a per-chain login whose credentials the chains publish; the password is usually empty.",
+      "endpointVerified": false
+    },
+    {
+      "id": "shufersal",
+      "name": "Shufersal price portal",
+      "baseUrl": "https://prices.shufersal.co.il",
+      "protocol": "directory-listing",
+      "endpointVerified": false
+    },
+    {
+      "id": "matrix",
+      "name": "Matrix catalog portal",
+      "baseUrl": "https://matrixcatalog.co.il",
+      "protocol": "directory-listing",
+      "endpointVerified": false
+    },
+    {
+      "id": "laibcatalog",
+      "name": "Laibcatalog portal",
+      "baseUrl": "https://laibcatalog.co.il",
+      "protocol": "directory-listing",
+      "endpointVerified": false
+    },
+    {
+      "id": "superpharm",
+      "name": "Super-Pharm price portal",
+      "baseUrl": "https://prices.super-pharm.co.il",
+      "protocol": "directory-listing",
+      "endpointVerified": false
+    },
+    {
+      "id": "govil",
+      "name": "gov.il food price transparency index",
+      "baseUrl": "https://www.gov.il/he/pages/cpfta_prices_regulations",
+      "protocol": "index-page",
+      "notes": "The Ministry of Economy index that lists where each chain publishes. Authoritative starting point for verifying every other portal entry.",
+      "endpointVerified": false
+    }
+  ],
+  "chains": [
+    { "id": "rami-levy", "nameHe": "רמי לוי שיווק השקמה", "nameEn": "Rami Levy", "portalId": "cerberus", "portalUsername": "RamiLevi", "group": "Rami Levy", "endpointVerified": false },
+    { "id": "shufersal", "nameHe": "שופרסל", "nameEn": "Shufersal", "portalId": "shufersal", "group": "Shufersal", "endpointVerified": false },
+    { "id": "carrefour", "nameHe": "קרפור", "nameEn": "Carrefour", "portalId": "cerberus", "portalUsername": "yohananof", "group": "Electra Consumer Products", "endpointVerified": false },
+    { "id": "victory", "nameHe": "ויקטורי", "nameEn": "Victory", "portalId": "matrix", "group": "Victory", "endpointVerified": false },
+    { "id": "yohananof", "nameHe": "יוחננוף", "nameEn": "Yochananof", "portalId": "cerberus", "portalUsername": "yohananof", "group": "Yochananof", "endpointVerified": false },
+    { "id": "osher-ad", "nameHe": "אושר עד", "nameEn": "Osher Ad", "portalId": "cerberus", "portalUsername": "osherad", "group": "Osher Ad", "endpointVerified": false },
+    { "id": "tiv-taam", "nameHe": "טיב טעם", "nameEn": "Tiv Taam", "portalId": "cerberus", "portalUsername": "TivTaam", "group": "Tiv Taam", "endpointVerified": false },
+    { "id": "hatzi-hinam", "nameHe": "חצי חינם", "nameEn": "Hatzi Hinam", "portalId": "cerberus", "portalUsername": "HaziHinam", "group": "Hatzi Hinam", "endpointVerified": false },
+    { "id": "machsanei-hashuk", "nameHe": "מחסני השוק", "nameEn": "Machsanei Hashuk", "portalId": "matrix", "group": "Machsanei Hashuk", "endpointVerified": false },
+    { "id": "keshet-teamim", "nameHe": "קשת טעמים", "nameEn": "Keshet Taamim", "portalId": "cerberus", "portalUsername": "Keshet", "group": "Keshet Taamim", "endpointVerified": false },
+    { "id": "mega", "nameHe": "מגה", "nameEn": "Mega", "portalId": "cerberus", "group": "Carrefour Israel", "endpointVerified": false },
+    { "id": "yeinot-bitan", "nameHe": "יינות ביתן", "nameEn": "Yeinot Bitan", "portalId": "cerberus", "group": "Carrefour Israel", "endpointVerified": false },
+    { "id": "super-pharm", "nameHe": "סופר פארם", "nameEn": "Super-Pharm", "portalId": "superpharm", "group": "Super-Pharm", "categoriesCovered": ["grocery", "toiletries"], "endpointVerified": false },
+    { "id": "super-sapir", "nameHe": "סופר ספיר", "nameEn": "Super Sapir", "portalId": "cerberus", "portalUsername": "SuperSapir", "group": "Super Sapir", "endpointVerified": false },
+    { "id": "dor-alon", "nameHe": "דור אלון", "nameEn": "Dor Alon", "portalId": "cerberus", "portalUsername": "doralon", "group": "Dor Alon", "endpointVerified": false },
+    { "id": "stop-market", "nameHe": "סטופ מרקט", "nameEn": "Stop Market", "portalId": "cerberus", "portalUsername": "Stop_Market", "group": "Stop Market", "endpointVerified": false },
+    { "id": "king-store", "nameHe": "קינג סטור", "nameEn": "King Store", "portalId": "laibcatalog", "group": "King Store", "endpointVerified": false },
+    { "id": "city-market", "nameHe": "סיטי מרקט", "nameEn": "City Market", "portalId": "cerberus", "group": "City Market", "endpointVerified": false },
+    { "id": "super-yuda", "nameHe": "סופר יודה", "nameEn": "Super Yuda", "portalId": "laibcatalog", "group": "Super Yuda", "endpointVerified": false },
+    { "id": "freshmarket", "nameHe": "פרשמרקט", "nameEn": "Freshmarket", "portalId": "cerberus", "portalUsername": "freshmarket", "group": "Freshmarket", "endpointVerified": false },
+    { "id": "prashmarket", "nameHe": "פראש מרקט", "nameEn": "Prashmarket", "portalId": "cerberus", "group": "Prashmarket", "endpointVerified": false },
+    { "id": "salach-dabach", "nameHe": "סאלח דבאח", "nameEn": "Salach Dabach", "portalId": "cerberus", "portalUsername": "SalachD", "group": "Salach Dabach", "endpointVerified": false },
+    { "id": "zol-vebegadol", "nameHe": "זול ובגדול", "nameEn": "Zol VeBegadol", "portalId": "cerberus", "group": "Zol VeBegadol", "endpointVerified": false },
+    { "id": "good-pharm", "nameHe": "גוד פארם", "nameEn": "Good Pharm", "portalId": "cerberus", "portalUsername": "GoodPharm", "categoriesCovered": ["grocery", "toiletries"], "group": "Good Pharm", "endpointVerified": false },
+    { "id": "polizer", "nameHe": "פוליצר", "nameEn": "Polizer", "portalId": "cerberus", "group": "Polizer", "endpointVerified": false },
+    { "id": "quik", "nameHe": "קוויק", "nameEn": "Quik", "portalId": "cerberus", "group": "Quik", "endpointVerified": false }
+  ]
+}

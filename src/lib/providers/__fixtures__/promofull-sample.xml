@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Root>
+  <ChainId>7290058140886</ChainId>
+  <StoreId>042</StoreId>
+  <Promotions>
+    <Promotion>
+      <PromotionId>P-1001</PromotionId>
+      <PromotionDescription>1+1 על קפה עלית</PromotionDescription>
+      <PromotionUpdateDate>2026-08-30 08:00</PromotionUpdateDate>
+      <PromotionStartDate>2026-08-30 00:00</PromotionStartDate>
+      <PromotionEndDate>2026-09-06 23:59</PromotionEndDate>
+      <RewardType>3</RewardType>
+      <MinQty>2</MinQty>
+      <ClubId>0</ClubId>
+      <PromotionItems>
+        <Item><ItemCode>7290000999999</ItemCode></Item>
+      </PromotionItems>
+    </Promotion>
+    <Promotion>
+      <PromotionId>P-1002</PromotionId>
+      <PromotionDescription>מחיר מועדון לחלב</PromotionDescription>
+      <DiscountedPrice>5.40</DiscountedPrice>
+      <ClubId>1</ClubId>
+      <PromotionStartDate>2026-08-25 00:00</PromotionStartDate>
+      <PromotionEndDate>2026-09-30 23:59</PromotionEndDate>
+      <PromotionItems>
+        <Item><ItemCode>7290000123456</ItemCode></Item>
+      </PromotionItems>
+    </Promotion>
+    <Promotion>
+      <PromotionId>P-1003</PromotionId>
+      <PromotionDescription>מבצע לא מזוהה</PromotionDescription>
+      <PromotionItems>
+        <Item><ItemCode>7290000123456</ItemCode></Item>
+      </PromotionItems>
+    </Promotion>
+  </Promotions>
+</Root>
