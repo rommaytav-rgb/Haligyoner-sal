@@ -5,22 +5,22 @@ export const idSchema = z
   .string()
   .min(3)
   .max(64)
-  .regex(/^[a-zA-Z0-9_-]+$/, "Invalid identifier.");
+  .regex(/^[a-zA-Z0-9_-]+$/, "validation.invalidId");
 
 export const problemTextSchema = z
   .string()
   .trim()
-  .min(10, "Tell us a little more so we can help — a sentence or two is enough.")
-  .max(8000, "That's longer than we can take in one go. Try trimming it down.");
+  .min(10, "validation.problemTooShort")
+  .max(8000, "validation.problemTooLong");
 
-export const messageSchema = z.string().trim().min(1, "Write something first.").max(8000);
+export const messageSchema = z.string().trim().min(1, "validation.messageEmpty").max(8000);
 
-export const emailSchema = z.string().trim().toLowerCase().email("That doesn't look like an email address.");
+export const emailSchema = z.string().trim().toLowerCase().email("validation.invalidEmail");
 
 export const passwordSchema = z
   .string()
-  .min(10, "Use at least 10 characters.")
-  .max(200, "That password is too long.");
+  .min(10, "validation.passwordTooShort")
+  .max(200, "validation.passwordTooLong");
 
 export const createCaseSchema = z.object({
   problem: problemTextSchema,
@@ -42,7 +42,7 @@ export const updateCaseSchema = z
       .optional(),
     resolutionConfirmedByUser: z.boolean().optional(),
   })
-  .refine((v) => Object.keys(v).length > 0, "Nothing to update.");
+  .refine((v) => Object.keys(v).length > 0, "errors.nothingToUpdate");
 
 export const addFactSchema = z.object({
   statement: z.string().trim().min(3).max(1000),
@@ -82,8 +82,15 @@ export const recordResponseSchema = z.object({
 export type CreateCaseInput = z.infer<typeof createCaseSchema>;
 export type UpdateCaseInput = z.infer<typeof updateCaseSchema>;
 
-/** Flattens a Zod error into a single sentence a person can act on. */
-export function firstIssue(error: z.ZodError): string {
-  const issue = error.issues[0];
-  return issue?.message ?? "That input didn't look right.";
+/**
+ * Returns the catalogue key for the first problem found.
+ *
+ * Schema messages are written as keys so the reason reaches the user in their
+ * own language. Anything Zod generates on its own (a wrong type, say) is not a
+ * key, so it falls back to the generic message rather than leaking English.
+ */
+export function firstIssueKey(error: z.ZodError): string {
+  const message = error.issues[0]?.message;
+  if (message && /^(validation|errors)\.[A-Za-z]+$/.test(message)) return message;
+  return "validation.generic";
 }

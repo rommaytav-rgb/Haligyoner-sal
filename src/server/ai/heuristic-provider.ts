@@ -1,74 +1,84 @@
 import { classifyRisk } from "@/domain/risk";
 import { normalizeCategory } from "@/domain/taxonomy";
+import { caseText } from "@/server/i18n";
+import type { Locale } from "@/i18n/config";
 import type { AIProvider, CaseContext, EvidenceInput, ProblemInput, ProviderQuality } from "./provider";
 import type { ActionPlan, CaseReply, DraftResult, EvidenceAnalysis, ProblemAnalysis } from "./schemas";
 import { detectInjection } from "./sanitize";
+import { caseLocale, detectLanguage } from "./language";
 
 /**
  * A deterministic, rule-based provider used when no model is configured.
  *
- * It genuinely structures the problem — it splits the account into discrete
+ * It genuinely structures the problem - it splits the account into discrete
  * claims, classifies the category and risk, and asks the questions that
  * materially change the options. What it does *not* do is reason, and it says
  * so: `quality.modelBacked` is false and the UI surfaces the limitation rather
- * than passing rule output off as understanding (section 51).
+ * than passing rule output off as understanding.
+ *
+ * Every rule here is bilingual. A problem written in Hebrew is classified by
+ * Hebrew signals and answered in Hebrew, because the language of a case follows
+ * the person who wrote it.
  */
 export class HeuristicProvider implements AIProvider {
   readonly name = "rule-based";
-  readonly quality: ProviderQuality = {
-    modelBacked: false,
-    limitationNote:
-      "AI understanding isn't connected on this deployment, so we've organised your problem using built-in rules. " +
-      "Everything below is structured from your own words - nothing has been inferred beyond them.",
-  };
+  readonly quality: ProviderQuality = { modelBacked: false, limitationKey: "ai.ruleBasedNote" };
 
   async analyzeProblem(input: ProblemInput): Promise<ProblemAnalysis> {
     const text = input.problem.trim();
+    const locale = detectLanguage(text);
+    const t = (key: string, params?: Record<string, string | number>) => caseText(key, params, locale);
+
     const claims = splitClaims(text);
     const category = input.categoryHint ? normalizeCategory(input.categoryHint) : detectCategory(text);
     const risk = classifyRisk(text);
-    const parties = detectParties(text);
-    const goal = detectGoal(text);
-
-    const questions = buildQuestions(text, category);
-    const injection = detectInjection(text);
+    const questions = buildQuestions(text, category, t);
 
     return {
-      title: buildTitle(text, category),
+      title: buildTitle(text, category, locale, t),
       summary: claims.length > 1 ? `${claims[0]} ${claims.slice(1, 3).join(" ")}`.trim() : text.slice(0, 400),
-      userGoal: goal,
+      userGoal: detectGoal(text, t),
       primaryCategory: category,
       secondaryCategories: [],
       riskLevel: risk.level,
-      involvedParties: parties,
+      involvedParties: detectParties(text, locale),
       facts: claims.slice(0, 8).map((statement) => ({
         statement,
         verification: "USER_REPORTED" as const,
         confidence: "MEDIUM" as const,
       })),
       questions,
-      timeline: [{ title: "You told us what happened", description: claims[0] ?? text.slice(0, 200) }],
-      reply: buildReply(questions),
-      injectionObserved: injection.length
-        ? "Your description contains text that reads like an instruction. We've treated it as part of your account, not as a command."
+      timeline: [{ title: t("agent.openedTimeline"), description: claims[0] ?? text.slice(0, 200) }],
+      reply: buildReply(questions, locale, t),
+      injectionObserved: detectInjection(text).length
+        ? t("unavailable.injectionInProblem")
         : undefined,
     };
   }
 
   async replyInCase(context: CaseContext, userMessage: string): Promise<CaseReply> {
+    // The case keeps the language it was opened in, so a follow-up written in
+    // the other language still gets an answer consistent with the case.
+    const locale = caseLocale(context.caseRecord.contentLocale, detectLanguage(userMessage));
+    const t = (key: string, params?: Record<string, string | number>) => caseText(key, params, locale);
+
     const claims = splitClaims(userMessage);
     const openUnknowns = context.unknowns.filter((u) => !u.resolved);
     const answered = openUnknowns.filter((u) => looksLikeAnswerTo(u.question, userMessage)).map((u) => u.id);
-    const correcting = /that'?s not|not what happened|wrong|actually,|correction/i.test(userMessage);
+    const correcting = CORRECTION_SIGNALS.some((pattern) => pattern.test(userMessage));
 
     const remaining = openUnknowns.filter((u) => !answered.includes(u.id));
+    const blocking = remaining.filter((u) => u.importance === "REQUIRED");
+
     const reply = correcting
-      ? "Understood - we've noted your correction and kept it against the case. Nothing is set in stone here."
+      ? t("agent.correctionAck")
       : answered.length > 0
-        ? `Thanks, that's recorded.${remaining.length ? ` Next: ${remaining[0].question}` : " We'll fold that into your plan."}`
+        ? remaining.length > 0
+          ? t("agent.recordedNext", { question: remaining[0].question })
+          : t("agent.recordedDone")
         : remaining.length > 0
-          ? `Noted and added to your case. ${remaining[0].question}`
-          : "Noted and added to your case.";
+          ? t("agent.notedNext", { question: remaining[0].question })
+          : t("agent.noted");
 
     return {
       reply,
@@ -81,26 +91,28 @@ export class HeuristicProvider implements AIProvider {
       newQuestions: [],
       timeline: [],
       retractedFactIds: [],
-      suggestedStatus: remaining.length > 0 ? "INFORMATION_REQUIRED" : "READY_FOR_ACTION",
+      suggestedStatus: blocking.length > 0 ? "INFORMATION_REQUIRED" : "READY_FOR_ACTION",
     };
   }
 
   async analyzeEvidence(input: EvidenceInput): Promise<EvidenceAnalysis> {
+    const locale = caseLocale(input.context.caseRecord.contentLocale);
+    const t = (key: string, params?: Record<string, string | number>) => caseText(key, params, locale);
+
     const text = input.extractedText.trim();
-    const injection = detectInjection(text);
     const lines = text
       .split(/\n+/)
-      .map((l) => l.trim())
-      .filter((l) => l.length > 12);
+      .map((line) => line.trim())
+      .filter((line) => line.length > 12);
 
     // Only surface lines that carry a recognisable data point. Anything else
     // stays as raw text the user can read for themselves.
-    const interesting = lines.filter((l) => /\d/.test(l)).slice(0, 6);
+    const interesting = lines.filter((line) => /\d/.test(line)).slice(0, 6);
 
     return {
       documentSummary: text
-        ? `${input.fileName} contains ${lines.length} lines of readable text. We've extracted it in full and attached it to the case.`
-        : `We stored ${input.fileName}, but no text could be read from it here.`,
+        ? t("agent.documentRead", { fileName: input.fileName, lines: lines.length })
+        : t("agent.documentUnreadable", { fileName: input.fileName }),
       facts: interesting.map((statement) => ({
         statement: statement.slice(0, 300),
         verification: "DOCUMENT_VERIFIED" as const,
@@ -108,23 +120,24 @@ export class HeuristicProvider implements AIProvider {
       })),
       timeline: [],
       contradictions: [],
-      injectionObserved: injection.length
-        ? "This document contains text that reads like an instruction to an assistant. We've ignored it and treated the file as evidence only."
-        : undefined,
+      injectionObserved: detectInjection(text).length ? t("unavailable.injectionInDocument") : undefined,
     };
   }
 
   async generateActionPlan(context: CaseContext): Promise<ActionPlan> {
+    const locale = caseLocale(context.caseRecord.contentLocale);
+    const t = (key: string, params?: Record<string, string | number>) => caseText(key, params, locale);
+
     const open = context.unknowns.filter((u) => !u.resolved);
     const hasEvidence = context.evidence.length > 0;
-    const company = context.caseRecord.summary.match(/\b(?:from|with|at)\s+([A-Z][\w&.-]{2,})/)?.[1];
-
     const steps: ActionPlan["steps"] = [];
 
     if (open.length > 0) {
       steps.push({
-        title: `Fill in ${open.length === 1 ? "one missing detail" : `${open.length} missing details`}`,
-        description: open.map((u) => `${u.question} (${u.reason})`).join("\n"),
+        title: open.length === 1 ? t("agent.stepFillTitleOne") : t("agent.stepFillTitleMany", { count: open.length }),
+        description: open
+          .map((u) => t("agent.stepFillLine", { question: u.question, reason: u.reason }))
+          .join("\n"),
         type: "INFORMATION",
         requiresApproval: false,
       });
@@ -132,28 +145,23 @@ export class HeuristicProvider implements AIProvider {
 
     if (!hasEvidence) {
       steps.push({
-        title: "Gather your paperwork",
-        description:
-          "Upload anything you already have - receipts, order confirmations, screenshots, or messages you've exchanged. " +
-          "Documents let us treat details as verified rather than as your account alone.",
+        title: t("agent.stepGatherTitle"),
+        description: t("agent.stepGatherBody"),
         type: "INFORMATION",
         requiresApproval: false,
       });
     }
 
     steps.push({
-      title: "Put the situation in writing",
-      description:
-        `We'll prepare a clear, factual message${company ? ` to ${company}` : ""} setting out what happened, what you've ` +
-        "already done, and what you're asking for. You'll see it in full and approve it before anything is sent.",
+      title: t("agent.stepWriteTitle"),
+      description: t("agent.stepWriteBody"),
       type: "DRAFT",
       requiresApproval: true,
     });
 
     steps.push({
-      title: "Set a follow-up date",
-      description:
-        "If there's no reply within a reasonable window, we'll remind you and lay out what escalation options exist.",
+      title: t("agent.stepFollowUpTitle"),
+      description: t("agent.stepFollowUpBody"),
       type: "RECOMMENDATION",
       requiresApproval: false,
     });
@@ -161,29 +169,28 @@ export class HeuristicProvider implements AIProvider {
     return { steps, nextAction: steps[0].title };
   }
 
-  async draftCommunication(
-    context: CaseContext,
-    _action: Pick<ActionPlan["steps"][number], "title" | "description">,
-  ): Promise<DraftResult> {
-    const c = context.caseRecord;
-    const reported = context.facts.filter((f) => f.verification !== "INFERRED").slice(0, 8);
+  async draftCommunication(context: CaseContext): Promise<DraftResult> {
+    const locale = caseLocale(context.caseRecord.contentLocale);
+    const t = (key: string, params?: Record<string, string | number>) => caseText(key, params, locale);
 
+    const record = context.caseRecord;
+    const reported = context.facts.filter((f) => f.verification !== "INFERRED").slice(0, 8);
     // A truncated case title carries an ellipsis; it reads badly mid-sentence.
-    const subject = c.title.replace(/\.{3}$/, "").trim();
+    const subject = record.title.replace(/\.{3}$/, "").trim();
 
     const body = [
-      "Hello,",
+      t("agent.draftGreeting"),
       "",
-      `I'm writing about the following: ${subject}.`,
+      t("agent.draftAbout", { subject }),
       "",
-      "What happened:",
+      t("agent.draftWhatHappened"),
       ...reported.map((f) => `- ${f.statement}`),
       "",
-      `What I'm asking for: ${c.userGoal ?? "a resolution to this issue"}.`,
+      t("agent.draftAsking", { goal: record.userGoal ?? t("agent.draftGoalFallback") }),
       "",
-      "I'd appreciate a written response confirming how you intend to resolve this, and by when.",
+      t("agent.draftClosing"),
       "",
-      "Thank you,",
+      t("agent.draftSignOff"),
     ].join("\n");
 
     return {
@@ -191,29 +198,56 @@ export class HeuristicProvider implements AIProvider {
       subject,
       body,
       sharedInformation: [
-        "Your account of what happened",
-        ...(reported.some((f) => /\d/.test(f.statement)) ? ["Reference numbers and amounts you provided"] : []),
+        t("agent.sharedAccount"),
+        ...(reported.some((f) => /\d/.test(f.statement)) ? [t("agent.sharedReferences")] : []),
       ],
     };
   }
 }
 
+type Text = (key: string, params?: Record<string, string | number>) => string;
+
+/**
+ * Category signals in both languages. English and Hebrew patterns sit side by
+ * side so a Hebrew problem is classified as accurately as an English one.
+ */
 const CATEGORY_SIGNALS: Array<[string, RegExp]> = [
-  ["Payments", /\b(charge|charged|payment|card|bank|transaction|direct debit|invoice|billed|billing)\b/i],
-  ["Delivery", /\b(parcel|package|delivery|courier|shipment|tracking|never arrived|shipping)\b/i],
-  ["Travel", /\b(flight|airline|hotel|booking|cancelled flight|baggage|luggage|train|boarding)\b/i],
-  ["Shopping", /\b(bought|purchase|order|retailer|store|product|item|refund|return|warranty)\b/i],
-  ["Subscriptions", /\b(subscription|membership|auto-renew|renewal|cancel my plan|free trial)\b/i],
-  ["Telecom", /\b(phone bill|mobile|broadband|internet provider|sim|data plan|router)\b/i],
-  ["Utilities", /\b(electricity|gas bill|water bill|energy|meter reading|utility)\b/i],
-  ["Housing", /\b(landlord|tenant|rent|deposit|lease|apartment|flat|eviction)\b/i],
-  ["Insurance", /\b(insurance|insurer|policy|claim|premium|excess|deductible)\b/i],
-  ["Employment", /\b(employer|salary|wages|payslip|contract of employment|dismissed|fired|overtime)\b/i],
-  ["Government", /\b(council|government|agency|benefits|licence|permit|tax office)\b/i],
-  ["Documents", /\b(document|letter|notice|form|certificate|paperwork|received a letter)\b/i],
-  ["Technology", /\b(software|account locked|hacked|app|website|login|password reset)\b/i],
-  ["Transportation", /\b(car|vehicle|garage|mechanic|parking|fine|ticket)\b/i],
-  ["Education", /\b(university|school|course|tuition|student)\b/i],
+  [
+    "Payments",
+    /\b(charge|charged|payment|card|bank|transaction|direct debit|invoice|billed|billing)\b|(חיוב|חייבו|תשלום|כרטיס אשראי|בנק|עסקה|הוראת קבע|חשבונית|גבו)/i,
+  ],
+  [
+    "Delivery",
+    /\b(parcel|package|delivery|courier|shipment|tracking|never arrived|shipping)\b|(חבילה|משלוח|שליח|דואר שליחים|מעקב משלוח|לא הגיע)/i,
+  ],
+  [
+    "Travel",
+    /\b(flight|airline|hotel|booking|cancelled flight|baggage|luggage|train|boarding)\b|(טיסה|חברת תעופה|מלון|הזמנה|כבודה|מזוודה|רכבת|עלייה למטוס)/i,
+  ],
+  [
+    "Shopping",
+    /\b(bought|purchase|order|retailer|store|product|item|refund|return|warranty)\b|(קניתי|רכישה|הזמנה|חנות|מוצר|החזר|אחריות|החזרה)/i,
+  ],
+  [
+    "Subscriptions",
+    /\b(subscription|membership|auto-renew|renewal|cancel my plan|free trial)\b|(מנוי|חידוש אוטומטי|ביטול מנוי|תקופת ניסיון)/i,
+  ],
+  [
+    "Telecom",
+    /\b(phone bill|mobile|broadband|internet provider|sim|data plan|router)\b|(חשבון טלפון|סלולר|אינטרנט|ספק אינטרנט|סים|נתב|גלישה)/i,
+  ],
+  ["Utilities", /\b(electricity|gas bill|water bill|energy|meter reading|utility)\b|(חשמל|גז|מים|קריאת מונה|חברת החשמל)/i],
+  ["Housing", /\b(landlord|tenant|rent|deposit|lease|apartment|flat|eviction)\b|(בעל הדירה|שוכר|שכירות|פיקדון|חוזה שכירות|דירה|פינוי)/i],
+  ["Insurance", /\b(insurance|insurer|policy|claim|premium|excess|deductible)\b|(ביטוח|חברת הביטוח|פוליסה|תביעה|פרמיה|השתתפות עצמית)/i],
+  [
+    "Employment",
+    /\b(employer|salary|wages|payslip|contract of employment|dismissed|fired|overtime)\b|(מעסיק|משכורת|שכר|תלוש|חוזה עבודה|פוטרתי|שעות נוספות)/i,
+  ],
+  ["Government", /\b(council|government|agency|benefits|licence|permit|tax office)\b|(עירייה|רשות|ביטוח לאומי|רישיון|היתר|מס הכנסה)/i],
+  ["Documents", /\b(document|letter|notice|form|certificate|paperwork|received a letter)\b|(מסמך|מכתב|הודעה|טופס|תעודה|ניירת)/i],
+  ["Technology", /\b(software|account locked|hacked|app|website|login|password reset)\b|(תוכנה|חשבון נחסם|נפרצתי|אפליקציה|אתר|התחברות|איפוס סיסמה)/i],
+  ["Transportation", /\b(car|vehicle|garage|mechanic|parking|fine|ticket)\b|(רכב|מוסך|מכונאי|חניה|קנס|דוח)/i],
+  ["Education", /\b(university|school|course|tuition|student)\b|(אוניברסיטה|בית ספר|קורס|שכר לימוד|סטודנט)/i],
 ];
 
 function detectCategory(text: string): string {
@@ -227,67 +261,88 @@ function detectCategory(text: string): string {
 export function splitClaims(text: string): string[] {
   return text
     .split(/(?<=[.!?])\s+|\n+/)
-    .map((s) => s.trim().replace(/\s+/g, " "))
-    .filter((s) => s.length > 8)
-    .map((s) => (s.endsWith(".") || s.endsWith("!") || s.endsWith("?") ? s : `${s}.`));
+    .map((sentence) => sentence.trim().replace(/\s+/g, " "))
+    .filter((sentence) => sentence.length > 8)
+    .map((sentence) => (/[.!?]$/.test(sentence) ? sentence : `${sentence}.`));
 }
 
-function buildTitle(text: string, category: string): string {
+function buildTitle(text: string, category: string, locale: Locale, t: Text): string {
   const first = splitClaims(text)[0] ?? text;
-  const trimmed = first.replace(/^(hi|hello|hey)[,!.\s]+/i, "").replace(/[.!?]+$/, "");
+  const trimmed = first.replace(/^(hi|hello|hey|שלום|היי)[,!.\s]+/i, "").replace(/[.!?]+$/, "");
   const short = trimmed.length > 70 ? `${trimmed.slice(0, 67).trimEnd()}...` : trimmed;
-  return short.length >= 8 ? capitalize(short) : `${category} problem`;
+
+  if (short.length < 8) return t("agent.fallbackTitle", { category: t(`category.${category}`) });
+  // Hebrew has no letter case, so only Latin titles are capitalised.
+  return locale === "he" ? short : short.charAt(0).toUpperCase() + short.slice(1);
 }
 
-function detectGoal(text: string): string {
-  if (/\brefund|money back|reimburse/i.test(text)) return "Get a refund";
-  if (/\breplace|replacement|exchange\b/i.test(text)) return "Get a replacement";
-  if (/\bcancel|stop the (charge|payment|subscription)/i.test(text)) return "Cancel and stop further charges";
-  if (/\bcompensat|claim\b/i.test(text)) return "Get compensation";
-  if (/\bexplain|understand|what does.*mean|don'?t understand/i.test(text)) return "Understand what this means and what to do";
-  if (/\bdeliver|arrive|receive\b/i.test(text)) return "Receive what was ordered, or get the money back";
-  if (/\breply|respond|answer|ignoring me/i.test(text)) return "Get a response and a resolution";
-  return "Move this to a resolution";
+const GOAL_SIGNALS: Array<[string, RegExp]> = [
+  ["agent.goalRefund", /\brefund|money back|reimburse\b|(החזר כספי|כסף בחזרה|לקבל את הכסף)/i],
+  ["agent.goalReplacement", /\breplace|replacement|exchange\b|(להחליף|מוצר חלופי|החלפה)/i],
+  ["agent.goalCancel", /\bcancel|stop the (charge|payment|subscription)\b|(לבטל|ביטול|להפסיק את החיוב)/i],
+  ["agent.goalCompensation", /\bcompensat|claim\b|(פיצוי|לתבוע)/i],
+  ["agent.goalUnderstand", /\bexplain|understand|what does.*mean|don'?t understand\b|(להבין|לא מבין|מה זה אומר|תסבירו)/i],
+  ["agent.goalReceive", /\bdeliver|arrive|receive\b|(לקבל|שיגיע|למסור)/i],
+  [
+    "agent.goalResponse",
+    /\breply|respond|answer|ignoring me\b|(תשובה|לא עונים|לא ענו|מתעלמים|לא חוזר|לא חוזרים|לא חזר|לא חזרו)/i,
+  ],
+];
+
+function detectGoal(text: string, t: Text): string {
+  for (const [key, pattern] of GOAL_SIGNALS) {
+    if (pattern.test(text)) return t(key);
+  }
+  return t("agent.goalGeneric");
 }
 
-function detectParties(text: string): ProblemAnalysis["involvedParties"] {
+function detectParties(text: string, locale: Locale): ProblemAnalysis["involvedParties"] {
+  // The capitalisation cue this relies on does not exist in Hebrew, so rather
+  // than guess at company names we record none and let the user tell us.
+  if (locale === "he") return [];
+
   const matches = [...text.matchAll(/\b(?:from|with|at|by|against)\s+([A-Z][A-Za-z0-9&.'-]{2,24})/g)]
-    .map((m) => m[1])
+    .map((match) => match[1])
     .filter((name) => !/^(I|The|My|A|An|It|They|We|This|That)$/i.test(name));
 
   return [...new Set(matches)].slice(0, 3).map((name) => ({ name, role: "COMPANY" as const }));
 }
 
-function buildQuestions(text: string, category: string): ProblemAnalysis["questions"] {
-  const questions: ProblemAnalysis["questions"] = [];
-  const has = (p: RegExp) => p.test(text);
+const HAS_DATE =
+  /\b(yesterday|today|last week|last month|on \w+day|\d{1,2}[/-]\d{1,2}|\d{4}|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))|(אתמול|היום|שלשום|לפני שבוע|לפני חודש|בינואר|בפברואר|במרץ|באפריל|במאי|ביוני|ביולי|באוגוסט|בספטמבר|באוקטובר|בנובמבר|בדצמבר|\d{1,2}[/.]\d{1,2})/i;
+const HAS_AMOUNT = /[$£€₪]|\d+\.\d{2}|\d+\s?(שקל|ש"ח|שקלים)/i;
+const HAS_REFERENCE =
+  /\b(order|reference|booking|invoice|account)\s*(number|no|#|id)|(מספר|מס')\s*(הזמנה|אסמכתא|חשבונית|לקוח|הזמנת)/i;
 
-  if (!has(/\b(yesterday|today|last week|last month|on \w+day|\d{1,2}[/-]\d{1,2}|\d{4}|\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec))/i)) {
+function buildQuestions(text: string, category: string, t: Text): ProblemAnalysis["questions"] {
+  const questions: ProblemAnalysis["questions"] = [];
+
+  if (!HAS_DATE.test(text)) {
     questions.push({
-      question: "When did this happen?",
-      reason: "Your options often depend on how long ago it was - many refund and dispute windows are time-limited.",
+      question: t("agent.askWhen"),
+      reason: t("agent.askWhenReason"),
       importance: "REQUIRED",
     });
   }
 
-  if (category === "Payments" && !has(/\b(\$|£|€|\d+\.\d{2})/)) {
+  if (category === "Payments" && !HAS_AMOUNT.test(text)) {
     questions.push({
-      question: "How much were you charged, and by whom?",
-      reason: "The amount and the merchant name are what a bank needs to open a dispute.",
+      question: t("agent.askAmount"),
+      reason: t("agent.askAmountReason"),
       importance: "REQUIRED",
     });
-  } else if (!has(/\b(order|reference|booking|invoice|account)\s*(number|no|#|id)/i)) {
+  } else if (!HAS_REFERENCE.test(text)) {
     questions.push({
-      question: "Do you have an order, booking or reference number?",
-      reason: "A reference number is usually the first thing the other side asks for, and it speeds everything up.",
+      question: t("agent.askReference"),
+      reason: t("agent.askReferenceReason"),
       importance: questions.length === 0 ? "REQUIRED" : "HELPFUL",
     });
   }
 
   if (questions.length < 3) {
     questions.push({
-      question: "Have you contacted them about this already, and what did they say?",
-      reason: "What you've already tried decides whether the next step is a first request or an escalation.",
+      question: t("agent.askContacted"),
+      reason: t("agent.askContactedReason"),
       importance: "HELPFUL",
     });
   }
@@ -295,14 +350,21 @@ function buildQuestions(text: string, category: string): ProblemAnalysis["questi
   return questions.slice(0, 3);
 }
 
-function buildReply(questions: ProblemAnalysis["questions"]): string {
-  if (questions.length === 0) {
-    return "We've organised what you told us into a case. Have a look at what we captured and correct anything that's off.";
-  }
-  return `We've organised what you told us into a case. To work out your options, we need ${
-    questions.length === 1 ? "one thing" : `${questions.length} things`
-  }. ${questions[0].question}`;
+function buildReply(questions: ProblemAnalysis["questions"], locale: Locale, t: Text): string {
+  if (questions.length === 0) return t("agent.introNoQuestions");
+  if (questions.length === 1) return t("agent.introOne", { question: questions[0].question });
+  return t("agent.introMany", { count: questions.length, question: questions[0].question });
 }
+
+const CORRECTION_SIGNALS = [
+  /that'?s not|not what happened|wrong|actually,|correction/i,
+  /(זה לא נכון|לא זה מה שקרה|טעות|בעצם|תיקון|לא מדויק)/,
+];
+
+const YES_NO_ANSWER =
+  /\b(yes|no|not yet|never|i (have|did|didn'?t|haven'?t)|emailed|called|wrote|contacted|spoke)\b|(כן|לא|עדיין לא|מעולם לא|שלחתי|התקשרתי|כתבתי|פניתי|דיברתי)/i;
+const DATE_ANSWER =
+  /\b(yesterday|today|last|ago|\d{1,2}[/-]\d{1,2}|\d{4}|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)|(אתמול|היום|שלשום|לפני|בתאריך|\d{1,2}[/.]\d{1,2}|\d{4})/i;
 
 /**
  * Decides whether a message plausibly answers an open question. Deliberately
@@ -311,24 +373,14 @@ function buildReply(questions: ProblemAnalysis["questions"]): string {
  * the person has clearly addressed it.
  */
 function looksLikeAnswerTo(question: string, message: string): boolean {
-  const q = question.toLowerCase();
+  const asksWhen = /\bwhen\b|\bdate\b/i.test(question) || /מתי/.test(question);
+  const asksNumber = /\b(number|how much|amount|reference)\b/i.test(question) || /(מספר|בכמה|סכום|אסמכתא)/.test(question);
+  const asksYesNo = /^(have|did|do|are|is|was|were|has)\b/i.test(question) || /(כבר|האם)/.test(question);
 
-  if (/\bwhen\b|\bdate\b/.test(q)) {
-    return /\b(yesterday|today|last|ago|this (week|month)|\d{1,2}[/-]\d{1,2}|\d{4}|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)/i.test(
-      message,
-    );
-  }
-  if (/\bnumber\b|\bhow much\b|\bamount\b|\breference\b/.test(q)) {
-    return /\d/.test(message);
-  }
-  if (/^(have|did|do|are|is|was|were|has)\b/.test(q) || /\balready\b/.test(q)) {
-    // A yes/no question is answered by any substantive reply that engages with it.
-    return /\b(yes|no|not yet|never|i (have|did|didn'?t|haven'?t)|emailed|called|wrote|contacted|spoke)\b/i.test(message);
-  }
+  if (asksWhen) return DATE_ANSWER.test(message);
+  if (asksNumber) return /\d/.test(message);
+  if (asksYesNo) return YES_NO_ANSWER.test(message);
+
   // Anything else: a reply of real substance counts as having addressed it.
   return message.trim().split(/\s+/).length >= 8;
-}
-
-function capitalize(s: string): string {
-  return s.charAt(0).toUpperCase() + s.slice(1);
 }

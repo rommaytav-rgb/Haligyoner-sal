@@ -2,6 +2,8 @@ import { automationAllowed } from "@/domain/risk";
 import type { ActionStep, CaseStatus, Fact, TimelineEvent } from "@/domain/types";
 import { getAIProvider } from "@/server/ai";
 import { buildCaseContext, addFact, addTimelineEvent, addTask, setStatus, patchCase } from "@/server/services/cases";
+import { caseText } from "@/server/i18n";
+import { caseLocale } from "@/server/ai/language";
 import type { Tool } from "./types";
 
 /**
@@ -14,7 +16,7 @@ export const addFactTool: Tool<
   { factId: string }
 > = {
   name: "addFact",
-  description: "Record a discrete claim or verified detail against a case.",
+  descriptionKey: "tools.addFact.description",
   available: true,
   requiresApproval: false,
   async run(input, context) {
@@ -32,7 +34,7 @@ export const addTimelineEventTool: Tool<
   { eventId: string }
 > = {
   name: "addTimelineEvent",
-  description: "Add a dated event to the case history.",
+  descriptionKey: "tools.addTimelineEvent.description",
   available: true,
   requiresApproval: false,
   async run(input) {
@@ -50,7 +52,7 @@ export const addTaskTool: Tool<
   { taskId: string }
 > = {
   name: "addTask",
-  description: "Create a task for the user or for follow-up.",
+  descriptionKey: "tools.addTask.description",
   available: true,
   requiresApproval: false,
   async run(input) {
@@ -68,7 +70,7 @@ export const addTaskTool: Tool<
 export const updateCaseStatusTool: Tool<{ caseId: string; status: CaseStatus; reason: string }, { status: CaseStatus }> =
   {
     name: "updateCaseStatus",
-    description: "Move a case to a new status.",
+    descriptionKey: "tools.updateCaseStatus.description",
     available: true,
     requiresApproval: false,
     async run(input, context) {
@@ -83,7 +85,7 @@ export const updateCaseTool: Tool<
   { caseId: string }
 > = {
   name: "updateCase",
-  description: "Update the case headline fields.",
+  descriptionKey: "tools.updateCase.description",
   available: true,
   requiresApproval: false,
   async run(input, context) {
@@ -98,13 +100,13 @@ export const createDraftTool: Tool<
   { channel: string; subject?: string; body: string; sharedInformation: string[] }
 > = {
   name: "createDraft",
-  description: "Prepare a message for the user to review. Never sends anything.",
+  descriptionKey: "tools.createDraft.description",
   available: true,
   // The draft itself is harmless; sending it is what needs approval.
   requiresApproval: false,
   async run(input, context) {
     if (!automationAllowed(context.riskLevel, "DRAFT")) {
-      return { ok: false, reason: "NOT_PERMITTED", message: "We won't draft this automatically for a high-risk case." };
+      return { ok: false, reason: "NOT_PERMITTED", messageKey: "unavailable.highRiskManual" };
     }
     const context_ = await buildCaseContext(input.caseId);
     const draft = await getAIProvider().draftCommunication(context_, input.action);
@@ -123,18 +125,19 @@ export const createDraftTool: Tool<
 export const prepareFormTool: Tool<{ caseId: string; formName: string }, { fields: { label: string; value: string }[] }> =
   {
     name: "prepareForm",
-    description: "Collect the values a known form would need from the case record.",
+    descriptionKey: "tools.prepareForm.description",
     available: true,
     requiresApproval: false,
     async run(input) {
       const context = await buildCaseContext(input.caseId);
+      const locale = caseLocale(context.caseRecord.contentLocale);
       const fields = [
-        { label: "What happened", value: context.caseRecord.summary },
-        { label: "What I'm asking for", value: context.caseRecord.userGoal ?? "" },
+        { label: caseText("agent.formWhatHappened", undefined, locale), value: context.caseRecord.summary },
+        { label: caseText("agent.formAsking", undefined, locale), value: context.caseRecord.userGoal ?? "" },
         ...context.facts
           .filter((f) => /\d/.test(f.statement))
           .slice(0, 6)
-          .map((f) => ({ label: "Detail", value: f.statement })),
+          .map((f) => ({ label: caseText("agent.formDetail", undefined, locale), value: f.statement })),
       ].filter((f) => f.value.length > 0);
       return { ok: true, data: { fields } };
     },

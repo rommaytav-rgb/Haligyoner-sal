@@ -3,6 +3,7 @@ import { z } from "zod";
 import { emailSchema } from "@/lib/validation";
 import { authenticate, setSessionCookie } from "@/server/auth";
 import { errorResponse } from "@/server/http/route";
+import { getRequestTranslator } from "@/i18n/server";
 import { checkRateLimit, RATE_LIMITS } from "@/server/http/rate-limit";
 import { clientKey } from "@/server/http/client-key";
 import { audit } from "@/server/services/audit";
@@ -16,7 +17,8 @@ export async function POST(request: Request) {
     const { allowed } = checkRateLimit(`signin:${clientKey(request)}`, RATE_LIMITS.auth);
     if (!allowed) {
       await audit("AUTH_FAILURE", "rate limited");
-      return NextResponse.json({ error: "Too many attempts. Try again in a few minutes." }, { status: 429 });
+      const t = await getRequestTranslator();
+      return NextResponse.json({ error: t("errors.authThrottled") }, { status: 429 });
     }
 
     const body = schema.parse(await request.json());

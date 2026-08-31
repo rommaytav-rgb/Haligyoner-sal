@@ -1,6 +1,7 @@
 import { COLLECTIONS, getStore } from "@/server/db";
 import { newId, now } from "@/domain/ids";
 import type { Notification, NotificationKind } from "@/domain/types";
+import { resolveRecord, type Recordable } from "@/server/i18n";
 import { log } from "@/lib/logger";
 
 /**
@@ -32,16 +33,21 @@ export async function notify(input: {
   userId: string;
   caseId?: string;
   kind: NotificationKind;
+  /** Usually the case title, which keeps the language the case was written in. */
   title: string;
-  body: string;
+  /** A catalogue reference for system text, or a plain string for content. */
+  body: Recordable;
 }): Promise<Notification> {
+  const body = resolveRecord(input.body);
+
   const notification: Notification = {
     id: newId("ntf"),
     userId: input.userId,
     caseId: input.caseId,
     kind: input.kind,
     title: input.title.slice(0, 160),
-    body: input.body.slice(0, 400),
+    body: body.text.slice(0, 400),
+    bodyText: body.ref,
     createdAt: now(),
   };
   await getStore().put(COLLECTIONS.notifications, notification);

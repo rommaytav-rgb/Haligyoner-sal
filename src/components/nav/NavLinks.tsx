@@ -3,16 +3,18 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/components/ui/cn";
+import { useT } from "@/i18n/client";
 
 const ITEMS = [
-  { href: "/home", label: "Home", icon: HomeIcon },
-  { href: "/cases", label: "My Cases", icon: CasesIcon },
-  { href: "/notifications", label: "Notifications", icon: BellIcon },
-  { href: "/settings", label: "Settings", icon: GearIcon },
+  { href: "/home", labelKey: "nav.home", shortKey: "nav.home", icon: HomeIcon },
+  { href: "/cases", labelKey: "nav.cases", shortKey: "nav.casesShort", icon: CasesIcon },
+  { href: "/notifications", labelKey: "nav.notifications", shortKey: "nav.notificationsShort", icon: BellIcon },
+  { href: "/settings", labelKey: "nav.settings", shortKey: "nav.settings", icon: GearIcon },
 ] as const;
 
 export function NavLinks({ unread, variant }: { unread: number; variant: "top" | "bottom" }) {
   const pathname = usePathname();
+  const t = useT();
 
   if (variant === "top") {
     return (
@@ -29,8 +31,8 @@ export function NavLinks({ unread, variant }: { unread: number; variant: "top" |
                   active ? "bg-paper-sunk text-ink" : "text-ink-mute hover:text-ink",
                 )}
               >
-                {item.label}
-                {item.href === "/notifications" && unread > 0 && <Dot />}
+                {t(item.labelKey)}
+                {item.href === "/notifications" && unread > 0 && <Dot label={t("common.unreadNotifications")} />}
               </Link>
             </li>
           );
@@ -58,12 +60,12 @@ export function NavLinks({ unread, variant }: { unread: number; variant: "top" |
                 <Icon active={active} />
                 {item.href === "/notifications" && unread > 0 && (
                   <span
-                    className="absolute -right-1 -top-0.5 h-2 w-2 rounded-full bg-signal-risk ring-2 ring-white"
-                    aria-label="unread notifications"
+                    className="absolute -end-1 -top-0.5 h-2 w-2 rounded-full bg-signal-risk ring-2 ring-white"
+                    aria-label={t("common.unreadNotifications")}
                   />
                 )}
               </span>
-              {item.label === "My Cases" ? "Cases" : item.label === "Notifications" ? "Alerts" : item.label}
+              {t(item.shortKey)}
             </Link>
           </li>
         );
@@ -72,13 +74,8 @@ export function NavLinks({ unread, variant }: { unread: number; variant: "top" |
   );
 }
 
-function Dot() {
-  return (
-    <span
-      className="absolute right-1.5 top-1 h-1.5 w-1.5 rounded-full bg-signal-risk"
-      aria-label="unread notifications"
-    />
-  );
+function Dot({ label }: { label: string }) {
+  return <span className="absolute end-1.5 top-1 h-1.5 w-1.5 rounded-full bg-signal-risk" aria-label={label} />;
 }
 
 function HomeIcon({ active }: { active: boolean }) {

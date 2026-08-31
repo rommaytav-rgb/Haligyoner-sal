@@ -3,9 +3,11 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
+import { useT } from "@/i18n/client";
 
 export function MarkAllReadButton() {
   const router = useRouter();
+  const t = useT();
   const [busy, setBusy] = React.useState(false);
 
   return (
@@ -20,7 +22,7 @@ export function MarkAllReadButton() {
         setBusy(false);
       }}
     >
-      Mark all read
+      {t("notifications.markAllRead")}
     </Button>
   );
 }

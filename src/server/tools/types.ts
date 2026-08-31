@@ -8,7 +8,13 @@ export interface ToolContext {
 
 export type ToolResult<T> =
   | { ok: true; data: T }
-  | { ok: false; reason: "UNAVAILABLE" | "FAILED" | "NOT_PERMITTED"; message: string };
+  | {
+      ok: false;
+      reason: "UNAVAILABLE" | "FAILED" | "NOT_PERMITTED";
+      /** Catalogue key, so the reason reaches the user in their own language. */
+      messageKey: string;
+      messageParams?: Record<string, string | number>;
+    };
 
 /**
  * A capability the orchestrator can call.
@@ -19,9 +25,13 @@ export type ToolResult<T> =
  */
 export interface Tool<Input, Output> {
   readonly name: string;
-  readonly description: string;
+  /** Catalogue key for the description shown in Settings. */
+  readonly descriptionKey: string;
   readonly available: boolean;
-  readonly unavailableReason?: string;
+  /** Catalogue key explaining why the capability is missing. */
+  readonly unavailableKey?: string;
+  /** Parameters for `unavailableKey`, when it names something. */
+  readonly unavailableParams?: Record<string, string | number>;
   /** True when a human must approve before this runs. */
   readonly requiresApproval: boolean;
   run(input: Input, context: ToolContext): Promise<ToolResult<Output>>;
@@ -29,18 +39,20 @@ export interface Tool<Input, Output> {
 
 export function unavailableTool<I, O>(
   name: string,
-  description: string,
-  reason: string,
+  unavailableKey: string,
+  unavailableParams?: Record<string, string | number>,
   requiresApproval = true,
 ): Tool<I, O> {
   return {
     name,
-    description,
+    descriptionKey: `tools.${name}.description`,
     available: false,
-    unavailableReason: reason,
+    unavailableKey,
+    unavailableParams,
     requiresApproval,
     async run() {
-      return { ok: false, reason: "UNAVAILABLE", message: reason };
+      // The caller translates; the tool layer never renders a language.
+      return { ok: false, reason: "UNAVAILABLE", messageKey: unavailableKey, messageParams: unavailableParams };
     },
   };
 }

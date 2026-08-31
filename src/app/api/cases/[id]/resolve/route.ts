@@ -2,6 +2,7 @@ import { z } from "zod";
 import { idSchema } from "@/lib/validation";
 import { addTimelineEvent, requireOwnedCase, setStatus } from "@/server/services/cases";
 import { authedRoute, parseBody } from "@/server/http/route";
+import { systemText } from "@/server/i18n";
 
 type Params = { id: string };
 
@@ -17,17 +18,17 @@ export const POST = authedRoute<Params>(async ({ user, params, request }) => {
   const body = await parseBody(request, schema);
 
   if (body.resolved) {
-    const record = await setStatus(user.id, caseId, "RESOLVED", body.note ?? "You confirmed this is fixed.", {
+    const record = await setStatus(user.id, caseId, "RESOLVED", body.note ?? systemText("system.confirmedFixed"), {
       userConfirmedResolution: true,
     });
     await addTimelineEvent(caseId, {
-      title: "You confirmed this is resolved",
+      title: systemText("system.confirmedFixedTitle"),
       description: body.note ?? "",
       source: "USER",
     });
     return { case: record };
   }
 
-  const record = await setStatus(user.id, caseId, "FOLLOW_UP_REQUIRED", body.note ?? "Not fixed yet.");
+  const record = await setStatus(user.id, caseId, "FOLLOW_UP_REQUIRED", body.note ?? systemText("system.notFixedYet"));
   return { case: record };
 });

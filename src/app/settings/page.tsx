@@ -8,99 +8,107 @@ import { unreadCount } from "@/server/services/notifications";
 import { AppShell } from "@/components/nav/AppShell";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
+import { getI18n } from "@/i18n/server";
+import { formatNumber } from "@/i18n/format";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Settings doubles as the transparency screen: exactly what is connected, what
- * is not, and what that means for what the product can do (sections 23, 59).
+ * is not, and what that means for what the product can do.
  */
 export default async function SettingsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in?next=/settings");
 
-  const unread = await unreadCount(user.id);
+  const [{ t, locale }, unread] = await Promise.all([getI18n(), unreadCount(user.id)]);
   const provider = getAIProvider();
   const tools = listTools();
-  const connected = tools.filter((t) => t.available);
-  const missing = tools.filter((t) => !t.available);
+  const connected = tools.filter((tool) => tool.available);
+  const missing = tools.filter((tool) => !tool.available);
   const actionProviders = listActionProviders();
 
   return (
     <AppShell user={user} unread={unread}>
-      <h1 className="display text-[28px] text-ink">Settings</h1>
+      <h1 className="display text-[28px] text-ink">{t("settings.title")}</h1>
 
       <div className="mt-6 space-y-5">
         <Card>
-          <CardHeader title="Your account" />
+          <CardHeader title={t("settings.accountTitle")} />
           <CardBody className="space-y-2 text-[14px]">
-            <Row label="Email" value={user.email} />
-            {user.displayName && <Row label="Name" value={user.displayName} />}
-            <p className="pt-2 text-[13px] leading-relaxed text-ink-mute">
-              Your cases, files and conversations are private to this account. We only ask for information when a case
-              actually needs it.
-            </p>
+            <Row label={t("settings.accountEmail")} value={user.email} literal />
+            {user.displayName && <Row label={t("settings.accountName")} value={user.displayName} />}
+            <p className="pt-2 text-[13px] leading-relaxed text-ink-mute">{t("settings.accountPrivacy")}</p>
           </CardBody>
         </Card>
 
         <Card>
-          <CardHeader
-            title="What's connected"
-            description="What this deployment can actually do right now."
-          />
+          <CardHeader title={t("settings.languageTitle")} action={<LanguageSwitcher />} />
+          <CardBody>
+            <p className="text-[13px] leading-relaxed text-ink-mute">{t("settings.languageBody")}</p>
+          </CardBody>
+        </Card>
+
+        <Card>
+          <CardHeader title={t("settings.connectedTitle")} description={t("settings.connectedBody")} />
           <CardBody className="space-y-3">
             <Row
-              label="Understanding"
-              value={
-                provider.quality.modelBacked
-                  ? "Connected"
-                  : "Rule-based only"
-              }
+              label={t("settings.understanding")}
+              value={provider.quality.modelBacked ? t("settings.understandingOn") : t("settings.understandingOff")}
               tone={provider.quality.modelBacked ? "ok" : "warn"}
             />
             <Row
-              label="Web research"
-              value={capabilities.webResearch ? "Connected" : "Not connected"}
+              label={t("settings.webResearch")}
+              value={capabilities.webResearch ? t("common.on") : t("common.notConnected")}
               tone={capabilities.webResearch ? "ok" : "neutral"}
             />
             <Row
-              label="File storage"
-              value={capabilities.cloudStorage ? "Cloud Storage" : "Local (development)"}
+              label={t("settings.fileStorage")}
+              value={capabilities.cloudStorage ? t("settings.fileStorageCloud") : t("settings.fileStorageLocal")}
               tone={capabilities.cloudStorage ? "ok" : "neutral"}
             />
             <Row
-              label="Database"
-              value={capabilities.firestore ? "Firestore" : "Local (development)"}
+              label={t("settings.database")}
+              value={capabilities.firestore ? t("settings.databaseCloud") : t("settings.databaseLocal")}
               tone={capabilities.firestore ? "ok" : "neutral"}
             />
             <Row
-              label="Sending on your behalf"
-              value={actionProviders.length > 0 ? actionProviders.join(", ") : "Not connected"}
+              label={t("settings.sending")}
+              value={actionProviders.length > 0 ? actionProviders.join(", ") : t("common.notConnected")}
               tone={actionProviders.length > 0 ? "ok" : "neutral"}
             />
-            {!provider.quality.modelBacked && provider.quality.limitationNote && (
-              <p className="pt-1 text-[13px] leading-relaxed text-ink-mute">{provider.quality.limitationNote}</p>
+            {!provider.quality.modelBacked && provider.quality.limitationKey && (
+              <p className="pt-1 text-[13px] leading-relaxed text-ink-mute">{t(provider.quality.limitationKey)}</p>
             )}
           </CardBody>
         </Card>
 
         <Card>
           <CardHeader
-            title="Capabilities"
-            description={`${connected.length} connected, ${missing.length} not yet available.`}
+            title={t("settings.capabilitiesTitle")}
+            description={t("settings.capabilitiesBody", {
+              connected: formatNumber(connected.length, locale),
+              missing: formatNumber(missing.length, locale),
+            })}
           />
           <CardBody>
             <ul className="space-y-2.5">
               {[...connected, ...missing].map((tool) => (
                 <li key={tool.name} className="flex items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="text-[14px] font-medium text-ink">{humanise(tool.name)}</p>
+                    {/* A capability name is a Latin identifier. Isolating it lets
+                        it read left-to-right while still sitting at the start of
+                        the row in either direction. */}
+                    <p className="text-[14px] font-medium text-ink bidi-isolate">{humanise(tool.name)}</p>
                     <p className="mt-0.5 text-[13px] leading-relaxed text-ink-mute">
-                      {tool.available ? tool.description : tool.unavailableReason ?? tool.description}
+                      {tool.available || !tool.unavailableKey
+                        ? t(tool.descriptionKey)
+                        : t.ref(tool.unavailableKey, tool.unavailableParams)}
                     </p>
                   </div>
                   <Badge tone={tool.available ? "ok" : "neutral"} className="shrink-0">
-                    {tool.available ? "On" : "Not connected"}
+                    {tool.available ? t("common.on") : t("common.notConnected")}
                   </Badge>
                 </li>
               ))}
@@ -109,14 +117,15 @@ export default async function SettingsPage() {
         </Card>
 
         <Card>
-          <CardHeader title="Limits" description="Guardrails that apply to every case." />
+          <CardHeader title={t("settings.limitsTitle")} description={t("settings.limitsBody")} />
           <CardBody className="space-y-2 text-[14px]">
-            <Row label="Maximum file size" value={`${Math.round(config.maxUploadBytes / (1024 * 1024))} MB`} />
-            <Row label="Steps per run" value={String(config.maxAgentIterations)} />
-            <Row label="Tool calls per run" value={String(config.maxToolCalls)} />
-            <p className="pt-2 text-[13px] leading-relaxed text-ink-mute">
-              Nothing is ever sent on your behalf without you approving exactly what it says.
-            </p>
+            <Row
+              label={t("settings.maxFileSize")}
+              value={`${formatNumber(Math.round(config.maxUploadBytes / (1024 * 1024)), locale)} MB`}
+            />
+            <Row label={t("settings.stepsPerRun")} value={formatNumber(config.maxAgentIterations, locale)} />
+            <Row label={t("settings.toolCallsPerRun")} value={formatNumber(config.maxToolCalls, locale)} />
+            <p className="pt-2 text-[13px] leading-relaxed text-ink-mute">{t("settings.limitsNote")}</p>
           </CardBody>
         </Card>
       </div>
@@ -124,14 +133,30 @@ export default async function SettingsPage() {
   );
 }
 
-function Row({ label, value, tone }: { label: string; value: string; tone?: "ok" | "warn" | "neutral" }) {
+function Row({
+  label,
+  value,
+  tone,
+  literal = false,
+}: {
+  label: string;
+  value: string;
+  tone?: "ok" | "warn" | "neutral";
+  /** Addresses and identifiers read left to right in any interface language. */
+  literal?: boolean;
+}) {
   return (
     <div className="flex items-center justify-between gap-4">
       <span className="text-[13.5px] text-ink-mute">{label}</span>
       {tone ? (
         <Badge tone={tone}>{value}</Badge>
       ) : (
-        <span className="text-[13.5px] font-medium text-ink">{value}</span>
+        <span
+          dir={literal ? "ltr" : "auto"}
+          className={`text-[13.5px] font-medium text-ink ${literal ? "bidi-isolate" : ""}`}
+        >
+          {value}
+        </span>
       )}
     </div>
   );

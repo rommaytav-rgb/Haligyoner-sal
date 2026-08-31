@@ -1,15 +1,8 @@
+"use client";
+
 import type { ActionStep } from "@/domain/types";
 import { Badge, type BadgeTone } from "@/components/ui/Badge";
-
-const STATUS_LABEL: Record<ActionStep["status"], string> = {
-  PENDING: "To do",
-  REQUIRES_APPROVAL: "Needs approval",
-  APPROVED: "Approved",
-  IN_PROGRESS: "In progress",
-  COMPLETED: "Done",
-  FAILED: "Didn't work",
-  CANCELLED: "Cancelled",
-};
+import { useT } from "@/i18n/client";
 
 const STATUS_TONE: Record<ActionStep["status"], BadgeTone> = {
   PENDING: "neutral",
@@ -21,19 +14,16 @@ const STATUS_TONE: Record<ActionStep["status"], BadgeTone> = {
   CANCELLED: "neutral",
 };
 
-/** Delivery state is shown separately so "approved" never reads as "sent" (section 25). */
-const DELIVERY_LABEL: Record<NonNullable<ActionStep["deliveryState"]>, string> = {
-  DRAFTED: "Draft ready",
-  APPROVED: "Approved - not sent from here",
-  IN_PROGRESS: "Sending",
-  SENT: "Sent",
-  DELIVERED: "Delivered",
-  RESPONSE_RECEIVED: "Reply received",
-  FAILED: "Not sent",
-  UNKNOWN: "Status unknown",
-};
-
-export function ActionCard({ action, index, children }: { action: ActionStep; index: number; children?: React.ReactNode }) {
+export function ActionCard({
+  action,
+  index,
+  children,
+}: {
+  action: ActionStep;
+  index: number;
+  children?: React.ReactNode;
+}) {
+  const t = useT();
   const done = action.status === "COMPLETED";
 
   return (
@@ -49,19 +39,23 @@ export function ActionCard({ action, index, children }: { action: ActionStep; in
         </span>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className={`text-[15px] font-semibold leading-snug ${done ? "text-ink-mute line-through" : "text-ink"}`}>
+            <h3
+              dir="auto"
+              className={`text-[15px] font-semibold leading-snug ${done ? "text-ink-mute line-through" : "text-ink"}`}
+            >
               {action.title}
             </h3>
-            <Badge tone={STATUS_TONE[action.status]}>{STATUS_LABEL[action.status]}</Badge>
+            <Badge tone={STATUS_TONE[action.status]}>{t(`actionStatus.${action.status}`)}</Badge>
+            {/* Delivery state is shown separately so "approved" never reads as "sent". */}
             {action.deliveryState && action.deliveryState !== "DRAFTED" && (
-              <Badge tone="neutral">{DELIVERY_LABEL[action.deliveryState]}</Badge>
+              <Badge tone="neutral">{t(`delivery.${action.deliveryState}`)}</Badge>
             )}
           </div>
-          <p className="mt-1.5 whitespace-pre-line text-[14px] leading-relaxed text-ink-soft">{action.description}</p>
+          <p dir="auto" className="mt-1.5 whitespace-pre-line text-[14px] leading-relaxed text-ink-soft">
+            {action.description}
+          </p>
           {action.toolAvailable === false && (
-            <p className="mt-2 text-[13px] text-ink-mute">
-              This step needs a connection we don&rsquo;t have yet, so we&rsquo;ll prepare it for you to send yourself.
-            </p>
+            <p className="mt-2 text-[13px] text-ink-mute">{t("plan.notConnectedNote")}</p>
           )}
           {children && <div className="mt-3">{children}</div>}
         </div>

@@ -2,6 +2,7 @@ import { approveActionSchema, idSchema } from "@/lib/validation";
 import { approveAction } from "@/server/agents/action-agent";
 import { listActions } from "@/server/services/cases";
 import { authedRoute, parseBody } from "@/server/http/route";
+import { getRequestTranslator } from "@/i18n/server";
 import { RATE_LIMITS } from "@/server/http/rate-limit";
 
 type Params = { id: string; actionId: string };
@@ -15,10 +16,11 @@ export const POST = authedRoute<Params>(
     const body = await parseBody(request, approveActionSchema);
 
     const result = await approveAction(user.id, caseId, actionId, body.editedBody);
+    const t = await getRequestTranslator();
     return {
       action: result.action,
       performed: result.performed,
-      message: result.message,
+      message: t.ref(result.messageKey, result.messageParams),
       actions: await listActions(caseId),
     };
   },

@@ -62,14 +62,15 @@ describe("risk classification", () => {
 
     expect(guard.allowed).toBe(false);
     expect(guard.requiresApproval).toBe(true);
-    expect(guard.blockedReason).toMatch(/isn't connected/i);
+    expect(guard.blockedKey).toBe("unavailable.notConnectedSuffix");
   });
 
   it("gates a step naming a capability that does not exist at all", () => {
     const record = { riskLevel: "LOW" } as Case;
     const guard = guardAction(record, { type: "EXTERNAL_ACTION", toolName: "teleportParcel" });
     expect(guard.allowed).toBe(false);
-    expect(guard.blockedReason).toMatch(/don't have/i);
+    expect(guard.blockedKey).toBe("unavailable.unknownTool");
+    expect(guard.blockedParams).toEqual({ tool: "teleportParcel" });
   });
 });
 
@@ -151,7 +152,7 @@ describe("tool failure and availability", () => {
     expect(result.ok).toBe(false);
     if (!result.ok) {
       expect(result.reason).toBe("UNAVAILABLE");
-      expect(result.message).toMatch(/isn't connected/i);
+      expect(result.messageKey).toBe("unavailable.research");
     }
   });
 
@@ -159,7 +160,7 @@ describe("tool failure and availability", () => {
     for (const name of ["sendEmail", "makePhoneCall", "connectBank", "trackShipment"]) {
       const tool = getTool(name)!;
       expect(tool.available).toBe(false);
-      expect(tool.unavailableReason).toBeTruthy();
+      expect(tool.unavailableKey).toBeTruthy();
     }
   });
 

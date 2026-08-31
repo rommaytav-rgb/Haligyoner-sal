@@ -11,9 +11,7 @@ export interface SearchHit {
   sourceType: ResearchSourceType;
 }
 
-const RESEARCH_UNAVAILABLE =
-  "Web research isn't connected on this deployment, so we can't look anything up for you yet. " +
-  "Nothing below has been checked against an outside source.";
+const RESEARCH_UNAVAILABLE_KEY = "unavailable.research";
 
 /** Classifies a result by its host so official sources can be preferred (section 27). */
 export function classifySource(url: string): ResearchSourceType {
@@ -53,38 +51,38 @@ async function runSearch(query: string, restrict?: string): Promise<SearchHit[]>
 
 export const searchWeb: Tool<{ query: string }, SearchHit[]> = {
   name: "searchWeb",
-  description: "Search the public web for information relevant to a case.",
+  descriptionKey: "tools.searchWeb.description",
   available: capabilities.webResearch,
-  unavailableReason: capabilities.webResearch ? undefined : RESEARCH_UNAVAILABLE,
+  unavailableKey: capabilities.webResearch ? undefined : RESEARCH_UNAVAILABLE_KEY,
   requiresApproval: false,
   async run({ query }) {
-    if (!capabilities.webResearch) return { ok: false, reason: "UNAVAILABLE", message: RESEARCH_UNAVAILABLE };
+    if (!capabilities.webResearch) return { ok: false, reason: "UNAVAILABLE", messageKey: RESEARCH_UNAVAILABLE_KEY };
     try {
       const hits = await runSearch(query);
       log.info({ event: "tool.searchWeb", outcome: "ok", results: hits.length });
       return { ok: true, data: hits };
     } catch (error) {
       log.error({ event: "tool.searchWeb", outcome: "error", error });
-      return { ok: false, reason: "FAILED", message: "We couldn't verify that information right now." };
+      return { ok: false, reason: "FAILED", messageKey: "unavailable.researchFailed" };
     }
   },
 };
 
 export const searchOfficialSource: Tool<{ query: string }, SearchHit[]> = {
   name: "searchOfficialSource",
-  description: "Search, preferring government, regulator and official policy pages.",
+  descriptionKey: "tools.searchOfficialSource.description",
   available: capabilities.webResearch,
-  unavailableReason: capabilities.webResearch ? undefined : RESEARCH_UNAVAILABLE,
+  unavailableKey: capabilities.webResearch ? undefined : RESEARCH_UNAVAILABLE_KEY,
   requiresApproval: false,
   async run({ query }) {
-    if (!capabilities.webResearch) return { ok: false, reason: "UNAVAILABLE", message: RESEARCH_UNAVAILABLE };
+    if (!capabilities.webResearch) return { ok: false, reason: "UNAVAILABLE", messageKey: RESEARCH_UNAVAILABLE_KEY };
     try {
       const hits = await runSearch(query, "site:.gov OR site:.org OR official policy");
       const ranked = [...hits].sort((a, b) => rank(a.sourceType) - rank(b.sourceType));
       return { ok: true, data: ranked };
     } catch (error) {
       log.error({ event: "tool.searchOfficialSource", outcome: "error", error });
-      return { ok: false, reason: "FAILED", message: "We couldn't verify that information right now." };
+      return { ok: false, reason: "FAILED", messageKey: "unavailable.researchFailed" };
     }
   },
 };
@@ -95,7 +93,7 @@ function rank(type: ResearchSourceType): number {
 
 export const fetchWebPage: Tool<{ url: string }, { url: string; text: string; suspicious: boolean }> = {
   name: "fetchWebPage",
-  description: "Fetch a page and return its readable text as untrusted quoted material.",
+  descriptionKey: "tools.fetchWebPage.description",
   available: true,
   requiresApproval: false,
   async run({ url }) {
@@ -103,26 +101,26 @@ export const fetchWebPage: Tool<{ url: string }, { url: string; text: string; su
     try {
       parsed = new URL(url);
     } catch {
-      return { ok: false, reason: "FAILED", message: "That doesn't look like a valid address." };
+      return { ok: false, reason: "FAILED", messageKey: "unavailable.researchFailed" };
     }
     // Only public HTTP(S); this must never be usable to reach internal metadata endpoints.
     if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-      return { ok: false, reason: "NOT_PERMITTED", message: "Only web addresses can be fetched." };
+      return { ok: false, reason: "NOT_PERMITTED", messageKey: "unavailable.researchFailed" };
     }
     if (/^(localhost|127\.|0\.|10\.|192\.168\.|169\.254\.|\[?::1)/.test(parsed.hostname)) {
-      return { ok: false, reason: "NOT_PERMITTED", message: "That address isn't reachable from here." };
+      return { ok: false, reason: "NOT_PERMITTED", messageKey: "unavailable.researchFailed" };
     }
 
     try {
       const response = await fetch(parsed, { redirect: "follow", signal: AbortSignal.timeout(15_000) });
-      if (!response.ok) return { ok: false, reason: "FAILED", message: "That page couldn't be opened." };
+      if (!response.ok) return { ok: false, reason: "FAILED", messageKey: "unavailable.researchFailed" };
       const html = (await response.text()).slice(0, 400_000);
       const text = htmlToText(html);
       const fenced = fenceUntrusted("WEB_PAGE", text, 8000);
       return { ok: true, data: { url: parsed.toString(), text: fenced.prompt, suspicious: fenced.suspicious } };
     } catch (error) {
       log.error({ event: "tool.fetchWebPage", outcome: "error", error });
-      return { ok: false, reason: "FAILED", message: "We couldn't open that page." };
+      return { ok: false, reason: "FAILED", messageKey: "unavailable.researchFailed" };
     }
   },
 };

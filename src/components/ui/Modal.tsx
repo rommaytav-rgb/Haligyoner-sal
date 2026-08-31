@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cn } from "./cn";
+import { useT } from "@/i18n/client";
 
 export function Modal({
   open,
@@ -20,6 +21,8 @@ export function Modal({
   footer?: React.ReactNode;
   size?: "md" | "lg";
 }) {
+  const t = useT();
+
   React.useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -38,7 +41,7 @@ export function Modal({
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center" role="dialog" aria-modal="true">
       <button
-        aria-label="Close"
+        aria-label={t("common.close")}
         onClick={onClose}
         className="absolute inset-0 h-full w-full cursor-default bg-ink/25 backdrop-blur-[2px] animate-fade-in"
       />

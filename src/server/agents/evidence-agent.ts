@@ -7,6 +7,7 @@ import { extractDocumentText } from "@/server/tools";
 import { getAIProvider } from "@/server/ai";
 import { addFact, addTimelineEvent, buildCaseContext, requireOwnedCase } from "@/server/services/cases";
 import { audit } from "@/server/services/audit";
+import { resolveRecord, systemText } from "@/server/i18n";
 
 export interface EvidenceResult {
   evidence: Evidence;
@@ -63,21 +64,26 @@ export async function processEvidence(
   if (!extraction.ok) {
     evidence = await getStore().patch<Evidence>(COLLECTIONS.evidence, evidenceId, {
       processingStatus: "FAILED",
-      extractionNote: extraction.message,
+      ...noteFields(extraction.messageKey, extraction.messageParams),
     });
     return { evidence, factsAdded: 0, contradictions: [] };
   }
 
-  const { text, note } = extraction.data as { text: string; note?: string; suspicious: boolean };
+  const { text, noteKey, noteParams } = extraction.data as {
+    text: string;
+    noteKey?: string;
+    noteParams?: Record<string, string | number>;
+    suspicious: boolean;
+  };
 
   if (!text.trim()) {
     evidence = await getStore().patch<Evidence>(COLLECTIONS.evidence, evidenceId, {
       processingStatus: "PROCESSED",
-      extractionNote: note,
+      ...noteFields(noteKey, noteParams),
     });
     await addTimelineEvent(caseId, {
-      title: `Added ${file.name}`,
-      description: note ?? "Stored with the case.",
+      title: systemText("system.fileAdded", { fileName: file.name }),
+      description: noteKey ? systemText(noteKey, noteParams) : systemText("system.fileStored"),
       source: "DOCUMENT",
     });
     return { evidence, factsAdded: 0, contradictions: [] };
@@ -122,7 +128,7 @@ export async function processEvidence(
     evidence = await getStore().patch<Evidence>(COLLECTIONS.evidence, evidenceId, {
       processingStatus: "PROCESSED",
       extractedText: text.slice(0, 50_000),
-      extractionNote: note,
+      ...noteFields(noteKey, noteParams),
       relatedFactIds,
     });
     await audit("EVIDENCE_PROCESSED", `${factsAdded} facts`, { userId, caseId });
@@ -132,15 +138,28 @@ export async function processEvidence(
     evidence = await getStore().patch<Evidence>(COLLECTIONS.evidence, evidenceId, {
       processingStatus: "FAILED",
       extractedText: text.slice(0, 50_000),
-      extractionNote: "We stored the file and read its text, but couldn't analyse it just now. You can retry from the case.",
+      ...noteFields("unavailable.evidenceAnalysisFailed"),
     });
   }
 
   await addTimelineEvent(caseId, {
-    title: `Added ${file.name}`,
-    description: factsAdded ? `${factsAdded} detail(s) confirmed by this document.` : "Stored with the case.",
+    title: systemText("system.fileAdded", { fileName: file.name }),
+    description: factsAdded
+      ? systemText("system.fileConfirmed", { count: factsAdded }, factsAdded)
+      : systemText("system.fileStored"),
     source: "DOCUMENT",
   });
 
   return { evidence, factsAdded, contradictions, injectionObserved };
+}
+
+/**
+ * Builds the stored note for a file we could not fully read: a catalogue
+ * reference for display, plus a rendered fallback that keeps the record legible
+ * on its own.
+ */
+function noteFields(key?: string, params?: Record<string, string | number>) {
+  if (!key) return {};
+  const record = resolveRecord(systemText(key, params));
+  return { extractionNote: record.text, extractionNoteText: record.ref };
 }

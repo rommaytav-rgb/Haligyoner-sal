@@ -5,6 +5,7 @@ import type { Evidence } from "@/domain/types";
 import { EvidenceCard } from "./EvidenceCard";
 import { Button } from "@/components/ui/Button";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
+import { useT } from "@/i18n/client";
 
 export function EvidencePanel({
   caseId,
@@ -15,6 +16,7 @@ export function EvidencePanel({
   evidence: Evidence[];
   onUploaded: () => Promise<void>;
 }) {
+  const t = useT();
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -29,15 +31,15 @@ export function EvidencePanel({
       body.append("file", file);
       const response = await fetch(`/api/cases/${caseId}/evidence`, { method: "POST", body });
       const payload = await response.json();
-      if (!response.ok) throw new Error(payload.error ?? "We couldn't upload that file.");
+      if (!response.ok) throw new Error(payload.error ?? t("evidence.uploadFailed"));
 
       if (payload.injectionObserved) setNotice(payload.injectionObserved as string);
       else if (payload.factsAdded > 0) {
-        setNotice(`Read that document and confirmed ${payload.factsAdded} detail(s) from it.`);
+        setNotice(t.plural("evidence.confirmedDetails", payload.factsAdded as number));
       }
       await onUploaded();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "We couldn't upload that file.");
+      setError(err instanceof Error ? err.message : t("evidence.uploadFailed"));
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";
@@ -52,9 +54,7 @@ export function EvidencePanel({
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-[13.5px] text-ink-mute">
-          Receipts, order confirmations, screenshots, letters. A document lets us treat a detail as verified.
-        </p>
+        <p className="text-[13.5px] text-ink-mute">{t("evidence.intro")}</p>
         <input
           ref={inputRef}
           type="file"
@@ -66,30 +66,35 @@ export function EvidencePanel({
           }}
         />
         <Button size="sm" variant="secondary" onClick={() => inputRef.current?.click()} loading={uploading}>
-          Add a file
+          {t("evidence.add")}
         </Button>
       </div>
 
-      {uploading && <LoadingState message="Reading what you sent..." />}
+      {uploading && <LoadingState message={t("evidence.uploading")} />}
       {notice && (
-        <p className="mt-4 rounded-xl border border-line bg-paper-sunk px-4 py-3 text-[13.5px] leading-relaxed text-ink-soft">
+        <p dir="auto" className="mt-4 rounded-xl border border-line bg-paper-sunk px-4 py-3 text-[13.5px] leading-relaxed text-ink-soft">
           {notice}
         </p>
       )}
       {error && (
         <div className="mt-4">
-          <ErrorState title="We couldn't upload that file." body={error} onRetry={() => inputRef.current?.click()} />
+          <ErrorState
+            title={t("evidence.uploadFailed")}
+            body={error}
+            onRetry={() => inputRef.current?.click()}
+            retryLabel={t("common.tryAgain")}
+          />
         </div>
       )}
 
       {evidence.length === 0 ? (
         <div className="mt-4 rounded-2xl border border-line bg-white shadow-card">
           <EmptyState
-            title="No paperwork yet."
-            body="Anything you already have helps - even a photo of a receipt."
+            title={t("evidence.emptyTitle")}
+            body={t("evidence.emptyBody")}
             action={
               <Button variant="secondary" onClick={() => inputRef.current?.click()}>
-                Add a file
+                {t("evidence.add")}
               </Button>
             }
           />

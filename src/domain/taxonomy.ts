@@ -34,19 +34,23 @@ export function normalizeCategory(input: string | undefined | null): string {
   return match ?? (custom.length > 0 ? custom : "Other");
 }
 
+/**
+ * Quick-start shortcuts. They carry no display text: the label and the seed
+ * phrase live in the string catalogue, so the same shortcut works in every
+ * language. `category` is a canonical taxonomy value, not a label, so the hint
+ * survives translation and passes server-side validation.
+ */
 export interface QuickStart {
   id: string;
   emoji: string;
-  label: string;
-  /** Seeds the composer; the user is never forced into a category. */
-  prompt: string;
+  category?: Category;
 }
 
 export const QUICK_STARTS: QuickStart[] = [
-  { id: "money", emoji: "💳", label: "Money & Charges", prompt: "I was charged " },
-  { id: "orders", emoji: "📦", label: "Orders & Deliveries", prompt: "I ordered " },
-  { id: "travel", emoji: "✈️", label: "Travel", prompt: "My flight " },
-  { id: "services", emoji: "📱", label: "Services & Subscriptions", prompt: "I'm being billed for a subscription " },
-  { id: "documents", emoji: "📄", label: "Documents", prompt: "I received a document " },
-  { id: "other", emoji: "💬", label: "Something else", prompt: "" },
+  { id: "money", emoji: "💳", category: "Payments" },
+  { id: "orders", emoji: "📦", category: "Delivery" },
+  { id: "travel", emoji: "✈️", category: "Travel" },
+  { id: "services", emoji: "📱", category: "Subscriptions" },
+  { id: "documents", emoji: "📄", category: "Documents" },
+  { id: "other", emoji: "💬" },
 ];

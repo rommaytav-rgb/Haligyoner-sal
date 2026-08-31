@@ -14,8 +14,9 @@ export interface PreparedAction {
 export interface ActionResult {
   ok: boolean;
   deliveryState: DeliveryState;
-  /** Written for the user. Must describe what actually happened, nothing more. */
-  message: string;
+  /** Catalogue key describing what actually happened, and nothing more. */
+  messageKey: string;
+  messageParams?: Record<string, string | number>;
 }
 
 /**

@@ -5,6 +5,9 @@ import { canExecuteType } from "@/server/services/action-providers";
 import { buildCaseContext, patchCase, replacePlan, requireOwnedCase } from "@/server/services/cases";
 import { audit } from "@/server/services/audit";
 import { guardAction } from "./risk-agent";
+import { caseText } from "@/server/i18n";
+import { caseLocale } from "@/server/ai/language";
+import type { Locale } from "@/i18n/config";
 
 export interface PlanningResult {
   steps: ActionStep[];
@@ -21,6 +24,7 @@ export interface PlanningResult {
 export async function runPlanning(userId: string, caseId: string): Promise<PlanningResult> {
   const record = await requireOwnedCase(userId, caseId);
   const context = await buildCaseContext(caseId);
+  const locale = caseLocale(record.contentLocale);
 
   const plan = await getAIProvider().generateActionPlan(context);
 
@@ -34,7 +38,7 @@ export async function runPlanning(userId: string, caseId: string): Promise<Plann
     return {
       order: index,
       title: step.title,
-      description: describeStep(step.description, guard.blockedReason, deliverable, step.type),
+      description: describeStep(step.description, guard, deliverable, step.type, locale),
       type: step.type,
       // A gated step only reaches REQUIRES_APPROVAL once there is something
       // concrete to approve; until then it is simply the next thing to do.
@@ -53,16 +57,25 @@ export async function runPlanning(userId: string, caseId: string): Promise<Plann
   return { steps, nextAction: plan.nextAction };
 }
 
-/** Appends the honest caveat to a step that cannot be carried out from here. */
+/**
+ * Appends the honest caveat to a step that cannot be carried out from here.
+ *
+ * A step description is case content and stays in the case's language; the
+ * caveat is rendered from the catalogue at the language the case was written
+ * in, so the whole description reads as one piece.
+ */
 function describeStep(
   description: string,
-  blockedReason: string | undefined,
+  guard: { blockedKey?: string; blockedParams?: Record<string, string | number> },
   deliverable: boolean,
   type: ActionStep["type"],
+  locale: Locale,
 ): string {
-  if (blockedReason) return `${description}\n\n${blockedReason}`;
+  if (guard.blockedKey) {
+    return `${description}\n\n${caseText(guard.blockedKey, guard.blockedParams, locale)}`;
+  }
   if (!deliverable && (type === "DRAFT" || type === "EXTERNAL_ACTION")) {
-    return `${description}\n\nWe'll prepare this for you to send yourself - sending on your behalf isn't connected here.`;
+    return `${description}\n\n${caseText("plan.notConnectedNote", undefined, locale)}`;
   }
   return description;
 }

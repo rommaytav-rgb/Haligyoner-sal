@@ -3,6 +3,7 @@ import { z } from "zod";
 import { advanceCase } from "@/server/agents/orchestrator";
 import { listMessages, requireOwnedCase, assertOpenForEditing } from "@/server/services/cases";
 import { authedRoute, parseBody } from "@/server/http/route";
+import { getRequestTranslator } from "@/i18n/server";
 import { RATE_LIMITS } from "@/server/http/rate-limit";
 
 type Params = { id: string };
@@ -20,13 +21,14 @@ export const POST = authedRoute<Params>(
     assertOpenForEditing(record);
 
     const { content } = await parseBody(request, z.object({ content: messageSchema }));
+    const t = await getRequestTranslator();
     const result = await advanceCase(user.id, caseId, { kind: "MESSAGE", message: content });
 
     return {
       case: result.case,
       reply: result.reply,
       appliedChanges: result.appliedChanges,
-      limitations: result.limitations,
+      limitations: result.limitationKeys.map((key) => t(key)),
       messages: await listMessages(caseId),
     };
   },

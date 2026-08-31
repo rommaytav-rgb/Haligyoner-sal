@@ -128,7 +128,9 @@ describe("action approval", () => {
     expect(result.performed).toBe(false);
     expect(result.action.status).toBe("APPROVED");
     expect(result.action.deliveryState).toBe("APPROVED");
-    expect(result.message).toMatch(/send it yourself|isn't connected/i);
+    // Reported as a catalogue key, so the honest wording reaches the user in
+    // whichever language they are reading.
+    expect(result.messageKey).toBe("system.approvedNotSent");
   });
 
   it("keeps the user's edits when they change a draft before approving", async () => {

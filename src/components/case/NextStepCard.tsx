@@ -3,10 +3,11 @@
 import * as React from "react";
 import type { Case } from "@/domain/types";
 import { Button } from "@/components/ui/Button";
+import { useT } from "@/i18n/client";
 
 /**
- * The most important element on the case screen: the single thing to do next
- * (section 30). Everything else is context for this.
+ * The most important element on the case screen: the single thing to do next.
+ * Everything else is context for this.
  */
 export function NextStepCard({
   record,
@@ -19,31 +20,38 @@ export function NextStepCard({
   actLabel?: string;
   busy?: boolean;
 }) {
-  const nextAction = record.currentNextAction;
+  const t = useT();
   const open = record.unknowns.filter((u) => !u.resolved);
   const openQuestion = open.find((u) => u.importance === "REQUIRED") ?? open[0];
 
   if (record.status === "RESOLVED") {
     return (
       <div className="rounded-2xl border border-signal-ok/25 bg-signal-okbg px-5 py-5">
-        <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-signal-ok">Resolved</p>
-        <p className="mt-2 text-[16px] leading-relaxed text-ink">
-          You confirmed this one is fixed. Nothing left to do.
+        <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-signal-ok">
+          {t("caseView.resolvedLabel")}
         </p>
+        <p className="mt-2 text-[16px] leading-relaxed text-ink">{t("caseView.resolvedBody")}</p>
       </div>
     );
   }
 
   return (
     <div className="rounded-2xl border border-line-strong bg-white px-5 py-5 shadow-card">
-      <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-faint">What you need to do next</p>
-      <p className="mt-2 text-[17px] leading-snug text-ink">
-        {openQuestion?.question ?? nextAction ?? "Nothing right now - we'll let you know when there is."}
+      <p className="text-[12px] font-semibold uppercase tracking-[0.08em] text-ink-faint">
+        {t("caseView.nextStepLabel")}
+      </p>
+      {/* Case content keeps its own language, whatever the interface is set to. */}
+      <p dir="auto" className="mt-2 text-[17px] leading-snug text-ink">
+        {openQuestion?.question ?? record.currentNextAction ?? t("caseView.nextStepNone")}
       </p>
       {openQuestion && (
         <p className="mt-2 text-[13.5px] leading-relaxed text-ink-mute">
-          <span className="font-medium text-ink-soft">Why we&rsquo;re asking: </span>
-          {openQuestion.reason}
+          <span className="font-medium text-ink-soft">{t("caseView.whyAsking")} </span>
+          {/* The reason is case content; isolating it keeps a Hebrew sentence
+              from reordering an English label around it, and the reverse. */}
+          <span dir="auto" className="bidi-isolate">
+            {openQuestion.reason}
+          </span>
         </p>
       )}
       {onAct && actLabel && (

@@ -28,6 +28,35 @@ record you can read, correct and audit.
 8. **Closes only when you say so.** Performing an action is not the same as
    fixing the problem.
 
+## Bilingual from the start
+
+English and Hebrew are both first-class. Hebrew is not a translation layer bolted
+onto an English product: it has true RTL layout, its own display typography, and
+its own rule-based understanding.
+
+- **No hard-coded UI text.** Every user-facing string comes from `src/i18n/locales/`.
+  The English catalogue defines the contract and the Hebrew one is typed against
+  it, so a missing or misspelled key is a build error.
+- **Real RTL.** `<html dir>` follows the language, and the interface is built on
+  CSS logical properties throughout - a test fails the build if a physical
+  `ml-`/`pl-`/`left-`/`text-left` utility reappears in a component.
+- **Language of the interface and language of the case are independent.** A case
+  detects the language the person actually wrote in and keeps it. Switching the
+  interface to English does not rewrite a Hebrew case, and the assistant keeps
+  replying in the language of the case.
+- **System entries are stored as references, not sentences.** Timeline entries,
+  notifications, tasks and "what changed" annotations store a catalogue key plus
+  parameters, so they read correctly in whichever language the case is opened in.
+  User, document and model content is stored verbatim - translating it would
+  rewrite the record.
+- **The safety rules are bilingual too.** Risk classification carries Hebrew
+  signal words as well as English ones, so a Hebrew court summons is treated as
+  high-risk rather than quietly scored low.
+
+A visible switcher sits in the header on every screen, signed in or not; the
+choice is a cookie, so it applies before sign-in and survives sign-out. With no
+choice made, the browser's `Accept-Language` decides.
+
 ## Honesty rules
 
 These are enforced in code, not just in copy:
@@ -54,6 +83,7 @@ These are enforced in code, not just in copy:
 | File storage | Cloud Storage (private) | local disk, owner-only |
 | Model | Gemini, schema-constrained output | rule-based provider, labelled as such |
 | Research | Google Programmable Search | reported as not connected |
+| Languages | English (LTR) and Hebrew (RTL) | English |
 
 Every one of those sits behind an interface (`DocumentStore`, `EvidenceStorage`,
 `AIProvider`, `Tool`, `ActionProvider`), so the Case Engine does not depend on
@@ -105,6 +135,7 @@ Create the composite indexes with
 
 ```
 src/
+  i18n/            locales, typed catalogue contract, translation + plural + bidi helpers
   domain/          Case, Fact, Evidence, Action… plus status machine, taxonomy, risk rules
   lib/             config, errors, logging, validation, formatting
   server/

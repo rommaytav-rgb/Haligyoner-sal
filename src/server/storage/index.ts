@@ -32,14 +32,14 @@ export const ALLOWED_MIME_TYPES: Record<string, "IMAGE" | "PDF" | "DOCUMENT" | "
 
 export function validateUpload(fileName: string, mimeType: string, sizeBytes: number): void {
   if (!ALLOWED_MIME_TYPES[mimeType]) {
-    throw invalid("We can take images, PDFs, Word documents and plain text. That file type isn't supported.");
+    throw invalid("errors.fileTypeUnsupported");
   }
-  if (sizeBytes <= 0) throw invalid("That file looks empty.");
+  if (sizeBytes <= 0) throw invalid("errors.fileEmpty");
   if (sizeBytes > config.maxUploadBytes) {
-    throw invalid(`That file is larger than ${Math.round(config.maxUploadBytes / (1024 * 1024))} MB.`);
+    throw invalid("errors.fileTooLarge", { limit: Math.round(config.maxUploadBytes / (1024 * 1024)) });
   }
   if (fileName.includes("..") || fileName.includes("/") || fileName.includes("\\")) {
-    throw invalid("That file name isn't allowed.");
+    throw invalid("errors.fileNameNotAllowed");
   }
 }
 
@@ -59,7 +59,7 @@ class LocalEvidenceStorage implements EvidenceStorage {
   private resolve(objectPath: string): string {
     const target = path.resolve(this.root, objectPath);
     // Defence in depth: a traversal in the object path must not escape the root.
-    if (!target.startsWith(this.root + path.sep)) throw new AppError("FORBIDDEN", "Invalid file location.");
+    if (!target.startsWith(this.root + path.sep)) throw new AppError("FORBIDDEN", "errors.invalidFileLocation");
     return target;
   }
 

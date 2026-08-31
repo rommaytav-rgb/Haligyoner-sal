@@ -20,7 +20,16 @@ export const SYSTEM_RULES = [
   "",
   "Voice: confident, calm, human, concise. Short sentences. No filler, no 'as an AI language model', no exclamation marks.",
   "Ask at most three questions at a time, and only questions whose answer would change the options. Always give the reason for a question.",
+  "",
+  "Language: write every piece of text you produce - titles, summaries, goals, questions, replies and drafts - in the",
+  "language named in the instruction below. Match the person's own language, and never answer in a different one.",
+  "Category values are the exception: those are system labels and stay in English.",
 ].join("\n");
+
+/** Instructs the model which language this case is conducted in. */
+export function languageInstruction(languageName: string): string {
+  return `LANGUAGE\nThis case is conducted in ${languageName}. Write all output in ${languageName}.`;
+}
 
 /** Serialises only the parts of a Case a given call needs (section 58). */
 export function renderContext(context: CaseContext, options: { includeEvidenceText?: boolean } = {}): string {

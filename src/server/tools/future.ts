@@ -7,18 +7,17 @@ import { unavailableTool, type Tool } from "./types";
  * would need `sendEmail`, mark the step as blocked, and tell the user exactly
  * what is missing - instead of pretending an email went out (sections 23, 25).
  */
-const notConnected = (what: string) =>
-  `${what} isn't connected yet. We can prepare everything for you, but you'll need to send it yourself for now.`;
+const notConnected = (whatKey: string) => ({ what: `@unavailable.${whatKey}` });
 
 export const FUTURE_TOOLS: Tool<Record<string, unknown>, unknown>[] = [
-  unavailableTool("sendEmail", "Send an approved email on the user's behalf.", notConnected("Outbound email")),
-  unavailableTool("makePhoneCall", "Place a call on the user's behalf.", notConnected("Phone calling")),
-  unavailableTool("browserAutomation", "Complete a web form on the user's behalf.", notConnected("Browser automation")),
-  unavailableTool("trackShipment", "Look up the status of a shipment.", notConnected("Shipment tracking")),
-  unavailableTool("connectGmail", "Read case-related email from Gmail.", notConnected("Gmail")),
-  unavailableTool("connectOutlook", "Read case-related email from Outlook.", notConnected("Outlook")),
-  unavailableTool("connectCalendar", "Add deadlines to a calendar.", notConnected("Calendar access")),
-  unavailableTool("connectBank", "Read transactions to confirm a charge.", notConnected("Bank connections")),
-  unavailableTool("connectAirline", "Look up a booking with an airline.", notConnected("Airline connections")),
-  unavailableTool("connectInsurance", "Look up an insurance policy.", notConnected("Insurer connections")),
+  unavailableTool("sendEmail", "unavailable.notConnectedSuffix", notConnected("outboundEmail")),
+  unavailableTool("makePhoneCall", "unavailable.notConnectedSuffix", notConnected("phone")),
+  unavailableTool("browserAutomation", "unavailable.notConnectedSuffix", notConnected("browser")),
+  unavailableTool("trackShipment", "unavailable.notConnectedSuffix", notConnected("shipment")),
+  unavailableTool("connectGmail", "unavailable.notConnectedSuffix", notConnected("gmail")),
+  unavailableTool("connectOutlook", "unavailable.notConnectedSuffix", notConnected("outlook")),
+  unavailableTool("connectCalendar", "unavailable.notConnectedSuffix", notConnected("calendar")),
+  unavailableTool("connectBank", "unavailable.notConnectedSuffix", notConnected("bank")),
+  unavailableTool("connectAirline", "unavailable.notConnectedSuffix", notConnected("airline")),
+  unavailableTool("connectInsurance", "unavailable.notConnectedSuffix", notConnected("insurance")),
 ];

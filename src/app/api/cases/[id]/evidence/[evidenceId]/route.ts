@@ -22,7 +22,7 @@ export async function GET(request: Request, context: { params: Promise<{ id: str
 
     const evidence = await getStore().get<Evidence>(COLLECTIONS.evidence, idSchema.parse(evidenceId));
     if (!evidence || evidence.caseId !== caseId || evidence.userId !== user.id) {
-      throw notFound("We couldn't find that file.");
+      throw notFound("errors.fileNotFound");
     }
 
     const bytes = await getStorage().read(evidence.storagePath);
@@ -49,7 +49,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
 
     const evidence = await getStore().get<Evidence>(COLLECTIONS.evidence, idSchema.parse(evidenceId));
     if (!evidence || evidence.caseId !== caseId || evidence.userId !== user.id) {
-      throw notFound("We couldn't find that file.");
+      throw notFound("errors.fileNotFound");
     }
 
     await getStorage().remove(evidence.storagePath);

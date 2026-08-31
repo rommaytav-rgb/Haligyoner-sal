@@ -5,7 +5,7 @@ import type { ResearchItem } from "@/domain/types";
 import { Badge, type BadgeTone } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { CapabilityNotice, EmptyState, LoadingState } from "@/components/ui/States";
-import { relativeTime } from "@/lib/format";
+import { useI18n } from "@/i18n/client";
 
 const TONE: Record<ResearchItem["sourceType"], BadgeTone> = {
   OFFICIAL: "ok",
@@ -15,12 +15,10 @@ const TONE: Record<ResearchItem["sourceType"], BadgeTone> = {
   SECONDARY: "neutral",
 };
 
-const LABEL: Record<ResearchItem["sourceType"], string> = {
-  OFFICIAL: "Official source",
-  GOVERNMENT: "Government",
-  REGULATOR: "Regulator",
-  POLICY: "Company policy",
-  SECONDARY: "Secondary source",
+const CONFIDENCE_KEY: Record<ResearchItem["confidence"], string> = {
+  HIGH: "research.confidenceHigh",
+  MEDIUM: "research.confidenceMedium",
+  LOW: "research.confidenceLow",
 };
 
 export function ResearchPanel({
@@ -36,16 +34,15 @@ export function ResearchPanel({
   unavailableReason?: string;
   onRun: () => void;
 }) {
+  const { t, relativeTime } = useI18n();
+
   if (!available) {
     return (
       <div className="space-y-4">
-        <CapabilityNotice>
-          {unavailableReason ??
-            "Web research isn't connected on this deployment, so we haven't looked anything up. Nothing here has been checked against an outside source."}
-        </CapabilityNotice>
+        <CapabilityNotice>{unavailableReason ?? t("research.unavailableBody")}</CapabilityNotice>
         {research.length === 0 && (
           <div className="rounded-2xl border border-line bg-white shadow-card">
-            <EmptyState title="No research on file." body="When research is connected, findings and their sources appear here." />
+            <EmptyState title={t("research.unavailableTitle")} body={t("research.unavailableBody")} />
           </div>
         )}
       </div>
@@ -55,39 +52,44 @@ export function ResearchPanel({
   return (
     <div>
       <div className="flex items-center justify-between gap-3">
-        <p className="text-[13.5px] text-ink-mute">
-          We look at official and government sources first, and store the source for anything we rely on.
-        </p>
+        <p className="text-[13.5px] text-ink-mute">{t("research.intro")}</p>
         <Button size="sm" variant="secondary" onClick={onRun} loading={running}>
-          {research.length > 0 ? "Look again" : "Look into this"}
+          {research.length > 0 ? t("research.runAgain") : t("research.run")}
         </Button>
       </div>
 
-      {running && <LoadingState message="Looking for relevant information..." />}
+      {running && <LoadingState message={t("research.running")} />}
 
       {research.length === 0 && !running ? (
         <div className="mt-4 rounded-2xl border border-line bg-white shadow-card">
-          <EmptyState title="Nothing looked up yet." body="We'll check the rules and policies that apply to your situation." />
+          <EmptyState title={t("research.emptyTitle")} body={t("research.emptyBody")} />
         </div>
       ) : (
         <ul className="mt-4 space-y-3">
           {research.map((item) => (
             <li key={item.id} className="rounded-2xl border border-line bg-white p-5 shadow-card">
-              <p className="text-[13px] font-medium text-ink-mute">{item.question}</p>
-              <p className="mt-2 text-[14.5px] leading-relaxed text-ink">{item.finding}</p>
+              <p dir="auto" className="text-[13px] font-medium text-ink-mute">
+                {item.question}
+              </p>
+              <p dir="auto" className="mt-2 text-[14.5px] leading-relaxed text-ink">
+                {item.finding}
+              </p>
               <div className="mt-3 flex flex-wrap items-center gap-2">
-                <Badge tone={TONE[item.sourceType]}>{LABEL[item.sourceType]}</Badge>
+                <Badge tone={TONE[item.sourceType]}>{t(`sourceType.${item.sourceType}`)}</Badge>
                 <Badge tone={item.confidence === "HIGH" ? "ok" : item.confidence === "MEDIUM" ? "neutral" : "warn"}>
-                  {item.confidence === "HIGH" ? "Confident" : item.confidence === "MEDIUM" ? "Fairly confident" : "Unverified"}
+                  {t(CONFIDENCE_KEY[item.confidence])}
                 </Badge>
-                <span className="text-[12.5px] text-ink-faint">Found {relativeTime(item.retrievedAt)}</span>
+                <span className="text-[12.5px] text-ink-faint">
+                  {t("research.found", { time: relativeTime(item.retrievedAt) })}
+                </span>
               </div>
               {item.sourceUrl && (
                 <a
                   href={item.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer nofollow"
-                  className="mt-2 inline-block break-all text-[13px] text-ink underline underline-offset-4 hover:text-ink-soft"
+                  dir="ltr"
+                  className="mt-2 inline-block break-all text-start text-[13px] text-ink underline underline-offset-4 hover:text-ink-soft"
                 >
                   {item.sourceTitle ?? item.sourceUrl}
                 </a>

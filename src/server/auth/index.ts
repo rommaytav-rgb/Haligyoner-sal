@@ -26,7 +26,7 @@ export async function findUserByEmail(email: string): Promise<User | null> {
 export async function registerUser(email: string, password: string, displayName?: string): Promise<AuthenticatedUser> {
   const existing = await findUserByEmail(email);
   if (existing) {
-    throw new AppError("CONFLICT", "There's already an account with that email. Try signing in instead.");
+    throw new AppError("CONFLICT", "errors.emailTaken");
   }
   const user: User = {
     id: newId("usr"),
@@ -47,7 +47,7 @@ export async function authenticate(email: string, password: string): Promise<Aut
     // The same message for both cases, so the endpoint can't be used to
     // enumerate which addresses have accounts.
     log.warn({ event: "auth.failure", outcome: "invalid_credentials" });
-    throw invalid("That email and password don't match an account.");
+    throw invalid("errors.badCredentials");
   }
   return publicUser(user);
 }

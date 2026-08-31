@@ -6,23 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { QUICK_STARTS } from "@/domain/taxonomy";
 import { ErrorState } from "@/components/ui/States";
 import { cn } from "@/components/ui/cn";
-
-const EXAMPLES = [
-  "My package never arrived...",
-  "I was charged for something I didn't buy...",
-  "My flight was cancelled...",
-  "The product I bought arrived damaged...",
-  "I need help getting a refund...",
-  "I received a document I don't understand...",
-  "Something is wrong with my bill...",
-  "I have a problem and I don't know where to start...",
-];
-
-/**
- * Stages shown while a case is being created. Each one names something that is
- * genuinely happening on the server; none of them is decorative (section 51).
- */
-const STAGES = ["Understanding what happened...", "Organising your information...", "Setting up your case..."];
+import { useI18n } from "@/i18n/client";
 
 export const DRAFT_KEY = "fmp.draft-problem";
 
@@ -36,6 +20,7 @@ export function ProblemComposer({
   size?: "hero" | "compact";
 }) {
   const router = useRouter();
+  const { t } = useI18n();
   const [value, setValue] = React.useState("");
   const [category, setCategory] = React.useState<string | undefined>();
   const [submitting, setSubmitting] = React.useState(false);
@@ -43,13 +28,26 @@ export function ProblemComposer({
   const [error, setError] = React.useState<string | null>(null);
   const areaRef = React.useRef<HTMLTextAreaElement>(null);
 
-  const placeholder = useRotatingPlaceholder(value.length === 0 && !submitting);
+  /**
+   * Stages shown while a case is being created. Each one names something that
+   * is genuinely happening on the server; none of them is decorative.
+   */
+  const stages = React.useMemo(
+    () => [t("composer.stage1"), t("composer.stage2"), t("composer.stage3")],
+    [t],
+  );
+
+  const placeholder = useRotatingPlaceholder(
+    t.list("composer.examples"),
+    t("composer.idlePlaceholder"),
+    value.length === 0 && !submitting,
+  );
 
   const submit = React.useCallback(
     async (problem: string, categoryHint?: string) => {
       const trimmed = problem.trim();
       if (trimmed.length < 10) {
-        setError("Tell us a little more - a sentence or two is enough.");
+        setError(t("composer.tooShort"));
         return;
       }
       setError(null);
@@ -75,7 +73,7 @@ export function ProblemComposer({
           body: JSON.stringify({ problem: trimmed, categoryHint }),
         });
         const payload = await response.json();
-        if (!response.ok) throw new Error(payload.error ?? "We couldn't start that case.");
+        if (!response.ok) throw new Error(payload.error ?? t("composer.failed"));
 
         try {
           sessionStorage.removeItem(DRAFT_KEY);
@@ -85,18 +83,18 @@ export function ProblemComposer({
         router.push(`/cases/${payload.case.id}`);
       } catch (err) {
         setSubmitting(false);
-        setError(err instanceof Error ? err.message : "We couldn't start that case. Please try again.");
+        setError(err instanceof Error ? err.message : t("composer.failed"));
       }
     },
-    [authed, router],
+    [authed, router, t],
   );
 
   // Advance the processing copy while the request is genuinely in flight.
   React.useEffect(() => {
     if (!submitting) return;
-    const timer = setInterval(() => setStage((s) => Math.min(s + 1, STAGES.length - 1)), 1600);
+    const timer = setInterval(() => setStage((s) => Math.min(s + 1, stages.length - 1)), 1600);
     return () => clearInterval(timer);
-  }, [submitting]);
+  }, [submitting, stages.length]);
 
   // Pick up a problem written before signing in.
   React.useEffect(() => {
@@ -124,24 +122,18 @@ export function ProblemComposer({
               />
             ))}
           </span>
-          <p className="text-[15px] font-medium text-ink">{STAGES[stage]}</p>
+          <p className="text-[15px] font-medium text-ink">{stages[stage]}</p>
         </div>
-        <p className="mt-3 text-sm leading-relaxed text-ink-mute">
-          We&rsquo;re reading what you wrote and turning it into a case you can work from.
-        </p>
+        <p className="mt-3 text-sm leading-relaxed text-ink-mute">{t("composer.processingBody")}</p>
       </div>
     );
   }
 
   return (
     <div className="w-full">
-      <div
-        className={cn(
-          "group rounded-3xl border border-line-strong bg-white shadow-card transition-shadow focus-within:shadow-lift",
-        )}
-      >
+      <div className="group rounded-3xl border border-line-strong bg-white shadow-card transition-shadow focus-within:shadow-lift">
         <label htmlFor="problem" className="sr-only">
-          What&rsquo;s going on?
+          {t("composer.label")}
         </label>
         <textarea
           ref={areaRef}
@@ -163,16 +155,23 @@ export function ProblemComposer({
         />
         <div className="flex items-center justify-between gap-3 px-4 pb-4 pt-1">
           <p className="hidden text-[12.5px] text-ink-faint sm:block">
-            {value.length > 0 ? "Press Cmd + Enter to send" : "Write as much or as little as you like."}
+            {value.length > 0 ? t("composer.hintTyping") : t("composer.hintEmpty")}
           </p>
           <Button
             size={size === "hero" ? "lg" : "md"}
             onClick={() => void submit(value, category)}
-            className="ml-auto w-full sm:w-auto"
+            className="ms-auto w-full sm:w-auto"
           >
-            Fix My Problem
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M3 8h9m0 0L8.5 4.5M12 8l-3.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+            {t("composer.submit")}
+            {/* The arrow points the way the language reads. */}
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true" className="rtl:-scale-x-100">
+              <path
+                d="M3 8h9m0 0L8.5 4.5M12 8l-3.5 3.5"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
             </svg>
           </Button>
         </div>
@@ -180,7 +179,12 @@ export function ProblemComposer({
 
       {error && (
         <div className="mt-4">
-          <ErrorState title="We couldn't start that case." body={error} onRetry={() => void submit(value, category)} />
+          <ErrorState
+            title={t("composer.failed")}
+            body={error}
+            onRetry={() => void submit(value, category)}
+            retryLabel={t("common.tryAgain")}
+          />
         </div>
       )}
 
@@ -190,8 +194,8 @@ export function ProblemComposer({
             key={quick.id}
             type="button"
             onClick={() => {
-              setCategory(quick.id === "other" ? undefined : quick.label.split(" ")[0]);
-              setValue((current) => (current.length > 0 ? current : quick.prompt));
+              setCategory(quick.id === "other" ? undefined : quick.category);
+              setValue((current) => (current.length > 0 ? current : t(`composer.starters.${quick.id}`)));
               areaRef.current?.focus();
             }}
             className={cn(
@@ -200,7 +204,7 @@ export function ProblemComposer({
             )}
           >
             <span aria-hidden="true">{quick.emoji}</span>
-            {quick.label}
+            {t(`quickStart.${quick.id}`)}
           </button>
         ))}
       </div>
@@ -209,14 +213,15 @@ export function ProblemComposer({
 }
 
 /** Cycles the example prompts, pausing as soon as the user starts typing. */
-function useRotatingPlaceholder(active: boolean): string {
+function useRotatingPlaceholder(examples: readonly string[], idle: string, active: boolean): string {
   const [index, setIndex] = React.useState(0);
 
   React.useEffect(() => {
-    if (!active) return;
-    const timer = setInterval(() => setIndex((i) => (i + 1) % EXAMPLES.length), 3800);
+    if (!active || examples.length === 0) return;
+    const timer = setInterval(() => setIndex((i) => (i + 1) % examples.length), 3800);
     return () => clearInterval(timer);
-  }, [active]);
+  }, [active, examples.length]);
 
-  return active ? EXAMPLES[index] : "What's going on?";
+  if (!active || examples.length === 0) return idle;
+  return examples[index % examples.length];
 }

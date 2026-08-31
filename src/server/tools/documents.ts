@@ -5,8 +5,9 @@ import { unavailableTool } from "./types";
 
 export interface ExtractionResult {
   text: string;
-  /** Set when nothing could be read, explaining why in plain language. */
-  note?: string;
+  /** Catalogue key explaining why nothing could be read, when that happens. */
+  noteKey?: string;
+  noteParams?: Record<string, string | number>;
   suspicious: boolean;
 }
 
@@ -20,12 +21,12 @@ const TEXT_TYPES = new Set(["text/plain", "text/csv", "text/html"]);
  */
 export const extractDocumentText: Tool<{ fileName: string; mimeType: string; data: Buffer }, ExtractionResult> = {
   name: "extractDocumentText",
-  description: "Read the text out of an uploaded document.",
+  descriptionKey: "tools.extractDocumentText.description",
   available: true,
   requiresApproval: false,
   async run({ fileName, mimeType, data }) {
     if (!ALLOWED_MIME_TYPES[mimeType]) {
-      return { ok: false, reason: "NOT_PERMITTED", message: "That file type isn't supported." };
+      return { ok: false, reason: "NOT_PERMITTED", messageKey: "errors.fileTypeUnsupported" };
     }
 
     if (TEXT_TYPES.has(mimeType)) {
@@ -38,30 +39,26 @@ export const extractDocumentText: Tool<{ fileName: string; mimeType: string; dat
     }
 
     const kind = ALLOWED_MIME_TYPES[mimeType];
+    const noteKey =
+      kind === "IMAGE" ? "unavailable.imageText" : kind === "PDF" ? "unavailable.pdfText" : "unavailable.wordText";
+
     return {
       ok: true,
-      data: {
-        text: "",
-        suspicious: false,
-        note:
-          kind === "IMAGE"
-            ? `We've stored ${fileName}, but reading text out of images isn't connected here yet. You can describe what it shows in the conversation and we'll record it.`
-            : `We've stored ${fileName}, but reading text out of ${kind === "PDF" ? "PDFs" : "Word documents"} isn't connected here yet. If you can paste the relevant part as text, we'll use it.`,
-      },
+      data: { text: "", suspicious: false, noteKey, noteParams: { fileName } },
     };
   },
 };
 
 export const analyzeImage = unavailableTool<{ evidenceId: string }, { description: string }>(
   "analyzeImage",
-  "Describe what an uploaded image shows.",
-  "Image understanding isn't connected on this deployment yet, so we won't guess at what a photo shows.",
+  "tools.analyzeImage.unavailable",
+  undefined,
   false,
 );
 
 export const compareDocuments: Tool<{ left: string; right: string }, { differences: string[] }> = {
   name: "compareDocuments",
-  description: "Compare two pieces of extracted text and report where they disagree.",
+  descriptionKey: "tools.compareDocuments.description",
   available: true,
   requiresApproval: false,
   async run({ left, right }) {

@@ -4,6 +4,7 @@ import type { Case, Task } from "@/domain/types";
 import { listCases, listTasks, listActions, addTask, setStatus } from "@/server/services/cases";
 import { notify } from "@/server/services/notifications";
 import { log } from "@/lib/logger";
+import { systemText } from "@/server/i18n";
 
 export interface FollowUpResult {
   overdueTasks: Task[];
@@ -36,7 +37,7 @@ export async function runFollowUp(userId: string): Promise<FollowUpResult> {
         caseId: record.id,
         kind: "DEADLINE",
         title: record.title,
-        body: `Overdue: ${task.title}`,
+        body: systemText("system.overdueTask", { task: task.title }),
       });
       remindersSent += 1;
     }
@@ -49,17 +50,17 @@ export async function runFollowUp(userId: string): Promise<FollowUpResult> {
         caseId: record.id,
         kind: "FOLLOW_UP",
         title: record.title,
-        body: `It's been over ${STALE_AFTER_DAYS} days with no update. Want to chase this, or escalate?`,
+        body: systemText("system.staleCase", { days: STALE_AFTER_DAYS }, STALE_AFTER_DAYS),
       });
       await addTask(record.id, {
-        title: "Decide whether to chase or escalate",
-        description: `No update on this case for more than ${STALE_AFTER_DAYS} days.`,
+        title: systemText("system.staleTaskTitle"),
+        description: systemText("system.staleTaskBody", { days: STALE_AFTER_DAYS }, STALE_AFTER_DAYS),
         priority: "MEDIUM",
         assignedTo: "USER",
         dueAt: now(),
       });
       try {
-        await setStatus(userId, record.id, "FOLLOW_UP_REQUIRED", "No update for over a week.");
+        await setStatus(userId, record.id, "FOLLOW_UP_REQUIRED", systemText("system.staleTaskBody", { days: STALE_AFTER_DAYS }, STALE_AFTER_DAYS));
       } catch {
         // The status may not permit the move; the reminder still stands.
       }
@@ -72,7 +73,7 @@ export async function runFollowUp(userId: string): Promise<FollowUpResult> {
         caseId: record.id,
         kind: "APPROVAL_REQUIRED",
         title: record.title,
-        body: `${awaitingApproval.length} step${awaitingApproval.length === 1 ? "" : "s"} still waiting on you.`,
+        body: systemText("system.approvalsWaiting", { count: awaitingApproval.length }, awaitingApproval.length),
       });
       remindersSent += 1;
     }

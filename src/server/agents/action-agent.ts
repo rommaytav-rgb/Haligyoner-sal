@@ -10,6 +10,8 @@ import {
   setStatus,
 } from "@/server/services/cases";
 import { audit } from "@/server/services/audit";
+import { caseText, systemText, type Recordable } from "@/server/i18n";
+import { caseLocale } from "@/server/ai/language";
 import { notify } from "@/server/services/notifications";
 import { guardAction } from "./risk-agent";
 import { canExecuteType, findProvider } from "@/server/services/action-providers";
@@ -26,7 +28,7 @@ export async function prepareDraft(userId: string, caseId: string, actionId: str
   const record = await requireOwnedCase(userId, caseId);
   const context = await buildCaseContext(caseId);
   const actions = context.actions.find((a) => a.id === actionId);
-  if (!actions) throw invalid("We couldn't find that step.");
+  if (!actions) throw invalid("errors.stepNotFound");
 
   const stored = await patchAction(userId, caseId, actionId, { status: "IN_PROGRESS" });
   try {
@@ -53,23 +55,25 @@ export async function prepareDraft(userId: string, caseId: string, actionId: str
       deliveryState: "DRAFTED",
     });
 
-    await patchCase(userId, caseId, { currentNextAction: `Review and approve: ${stored.title}` });
+    await patchCase(userId, caseId, {
+      currentNextAction: caseText("agent.reviewAndApprove", { title: stored.title }, caseLocale(record.contentLocale)),
+    });
 
     await audit("ACTION_DRAFTED", `${draft.channel}`, { userId, caseId });
-    await setStatusQuietly(record, userId, "AWAITING_USER_APPROVAL", "A draft is ready for you to review.");
+    await setStatusQuietly(record, userId, "AWAITING_USER_APPROVAL", systemText("system.draftReady"));
     await notify({
       userId,
       caseId,
       kind: "APPROVAL_REQUIRED",
       title: record.title,
-      body: "Draft ready for your approval.",
+      body: systemText("system.draftReadyShort"),
     });
     return updated;
   } catch (error) {
     await patchAction(userId, caseId, actionId, { status: "FAILED" });
     throw error instanceof AppError
       ? error
-      : new AppError("UPSTREAM_FAILED", "We couldn't prepare that draft. Nothing was sent.");
+      : new AppError("UPSTREAM_FAILED", "errors.draftFailed");
   }
 }
 
@@ -78,12 +82,18 @@ export async function approveAction(
   caseId: string,
   actionId: string,
   editedBody?: string,
-): Promise<{ action: ActionStep; performed: boolean; message: string }> {
+): Promise<{
+  action: ActionStep;
+  performed: boolean;
+  /** Catalogue key, so the outcome is reported in the reader's language. */
+  messageKey: string;
+  messageParams?: Record<string, string | number>;
+}> {
   const record = await requireOwnedCase(userId, caseId);
   const step = await getStep(userId, caseId, actionId);
 
-  if (step.status === "COMPLETED") throw invalid("That step is already done.");
-  if (step.status === "CANCELLED") throw invalid("That step was cancelled.");
+  if (step.status === "COMPLETED") throw invalid("errors.alreadyDone");
+  if (step.status === "CANCELLED") throw invalid("errors.alreadyCancelled");
 
   const guard = guardAction(record, step);
   const draft = editedBody && step.draft ? { ...step.draft, body: editedBody, editedByUser: true } : step.draft;
@@ -93,22 +103,21 @@ export async function approveAction(
   const provider = findProvider(step);
   if (!provider || !guard.allowed) {
     // Approved, but nothing can carry it out here. Say exactly that.
-    const message =
-      guard.blockedReason ??
-      "This is approved and ready. Sending it isn't connected here yet, so copy the text below and send it yourself - " +
-        "then tell us when you have, and we'll track the reply.";
+    // Reported to the caller, which localises it for the person reading it.
+    const messageKey = guard.blockedKey ?? "system.approvedNotSent";
+    const messageParams = guard.blockedKey ? guard.blockedParams : undefined;
     const updated = await patchAction(userId, caseId, actionId, {
       status: "APPROVED",
       draft,
       deliveryState: "APPROVED",
     });
     await addTimelineEvent(caseId, {
-      title: "You approved a draft",
-      description: message,
+      title: systemText("system.approvedTitle"),
+      description: systemText(messageKey, messageParams),
       source: "USER",
     });
-    await setStatusQuietly(record, userId, "READY_FOR_ACTION", "You approved the draft.");
-    return { action: updated, performed: false, message };
+    await setStatusQuietly(record, userId, "READY_FOR_ACTION", systemText("system.youApprovedDraft"));
+    return { action: updated, performed: false, messageKey, messageParams };
   }
 
   await patchAction(userId, caseId, actionId, { status: "IN_PROGRESS", draft, deliveryState: "IN_PROGRESS" });
@@ -120,19 +129,19 @@ export async function approveAction(
   });
   await audit("ACTION_EXECUTED", `${step.toolName}: ${result.deliveryState}`, { userId, caseId });
   await addTimelineEvent(caseId, {
-    title: result.ok ? "Action carried out" : "Action failed",
-    description: result.message,
+    title: systemText(result.ok ? "system.actionCarriedOut" : "system.actionFailed"),
+    description: systemText(result.messageKey, result.messageParams),
     source: "SYSTEM",
   });
   if (result.ok) {
-    await setStatusQuietly(record, userId, "WAITING_FOR_RESPONSE", "We're waiting on a reply.");
+    await setStatusQuietly(record, userId, "WAITING_FOR_RESPONSE", systemText("system.waitingOnReply"));
   }
-  return { action: updated, performed: result.ok, message: result.message };
+  return { action: updated, performed: result.ok, messageKey: result.messageKey };
 }
 
 export async function cancelAction(userId: string, caseId: string, actionId: string): Promise<ActionStep> {
   const step = await getStep(userId, caseId, actionId);
-  if (step.status === "COMPLETED") throw invalid("That step already happened, so it can't be cancelled.");
+  if (step.status === "COMPLETED") throw invalid("errors.cannotCancelCompleted");
   const updated = await patchAction(userId, caseId, actionId, { status: "CANCELLED" });
   await audit("ACTION_CANCELLED", step.title.slice(0, 80), { userId, caseId });
   return updated;
@@ -141,13 +150,13 @@ export async function cancelAction(userId: string, caseId: string, actionId: str
 async function getStep(userId: string, caseId: string, actionId: string): Promise<ActionStep> {
   const { COLLECTIONS, getStore } = await import("@/server/db");
   const step = await getStore().get<ActionStep>(COLLECTIONS.actions, actionId);
-  if (!step || step.caseId !== caseId) throw invalid("We couldn't find that step.");
+  if (!step || step.caseId !== caseId) throw invalid("errors.stepNotFound");
   await requireOwnedCase(userId, caseId);
   return step;
 }
 
 /** Status moves that must not fail the operation they accompany. */
-async function setStatusQuietly(record: Case, userId: string, status: Case["status"], reason: string): Promise<void> {
+async function setStatusQuietly(record: Case, userId: string, status: Case["status"], reason: Recordable): Promise<void> {
   try {
     await setStatus(userId, record.id, status, reason);
   } catch {

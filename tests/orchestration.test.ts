@@ -52,7 +52,7 @@ describe("orchestration", () => {
     expect(actions.length).toBeGreaterThan(0);
     expect(result.case.currentNextAction).toBeTruthy();
     // With no research capability, that limitation is stated rather than hidden.
-    expect(result.limitations.join(" ")).toMatch(/isn't connected/i);
+    expect(result.limitationKeys).toContain("unavailable.research");
   });
 
   it("applies a user message to the structured case, not just the transcript", async () => {
@@ -90,7 +90,9 @@ describe("orchestration", () => {
     const result = await advanceCase(user.id, record.id, { kind: "REFRESH" });
 
     expect(calls).toBeLessThanOrEqual(2);
-    expect(result.limitations.join(" ")).toMatch(/problem partway through|isn't connected/i);
+    expect(result.limitationKeys.some((key) => key === "errors.orchestratorPartial" || key === "unavailable.research")).toBe(
+      true,
+    );
     // A failed run never invents a plan.
     expect(await listActions(record.id)).toHaveLength(0);
   });
@@ -122,7 +124,7 @@ describe("investigation without a research capability", () => {
 
     expect(result.ran).toBe(false);
     expect(result.findingsAdded).toBe(0);
-    expect(result.unavailableReason).toMatch(/isn't connected/i);
+    expect(result.unavailableKey).toBe("unavailable.research");
   });
 });
 

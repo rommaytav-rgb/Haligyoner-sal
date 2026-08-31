@@ -38,7 +38,7 @@ export function Tabs({
               {item.count !== undefined && item.count > 0 && (
                 <span
                   className={cn(
-                    "ml-1.5 rounded-full px-1.5 py-0.5 text-[11px] tabular-nums",
+                    "ms-1.5 rounded-full px-1.5 py-0.5 text-[11px] tabular-nums",
                     selected ? "bg-ink text-white" : "bg-paper-sunk text-ink-mute",
                   )}
                 >

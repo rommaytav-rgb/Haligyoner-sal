@@ -6,15 +6,18 @@ import { AppError } from "@/lib/errors";
 import { log } from "@/lib/logger";
 import { addFact, addMessage, addTimelineEvent, buildUnknown, saveCase } from "@/server/services/cases";
 import { audit } from "@/server/services/audit";
+import { caseText, systemText } from "@/server/i18n";
 import { notify } from "@/server/services/notifications";
-import { assessRisk, HIGH_RISK_DISCLAIMER } from "./risk-agent";
+import { assessRisk, HIGH_RISK_DISCLAIMER_KEY } from "./risk-agent";
+import { detectLanguage } from "@/server/ai/language";
 
 export interface IntakeResult {
   case: Case;
   reply: string;
   /** True when a language model produced the understanding, false when rules did. */
   modelBacked: boolean;
-  limitationNote?: string;
+  /** Catalogue key for the limitation note, when there is one. */
+  limitationKey?: string;
 }
 
 /**
@@ -36,13 +39,11 @@ export async function runIntake(
     analysis = await provider.analyzeProblem({ problem, categoryHint });
   } catch (error) {
     log.error({ event: "intake.analyze_failed", userId, error });
-    throw new AppError(
-      "UPSTREAM_FAILED",
-      "We couldn't work through that just now. Your words weren't lost - try again in a moment.",
-    );
+    throw new AppError("UPSTREAM_FAILED", "errors.intakeFailed");
   }
 
   const risk = assessRisk(problem, analysis.riskLevel);
+  const locale = detectLanguage(problem);
   const caseId = newId("case");
   const timestamp = now();
 
@@ -63,10 +64,11 @@ export async function runIntake(
     secondaryCategories: analysis.secondaryCategories.map(normalizeCategory),
     status: unknowns.length > 0 ? "INFORMATION_REQUIRED" : "INVESTIGATING",
     riskLevel: risk.level,
-    riskNote: risk.note,
+    riskNoteKey: risk.noteKey,
+    contentLocale: locale,
     involvedParties: parties,
     unknowns,
-    currentNextAction: unknowns[0]?.question ?? "Review what we captured and correct anything that's wrong.",
+    currentNextAction: unknowns[0]?.question ?? caseText("agent.reviewCaptured", undefined, locale),
     createdAt: timestamp,
     updatedAt: timestamp,
   };
@@ -83,8 +85,8 @@ export async function runIntake(
   }
 
   await addTimelineEvent(caseId, {
-    title: "Case opened",
-    description: "You told us what happened and we organised it into a case.",
+    title: systemText("system.caseOpened"),
+    description: systemText("system.caseOpenedBody"),
     source: "USER",
   });
   for (const entry of analysis.timeline.slice(0, 6)) {
@@ -96,15 +98,17 @@ export async function runIntake(
   }
 
   const replyParts = [analysis.reply];
-  if (risk.requiresProfessionalDisclaimer) replyParts.push(HIGH_RISK_DISCLAIMER);
+  if (risk.requiresProfessionalDisclaimer) replyParts.push(caseText(HIGH_RISK_DISCLAIMER_KEY, undefined, locale));
   if (analysis.injectionObserved) replyParts.push(analysis.injectionObserved);
   const reply = replyParts.join("\n\n");
 
   await addMessage(caseId, "USER", problem);
   await addMessage(caseId, "ASSISTANT", reply, [
-    `Created case "${record.title}"`,
-    `Recorded ${analysis.facts.length} detail${analysis.facts.length === 1 ? "" : "s"}`,
-    ...(unknowns.length ? [`Noted ${unknowns.length} open question${unknowns.length === 1 ? "" : "s"}`] : []),
+    systemText("agent.changeCreatedCase", { title: record.title }),
+    systemText("agent.changeRecordedDetails", { count: analysis.facts.length }, analysis.facts.length),
+    ...(unknowns.length
+      ? [systemText("agent.changeNotedQuestions", { count: unknowns.length }, unknowns.length)]
+      : []),
   ]);
 
   if (unknowns.length > 0) {
@@ -121,6 +125,6 @@ export async function runIntake(
     case: record,
     reply,
     modelBacked: provider.quality.modelBacked,
-    limitationNote: provider.quality.limitationNote,
+    limitationKey: provider.quality.limitationKey,
   };
 }

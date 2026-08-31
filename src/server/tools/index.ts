@@ -48,18 +48,21 @@ export function isToolAvailable(name: string): boolean {
 
 export interface ToolSummary {
   name: string;
-  description: string;
+  /** Catalogue keys; the Settings screen renders them in the reader's language. */
+  descriptionKey: string;
   available: boolean;
-  unavailableReason?: string;
+  unavailableKey?: string;
+  unavailableParams?: Record<string, string | number>;
 }
 
 /** Powers the Settings screen, so users can see exactly what is connected. */
 export function listTools(): ToolSummary[] {
-  return [...REGISTRY.values()].map((t) => ({
-    name: t.name,
-    description: t.description,
-    available: t.available,
-    unavailableReason: t.unavailableReason,
+  return [...REGISTRY.values()].map((tool) => ({
+    name: tool.name,
+    descriptionKey: tool.descriptionKey,
+    available: tool.available,
+    unavailableKey: tool.unavailableKey,
+    unavailableParams: tool.unavailableParams,
   }));
 }
 

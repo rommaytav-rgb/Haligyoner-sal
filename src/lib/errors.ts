@@ -1,3 +1,6 @@
+import type { TranslationParams } from "@/i18n/types";
+import type { Translator } from "@/i18n/translate";
+
 export type ErrorCode =
   | "UNAUTHENTICATED"
   | "FORBIDDEN"
@@ -21,15 +24,23 @@ const STATUS: Record<ErrorCode, number> = {
   INTERNAL: 500,
 };
 
-/** Messages carried by AppError are written for users; stack traces never leave the server (§39). */
+/**
+ * Errors carry a catalogue key rather than a sentence, so the message reaches
+ * the user in their own language. Stack traces never leave the server; the key
+ * doubles as a stable identifier in the logs.
+ */
 export class AppError extends Error {
   readonly code: ErrorCode;
+  readonly messageKey: string;
+  readonly params?: TranslationParams;
   readonly details?: unknown;
 
-  constructor(code: ErrorCode, message: string, details?: unknown) {
-    super(message);
+  constructor(code: ErrorCode, messageKey: string, params?: TranslationParams, details?: unknown) {
+    super(messageKey);
     this.name = "AppError";
     this.code = code;
+    this.messageKey = messageKey;
+    this.params = params;
     this.details = details;
   }
 
@@ -38,17 +49,20 @@ export class AppError extends Error {
   }
 }
 
-export const unauthenticated = (m = "Please sign in to continue.") => new AppError("UNAUTHENTICATED", m);
-export const forbidden = (m = "You don't have access to this.") => new AppError("FORBIDDEN", m);
-export const notFound = (m = "We couldn't find that.") => new AppError("NOT_FOUND", m);
-export const invalid = (m: string, details?: unknown) => new AppError("INVALID_INPUT", m, details);
-export const unavailable = (m: string) => new AppError("CAPABILITY_UNAVAILABLE", m);
+export const unauthenticated = (key = "errors.unauthenticated") => new AppError("UNAUTHENTICATED", key);
+export const forbidden = (key = "errors.forbidden") => new AppError("FORBIDDEN", key);
+export const notFound = (key = "errors.notFound") => new AppError("NOT_FOUND", key);
+export const invalid = (key: string, params?: TranslationParams) => new AppError("INVALID_INPUT", key, params);
+export const conflict = (key: string, params?: TranslationParams) => new AppError("CONFLICT", key, params);
+export const unavailable = (key: string) => new AppError("CAPABILITY_UNAVAILABLE", key);
+export const upstreamFailed = (key: string) => new AppError("UPSTREAM_FAILED", key);
 
 export function statusFor(err: unknown): number {
   return err instanceof AppError ? err.status : 500;
 }
 
-export function userMessageFor(err: unknown): string {
-  if (err instanceof AppError) return err.message;
-  return "Something went wrong on our side. Nothing was lost — please try again.";
+/** Renders an error for the user in the language of the current request. */
+export function userMessageFor(err: unknown, t: Translator): string {
+  if (err instanceof AppError) return t.ref(err.messageKey, err.params);
+  return t("errors.generic");
 }

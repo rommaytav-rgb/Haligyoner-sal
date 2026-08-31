@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { ZodError, type ZodType } from "zod";
 import { AppError, statusFor, userMessageFor } from "@/lib/errors";
-import { firstIssue } from "@/lib/validation";
+import { firstIssueKey } from "@/lib/validation";
 import { log } from "@/lib/logger";
+import { getRequestTranslator } from "@/i18n/server";
 import { requireUser, type AuthenticatedUser } from "@/server/auth";
 import { checkRateLimit, sweepRateLimits, type RateLimitRule } from "./rate-limit";
 
@@ -36,8 +37,9 @@ export function authedRoute<P = Record<string, string>>(
           options.rateLimit.rule,
         );
         if (!allowed) {
+          const t = await getRequestTranslator();
           return NextResponse.json(
-            { error: "You've done that a lot in a short time. Give it a minute and try again." },
+            { error: t("errors.rateLimited") },
             { status: 429, headers: { "Retry-After": String(retryAfterSeconds) } },
           );
         }
@@ -52,14 +54,17 @@ export function authedRoute<P = Record<string, string>>(
   };
 }
 
-export function errorResponse(error: unknown, request?: Request): NextResponse {
+/** Shapes an error for the client, in the language of the current request. */
+export async function errorResponse(error: unknown, request?: Request): Promise<NextResponse> {
+  const t = await getRequestTranslator();
+
   if (error instanceof ZodError) {
-    return NextResponse.json({ error: firstIssue(error) }, { status: 400 });
+    return NextResponse.json({ error: t(firstIssueKey(error)) }, { status: 400 });
   }
   if (!(error instanceof AppError)) {
     log.error({ event: "route.unhandled", path: request ? new URL(request.url).pathname : undefined, error });
   }
-  return NextResponse.json({ error: userMessageFor(error) }, { status: statusFor(error) });
+  return NextResponse.json({ error: userMessageFor(error, t) }, { status: statusFor(error) });
 }
 
 export async function parseBody<T>(request: Request, schema: ZodType<T>): Promise<T> {
@@ -67,7 +72,7 @@ export async function parseBody<T>(request: Request, schema: ZodType<T>): Promis
   try {
     raw = await request.json();
   } catch {
-    throw new AppError("INVALID_INPUT", "We couldn't read that request.");
+    throw new AppError("INVALID_INPUT", "errors.unreadableRequest");
   }
   return schema.parse(raw);
 }

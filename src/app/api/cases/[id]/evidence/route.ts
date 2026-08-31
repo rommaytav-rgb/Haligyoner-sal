@@ -21,9 +21,9 @@ export const POST = authedRoute<Params>(
 
     const form = await request.formData().catch(() => null);
     const file = form?.get("file");
-    if (!(file instanceof File)) throw invalid("Attach a file to upload.");
+    if (!(file instanceof File)) throw invalid("errors.attachFile");
     if (file.size > config.maxUploadBytes) {
-      throw invalid(`That file is larger than ${Math.round(config.maxUploadBytes / (1024 * 1024))} MB.`);
+      throw invalid("errors.fileTooLarge", { limit: Math.round(config.maxUploadBytes / (1024 * 1024)) });
     }
 
     const data = Buffer.from(await file.arrayBuffer());

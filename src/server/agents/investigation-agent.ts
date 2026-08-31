@@ -3,11 +3,13 @@ import { log } from "@/lib/logger";
 import { searchOfficialSource } from "@/server/tools";
 import { addResearch, buildCaseContext, listResearch } from "@/server/services/cases";
 import { audit } from "@/server/services/audit";
+import { caseText } from "@/server/i18n";
+import { caseLocale } from "@/server/ai/language";
 
 export interface InvestigationResult {
   ran: boolean;
-  /** Explains, in the user's words, why nothing was researched. */
-  unavailableReason?: string;
+  /** Catalogue key explaining why nothing was researched. */
+  unavailableKey?: string;
   findingsAdded: number;
 }
 
@@ -22,7 +24,7 @@ export async function runInvestigation(userId: string, caseId: string): Promise<
   const context = await buildCaseContext(caseId);
 
   if (!searchOfficialSource.available) {
-    return { ran: false, unavailableReason: searchOfficialSource.unavailableReason, findingsAdded: 0 };
+    return { ran: false, unavailableKey: searchOfficialSource.unavailableKey, findingsAdded: 0 };
   }
 
   const questions = buildResearchQuestions(context.caseRecord.primaryCategory, context.caseRecord.summary);
@@ -50,7 +52,7 @@ export async function runInvestigation(userId: string, caseId: string): Promise<
     // paraphrased into a claim the source did not make.
     await addResearch(caseId, {
       question,
-      finding: best.snippet || "See the linked source for the detail.",
+      finding: best.snippet || caseText("agent.seeLinkedSource", undefined, caseLocale(context.caseRecord.contentLocale)),
       sourceTitle: best.title,
       sourceUrl: best.url,
       sourceType: best.sourceType as "OFFICIAL",

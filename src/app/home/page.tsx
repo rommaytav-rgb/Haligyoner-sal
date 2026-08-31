@@ -7,7 +7,9 @@ import { AppShell } from "@/components/nav/AppShell";
 import { ProblemComposer } from "@/components/landing/ProblemComposer";
 import { CaseCard } from "@/components/case/CaseCard";
 import { EmptyState } from "@/components/ui/States";
-import { greeting } from "@/lib/format";
+import { greeting } from "@/i18n/format";
+import { getI18n } from "@/i18n/server";
+import { renderSystemText } from "@/i18n/system-text";
 import { isOpen } from "@/domain/status";
 
 export const dynamic = "force-dynamic";
@@ -16,7 +18,8 @@ export default async function HomePage() {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in?next=/home");
 
-  const [cases, unread, tasks] = await Promise.all([
+  const [{ t, dictionary }, cases, unread, tasks] = await Promise.all([
+    getI18n(),
     listCases(user.id),
     unreadCount(user.id),
     listTasksForUser(user.id),
@@ -29,11 +32,11 @@ export default async function HomePage() {
   return (
     <AppShell user={user} unread={unread}>
       <section className="animate-fade-up">
-        <h1 className="display text-[28px] text-ink sm:text-[34px]">
-          {greeting()}
+        <h1 dir="auto" className="display text-[28px] text-ink sm:text-[34px]">
+          {greeting(dictionary)}
           {firstName ? `, ${firstName}` : ""}.
         </h1>
-        <p className="mt-2 text-[15px] text-ink-mute sm:text-base">What can we help you fix?</p>
+        <p className="mt-2 text-[15px] text-ink-mute sm:text-base">{t("home.prompt")}</p>
 
         <div className="mt-6">
           <ProblemComposer authed autoSubmitDraft size="compact" />
@@ -42,7 +45,9 @@ export default async function HomePage() {
 
       {tasks.length > 0 && (
         <section className="mt-10 animate-fade-up">
-          <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-faint">Waiting on you</h2>
+          <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-faint">
+            {t("home.waitingOnYou")}
+          </h2>
           <ul className="mt-3 space-y-2">
             {tasks.slice(0, 4).map((task) => (
               <li key={task.id}>
@@ -50,8 +55,10 @@ export default async function HomePage() {
                   href={`/cases/${task.caseId}`}
                   className="flex items-center justify-between gap-3 rounded-xl border border-line bg-white px-4 py-3 text-[14px] transition-colors hover:bg-paper-sunk"
                 >
-                  <span className="text-ink">{task.title}</span>
-                  <span className="shrink-0 text-[12.5px] text-ink-faint">Open case</span>
+                  <span dir="auto" className="text-ink">
+                    {renderSystemText(t, task.titleText, task.title)}
+                  </span>
+                  <span className="shrink-0 text-[12.5px] text-ink-faint">{t("common.openCase")}</span>
                 </Link>
               </li>
             ))}
@@ -61,20 +68,19 @@ export default async function HomePage() {
 
       <section className="mt-10 animate-fade-up">
         <div className="flex items-baseline justify-between">
-          <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-faint">Your cases</h2>
+          <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-faint">
+            {t("home.yourCases")}
+          </h2>
           {cases.length > 0 && (
             <Link href="/cases" className="text-[13px] font-medium text-ink-mute hover:text-ink">
-              See all
+              {t("common.seeAll")}
             </Link>
           )}
         </div>
 
         {cases.length === 0 ? (
           <div className="mt-3 rounded-2xl border border-line bg-white shadow-card">
-            <EmptyState
-              title="Nothing to fix yet."
-              body="Hopefully it stays that way - but if something comes up, we're here."
-            />
+            <EmptyState title={t("cases.emptyTitle")} body={t("cases.emptyBody")} />
           </div>
         ) : (
           <div className="mt-3 grid gap-3 sm:grid-cols-2">

@@ -7,6 +7,7 @@ import { AppShell } from "@/components/nav/AppShell";
 import { CaseCard } from "@/components/case/CaseCard";
 import { EmptyState } from "@/components/ui/States";
 import { Button } from "@/components/ui/Button";
+import { getI18n } from "@/i18n/server";
 import { isOpen } from "@/domain/status";
 
 export const dynamic = "force-dynamic";
@@ -15,22 +16,22 @@ export default async function CasesPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/sign-in?next=/cases");
 
-  const [cases, unread] = await Promise.all([listCases(user.id), unreadCount(user.id)]);
+  const [{ t }, cases, unread] = await Promise.all([getI18n(), listCases(user.id), unreadCount(user.id)]);
   const open = cases.filter((c) => isOpen(c.status));
   const settled = cases.filter((c) => !isOpen(c.status));
 
   return (
     <AppShell user={user} unread={unread}>
-      <h1 className="display text-[28px] text-ink">My cases</h1>
+      <h1 className="display text-[28px] text-ink">{t("cases.title")}</h1>
 
       {cases.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-line bg-white shadow-card">
           <EmptyState
-            title="Nothing to fix yet."
-            body="Hopefully it stays that way - but if something comes up, we're here."
+            title={t("cases.emptyTitle")}
+            body={t("cases.emptyBody")}
             action={
               <Link href="/home">
-                <Button size="lg">Tell us what&rsquo;s wrong</Button>
+                <Button size="lg">{t("cases.emptyCta")}</Button>
               </Link>
             }
           />
@@ -39,11 +40,11 @@ export default async function CasesPage() {
         <>
           <section className="mt-6">
             <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-faint">
-              Open ({open.length})
+              {t("cases.open", { count: open.length })}
             </h2>
             {open.length === 0 ? (
               <p className="mt-3 rounded-2xl border border-line bg-white px-5 py-6 text-[14px] text-ink-mute shadow-card">
-                Nothing open right now.
+                {t("cases.nothingOpen")}
               </p>
             ) : (
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -57,7 +58,7 @@ export default async function CasesPage() {
           {settled.length > 0 && (
             <section className="mt-10">
               <h2 className="text-[13px] font-semibold uppercase tracking-[0.08em] text-ink-faint">
-                Closed &amp; resolved ({settled.length})
+                {t("cases.settled", { count: settled.length })}
               </h2>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 {settled.map((record) => (

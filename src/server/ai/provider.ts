@@ -1,5 +1,6 @@
 import type { Case, CaseMessage, Fact, ResearchItem, UnknownItem, ActionStep, Evidence } from "@/domain/types";
 import type { ActionPlan, CaseReply, DraftResult, EvidenceAnalysis, ProblemAnalysis } from "./schemas";
+import type { Locale } from "@/i18n/config";
 
 /**
  * The only context a model ever sees. Built deliberately rather than by dumping
@@ -9,7 +10,15 @@ import type { ActionPlan, CaseReply, DraftResult, EvidenceAnalysis, ProblemAnaly
 export interface CaseContext {
   caseRecord: Pick<
     Case,
-    "id" | "title" | "summary" | "originalProblem" | "userGoal" | "primaryCategory" | "status" | "riskLevel"
+    | "id"
+    | "title"
+    | "summary"
+    | "originalProblem"
+    | "userGoal"
+    | "primaryCategory"
+    | "status"
+    | "riskLevel"
+    | "contentLocale"
   >;
   facts: Pick<Fact, "id" | "statement" | "verification" | "confidence">[];
   unknowns: Pick<UnknownItem, "id" | "question" | "reason" | "importance" | "resolved">[];
@@ -22,7 +31,8 @@ export interface CaseContext {
 export interface ProblemInput {
   problem: string;
   categoryHint?: string;
-  locale?: string;
+  /** Overrides detection when the language is already known. */
+  locale?: Locale;
 }
 
 export interface EvidenceInput {
@@ -35,8 +45,8 @@ export interface EvidenceInput {
 export interface ProviderQuality {
   /** True when a language model is actually behind these results. */
   modelBacked: boolean;
-  /** Shown verbatim to the user when the provider is not model-backed. */
-  limitationNote?: string;
+  /** Catalogue key for the limitation shown when the provider is not model-backed. */
+  limitationKey?: string;
 }
 
 /**
@@ -51,5 +61,5 @@ export interface AIProvider {
   replyInCase(context: CaseContext, userMessage: string): Promise<CaseReply>;
   analyzeEvidence(input: EvidenceInput): Promise<EvidenceAnalysis>;
   generateActionPlan(context: CaseContext): Promise<ActionPlan>;
-  draftCommunication(context: CaseContext, action: Pick<ActionStep, "title" | "description">): Promise<DraftResult>;
+  draftCommunication(context: CaseContext, action?: Pick<ActionStep, "title" | "description">): Promise<DraftResult>;
 }

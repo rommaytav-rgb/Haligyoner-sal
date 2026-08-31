@@ -1,7 +1,7 @@
 import { config } from "@/lib/config";
 import { AppError } from "@/lib/errors";
 import { log } from "@/lib/logger";
-import type { Case } from "@/domain/types";
+import type { Case, LocalizedText } from "@/domain/types";
 import { getAIProvider } from "@/server/ai";
 import {
   addFact,
@@ -14,6 +14,8 @@ import {
   requireOwnedCase,
   setStatus,
 } from "@/server/services/cases";
+import { caseText, systemText, type Recordable } from "@/server/i18n";
+import { caseLocale } from "@/server/ai/language";
 import { runInvestigation } from "./investigation-agent";
 import { runPlanning } from "./planning-agent";
 import { prepareDraft } from "./action-agent";
@@ -28,10 +30,10 @@ export interface OrchestrationStep {
 export interface OrchestrationResult {
   case: Case;
   reply: string;
-  appliedChanges: string[];
+  appliedChanges: LocalizedText[];
   steps: OrchestrationStep[];
-  /** Populated when the run stopped because a capability is missing. */
-  limitations: string[];
+  /** Catalogue keys, populated when the run stopped because something is missing. */
+  limitationKeys: string[];
 }
 
 /**
@@ -48,8 +50,8 @@ export async function advanceCase(
 ): Promise<OrchestrationResult> {
   const started = Date.now();
   const steps: OrchestrationStep[] = [];
-  const limitations: string[] = [];
-  const appliedChanges: string[] = [];
+  const limitationKeys: string[] = [];
+  const appliedChanges: LocalizedText[] = [];
   let budget = config.maxToolCalls;
 
   let record = await requireOwnedCase(userId, caseId);
@@ -79,22 +81,26 @@ export async function advanceCase(
       if (next === "investigation") {
         const result = await runInvestigation(userId, caseId);
         if (!result.ran) {
-          if (result.unavailableReason) limitations.push(result.unavailableReason);
+          if (result.unavailableKey) limitationKeys.push(result.unavailableKey);
           steps.push({ agent: "investigation", outcome: "not connected" });
           // Without research there is nothing more to learn; move to planning.
-          record = await safeStatus(userId, record, "READY_FOR_ACTION", "Moving on to what you can do next.");
+          record = await safeStatus(userId, record, "READY_FOR_ACTION", systemText("system.movingOn"));
           continue;
         }
         steps.push({ agent: "investigation", outcome: `${result.findingsAdded} findings` });
-        if (result.findingsAdded > 0) appliedChanges.push(`Added ${result.findingsAdded} research finding(s)`);
-        record = await safeStatus(userId, record, "READY_FOR_ACTION", "We've looked into your options.");
+        if (result.findingsAdded > 0) {
+          appliedChanges.push(
+            systemText("agent.changeAddedResearch", { count: result.findingsAdded }, result.findingsAdded),
+          );
+        }
+        record = await safeStatus(userId, record, "READY_FOR_ACTION", systemText("system.lookedIntoOptions"));
         continue;
       }
 
       if (next === "planning") {
         const plan = await runPlanning(userId, caseId);
         steps.push({ agent: "planning", outcome: `${plan.steps.length} steps` });
-        appliedChanges.push(`Built a ${plan.steps.length}-step plan`);
+        appliedChanges.push(systemText("agent.changeBuiltPlan", { count: plan.steps.length }));
         record = await requireOwnedCase(userId, caseId);
         continue;
       }
@@ -105,7 +111,7 @@ export async function advanceCase(
         if (!draftStep) break;
         await prepareDraft(userId, caseId, draftStep.id);
         steps.push({ agent: "action", outcome: "draft prepared" });
-        appliedChanges.push("Prepared a draft for your approval");
+        appliedChanges.push(systemText("agent.changePreparedDraft"));
         record = await requireOwnedCase(userId, caseId);
         continue;
       }
@@ -113,13 +119,13 @@ export async function advanceCase(
       // A failing agent stops the run; it never invents a result (section 39).
       log.error({ event: "orchestrator.agent_failed", caseId, agent: next, error });
       steps.push({ agent: next, outcome: "failed" });
-      limitations.push("We hit a problem partway through. Nothing was lost - you can try that step again.");
+      limitationKeys.push("errors.orchestratorPartial");
       break;
     }
   }
 
   if (!reply) {
-    reply = summarise(record, steps, limitations);
+    reply = summarise(record, steps, limitationKeys);
   }
 
   log.info({
@@ -130,7 +136,7 @@ export async function advanceCase(
     iterations: steps.length,
   });
 
-  return { case: record, reply, appliedChanges, steps, limitations };
+  return { case: record, reply, appliedChanges, steps, limitationKeys };
 }
 
 /**
@@ -167,7 +173,7 @@ async function applyMessage(
   userId: string,
   record: Case,
   message: string,
-  appliedChanges: string[],
+  appliedChanges: LocalizedText[],
 ): Promise<{ case: Case; reply: string }> {
   await addMessage(record.id, "USER", message);
   const context = await buildCaseContext(record.id);
@@ -177,10 +183,7 @@ async function applyMessage(
     result = await getAIProvider().replyInCase(context, message);
   } catch (error) {
     log.error({ event: "orchestrator.reply_failed", caseId: record.id, error });
-    throw new AppError(
-      "UPSTREAM_FAILED",
-      "We lost track of that last step. Your message is saved - try sending it again.",
-    );
+    throw new AppError("UPSTREAM_FAILED", "errors.replyFailed");
   }
 
   for (const fact of result.newFacts) {
@@ -190,13 +193,15 @@ async function applyMessage(
       { userId },
     );
   }
-  if (result.newFacts.length) appliedChanges.push(`Recorded ${result.newFacts.length} new detail(s)`);
+  if (result.newFacts.length) {
+    appliedChanges.push(systemText("agent.changeRecordedDetails", { count: result.newFacts.length }, result.newFacts.length));
+  }
 
   // A correction is accepted, not argued with (section 64).
   for (const factId of result.retractedFactIds) {
     try {
       await removeFact(userId, record.id, factId);
-      appliedChanges.push("Removed a detail you corrected");
+      appliedChanges.push(systemText("agent.changeRemovedDetail"));
     } catch {
       // Already gone.
     }
@@ -212,7 +217,9 @@ async function applyMessage(
     resolved: false,
     createdAt: new Date().toISOString(),
   }));
-  if (answered.size) appliedChanges.push(`Answered ${answered.size} open question(s)`);
+  if (answered.size) {
+    appliedChanges.push(systemText("agent.changeAnsweredQuestions", { count: answered.size }, answered.size));
+  }
 
   for (const entry of result.timeline) {
     await addTimelineEvent(record.id, {
@@ -230,16 +237,16 @@ async function applyMessage(
   });
 
   if (result.suggestedStatus) {
-    updated = await safeStatus(userId, updated, result.suggestedStatus, "Updated from your message.");
+    updated = await safeStatus(userId, updated, result.suggestedStatus, systemText("system.updatedFromMessage"));
   } else if (stillBlocking.length === 0 && updated.status === "INFORMATION_REQUIRED") {
-    updated = await safeStatus(userId, updated, "INVESTIGATING", "You've answered everything we needed.");
+    updated = await safeStatus(userId, updated, "INVESTIGATING", systemText("system.youAnswered"));
   }
 
   await addMessage(record.id, "ASSISTANT", result.reply, appliedChanges);
   return { case: updated, reply: result.reply };
 }
 
-async function safeStatus(userId: string, record: Case, status: Case["status"], reason: string): Promise<Case> {
+async function safeStatus(userId: string, record: Case, status: Case["status"], reason: Recordable): Promise<Case> {
   try {
     return await setStatus(userId, record.id, status, reason);
   } catch {
@@ -247,8 +254,13 @@ async function safeStatus(userId: string, record: Case, status: Case["status"], 
   }
 }
 
-function summarise(record: Case, steps: OrchestrationStep[], limitations: string[]): string {
-  if (limitations.length > 0) return limitations.join(" ");
-  if (steps.length === 0) return "Nothing new to do on this case right now.";
-  return `Here's where things stand: ${record.currentNextAction ?? "review the plan below."}`;
+/**
+ * A short summary of the run, written in the language of the case so it sits
+ * naturally alongside the rest of the conversation.
+ */
+function summarise(record: Case, steps: OrchestrationStep[], limitationKeys: string[]): string {
+  const locale = caseLocale(record.contentLocale);
+  if (limitationKeys.length > 0) return limitationKeys.map((key) => caseText(key, undefined, locale)).join(" ");
+  if (steps.length === 0) return caseText("agent.nothingToDo", undefined, locale);
+  return caseText("agent.whereThingsStand", { next: record.currentNextAction ?? "" }, locale);
 }

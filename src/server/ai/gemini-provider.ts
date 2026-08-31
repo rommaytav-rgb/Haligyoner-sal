@@ -22,7 +22,8 @@ import {
   evidenceAnalysisResponseSchema,
   problemAnalysisResponseSchema,
 } from "./response-schemas";
-import { renderContext, SYSTEM_RULES } from "./prompts";
+import { languageInstruction, renderContext, SYSTEM_RULES } from "./prompts";
+import { caseLocale, detectLanguage, LANGUAGE_NAME } from "./language";
 import { fenceUntrusted, redactSecrets } from "./sanitize";
 import type { ActionStep } from "@/domain/types";
 
@@ -76,7 +77,7 @@ export class GeminiProvider implements AIProvider {
     });
 
     const timeout = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new AppError("UPSTREAM_FAILED", "That took too long. Try again.")), config.aiTimeoutMs),
+      setTimeout(() => reject(new AppError("UPSTREAM_FAILED", "errors.aiTimeout")), config.aiTimeoutMs),
     );
 
     let raw: string;
@@ -85,13 +86,13 @@ export class GeminiProvider implements AIProvider {
       raw = response.text ?? "";
     } catch (error) {
       log.error({ event: "ai.call", outcome: "error", model: args.model, label, error });
-      throw new AppError("UPSTREAM_FAILED", "We couldn't reach the reasoning service just now.");
+      throw new AppError("UPSTREAM_FAILED", "errors.aiUnreachable");
     }
 
     const parsed = safeParseJson(raw);
     if (!parsed) {
       log.warn({ event: "ai.call", outcome: "unparseable", model: args.model, label });
-      throw new AppError("UPSTREAM_FAILED", "We got an unusable answer back. Nothing was saved.");
+      throw new AppError("UPSTREAM_FAILED", "errors.aiUnusable");
     }
 
     const validated = schema.safeParse(parsed);
@@ -105,16 +106,24 @@ export class GeminiProvider implements AIProvider {
         label,
         issues: validated.error.issues.slice(0, 3).map((i) => i.path.join(".")),
       });
-      throw new AppError("UPSTREAM_FAILED", "The answer didn't come back in a usable shape. Nothing was saved.");
+      throw new AppError("UPSTREAM_FAILED", "errors.aiMalformed");
     }
 
     log.info({ event: "ai.call", outcome: "ok", model: args.model, label, durationMs: Date.now() - started });
     return validated.data;
   }
 
+  private languageFor(context: CaseContext): string {
+    return languageOf(context);
+  }
+
   async analyzeProblem(input: ProblemInput): Promise<ProblemAnalysis> {
     const fenced = fenceUntrusted("USER_TEXT", redactSecrets(input.problem));
+    // The case takes the language the person actually wrote in.
+    const language = LANGUAGE_NAME[input.locale ?? detectLanguage(input.problem)];
     const contents = [
+      languageInstruction(language),
+      "",
       "A person has described a problem. Turn it into a structured Case.",
       "",
       "Extract only what they actually said. Every fact you record must be traceable to their words.",
@@ -137,6 +146,8 @@ export class GeminiProvider implements AIProvider {
   async replyInCase(context: CaseContext, userMessage: string): Promise<CaseReply> {
     const fenced = fenceUntrusted("USER_TEXT", redactSecrets(userMessage));
     const contents = [
+      languageInstruction(this.languageFor(context)),
+      "",
       "The person has said something new about an open case. Update the case and reply.",
       "",
       "If their message answers an open question, list that question's id in answeredUnknownIds.",
@@ -159,6 +170,8 @@ export class GeminiProvider implements AIProvider {
   async analyzeEvidence(input: EvidenceInput): Promise<EvidenceAnalysis> {
     const fenced = fenceUntrusted("DOCUMENT", redactSecrets(input.extractedText));
     const contents = [
+      languageInstruction(this.languageFor(input.context)),
+      "",
       `A document named ${JSON.stringify(input.fileName)} (${input.mimeType}) was uploaded to a case.`,
       "",
       "Extract facts the document itself states - mark those DOCUMENT_VERIFIED. Do not restate the user's claims as verified.",
@@ -191,6 +204,8 @@ export class GeminiProvider implements AIProvider {
 
   async generateActionPlan(context: CaseContext): Promise<ActionPlan> {
     const contents = [
+      languageInstruction(this.languageFor(context)),
+      "",
       "Build a prioritised action plan for this case.",
       "",
       "Rules:",
@@ -214,6 +229,8 @@ export class GeminiProvider implements AIProvider {
     action: Pick<ActionStep, "title" | "description">,
   ): Promise<DraftResult> {
     const contents = [
+      languageInstruction(this.languageFor(context)),
+      "",
       "Draft the communication for this step. The person will read it in full and approve it before anything is sent.",
       "",
       `Step: ${action.title}`,
@@ -233,6 +250,11 @@ export class GeminiProvider implements AIProvider {
       "draftCommunication",
     );
   }
+}
+
+/** The language a case is conducted in, as named to the model. */
+function languageOf(context: CaseContext): string {
+  return LANGUAGE_NAME[caseLocale(context.caseRecord.contentLocale)];
 }
 
 function safeParseJson(raw: string): unknown {

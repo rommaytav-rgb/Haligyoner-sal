@@ -52,12 +52,12 @@ export function EmptyState({
 }
 
 export function ErrorState({
-  title = "Something went wrong.",
+  title,
   body,
   onRetry,
-  retryLabel = "Try again",
+  retryLabel,
 }: {
-  title?: string;
+  title: string;
   body?: string;
   onRetry?: () => void;
   retryLabel?: string;
@@ -66,7 +66,7 @@ export function ErrorState({
     <div className="rounded-2xl border border-signal-risk/25 bg-signal-riskbg px-5 py-4" role="alert">
       <p className="text-sm font-medium text-signal-risk">{title}</p>
       {body && <p className="mt-1 text-[13px] leading-relaxed text-signal-risk/85">{body}</p>}
-      {onRetry && (
+      {onRetry && retryLabel && (
         <button
           onClick={onRetry}
           className="mt-3 rounded-lg border border-signal-risk/30 bg-white px-3 py-1.5 text-[13px] font-medium text-signal-risk hover:bg-white/70"

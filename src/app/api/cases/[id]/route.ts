@@ -14,6 +14,7 @@ import {
 } from "@/server/services/cases";
 import { listAuditForCase } from "@/server/services/audit";
 import { authedRoute, parseBody } from "@/server/http/route";
+import { systemText } from "@/server/i18n";
 import { RATE_LIMITS } from "@/server/http/rate-limit";
 
 type Params = { id: string };
@@ -49,7 +50,7 @@ export const PATCH = authedRoute<Params>(async ({ user, params, request }) => {
     record = await patchCase(user.id, caseId, fields);
   }
   if (status) {
-    record = await setStatus(user.id, caseId, status, "You changed the status.", {
+    record = await setStatus(user.id, caseId, status, systemText("system.userChangedStatus"), {
       userConfirmedResolution: resolutionConfirmedByUser === true,
     });
   }

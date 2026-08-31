@@ -4,6 +4,7 @@ import { canTransition, isOpen } from "@/domain/status";
 import type {
   ActionStep,
   Case,
+  LocalizedText,
   CaseMessage,
   CaseStatus,
   Evidence,
@@ -17,7 +18,7 @@ import { AppError, invalid, notFound } from "@/lib/errors";
 import type { CaseContext } from "@/server/ai/provider";
 import { audit } from "./audit";
 import { notify } from "./notifications";
-import { CASE_STATUS_LABEL } from "@/domain/status";
+import { resolveRecord, statusRef, systemText, type Recordable } from "@/server/i18n";
 
 const store = () => getStore();
 
@@ -29,10 +30,10 @@ const store = () => getStore();
  */
 export async function requireOwnedCase(userId: string, caseId: string): Promise<Case> {
   const record = await store().get<Case>(COLLECTIONS.cases, caseId);
-  if (!record) throw notFound("We couldn't find that case.");
+  if (!record) throw notFound("errors.caseNotFound");
   if (record.userId !== userId) {
     await audit("ACCESS_DENIED", `case ${caseId}`, { userId, caseId });
-    throw notFound("We couldn't find that case.");
+    throw notFound("errors.caseNotFound");
   }
   return record;
 }
@@ -60,22 +61,23 @@ export async function setStatus(
   userId: string,
   caseId: string,
   next: CaseStatus,
-  reason: string,
+  /** Why the case moved. A catalogue reference for system moves. */
+  reason: Recordable,
   options: { userConfirmedResolution?: boolean } = {},
 ): Promise<Case> {
   const record = await requireOwnedCase(userId, caseId);
   if (record.status === next) return record;
 
   if (!canTransition(record.status, next)) {
-    throw new AppError(
-      "CONFLICT",
-      `This case can't move from "${CASE_STATUS_LABEL[record.status]}" to "${CASE_STATUS_LABEL[next]}".`,
-    );
+    throw new AppError("CONFLICT", "errors.illegalTransition", {
+      from: statusRef(record.status),
+      to: statusRef(next),
+    });
   }
 
   // Resolution is a claim about the real world, so only the user can make it (section 65).
   if (next === "RESOLVED" && !options.userConfirmedResolution) {
-    throw new AppError("CONFLICT", "A case is only marked resolved once you confirm the problem is actually fixed.");
+    throw new AppError("CONFLICT", "errors.resolutionNeedsUser");
   }
 
   const updated = await store().patch<Case>(COLLECTIONS.cases, caseId, {
@@ -84,19 +86,13 @@ export async function setStatus(
     ...(next === "RESOLVED" ? { resolutionConfirmedByUser: true } : {}),
   });
 
-  await audit("STATUS_CHANGED", `${record.status} -> ${next}: ${reason}`, { userId, caseId });
+  await audit("STATUS_CHANGED", `${record.status} -> ${next}`, { userId, caseId });
   await addTimelineEvent(caseId, {
-    title: `Status changed to "${CASE_STATUS_LABEL[next]}"`,
+    title: systemText("system.statusChangedTitle", { status: statusRef(next) }),
     description: reason,
     source: "SYSTEM",
   });
-  await notify({
-    userId,
-    caseId,
-    kind: "STATUS_CHANGE",
-    title: `${record.title}: ${CASE_STATUS_LABEL[next]}`,
-    body: reason,
-  });
+  await notify({ userId, caseId, kind: "STATUS_CHANGE", title: record.title, body: reason });
   return updated;
 }
 
@@ -147,7 +143,7 @@ export async function addFact(
 export async function removeFact(userId: string, caseId: string, factId: string): Promise<void> {
   await requireOwnedCase(userId, caseId);
   const fact = await store().get<Fact>(COLLECTIONS.facts, factId);
-  if (!fact || fact.caseId !== caseId) throw notFound("We couldn't find that detail.");
+  if (!fact || fact.caseId !== caseId) throw notFound("errors.factNotFound");
   await store().remove(COLLECTIONS.facts, factId);
   await audit("FACT_REMOVED", "retracted", { userId, caseId });
 }
@@ -161,7 +157,7 @@ export function buildUnknown(input: { question: string; reason: string; importan
 export async function resolveUnknown(userId: string, caseId: string, unknownId: string, answer: string): Promise<Case> {
   const record = await requireOwnedCase(userId, caseId);
   const target = record.unknowns.find((u) => u.id === unknownId);
-  if (!target) throw notFound("We couldn't find that question.");
+  if (!target) throw notFound("errors.questionNotFound");
 
   const unknowns = record.unknowns.map((u) => (u.id === unknownId ? { ...u, resolved: true, answer } : u));
   await addFact(caseId, {
@@ -177,7 +173,7 @@ export async function resolveUnknown(userId: string, caseId: string, unknownId: 
     updated.status === "INFORMATION_REQUIRED" &&
     unknowns.every((u) => u.resolved || u.importance !== "REQUIRED")
   ) {
-    return setStatus(userId, caseId, "INVESTIGATING", "You answered everything we needed.");
+    return setStatus(userId, caseId, "INVESTIGATING", systemText("system.youAnswered"));
   }
   return updated;
 }
@@ -192,9 +188,28 @@ export async function listTimeline(caseId: string): Promise<TimelineEvent[]> {
 
 export async function addTimelineEvent(
   caseId: string,
-  input: Omit<TimelineEvent, "id" | "caseId" | "createdAt">,
+  input: {
+    date?: string;
+    source: TimelineEvent["source"];
+    /** A catalogue reference for system entries, a string for user content. */
+    title: Recordable;
+    description: Recordable;
+  },
 ): Promise<TimelineEvent> {
-  const event: TimelineEvent = { id: newId("tml"), caseId, createdAt: now(), ...input };
+  const title = resolveRecord(input.title);
+  const description = resolveRecord(input.description);
+
+  const event: TimelineEvent = {
+    id: newId("tml"),
+    caseId,
+    createdAt: now(),
+    date: input.date,
+    source: input.source,
+    title: title.text,
+    titleText: title.ref,
+    description: description.text,
+    descriptionText: description.ref,
+  };
   await store().put(COLLECTIONS.timelineEvents, event);
   return event;
 }
@@ -215,15 +230,35 @@ export async function listTasksForUser(userId: string): Promise<Task[]> {
   return all.filter((t) => t.status === "PENDING");
 }
 
-export async function addTask(caseId: string, input: Omit<Task, "id" | "caseId" | "createdAt" | "status">): Promise<Task> {
-  const task: Task = { id: newId("tsk"), caseId, status: "PENDING", createdAt: now(), ...input };
+export async function addTask(
+  caseId: string,
+  input: Omit<Task, "id" | "caseId" | "createdAt" | "status" | "title" | "description" | "titleText" | "descriptionText"> & {
+    title: Recordable;
+    description?: Recordable;
+  },
+): Promise<Task> {
+  const { title, description, ...rest } = input;
+  const resolvedTitle = resolveRecord(title);
+  const resolvedDescription = description === undefined ? undefined : resolveRecord(description);
+
+  const task: Task = {
+    id: newId("tsk"),
+    caseId,
+    status: "PENDING",
+    createdAt: now(),
+    ...rest,
+    title: resolvedTitle.text,
+    titleText: resolvedTitle.ref,
+    description: resolvedDescription?.text,
+    descriptionText: resolvedDescription?.ref,
+  };
   await store().put(COLLECTIONS.tasks, task);
   return task;
 }
 
 export async function updateTask(userId: string, taskId: string, status: Task["status"]): Promise<Task> {
   const task = await store().get<Task>(COLLECTIONS.tasks, taskId);
-  if (!task) throw notFound("We couldn't find that task.");
+  if (!task) throw notFound("errors.taskNotFound");
   await requireOwnedCase(userId, task.caseId);
   return store().patch<Task>(COLLECTIONS.tasks, taskId, { status });
 }
@@ -267,7 +302,7 @@ export async function patchAction(
 ): Promise<ActionStep> {
   await requireOwnedCase(userId, caseId);
   const action = await store().get<ActionStep>(COLLECTIONS.actions, actionId);
-  if (!action || action.caseId !== caseId) throw notFound("We couldn't find that step.");
+  if (!action || action.caseId !== caseId) throw notFound("errors.stepNotFound");
   return store().patch<ActionStep>(COLLECTIONS.actions, actionId, { ...partial, updatedAt: now() });
 }
 
@@ -302,7 +337,7 @@ export async function addMessage(
   caseId: string,
   role: CaseMessage["role"],
   content: string,
-  appliedChanges?: string[],
+  appliedChanges?: LocalizedText[],
 ): Promise<CaseMessage> {
   const message: CaseMessage = {
     id: newId("msg"),
@@ -332,7 +367,7 @@ export async function listEvidence(caseId: string): Promise<Evidence[]> {
  */
 export async function buildCaseContext(caseId: string, options: { messageLimit?: number } = {}): Promise<CaseContext> {
   const record = await store().get<Case>(COLLECTIONS.cases, caseId);
-  if (!record) throw notFound("We couldn't find that case.");
+  if (!record) throw notFound("errors.caseNotFound");
 
   const [facts, evidence, research, actions, messages] = await Promise.all([
     listFacts(caseId),
@@ -352,6 +387,7 @@ export async function buildCaseContext(caseId: string, options: { messageLimit?:
       primaryCategory: record.primaryCategory,
       status: record.status,
       riskLevel: record.riskLevel,
+      contentLocale: record.contentLocale,
     },
     facts: facts.map((f) => ({
       id: f.id,
@@ -386,7 +422,7 @@ export async function buildCaseContext(caseId: string, options: { messageLimit?:
 
 export function assertOpenForEditing(record: Case): void {
   if (record.status === "CLOSED") {
-    throw invalid("This case is closed. Reopen it to make changes.");
+    throw invalid("errors.caseClosed");
   }
 }
 

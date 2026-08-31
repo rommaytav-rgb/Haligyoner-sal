@@ -17,6 +17,7 @@ import {
   requireOwnedCase,
 } from "@/server/services/cases";
 import { AppShell } from "@/components/nav/AppShell";
+import { getI18n } from "@/i18n/server";
 import { CaseWorkspace } from "@/components/case/CaseWorkspace";
 
 export const dynamic = "force-dynamic";
@@ -48,21 +49,29 @@ export default async function CasePage({ params }: { params: Promise<{ id: strin
   ]);
 
   const provider = getAIProvider();
+  const { t } = await getI18n();
 
   return (
     <AppShell user={user} unread={unread}>
       <Link href="/cases" className="mb-5 inline-flex items-center gap-1.5 text-[13px] text-ink-mute hover:text-ink">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
-          <path d="M8.5 3.5L5 7l3.5 3.5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+        {/* "Back" points the way the language reads. */}
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true" className="rtl:-scale-x-100">
+          <path
+            d="M8.5 3.5L5 7l3.5 3.5"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
-        All cases
+        {t("common.allCases")}
       </Link>
 
       <CaseWorkspace
         initial={{ case: record, facts, evidence, timeline, tasks, research, actions, messages, activity }}
         capabilities={{
           aiModelBacked: provider.quality.modelBacked,
-          aiLimitationNote: provider.quality.limitationNote,
+          aiLimitationNote: provider.quality.limitationKey ? t(provider.quality.limitationKey) : undefined,
           webResearch: capabilities.webResearch,
         }}
       />
