@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    --font-display: ui-serif, Georgia, Cambria, "Times New Roman", serif;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    font-family: var(--font-sans);
+    background-color: theme("colors.paper.warm");
+    color: theme("colors.ink.DEFAULT");
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background-color: theme("colors.brand.100");
+  }
+
+  :focus-visible {
+    outline: 2px solid theme("colors.brand.500");
+    outline-offset: 2px;
+  }
+
+  /* Inputs grow with their content rather than scrolling. Callers set an
+     explicit min-height, which field sizing respects, so nothing collapses. */
+  textarea {
+    field-sizing: content;
+  }
+}
+
+@layer components {
+  .display {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+  }
+
+  .prose-tight p + p {
+    margin-top: 0.75rem;
+  }
+
+  .hairline {
+    border-color: theme("colors.line.DEFAULT");
+  }
+
+  /* Used by the rotating placeholder and the processing states. */
+  .shimmer {
+    background-image: linear-gradient(
+      90deg,
+      theme("colors.paper.sunk") 0%,
+      theme("colors.line.DEFAULT") 50%,
+      theme("colors.paper.sunk") 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.8s ease-in-out infinite;
+  }
+}
+
+@keyframes shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,12 @@
+rules_version = '2';
+
+// Evidence is private. Files are read back only through
+// GET /api/cases/:id/evidence/:evidenceId, which re-checks that the signed-in
+// user owns the case. Direct client access is denied.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
