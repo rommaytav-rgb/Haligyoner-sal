@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>הנינג'ות – פיקסל</title>
+<style>
+  html,body{margin:0;height:100%;overflow:hidden;background:#0f1020;font-family:Arial,sans-serif;color:#fff;touch-action:manipulation}
+  #bg{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 40%,#232650 0%,#0f1020 70%)}
+  #stage{position:fixed;top:0;left:0;right:0;bottom:215px;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  canvas{image-rendering:pixelated;image-rendering:crisp-edges}
+  #name{font-size:34px;font-weight:900;letter-spacing:5px;text-shadow:0 0 18px var(--glow),0 3px 6px #000;margin-top:10px}
+  #elem{font-size:15px;color:#bbb;margin-top:2px}
+  #anim{display:flex;gap:8px;margin-top:14px}
+  .b{padding:10px 16px;border-radius:12px;border:2px solid #555;background:#1a1c30;font-weight:bold;font-size:14px;user-select:none}
+  .b.on{border-color:var(--glow);background:#2a2040}
+  #row2{position:fixed;bottom:12px;left:0;right:0;display:flex;justify-content:center;gap:6px}
+  #row{position:fixed;bottom:112px;left:0;right:0;display:flex;justify-content:center;gap:6px}
+  .thumb{border:2px solid transparent;border-radius:10px;padding:2px;background:#161830}
+  .thumb.on{border-color:var(--glow)}
+  #arrows{position:fixed;top:45%;left:0;right:0;display:flex;justify-content:space-between;padding:0 8px;pointer-events:none}
+  #arrows div{pointer-events:auto;font-size:38px;padding:10px 16px;color:#aaa;user-select:none}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<div id="stage">
+  <canvas id="big"></canvas>
+  <div id="name"></div><div id="elem"></div>
+  <div id="anim"><div class="b on" data-a="idle">עמידה</div><div class="b" data-a="walk">הליכה</div><div class="b" data-a="attack">מכה</div></div>
+</div>
+<div id="arrows"><div id="prev">‹</div><div id="next">›</div></div>
+<div id="row"></div>
+<div id="row2"></div>
+<script>
+/* ---------- מבנה גוף משותף (24×32) ---------- */
+const ARM=['AAA','AAA','AAA','AAA','AAA','AAA','GGG','GGG'];
+const LEG=['PPPP','PPPP','PPPP','PPPP','PPPP','OOOO','OOOO','OOOO'];
+const CAPE=['..CCCCCCCCCC..','.CCCCCCCCCCCC.','.CCcCCCCCCCCC.','CCCCCCCCCCCCCC','CCcCCCCCCCcCCC','CCCCCCCCCCCCCC','CCCCCCCCCCCCCC','CcCCCCCCCCCCCC','CCCCCCCCCCCcCC','CCCCCCCCCCCCCC','CCCCCCCCCCCCCC','CCcCCCCCCCCCCC','CCCC.CCCCCCCCC','CCC..CCCCCC.CC','CC....CCCC..CC','C......CC....C'];
+
+/* ---------- הדמויות ---------- */
+const CHARS=[
+{ name:'CLAY', elem:'אדמה', glow:'#e0b96a',
+  c:{F:'#3a2410',R:'#b98a6a',N:'#fff',K:'#f1c39c',E:'#ffcc33',B:'#3a2410',M:'#7a3a2a',H:'#6b3e1e',h:'#9a6132',T:'#5b3a1c',d:'#c9962e',s:'#7a5230',L:'#3a2410',l:'#e0b96a',A:'#5b3a1c',G:'#7a5230',P:'#4a2f16',O:'#2e1c0c',C:'#7a4a22',c:'#5a361a',W:'#d4a24a',w:'#ffe08a',g:'#3a2410'},
+  p:['#e0b96a','#c89a4e','#fff0c0'],
+  head:['KKKKKKKK','KKKKKKKK','KBBKKBBK','KKBKKBKK','KEEKKEEK','KRKKKKKK','FKKKKKKK','FFKMMKFF','.FFFFFF.'],
+  hair:[['..H.hH....','.HHHHHH.H.','HHhHHHHHH.','HHHHHHHHHH','HHHHHHHHHH','HH......HH']],
+  torso:['sTTTTTTTTs','TTTTddTTTT','TTTdTTdTTT','TTdTTTTdTT','TTTTTTTTTT','TTTTTTTTTT','LLLLllLLLL','LLLLLLLLLL','TTTTTTTTTT'],
+  weapon:{rest:['.g..','.g..','.W..','.Ww.','.W..','..W.','..w.'],restPos:[19,17],strike:['gWWWWWw.','.wWWWWWw'],strikePos:[20,17]} },
+{ name:'BECK', elem:'מים', glow:'#3ee0ff',
+  c:{F:'#2fc4a8',R:'#6fa8d8',N:'#fff',K:'#9fc8e8',E:'#33e0ff',B:'#0d1b36',M:'#3a5a8a',H:'#1a2a5a',h:'#2d4a8a',T:'#1c3f7a',d:'#2fc4a8',s:'#2a5aa8',L:'#12284f',l:'#3ee0ff',A:'#1c3f7a',G:'#9fc8e8',P:'#12284f',O:'#0d1b36',C:'#1f9a8a',c:'#157a6c',W:'#3ee0ff',w:'#bffaff',g:'#0d1b36'},
+  p:['#4fd0ff','#ffffff','#1f9a8a'],
+  head:['.KKKKKK.','.KKKKKK.','KKBKKBKK','KKBKKBKK','KEEKKEEK','FKKKKKKF','FKKKKKKF','.KKMMKK.','..KKKK..'],
+  hair:[['..........','..........','..HHHHhH..','.HHHHHHHH.','HHHHhHHHHH','HH......HH']],
+  torso:['sTTTTTTTTs','TTTsddsTTT','TTsddddsTT','TTTsddsTTT','TTTTssTTTT','TTTTTTTTTT','LLLLllLLLL','LLLLLLLLLL','TTTTTTTTTT'],
+  weapon:{rest:['W.W.W','W.W.W','WWWWW','..W..','..g..','..g..','..g..','..g..','..g..','..g..','..g..','..g..','..g..','..g..','..g..','..g..'],restPos:[19,4],strike:['..........W..W','ggggggggggWWWW','..........W..W'],strikePos:[16,17]} },
+{ name:'BOREAS', elem:'קרח', glow:'#9ff0ff',
+  c:{F:'#9ff0ff',R:'#a8bccc',N:'#fff',K:'#c8dcec',E:'#66e0ff',B:'#6a7a8a',M:'#7a8aa0',H:'#e8f4ff',h:'#bfe0f5',T:'#c9d3dd',d:'#7fd4ff',s:'#f4f8ff',L:'#8a98a8',l:'#9ff0ff',A:'#c9d3dd',G:'#c8dcec',P:'#9aa8b8',O:'#f4f8ff',C:'#eef4fa',c:'#c9d3dd',W:'#9ff0ff',w:'#ffffff',g:'#6a7a8a'},
+  p:['#bfefff','#ffffff','#7fd4ff'],
+  head:['.KKKKKK.','KKKKKKKK','KB.KK.BK','KKBKKBKK','KEEKKEEK','KFKKKKFK','KKKKKKKK','.KMMMMK.','..KFFK..'],
+  hair:[['h..H..h.H.','H.HHH.HHH.','HHHhHHHHHH','HHHHHHHHHH','HHhHHHHhHH','HH......HH']],
+  torso:['ssssssssss','sssTTTTsss','TTTTddTTTT','TTTTddTTTT','TTdTTTTdTT','TTTTTTTTTT','LLLLllLLLL','TTTTTTTTTT','TTTTTTTTTT'],
+  weapon:{rest:['.W.','.W.','.Ww','.W.','wW.','.W.','.W.','ggg','.g.','.g.'],restPos:[19,10],strike:['g.WWWWWWWw','gWWWWWWWWWw','g.WWWWWWWw'],strikePos:[19,17]} },
+{ name:'APOLLO', elem:'אש', glow:'#ff7a1a',
+  c:{F:'#7a2a1a',R:'#e89a80',N:'#ffffff',K:'#f1c39c',E:'#ff2020',B:'#1c1c22',M:'#7a2a1a',H:'#ff6a00',h:'#ffd23f',T:'#a8101c',d:'#ff7a1a',s:'#1c1c22',L:'#ff9a2a',l:'#ffd23f',A:'#a8101c',G:'#1c1c22',P:'#7a0c15',O:'#1c1c22',C:'#8a0c14',c:'#5e0810',W:'#ff5a1f',w:'#ffd23f',g:'#3a2a1a'},
+  p:['#ff7a1a','#ffd23f','#ff3a1a'],
+  head:['.KKKKKK.','KKKKKKKK','KBBKKBBK','KKBEEBKK','KEEKKEEK','KRKKKKRK','KMNNNNMK','KKMMMMKK','.KKKKKK.'],
+  hair:[['...h..h...','..H.hHH.h.','.HhHHHhHH.','HHHhHHHHHH','HHHHHHHhHH','HH......HH'],['.h..h...h.','..HhH.hH..','.HHHhHHHH.','HHhHHHHHHH','HHHHhHHHHH','HH......HH']],
+  torso:['ssTTTTTTss','ssTTddTTss','TTTdTTdTTT','TTTTTdTTTT','TTTdTTTTTT','TTTTTTdTTT','LLLLllLLLL','TTTdTTTTTT','TTTTTTdTTT'],
+  weapon:{rest:['..gWWW','..gWWW','..gWWw','..g.Ww','..g...','..g...','..g...','..g...','..g...','..g...'],restPos:[18,8],strike:['........WWWW','gggggggWWWWW','........WWww'],strikePos:[18,16]} },
+{ name:'SHADE', elem:'צל', glow:'#a040ff',
+  c:{F:'#4a1f8f',R:'#6a2fbf',N:'#fff',K:'#2a1a3a',E:'#c060ff',B:'#1a1024',M:'#1a1024',H:'#6a2fbf',h:'#8a4fdf',T:'#2a1a3a',d:'#9a4fff',s:'#4a1f8f',L:'#1a1024',l:'#a040ff',A:'#2a1a3a',G:'#3a2a4a',P:'#1a1024',O:'#0e0a14',C:'#4a1f8f',c:'#331566',W:'#a040ff',w:'#e0b0ff',g:'#4a1f8f'},
+  p:['#8a40ff','#c080ff','#4a1f8f'],
+  hood:['....HH....','..HHHHHH..','.HHHhHHHH.','HHHHHHHHHH','HH......HH','HH......HH','HH......HH','HHH....HHH','.HHHHHHHH.'],
+  head:['.KKKKKK.','KKKKKKKK','KBKKKKBK','KKBKKBKK','KEEKKEEK','KKKKKKKK','FFFFFFFF','FFFFFFFF','.FFFFFF.'],
+  hair:[[]],
+  torso:['TTTTTTTTTT','TTTTddTTTT','TTTddddTTT','TTTTddTTTT','TTTTTTTTTT','TTsTTTTsTT','LLLLllLLLL','TTTTTTTTTT','TTTTTTTTTT'],
+  weapon:{rest:['..W..','.wWw.','WWWWW','.wWw.','..W..'],restPos:[19,19],strike:['W...W','.wWw.','..W..','.wWw.','W...W'],strikePos:[19,19],thrown:true} }
+];
+
+
+/* ---------- יריבים ---------- */
+const BONE_ARM=['SSS','.S.','.S.','.S.','SSS','.S.','.S.','SSS'];
+const BONE_LEG=['SSSS','.SS.','.SS.','.SS.','SSSS','.SS.','OOOO','OOOO'];
+const BIG_ARM=['AAAA','AAAA','AAAA','AAAA','AAAA','AAAA','AAAA','AAAA','GGGG','GGGG'];
+const BIG_LEG=['PPPPP','PPPPP','PPPPP','PPPPP','PPPPP','PPPPP','PPPPP','OOOOO','OOOOO','OOOOO'];
+const BIG_CAPE=['...CCCCCCCCCCCC...','..CCCCCCCCCCCCCC..','.CCcCCCCCCCCCCCCC.','CCCCCCCCCCCCCCCCCC','CCcCCCCCCCcCCCCCCC','CCCCCCCCCCCCCCCCCC','CCCCCCCCCCCCCCCCCC','CcCCCCCCCCCCCCcCCC','CCCCCCCCCCCcCCCCCC','CCCCCCCCCCCCCCCCCC','CCCCCCCCCCCCCCCCCC','CCcCCCCCCCCCCCCCCC','CCCCC.CCCCCCCC.CCC','CCCC..CCCCCC...CCC','CC.....CCCC.....CC','C.......CC.......C'];
+const ENEMIES=[
+{ name:'שלד', elem:'יריב רגיל', glow:'#ff3030', enemy:true,
+  c:{S:'#f2ede0',D:'#1a1414',E:'#ff3030',N:'#ffffff',R:'#c8202a',r:'#f4f4f4',F:'#7a5a3a',A:'#f2ede0',G:'#f2ede0',P:'#f2ede0',O:'#111111',W:'#a86a3a',w:'#d9a066',g:'#3a2a1a',Q:'#8a1a20',q:'#f2ede0'},
+  p:[],
+  head:['.RRRRRR.','RrRRRrRR','RRRRrRRR','.SSSSSS.','SDDSSDDS','SDESSEDS','SSSSSSSS','SNDNDNDS','.SSSSSS.'], eyeOff:[[2,5],[5,5]], eyeW:1,
+  hair:[[]],
+  torso:['..SSSSSS..','.S.S..S.S.','.SSSSSSSS.','.S.SDDS.S.','.SSSSSSSS.','.S.SDDS.S.','..SSSSSS..','..FFFFFF..','..FF.FFF..'],
+  arm:BONE_ARM, leg:BONE_LEG, noCape:true,
+  extras:[{g:['.QQQQQ.','QQQqqQQ','QQqqqqQ','QQqDqDQ','QQqqqqQ','QQQqqQQ','.QQQQQ.'],pos:[1,13],front:true}],
+  weapon:{rest:['.ww.','.Ww.','.W..','.W..','.W..','.W..','W...','W...','gg..','.g..'],restPos:[19,10],strike:['.....WWWWWw','ggWWWWWWWw.','.....ww....'],strikePos:[19,16]} },
+{ name:'בוס – היפופוטם', elem:'בוס', glow:'#c89a6a', enemy:true, big:true,
+  c:{B:'#7a5238',b:'#9a6e50',E:'#ffcc33',D:'#3a2418',N:'#f4e8d0',T:'#6b4a2e',s:'#3a2418',d:'#c8a060',L:'#3a2418',l:'#c8a060',A:'#6b4a2e',G:'#7a5238',P:'#4a3222',O:'#2a1a10',W:'#5a5a60',w:'#9a9aa0',g:'#3a2a1a',m:'#7a7a80'},
+  p:['#a08060','#c8a878','#6b4a2e'],
+  head:['.bB......Bb.','.BBBBBBBBBB.','BBBBBBBBBBBB','BBEEBBBBEEBB','BBBBBBBBBBBB','BBbbbbbbbbBB','BbbbbbbbbbbB','BbbbDDDDbbbB','BbbbbbbbbbbB','BbNbbbbbbNbB','.bbbbbbbbbb.'], eyeOff:[[2,3],[8,3]],
+  hair:[[]],
+  torso:['TTTTTTTTTTTTTT','TTsTTTTTTTTsTT','TTsTTddddTTsTT','TTsTTdTTdTTsTT','TTsTTddddTTsTT','TTsTTTTTTTTsTT','TTTTTTTTTTTTTT','LLLLLLllLLLLLL','LLLLLLLLLLLLLL','TTTTTTTTTTTTTT','TTTTTTTTTTTTTT'],
+  arm:BIG_ARM, leg:BIG_LEG, noCape:true,
+  weapon:{rest:['..g..','..g..','..g..','..g..','..m..','.m.m.','..m..','.m.m.','..m..','.WWW.','WWWWW','wWWWw','.WWW.','w.w.w'],restPos:[26,8],strike:['............wWWWw','ggggg.m.m.m.WWWWW','............wWWWw'],strikePos:[24,16]} },
+{ name:'בוס – תנין', elem:'בוס', glow:'#7ab040', enemy:true, big:true,
+  c:{G:'#3e6b2a',g:'#7aa050',h:'#1c1c22',r:'#c8202a',E:'#ffe040',N:'#f4f4f4',T:'#1c1c22',s:'#2f5a22',d:'#c8202a',L:'#5a3a22',l:'#c8a060',A:'#1c1c22',P:'#1c1c22',O:'#7aa050',C:'#3f5a22',c:'#2f4418',W:'#1c1c22',w:'#5a5a60',k:'#5a3a22'},
+  p:['#7aa050','#3e6b2a','#c8202a'],
+  head:['..h....h......','..hh..hh......','.rhh..hhr.....','.GGGGGGGG.....','GGGGGGGGGG....','GGEGGGGGGGGGGG','GGGGrrGGGGGGGG','GggggggggggggG','GNGNGNGNGNGNGg','.gggggggggggg.'], eyeOff:[[2,5]], eyeW:1,
+  hair:[[]],
+  torso:['sTTTTTTTTTTTTs','sTTTsTTTTsTTTs','TTTTTTddTTTTTT','TTTTTddddTTTTT','TTTTTTddTTTTTT','TTsTTTTTTTTsTT','TTTTTTTTTTTTTT','LLLLLLllLLLLLL','TTTTTTTTTTTTTT','TTsTTTTTTTTsTT','TTTTTTTTTTTTTT'],
+  arm:BIG_ARM.map(r=>r), leg:BIG_LEG, cape:BIG_CAPE,
+  extras:[{g:['GGG.....','.GGGG...','...GGGG.','.....GGG'],pos:[0,26],front:false}],
+  weapon:{rest:['..kWWW','..kWWW','..kWWWw','..kWWw','..k.w.','..k...','..k...','..k...','..k...','..k...','..k...','..k...'],restPos:[26,6],strike:['.........WWWWW','kkkkkkkkkWWWWWw','.........WWWww'],strikePos:[24,15]} }
+];
+ENEMIES[2].c.G='#3e6b2a'; ENEMIES[2].c.A='#1c1c22'; ENEMIES[2].c.Gh='#7aa050';
+// כפות ידיים/רגליים ירוקות לתנין
+ENEMIES[2].arm=['AAAA','AAAA','AAAA','AAAA','AAAA','AAAA','AAAA','AAAA','gggg','gggg'];
+ENEMIES[1].leg=BIG_LEG; ENEMIES[1].arm=BIG_ARM;
+
+/* ---------- ציור ---------- */
+const OX=2, OY=4;
+const NINJA_LAYOUT={cw:28,ch:36,head:[8,2],torso:[7,10],armL:[4,11],armR:[17,11],legL:[8,19],legR:[12,19],cape:[5,10],capeGrid:CAPE,shadow:[6,27,12],legCut:1,strikeArm:{g:['AAAAAAA','GGG....'],pos:[17,13]},partW:{arm:3,leg:4}};
+const BIG_LAYOUT={cw:42,ch:44,head:[10,0],torso:[9,10],armL:[5,11],armR:[23,11],legL:[10,21],legR:[17,21],cape:[7,10],capeGrid:BIG_CAPE,shadow:[7,30,20],legCut:1,strikeArm:{g:['AAAAAAAAA','GGGG.....'],pos:[23,13]}};
+function layoutOf(ch){ return ch.big?BIG_LAYOUT:NINJA_LAYOUT; }
+function blit(ctx,s,grid,x,y,cols,cut=0){ for(let j=0;j<grid.length-cut;j++){ const row=grid[j]; for(let i=0;i<row.length;i++){ const ch=row[i]; if(ch==='.')continue; const col=cols[ch]; if(!col)continue; ctx.fillStyle=col; ctx.fillRect((OX+x+i)*s,(OY+y+j)*s,s,s);} } }
+function drawChar(ctx,s,ch,anim,t,face=1){
+  const c=ch.c, f=Math.floor(t*8), L=layoutOf(ch), ARMG=ch.arm||ARM, LEGG=ch.leg||LEG, CAPEG=ch.cape||L.capeGrid;
+  ctx.clearRect(0,0,L.cw*s,L.ch*s);
+  ctx.save(); if(face<0){ ctx.translate(L.cw*s,0); ctx.scale(-1,1); }
+  let bob=0, legL=0, legR=0, armL=0, armR=0, lean=0, strike=false, wind=false;
+  if(anim==='idle'){ bob=(f%2); }
+  if(anim==='walk'){ const k=f%4; legL=[-1,0,1,0][k]; legR=[1,0,-1,0][k]; armL=[1,0,-1,0][k]; armR=[-1,0,1,0][k]; bob=(k%2?1:0); }
+  if(anim==='attack'){ const k=f%6; if(k<2){ wind=true; armR=-2; lean=-1; } else if(k<4){ strike=true; lean=2; armR=-3; } else { armR=-1; } }
+  ctx.fillStyle='rgba(0,0,0,.35)'; ctx.fillRect((OX+L.shadow[0])*s,(OY+L.shadow[1])*s,L.shadow[2]*s,2*s);
+  const cx=L.shadow[0]+L.shadow[2]/2, cy=L.shadow[1]-2;
+  const parts=(front)=>{ for(let i=0;i<6;i++){ const a=t*2+i*1.05, r=L.shadow[2]*.7+Math.sin(t*3+i)*2; const px=cx+Math.cos(a)*r, py=cy+Math.sin(a)*2.2-i*.3; if((Math.sin(a)>=0)===front){ ctx.fillStyle=ch.p[i%3]; ctx.fillRect(Math.round((OX+px))*s,Math.round((OY+py))*s,s,s);} } };
+  if(ch.p.length) parts(false);
+  if(!ch.noCape){ for(let j=0;j<CAPEG.length;j++){ const sway=j>6?Math.round(Math.sin(t*3+j*.35)*1.2)+(strike?-2:0):0; blit(ctx,s,[CAPEG[j]],L.cape[0]+lean*.5+sway,L.cape[1]+j+bob,c); } }
+  (ch.extras||[]).filter(e=>!e.front).forEach(e=>blit(ctx,s,e.g,e.pos[0]+lean,e.pos[1]+bob,c));
+  blit(ctx,s,LEGG,L.legL[0]+lean,L.legL[1]+Math.max(0,legL),c,legL<0?1:0); blit(ctx,s,LEGG,L.legR[0]+lean,L.legR[1]+Math.max(0,legR),c,legR<0?1:0);
+  blit(ctx,s,ch.torso,L.torso[0]+lean,L.torso[1]+bob,c);
+  blit(ctx,s,ARMG,L.armL[0]+lean,L.armL[1]+bob+armL,c);
+  (ch.extras||[]).filter(e=>e.front).forEach(e=>blit(ctx,s,e.g,e.pos[0]+lean,e.pos[1]+bob+armL,c));
+  if(strike){ const sa=L.strikeArm; const cols={A:c.A,G:ch.arm?c[ch.arm[ch.arm.length-1][0]]:c.G}; blit(ctx,s,sa.g,sa.pos[0]+lean,sa.pos[1]+bob,cols); }
+  else blit(ctx,s,ARMG,L.armR[0]+lean,L.armR[1]+bob+armR,c);
+  blit(ctx,s,ch.head,L.head[0]+lean,L.head[1]+bob,c);
+  if(ch.hood) blit(ctx,s,ch.hood,L.head[0]-1+lean,L.head[1]-2+bob,c);
+  const hair=ch.hair[f%ch.hair.length]; if(hair.length) blit(ctx,s,hair,L.head[0]-1+lean,L.head[1]-4+bob,c);
+  if(f%8<6){ const eo=ch.eyeOff||[[1,4],[5,4]], ew=ch.eyeW||2; ctx.fillStyle=c.E; ctx.globalAlpha=.35; eo.forEach(([x,y])=>ctx.fillRect((OX+L.head[0]+x-1+lean)*s,(OY+L.head[1]+y+bob)*s,(ew+2)*s,s)); ctx.globalAlpha=1; }
+  const w=ch.weapon;
+  if(strike){ const off=w.thrown?Math.min(10,(f%6-2)*5):0; blit(ctx,s,w.strike,w.strikePos[0]+lean+off,w.strikePos[1]+bob,c); }
+  else if(wind){ blit(ctx,s,w.rest,w.restPos[0]+lean,w.restPos[1]+bob-4,c); }
+  else blit(ctx,s,w.rest,w.restPos[0]+lean,w.restPos[1]+bob+armR,c);
+  if(ch.p.length) parts(true);
+  if(strike){ for(let i=0;i<8;i++){ ctx.fillStyle=(ch.p.length?ch.p:[ch.glow])[i%Math.max(1,ch.p.length)]; const px=L.armR[0]+5+lean+i*1.2+Math.random()*2, py=12+Math.random()*10; ctx.fillRect(Math.round(OX+px)*s,Math.round(OY+py)*s,s,s);} }
+  ctx.restore();
+}
+
+/* ---------- ממשק ---------- */
+const ALL=[...CHARS,...ENEMIES];
+let cur=3, anim='idle';
+const big=document.getElementById('big'); const S=Math.floor(Math.min(innerWidth*.85/42,(innerHeight-360)/44)); const bctx=big.getContext('2d');
+const row=document.getElementById('row'), row2=document.getElementById('row2');
+const thumbs=ALL.map((ch,i)=>{ const L=layoutOf(ch); const d=document.createElement('div'); d.className='thumb'; const c=document.createElement('canvas'); c.width=L.cw*2; c.height=L.ch*2; d.appendChild(c); d.onclick=()=>select(i); (ch.enemy?row2:row).appendChild(d); return c; });
+function select(i){ cur=i; const ch=ALL[i], L=layoutOf(ch); big.width=L.cw*S; big.height=L.ch*S; document.body.style.setProperty('--glow',ch.glow); document.getElementById('name').textContent=ch.name; document.getElementById('elem').textContent=ch.enemy?ch.elem:'נינג\'ת ה'+ch.elem; document.querySelectorAll('.thumb').forEach((t,j)=>t.classList.toggle('on',j===i)); }
+document.querySelectorAll('.b').forEach(b=>b.onclick=()=>{ anim=b.dataset.a; document.querySelectorAll('.b').forEach(x=>x.classList.toggle('on',x===b)); });
+document.getElementById('prev').onclick=()=>select((cur+ALL.length-1)%ALL.length); document.getElementById('next').onclick=()=>select((cur+1)%ALL.length);
+select(cur);
+let t0=performance.now();
+function loop(now){ const t=(now-t0)/1000; drawChar(bctx,S,ALL[cur],anim,t); thumbs.forEach((c,i)=>drawChar(c.getContext('2d'),2,ALL[i],'idle',t+i*.4)); requestAnimationFrame(loop); }
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
