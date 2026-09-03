@@ -541,7 +541,7 @@ let SW=800, SH=360, DPR=1, ZOOM=1, ZOOM_BASE=1;
 function resize(){ SW=innerWidth; SH=innerHeight; DPR=Math.min(2,devicePixelRatio||1); cv.width=Math.round(SW*DPR); cv.height=Math.round(SH*DPR); ZOOM=clamp(SH/430,.6,2.2); ZOOM_BASE=ZOOM; }
 addEventListener('resize',resize); resize();
 
-const UI={ stickR:52, mini(){ const mw=Math.min(190,SW*.2), mh=mw*WORLD.h/WORLD.w; return {x:SW-mw-10,y:10,w:mw,h:mh}; }, pause(){ return {x:Math.min(360,SW*.42)+170,y:22}; }, btn(){ return { ability:{x:SW-190,y:SH-44,r:28,c:'#c084fc',l:'✦'}, chi:{x:SW-190,y:SH-108,r:26,c:'#4fb0e8',l:''}, chars:{x:46,y:Math.round(SH*.42),r:22,c:'#fbbf24',l:''} }; } };
+const UI={ stickR:52, mini(){ const mw=Math.min(190,SW*.2), mh=mw*WORLD.h/WORLD.w; return {x:SW-mw-10,y:10,w:mw,h:mh}; }, pause(){ return {x:Math.min(360,SW*.42)+170,y:22}; }, btn(){ return { ability:{x:SW-190,y:SH-44,r:28,c:'#c084fc',l:'✦'}, chi:{x:SW-190,y:SH-126,r:26,c:'#4fb0e8',l:''}, chars:{x:46,y:Math.round(SH*.42),r:22,c:'#fbbf24',l:''} }; } };
 const IN={mx:0,my:0,aim:false,ax:1,ay:0,fire:null,ability:false,dash:false,keys:{},mouse:{x:0,y:0,down:false,aiming:false}};
 const sticks={L:null,R:null}; const touchMap=new Map();
 const KEYMAP={KeyW:'u',ArrowUp:'u',KeyS:'d',ArrowDown:'d',KeyA:'l',ArrowLeft:'l',KeyD:'r',ArrowRight:'r',KeyE:'ability',KeyQ:'chi',Escape:'pause',KeyM:'map'};
@@ -1103,22 +1103,23 @@ function spinjitzu(cx,cy,t,C,phase,k,fade){
     const p=(cy-2-y)/H, w=(W_BOT+(W_TOP-W_BOT)*Math.pow(p,.55))+3;
     for(let kk=0;kk<2;kk++){ const x=cx+(kk?w:-w); if(((x|0)+(y|0))%2===0) px(x,y,C.ring[1]); }
   }
-  const LAY=26;
+  // tornado body — solid fill, no gaps (chi-spinjitzu v2)
+  const LAY=Math.round(H);
   for(let i=0;i<LAY;i++){
     const p=i/(LAY-1);
-    const y=(cy-3)-p*H;
+    const y=Math.round((cy-3)-p*H);
     const w=W_BOT+(W_TOP-W_BOT)*Math.pow(p,.55);
     const ph=spin - p*4.2;
+    rect(cx-w, y, w*2, 1, C.ring[1]);
     for(let kk=0;kk<3;kk++){
       const a=ph+kk*2.09;
       const x1=cx+Math.cos(a)*w, x2=cx+Math.cos(a+1.15)*w;
-      const yy=y+Math.sin(a)*(w*.22);
       const lo=Math.min(x1,x2), len=Math.abs(x2-x1)+1;
       const front=Math.sin(a+.55)>0;
-      rect(lo,yy,len,1, front?C.ring[2]:C.ring[1]);
-      if(front && i%2===0) rect(lo+len*.25,yy,Math.max(1,len*.5),1,C.core);
+      rect(lo,y,len,1, front?C.ring[2]:C.ring[0]);
+      if(front) rect(lo+len*.25,y,Math.max(1,len*.5),1,C.core);
     }
-    if(i%5===0){ const a=ph+1.0; const x1=cx+Math.cos(a)*w*.9; rect(x1,y,2,1,C.ring[0]); }
+    rect(cx-w,y,1,1,C.ring[0]); rect(cx+w-1,y,1,1,C.ring[0]);
   }
   for(let kk=0;kk<3;kk++){
     const a=spin*.7+kk*2.09, w=W_TOP+2+kk;
