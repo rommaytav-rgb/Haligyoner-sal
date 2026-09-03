@@ -795,6 +795,7 @@ function playerUpdate(p,dt){
   // dash
   if(IN.dash){ IN.dash=false; if(p.dashCd<=0&&p.dashT<=0&&!p.hidden){ p.dashT=.32; p.dashCd=1.2; p.inv=.34; p.dashDmg=false; p.dashHit=[]; p.dAng=(IN.mx||IN.my)?Math.atan2(IN.my,IN.mx):p.face; SFX.dash(); burst(p.x,p.y+6,['#ffffff'],8,80,.4,4); CAM.px=Math.cos(p.dAng)*26; CAM.py=Math.sin(p.dAng)*26; if(!SAVE.hints.dodge){ SAVE.hints.dodge=true; showHint(null); } } }
   // attack: released stick / click -> fire (or queue for a moment if on cooldown)
+  const safeNow=inSafeZone(p.x,p.y); if(safeNow&&(IN.fire||IN.ability)){ IN.fire=null; IN.ability=false; p.queued=null; if((p.safeHintT||0)<=0){ showHint('Leave the blue circle to fight'); p.safeHintT=4; } } p.safeHintT=(p.safeHintT||0)-dt;
   if(IN.fire){ const f=IN.fire; IN.fire=null; if(!p.hidden&&p.dashT<=0){ let ang=f.ang; if(f.auto||ang===null){ const t=nearestEnemy(p,p.ch.range+120); ang=t?Math.atan2(t.y-p.y,t.x-p.x):p.face; } p.queued={ang,t:.4}; } }
   if(p.queued){ p.queued.t-=dt; if(p.atkCd<=0&&p.stagger<=0){ fireAttack(p,p.queued.ang); p.queued=null; } else if(p.queued.t<=0) p.queued=null; }
   // ability
@@ -931,7 +932,7 @@ function enterMap(def){
   G.chests=[...WORLD.chests.map(([x,y],i)=>({x,y,kind:'normal',id:def.id+'_c'+i,open:!!SAVE.chests[def.id+'_c'+i]})),...WORLD.golden.map(([x,y],i)=>({x,y,kind:'golden',id:def.id+'_g'+i,open:SAVE.golden[def.id+'_g'+i]===today})),{x:WORLD.secret.x,y:WORLD.secret.y,kind:'secret',id:def.id+'_s',open:!!SAVE.secret[def.id+'_s']}];
   for(const pl of G.piles){ const n=dist(pl,p)<1300?1:2; for(let i=0;i<n;i++) spawnFromPile(pl,true); }
   // rare boss on entry (short timer) or guaranteed after time on the map / in the swamp
-  G.bossPlan={hippo:{t:Math.random()<.2?rnd(25,70):300,spawned:false},croc:{t:Math.random()<.05?rnd(30,90):720,swampOnly:true,spawned:false}};
+  G.bossPlan={hippo:{t:Math.random()<.2?rnd(25,70):300,spawned:false},croc:{t:Math.random()<.12?rnd(30,90):240,swampOnly:true,spawned:false}};   // hippo 20% / 5 min on the map, croc 12% / 4 min in the swamp
   G.arrowTarget=SAVE.hints.kill?null:G.piles.reduce((a,b)=>dist(a,p)<dist(b,p)?a:b);
   explore(p.x,p.y); G.banner={text:def.name.toUpperCase(),sub:'LEVELS '+def.lvl[0]+'–'+def.lvl[1],t:2.6};
   showHint(SAVE.hints.attack?null:'Drag the right stick to aim, release to fire');
@@ -941,7 +942,7 @@ function worldUpdate(dt){
   const p=G.player; G.mapT+=dt;
   if(G.announce){ G.announce.t-=dt; shake(2); const a=G.announce; if(a.type==='croc'&&Math.random()<.6) part(a.x+rnd(-60,60),a.y+rnd(-30,30),0,-40,'#7aa050',.9,5,0,true); if(a.t<=0){ G.announce=null; const e=makeEnemy(a.type,a.x,a.y); e.spawnT=0; collide(e); G.bossPlan[a.type].entity=e; SFX.roar(); shake(14); burst(e.x,e.y,a.type==='croc'?['#3e6b2a','#7aa050','#2f95dd']:['#8a6a4a','#c8a878','#5a3a20'],50,300,1,7,300); } }
   const bp=G.bossPlan; if(!G.boss&&!G.announce&&p.alive){ if(!bp.hippo.spawned&&G.mapT>bp.hippo.t){ bp.hippo.spawned=true; announceBoss('hippo'); } else if(!bp.croc.spawned&&(G.swampT>bp.croc.t||(bp.croc.t<100&&G.mapT>bp.croc.t))){ bp.croc.spawned=true; announceBoss('croc'); } }
-  if(!G.boss&&!G.announce){ if(bp.hippo.entity&&!bp.hippo.entity.alive) bp.hippo={t:G.mapT+300,spawned:false}; if(bp.croc.entity&&!bp.croc.entity.alive) bp.croc={t:G.swampT+720,swampOnly:true,spawned:false}; }   // re-arm only after a defeated boss
+  if(!G.boss&&!G.announce){ if(bp.hippo.entity&&!bp.hippo.entity.alive) bp.hippo={t:G.mapT+300,spawned:false}; if(bp.croc.entity&&!bp.croc.entity.alive) bp.croc={t:G.swampT+240,swampOnly:true,spawned:false}; }   // re-arm only after a defeated boss
   for(const pl of G.piles){ if(pl.refill>0){ pl.refill-=dt; if(pl.refill<=0) pl.count=0; } else if(pl.count>=3) pl.refill=40; const d=dist(pl,p); pl.t-=dt; if(pl.count<3&&pl.alive<3&&d<1000&&d>260&&pl.t<=0){ pl.t=2.5; spawnFromPile(pl,false); } }
   G.enemies=G.enemies.filter(e=>e.alive||(e.bones!==undefined&&e.bones>0));
   G.chasers=G.enemies.filter(e=>e.alive&&e.type==='skel'&&e.ai.state!=='idle').length;
@@ -1036,7 +1037,7 @@ function drawHUD(c,p){
   if(G.boss&&G.boss.alive){ const b=G.boss, w=Math.min(420,SW*.45); c.fillStyle='rgba(8,10,24,.7)'; roundRect(c,SW/2-w/2,70,w,30,10); c.fill(); c.font='900 12px Arial'; c.textAlign='center'; c.fillStyle='#fca5a5'; c.fillText(b.d.name,SW/2,82); c.fillStyle='#3b0a0a'; roundRect(c,SW/2-w/2+8,86,w-16,9,4); c.fill(); c.fillStyle='#ef4444'; roundRect(c,SW/2-w/2+8,86,(w-16)*clamp(b.hp/b.maxHp,0,1),9,4); c.fill(); }
   // minimap
   const mm=UI.mini(), mw=mm.w, mh=mm.h, mx=mm.x, my=mm.y; c.fillStyle='rgba(8,10,24,.7)'; roundRect(c,mx-4,my-4,mw+8,mh+8,10); c.fill(); c.save(); roundRect(c,mx,my,mw,mh,7); c.clip(); c.drawImage(WORLD.mini,mx,my,mw,mh); drawFog(c,mx,my,mw,mh,.82);
-  for(const e of G.enemies) if(e.alive&&(e.boss||isExplored(e.x,e.y))){ c.fillStyle=e.boss?'#ef4444':'#fca5a5'; c.beginPath(); c.arc(mx+e.x/WORLD.w*mw,my+e.y/WORLD.h*mh,e.boss?3.5:1.5,0,TAU); c.fill(); }
+  for(const e of G.enemies) if(e.alive&&(e.boss||isExplored(e.x,e.y))){ c.fillStyle=e.boss?'#a855f7':'#fca5a5'; c.beginPath(); c.arc(mx+e.x/WORLD.w*mw,my+e.y/WORLD.h*mh,e.boss?3.5:1.5,0,TAU); c.fill(); }
   for(const lm of WORLD.landmarks) if(isExplored(lm.x,lm.y)){ c.fillStyle='#fde68a'; c.beginPath(); c.arc(mx+lm.x/WORLD.w*mw,my+lm.y/WORLD.h*mh,2.2,0,TAU); c.fill(); }
   c.fillStyle='#4ade80'; c.beginPath(); c.arc(mx+p.x/WORLD.w*mw,my+p.y/WORLD.h*mh,3,0,TAU); c.fill(); c.strokeStyle='rgba(255,255,255,.5)'; c.lineWidth=1; c.strokeRect(mx+(CAM.x-SW/ZOOM_BASE/2)/WORLD.w*mw,my+(CAM.y-SH/ZOOM_BASE/2)/WORLD.h*mh,SW/ZOOM_BASE/WORLD.w*mw,SH/ZOOM_BASE/WORLD.h*mh); c.restore();
   // banner / announce
@@ -1063,7 +1064,7 @@ function drawFullMap(c,p){
   for(const ch of G.chests) if(!ch.open&&isExplored(ch.x,ch.y)) dot(ch.x,ch.y,ch.kind==='golden'?'#fde047':ch.kind==='secret'?'#a855f7':'#d9a34a',4);
   for(const pl of G.piles) if(isExplored(pl.x,pl.y)) dot(pl.x,pl.y,'#f3eee2',3);
   for(const lm of WORLD.landmarks) if(isExplored(lm.x,lm.y)){ c.font='16px Arial'; c.textAlign='center'; c.fillText(lm.icon,mx+lm.x*sc,my+lm.y*sc+6); c.font='800 10px Arial'; c.lineWidth=3; c.strokeStyle='rgba(0,0,0,.8)'; c.strokeText(lm.name,mx+lm.x*sc,my+lm.y*sc+20); c.fillStyle='#fde68a'; c.fillText(lm.name,mx+lm.x*sc,my+lm.y*sc+20); }
-  if(G.boss&&G.boss.alive) dot(G.boss.x,G.boss.y,'#ef4444',7); dot(p.x,p.y,'#4ade80',6);
+  if(G.boss&&G.boss.alive) dot(G.boss.x,G.boss.y,'#a855f7',7); if(G.announce) dot(G.announce.x,G.announce.y,'#c084fc',6); dot(p.x,p.y,'#4ade80',6);
   c.font='900 18px Arial'; c.textAlign='center'; c.fillStyle='#fff'; c.fillText(G.map.name.toUpperCase()+'  ·  LEVELS '+G.map.lvl[0]+'–'+G.map.lvl[1],SW/2,36); c.font='700 12px Arial'; c.fillStyle='#9aa3c7'; c.fillText('village · chests · bone piles · boss — tap to close',SW/2,SH-14);
 }
 /* =====================================================================
