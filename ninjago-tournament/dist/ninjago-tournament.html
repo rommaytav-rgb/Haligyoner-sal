@@ -3400,7 +3400,7 @@ NT.Scenes.Battle = class Battle {
       this.champion = ch; this.entities.push(ch);
       this.vfx.flash(bx, 40, bz, 120, '#ffffff');
       NT.Audio.play('boss_intro'); NT.Audio.playMusic('boss');
-      this.addBanner('vs', 'VS', cdef.name, 2.4);
+      this.addBanner('vs', 'VS', cdef.name, 2.4); this.waveText = this.plan.boss ? 'ARENA BOSS' : 'CHAMPION';
       this.cam.tzoom = 1.25;
     } else if (p === 'champion') { this.cam.tzoom = 1; this.addBanner('fight', 'FIGHT!', null, 1.0); this.waveText = this.plan.boss ? 'ARENA BOSS' : 'CHAMPION'; }
     else if (p === 'results') { this.buildResult(); }
@@ -3601,7 +3601,7 @@ NT.Scenes.Battle = class Battle {
         if (ch) { NT.Minifig.drawPortrait(ctx, ch.look, rx, y, pr * 0.85, { bg: '#7a2a3a', bg2: '#2a0f1a' }); UI.goldRing(ctx, rx, y, pr * 0.9, pr * 0.12); }
         UI.text(ctx, pl.name, lx, y + pr * 1.2, { size: base * 0.022, color: '#ffe9a0', stroke: '#2a1408', strokeWidth: 3 });
         UI.text(ctx, b.sub, rx, y + pr * 1.2, { size: base * 0.022, color: '#ff9a9a', stroke: '#2a1408', strokeWidth: 3 });
-        if (this.plan.boss) UI.goldText(ctx, 'ARENA BOSS', W / 2, y + pr * 1.25, base * 0.03, { mid: '#ff5a5a', top: '#ffb0b0', bot: '#7a0a0a' });
+        if (this.plan.boss) UI.goldText(ctx, 'ARENA BOSS', W / 2, y + pr * 1.75, base * 0.03, { mid: '#ff5a5a', top: '#ffb0b0', bot: '#7a0a0a' });
       } else if (b.style === 'special') {
         ctx.globalAlpha = outT; const x = U.lerp(W * 0.2, W * 0.5, U.ease.outCubic(inT)); ctx.translate(x, H * 0.2);
         ctx.fillStyle = 'rgba(40,20,90,0.85)'; ctx.transform(1, 0, -0.3, 1, 0, 0); ctx.fillRect(-base * 0.24, -base * 0.03, base * 0.48, base * 0.06); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.translate(x, H * 0.2);
