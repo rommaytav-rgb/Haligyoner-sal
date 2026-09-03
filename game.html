@@ -1039,6 +1039,7 @@ const SPIN={
  SHADE: {ring:['#a040ff','#6a2fbf','#e0b0ff'], core:'#f0d0ff', suit:'#2a1a3a', head:'#2a1a3a', eye:'#c060ff', extra:'wisps',  dur:7.0, rad:1.4, pct:35, tick:5, spd:45, dr:60, regen:2},
 };
 const TILE_PX=32;   // one "tile" in world units
+const SPIN_VIS_RS=1.2/1.4;   // fixed tornado size for all ninjas
 /* ---------- Chi model (verbatim) ---------- */
 function chiOrb(x,y,t,s=1){
   const f=Math.sin(t*3), bob=Math.round(f*2);
@@ -1097,7 +1098,7 @@ function spinjitzu(cx,cy,t,C,phase,k,fade){
     return;
   }
   if(fade===undefined) fade=1;
-  const RS=C.rad/1.4, H=34*(0.8+RS*0.25), TOP=cy-4-H, W_TOP=17*RS*fade, W_BOT=6*RS*fade;
+  const RS=SPIN_VIS_RS, H=34*(0.8+RS*0.25), TOP=cy-4-H, W_TOP=17*RS*fade, W_BOT=6*RS*fade;   // same size for every character (the APOLLO reference shot)
   rect(cx-13,cy-3,27,3,'rgba(0,0,0,.32)');
   for(let y=TOP-2;y<cy-2;y+=1){
     const p=(cy-2-y)/H, w=(W_BOT+(W_TOP-W_BOT)*Math.pow(p,.55))+3;
