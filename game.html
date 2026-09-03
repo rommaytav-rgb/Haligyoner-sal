@@ -229,7 +229,7 @@
   <div class="ver" id="ver">version 1.0.0</div>
 </div>
 
-<div id="ovPause" class="ov"><h2>PAUSED</h2><div class="row" style="flex-direction:column;align-items:center"><div class="btn primary" id="bResume">RESUME</div><div class="btn" id="bSwitch">CHARACTERS</div><div class="btn" id="bQuit">QUIT TO MENU</div></div></div>
+<div id="ovPause" class="ov"><h2>PAUSED</h2><div class="row" style="flex-direction:column;align-items:center"><div class="btn primary" id="bResume">RESUME</div><div class="btn" id="bSwitch">CHARACTERS</div><div class="btn" id="bPauseSettings">SETTINGS</div><div class="btn" id="bQuit">QUIT TO MENU</div></div></div>
 
 <div id="ovDead" class="ov">
   <p class="big red">YOU FELL</p>
@@ -1101,9 +1101,9 @@ $('bUpgrade').onclick=()=>{ const n=SAVE.selected, lv=SAVE.levels[n], cost=LEVEL
 function buildSettings(){ document.querySelectorAll('.sw').forEach(s=>s.classList.toggle('on',!!SAVE.settings[s.dataset.k])); $('dbg').style.display=DEBUG.on?'flex':'none'; }
 document.querySelectorAll('.sw').forEach(s=>s.onclick=()=>{ SAVE.settings[s.dataset.k]=!SAVE.settings[s.dataset.k]; save(); buildSettings(); });
 function leaveChars(){ if(G.charsFrom==='GAME'&&G.map){ const o=G.player, frac=o.hp/o.maxHp; const p=makePlayer(SAVE.selected); p.x=o.x; p.y=o.y; p.hp=p.maxHp*(SAVE.selected===o.name?frac:1); p.face=o.face; G.player=p; G.npcCd=3; setState('PLAYING'); } else setState('MAP_SELECT'); }
-$('bPlay').onclick=()=>setState('MAP_SELECT'); $('bAbout').onclick=()=>setState('ABOUT'); $('bAboutBack').onclick=()=>setState('MENU'); $('bChars').onclick=()=>{ G.charsFrom='MENU'; setState('CHARACTERS'); }; $('bSettings').onclick=()=>setState('SETTINGS');
+$('bPlay').onclick=()=>setState('MAP_SELECT'); $('bAbout').onclick=()=>setState('ABOUT'); $('bAboutBack').onclick=()=>setState('MENU'); $('bChars').onclick=()=>{ G.charsFrom='MENU'; setState('CHARACTERS'); }; $('bSettings').onclick=()=>{ G.settingsFrom='MENU'; setState('SETTINGS'); };
 $('bCharsPlay').onclick=leaveChars; $('bCharsBack').onclick=()=>{ if(G.charsFrom==='GAME'&&G.map) leaveChars(); else setState('MENU'); };
-$('bMapBack').onclick=()=>setState('MENU'); $('bSetBack').onclick=()=>setState('MENU'); $('bDeadMenu').onclick=()=>{ save(); setState('MENU'); }; $('bQuit').onclick=()=>{ save(); setState('MENU'); }; $('bResume').onclick=()=>setState('PLAYING'); $('bSwitch').onclick=()=>{ G.charsFrom='GAME'; setState('CHARACTERS'); };
+$('bMapBack').onclick=()=>setState('MENU'); $('bSetBack').onclick=()=>{ if(G.settingsFrom==='PAUSED'&&G.map){ G.settingsFrom=null; setState('PAUSED'); } else setState('MENU'); }; $('bDeadMenu').onclick=()=>{ save(); setState('MENU'); }; $('bQuit').onclick=()=>{ save(); setState('MENU'); }; $('bResume').onclick=()=>setState('PLAYING'); $('bSwitch').onclick=()=>{ if(!G.player||!G.player.alive) return; G.charsFrom='GAME'; setState('CHARACTERS'); }; $('bPauseSettings').onclick=()=>{ G.settingsFrom='PAUSED'; setState('SETTINGS'); };
 $('bRespawn').onclick=respawn;
 $('bReset').onclick=()=>{ if(confirm('Reset all progress?')){ localStorage.removeItem(SAVE_KEY); location.reload(); } };
 $('ver').onclick=()=>{ DEBUG.taps++; if(DEBUG.taps>=5&&!DEBUG.on){ DEBUG.on=true; buildSettings(); $('ver').textContent='version 1.0.0 · DEBUG (nothing is saved)'; } };
