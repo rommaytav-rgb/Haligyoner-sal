@@ -222,7 +222,7 @@
   <div class="tog"><span>Damage numbers</span><div class="sw" data-k="dmgNums"></div></div>
   <div class="tog"><span>Screen shake</span><div class="sw" data-k="shake"></div></div>
   <div id="dbg">
-    <div class="btn sm" data-dbg="god">God mode</div><div class="btn sm" data-dbg="coins">+1000 gold</div><div class="btn sm" data-dbg="shards">+10 shards</div>
+    <div class="btn sm" data-dbg="god">God mode</div><div class="btn sm" data-dbg="coins">+1000 gold</div><div class="btn sm" data-dbg="shards">+quest progress</div>
     <div class="btn sm" data-dbg="hippo">Spawn hippo</div><div class="btn sm" data-dbg="croc">Spawn crocodile</div><div class="btn sm" data-dbg="unlock">Unlock all</div><div class="btn sm" data-dbg="hitbox">Hitboxes + FPS</div>
   </div>
   <div class="row" style="margin-top:10px"><div class="btn sm" id="bReset">RESET SAVE</div><div class="btn sm" id="bSetBack">BACK</div></div>
@@ -389,10 +389,10 @@ const COIN_URI='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAYAAABV7b
    ===================================================================== */
 const TAU=Math.PI*2;
 const CH={
-  SHADE: {color:'#a855f7',glow:'#e9d5ff',dark:'#5b21b6',role:'Balanced',    hp:140,dmg:16,spd:190,rate:2.6,range:300,kind:'proj',aim:.22,weapon:'shuriken',basic:'Shadow Bolt – piercing purple bolt, medium range', skill:{name:'Shadow Step',cd:8,desc:'Vanish for 1.5s, reappear behind the nearest enemy and land a ×3 critical strike'}},
-  BOREAS:{color:'#7dd3fc',glow:'#f0f9ff',dark:'#0369a1',role:'Control',     hp:100,dmg:13,spd:170,rate:2.4,range:420,kind:'proj',aim:.22,weapon:'staff',   basic:'Ice Ball – long range, slows the target 40% for 2s', skill:{name:'Frost Nova',cd:9,desc:'Freeze every enemy in a radius for 2s. Frozen enemies take double damage'}},
-  APOLLO:{color:'#fb923c',glow:'#fff7ed',dark:'#9a3412',role:'Glass Cannon',hp:95, dmg:20,spd:180,rate:2.2,range:200,kind:'cone',aim:.24,weapon:'torch',   basic:'Flame Cone – close-range burst, more damage up close, burns', skill:{name:'Inferno',cd:7,desc:'Fire explosion around you: 200% damage plus burn 5/s for 3s'}},
-  BECK:  {color:'#22d3ee',glow:'#ecfeff',dark:'#155e75',role:'Fast Striker',hp:130,dmg:14,spd:235,rate:3.2,range:160,kind:'wide',aim:.32,weapon:'trident', basic:'Water Strike – very fast wide splash that hits everything in front', skill:{name:'Tidal Dash',cd:5,desc:'Dash forward dealing 150% damage to everything in the path. +30% speed for 3s'}},
+  SHADE: {color:'#a855f7',glow:'#e9d5ff',dark:'#5b21b6',role:'Balanced',    hp:140,dmg:16,spd:190,rate:2.6,range:300,kind:'proj',aim:.18,weapon:'shuriken',basic:'Shadow Bolt – piercing purple bolt, medium range', skill:{name:'Shadow Step',cd:8,desc:'Vanish for 1.5s, reappear behind the nearest enemy and land a ×3 critical strike'}},
+  BOREAS:{color:'#7dd3fc',glow:'#f0f9ff',dark:'#0369a1',role:'Control',     hp:100,dmg:13,spd:170,rate:2.4,range:420,kind:'proj',aim:.18,weapon:'staff',   basic:'Ice Ball – long range, slows the target 40% for 2s', skill:{name:'Frost Nova',cd:9,desc:'Freeze every enemy in a radius for 2s. Frozen enemies take double damage'}},
+  APOLLO:{color:'#fb923c',glow:'#fff7ed',dark:'#9a3412',role:'Glass Cannon',hp:95, dmg:20,spd:180,rate:2.2,range:200,kind:'cone',aim:.2,weapon:'torch',   basic:'Flame Cone – close-range burst, more damage up close, burns', skill:{name:'Inferno',cd:7,desc:'Fire explosion around you: 200% damage plus burn 5/s for 3s'}},
+  BECK:  {color:'#22d3ee',glow:'#ecfeff',dark:'#155e75',role:'Fast Striker',hp:130,dmg:14,spd:235,rate:3.2,range:160,kind:'wide',aim:.27,weapon:'trident', basic:'Water Strike – very fast wide splash that hits everything in front', skill:{name:'Tidal Dash',cd:5,desc:'Dash forward dealing 150% damage to everything in the path. +30% speed for 3s'}},
   CLAY:  {color:'#d9a34a',glow:'#fef3c7',dark:'#78350f',role:'Tank',        hp:180,dmg:12,spd:160,rate:2.0,range:100,kind:'quake',aim:0,weapon:'dagger',  basic:'Earthquake – slams the ground and hits everything around him, every hit knocks back', skill:{name:'Stone Wall',cd:8,desc:'Ground slam: knockback and 1s stun around you. You take 50% less damage for 3s'}},
 };
 for(const k in CH){ CH[k].name=k; CH[k].sprite=CHARS.findIndex(m=>m.name===k); }
@@ -401,15 +401,24 @@ const COIN_IMG=new Image(); COIN_IMG.src=COIN_URI;
 const LV_MULT=lv=>1+0.08*(lv-1);           // +8% HP and damage per level
 const LEVEL_COST=n=>40*n*n;                 // gold to buy level n
 const MAX_LV=30;
+const XP_COST=n=>30*n*n;                 // XP spent to buy character level n
+const XP_SKEL=5, XP_BOSS=150;
+const XP_NEED=lv=>80*lv*lv;              // total XP needed to reach player level lv+1
+function playerLevel(){ let lv=1; while(lv<99&&SAVE.xpTotal>=XP_NEED(lv)) lv++; return lv; }
+/* unlock quests */
+const QUESTS={CLAY:{text:'Defeat the Hippo boss and 250 skeletons',check:()=>SAVE.bosses.hippo>=1&&SAVE.kills>=250,progress:()=>`Hippo ${Math.min(1,SAVE.bosses.hippo)}/1 · Skeletons ${Math.min(250,SAVE.kills)}/250`,pct:()=>(Math.min(1,SAVE.bosses.hippo)*.5+Math.min(1,SAVE.kills/250)*.5)},
+              BECK:{text:'Defeat the Crocodile boss and 500 skeletons',check:()=>SAVE.bosses.croc>=1&&SAVE.kills>=500,progress:()=>`Crocodile ${Math.min(1,SAVE.bosses.croc)}/1 · Skeletons ${Math.min(500,SAVE.kills)}/500`,pct:()=>(Math.min(1,SAVE.bosses.croc)*.5+Math.min(1,SAVE.kills/500)*.5)},
+              APOLLO:{text:'Unlocked in Map 2 (coming soon)',check:()=>false,progress:()=>'Map 2',pct:()=>0},BOREAS:{text:'Unlocked in Map 2 (coming soon)',check:()=>false,progress:()=>'Map 2',pct:()=>0}};
+function checkUnlocks(){ for(const n in QUESTS) if(!SAVE.unlocked[n]&&QUESTS[n].check()){ SAVE.unlocked[n]=true; const p=G.player; if(p){ floatText(p.x,p.y-100,n+' UNLOCKED!','#ffffff',true,true); burst(p.x,p.y-20,[CH[n].color,CH[n].glow],30,220,1,5,0,true); SFX.levelup(); } } }
 const SHARD_SRC={CLAY:'Shards drop from the Hippo boss (2–3 per kill)',APOLLO:'Shards drop from the Crocodile boss (3–4 per kill)',BECK:'1 shard per golden chest on the beach (5 per map, refill daily)',BOREAS:'1 shard per 50 skeleton kills + 3 in the secret chest',SHADE:'Starting character'};
 /* Maps: level range gate + tier for enemy scaling. Map layout lives in WORLD. */
 const MAPS=[{id:'bone_shore',name:'Bone Shore',lvl:[1,6],tier:0,bosses:'Hippo · Crocodile',desc:'Village in the centre, forest all around, skeleton camps on the eastern beach, river to the north, swamp to the south.'},
             {id:'map2',name:'Map 2',lvl:[6,12],tier:1,bosses:'?',desc:'Coming soon',locked:true},{id:'map3',name:'Map 3',lvl:[12,18],tier:2,bosses:'?',desc:'Coming soon',locked:true}];
 const TIERS=[{hp:1,dmg:1},{hp:2.2,dmg:1.9},{hp:4.5,dmg:3.2},{hp:8,dmg:5}];
 const EN={
-  skel: {hp:30, dmg:5, spd:118,r:14,range:46,coins:[5,8],  gold:[5,8],sprite:0,scale:1.5},
-  hippo:{hp:600,dmg:18,spd:100,r:34,range:74,coins:[40,40],gold:[200,200],boss:true,name:'HIPPO',sprite:1,scale:2.2,shards:['CLAY',2,3]},
-  croc: {hp:500,dmg:16,spd:125,r:34,range:82,coins:[40,40],gold:[250,250],boss:true,name:'CROCODILE',sprite:2,scale:2.2,shards:['APOLLO',3,4]},
+  skel: {hp:36, dmg:5, spd:118,r:14,range:46,coins:[5,8],  gold:[5,8],sprite:0,scale:1.5},
+  hippo:{hp:1200,dmg:21,spd:100,r:34,range:74,coins:[40,40],gold:[200,200],boss:true,name:'HIPPO',sprite:1,scale:2.2,shards:['CLAY',2,3]},
+  croc: {hp:1000,dmg:19,spd:125,r:34,range:82,coins:[40,40],gold:[250,250],boss:true,name:'CROCODILE',sprite:2,scale:2.2,shards:['APOLLO',3,4]},
 };
 const STATUS={
   slow:  {tint:'#60a5fa',mult:{spd:.6,rate:.6}},
@@ -431,7 +440,7 @@ function roundRect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x
    SAVE
    ===================================================================== */
 const SAVE_KEY='elemental_ninjas_world_v3';
-const DEFAULT_SAVE=()=>({gold:0,levels:{SHADE:1,BOREAS:1,APOLLO:1,BECK:1,CLAY:1},unlocked:{SHADE:true},shards:{CLAY:0,BECK:0,BOREAS:0,APOLLO:0},selected:'SHADE',kills:0,chests:{},golden:{},secret:{},bosses:{hippo:0,croc:0},maps:{bone_shore:true},hints:{},settings:{sound:true,vibrate:true,dmgNums:true,shake:true}});
+const DEFAULT_SAVE=()=>({gold:0,levels:{SHADE:1,BOREAS:1,APOLLO:1,BECK:1,CLAY:1},unlocked:{SHADE:true},shards:{CLAY:0,BECK:0,BOREAS:0,APOLLO:0},selected:'SHADE',kills:0,xp:0,xpTotal:0,chests:{},golden:{},secret:{},bosses:{hippo:0,croc:0},maps:{bone_shore:true},hints:{},settings:{sound:true,vibrate:true,dmgNums:true,shake:true}});
 let SAVE=DEFAULT_SAVE();
 try{ const s=JSON.parse(localStorage.getItem(SAVE_KEY)); if(s){ const d=DEFAULT_SAVE(); for(const k in d){ if(s[k]===undefined) continue; if(typeof d[k]==='object'&&d[k]!==null) Object.assign(d[k],s[k]); else d[k]=s[k]; } if(!CH[d.selected]||!d.unlocked[d.selected]) d.selected='SHADE'; SAVE=d; } }catch(e){}
 const DEBUG={on:false,god:false,hitbox:false,taps:0};
@@ -463,11 +472,11 @@ let SW=800, SH=360, DPR=1, ZOOM=1, ZOOM_BASE=1;
 function resize(){ SW=innerWidth; SH=innerHeight; DPR=Math.min(2,devicePixelRatio||1); cv.width=Math.round(SW*DPR); cv.height=Math.round(SH*DPR); ZOOM=clamp(SH/430,.6,2.2); ZOOM_BASE=ZOOM; }
 addEventListener('resize',resize); resize();
 
-const UI={ stickR:52, mini(){ const mw=Math.min(190,SW*.2), mh=mw*WORLD.h/WORLD.w; return {x:SW-mw-10,y:10,w:mw,h:mh}; }, pause(){ return {x:Math.min(360,SW*.42)+170,y:22}; }, btn(){ return { ability:{x:SW-72,y:SH-196,r:30,c:'#c084fc',l:'✦'}, dash:{x:SW-200,y:SH-66,r:27,c:'#38bdf8',l:'➜'}, chars:{x:46,y:Math.round(SH*.42),r:22,c:'#fbbf24',l:''} }; } };
+const UI={ stickR:52, mini(){ const mw=Math.min(190,SW*.2), mh=mw*WORLD.h/WORLD.w; return {x:SW-mw-10,y:10,w:mw,h:mh}; }, pause(){ return {x:Math.min(360,SW*.42)+170,y:22}; }, btn(){ return { ability:{x:SW-72,y:SH-196,r:30,c:'#c084fc',l:'✦'}, chars:{x:46,y:Math.round(SH*.42),r:22,c:'#fbbf24',l:''} }; } };
 const IN={mx:0,my:0,aim:false,ax:1,ay:0,fire:null,ability:false,dash:false,keys:{},mouse:{x:0,y:0,down:false,aiming:false}};
 const sticks={L:null,R:null}; const touchMap=new Map();
-const KEYMAP={KeyW:'u',ArrowUp:'u',KeyS:'d',ArrowDown:'d',KeyA:'l',ArrowLeft:'l',KeyD:'r',ArrowRight:'r',KeyE:'ability',ShiftLeft:'dash',ShiftRight:'dash',Space:'dash',Escape:'pause',KeyM:'map'};
-addEventListener('keydown',e=>{ const k=KEYMAP[e.code]; if(!k) return; e.preventDefault(); audioInit(); if(!IN.keys[k]){ if(k==='pause') togglePause(); if(k==='map') toggleFullMap(); if(k==='ability') IN.ability=true; if(k==='dash') IN.dash=true; } IN.keys[k]=true; });
+const KEYMAP={KeyW:'u',ArrowUp:'u',KeyS:'d',ArrowDown:'d',KeyA:'l',ArrowLeft:'l',KeyD:'r',ArrowRight:'r',KeyE:'ability',Escape:'pause',KeyM:'map'};
+addEventListener('keydown',e=>{ const k=KEYMAP[e.code]; if(!k) return; e.preventDefault(); audioInit(); if(!IN.keys[k]){ if(k==='pause') togglePause(); if(k==='map') toggleFullMap(); if(k==='ability') IN.ability=true; } IN.keys[k]=true; });
 addEventListener('keyup',e=>{ const k=KEYMAP[e.code]; if(k) IN.keys[k]=false; });
 function hitBtn(x,y){ const b=UI.btn(); for(const k in b) if(Math.hypot(x-b[k].x,y-b[k].y)<=b[k].r+10) return k; return null; }
 function pDown(id,x,y){
@@ -763,8 +772,8 @@ function damage(e,amt,src,o){
 }
 function enemyDie(e){
   e.alive=false; G.kills++; const n=rndi(e.d.coins[0],e.d.coins[1]), gold=rndi(e.d.gold[0],e.d.gold[1]), per=Math.ceil(gold/n); for(let i=0;i<n;i++) G.coins.push({x:e.x,y:e.y,vx:rnd(-120,120),vy:rnd(-220,-80),v:per,t:0,fly:false,z:0});
-  if(e.boss){ burst(e.x,e.y-10,['#c8a878','#8a6a4a','#fde047','#ffffff'],80,260,1.4,6,200,true); shake(16); vibrate(300); SFX.death(); floatText(e.x,e.y-60,'BOSS DEFEATED','#fde047',true,true); if(G.boss===e) G.boss=null; SAVE.bosses[e.type]++; const [c,a,b]=e.d.shards; addShard(c,rndi(a,b)); }
-  else { burst(e.x,e.y-10,['#f5f0e6','#d8d0b8','#ffffff'],14,150,.9,4,300); e.bones=1.2; if(e.pile) e.pile.alive--; SAVE.kills++; if(SAVE.kills%50===0) addShard('BOREAS',1); if(!SAVE.hints.kill){ SAVE.hints.kill=true; G.arrowTarget=null; showHint('Try your ability ✦'); } }
+  if(e.boss){ burst(e.x,e.y-10,['#c8a878','#8a6a4a','#fde047','#ffffff'],80,260,1.4,6,200,true); shake(16); vibrate(300); SFX.death(); floatText(e.x,e.y-60,'BOSS DEFEATED  +'+XP_BOSS+' XP','#fde047',true,true); if(G.boss===e) G.boss=null; SAVE.bosses[e.type]++; SAVE.xp+=XP_BOSS; SAVE.xpTotal+=XP_BOSS; checkUnlocks(); }
+  else { burst(e.x,e.y-10,['#f5f0e6','#d8d0b8','#ffffff'],14,150,.9,4,300); e.bones=1.2; if(e.pile) e.pile.alive--; SAVE.kills++; SAVE.xp+=XP_SKEL; SAVE.xpTotal+=XP_SKEL; floatText(e.x,e.y-44,'+'+XP_SKEL+' XP','#c4b5fd'); checkUnlocks(); if(!SAVE.hints.kill){ SAVE.hints.kill=true; G.arrowTarget=null; showHint('Try your ability ✦'); } }
   save();
 }
 function addShard(c,n){ const p=G.player; if(SAVE.unlocked[c]){ SAVE.gold+=n*25; floatText(p.x,p.y-56,'+'+(n*25)+' GOLD ('+c+' already unlocked)','#fde68a',true); return; } SAVE.shards[c]=(SAVE.shards[c]||0)+n; floatText(p.x,p.y-88,'+'+n+' '+c+' SHARD'+(n>1?'S':'')+'  '+Math.min(10,SAVE.shards[c])+'/10',CH[c].color,true,true); SFX.levelup(); burst(p.x,p.y-20,[CH[c].color,CH[c].glow],24,200,1,5,0,true); if(SAVE.shards[c]>=10&&!SAVE.unlocked[c]){ SAVE.unlocked[c]=true; floatText(p.x,p.y-116,c+' UNLOCKED!','#ffffff',true,true); } save(); }
@@ -772,8 +781,8 @@ function playerDie(){ const p=G.player; p.alive=false; p.deadT=1; SFX.death(); s
 function openChest(c){
   c.open=true; SFX.levelup(); burst(c.x,c.y-6,['#fde047','#ffffff','#e0a020'],26,180,.9,4,250,true); const p=G.player;
   if(c.kind==='normal'){ const n=rndi(15,35); SAVE.chests[c.id]=true; SAVE.gold+=n; floatText(c.x,c.y-30,'+'+n+' GOLD','#fde68a',true); }
-  else if(c.kind==='golden'){ SAVE.golden[c.id]=new Date().toDateString(); SAVE.gold+=40; floatText(c.x,c.y-30,'+40 GOLD','#fde68a',true); addShard('BECK',1); }
-  else { SAVE.secret[c.id]=true; SAVE.gold+=120; floatText(c.x,c.y-30,'SECRET CHEST! +120 GOLD','#ffffff',true,true); addShard('BOREAS',3); }
+  else if(c.kind==='golden'){ SAVE.golden[c.id]=new Date().toDateString(); SAVE.gold+=90; SAVE.xp+=40; SAVE.xpTotal+=40; floatText(c.x,c.y-30,'+90 GOLD  +40 XP','#fde68a',true); }
+  else { SAVE.secret[c.id]=true; SAVE.gold+=300; SAVE.xp+=150; SAVE.xpTotal+=150; floatText(c.x,c.y-30,'SECRET CHEST! +300 GOLD  +150 XP','#ffffff',true,true); }
   save();
 }
 
@@ -793,7 +802,7 @@ function playerUpdate(p,dt){
   const sp=Math.hypot(p.vx,p.vy), running=sp>25; p.animT+=dt*(running?clamp(sp/p.spd,.7,1.4)*1.25:1);
   if(running){ const step=Math.floor(p.animT*8)%4; if(step!==p.lastStep&&(step===0||step===2)) footstep(p,zone); p.lastStep=step; }
   // dash
-  if(IN.dash){ IN.dash=false; if(p.dashCd<=0&&p.dashT<=0&&!p.hidden){ p.dashT=.32; p.dashCd=1.2; p.inv=.34; p.dashDmg=false; p.dashHit=[]; p.dAng=(IN.mx||IN.my)?Math.atan2(IN.my,IN.mx):p.face; SFX.dash(); burst(p.x,p.y+6,['#ffffff'],8,80,.4,4); CAM.px=Math.cos(p.dAng)*26; CAM.py=Math.sin(p.dAng)*26; if(!SAVE.hints.dodge){ SAVE.hints.dodge=true; showHint(null); } } }
+  IN.dash=false; if(false){ if(true){ p.dashT=.32; p.dashCd=1.2; p.inv=.34; p.dashDmg=false; p.dashHit=[]; p.dAng=(IN.mx||IN.my)?Math.atan2(IN.my,IN.mx):p.face; SFX.dash(); burst(p.x,p.y+6,['#ffffff'],8,80,.4,4); CAM.px=Math.cos(p.dAng)*26; CAM.py=Math.sin(p.dAng)*26; if(!SAVE.hints.dodge){ SAVE.hints.dodge=true; showHint(null); } } }
   // attack: released stick / click -> fire (or queue for a moment if on cooldown)
   const safeNow=inSafeZone(p.x,p.y); if(safeNow&&(IN.fire||IN.ability)){ IN.fire=null; IN.ability=false; p.queued=null; if((p.safeHintT||0)<=0){ showHint('Leave the blue circle to fight'); p.safeHintT=4; } } p.safeHintT=(p.safeHintT||0)-dt;
   if(IN.fire){ const f=IN.fire; IN.fire=null; if(!p.hidden&&p.dashT<=0){ let ang=f.ang; if(f.auto||ang===null){ const t=nearestEnemy(p,p.ch.range+120); ang=t?Math.atan2(t.y-p.y,t.x-p.x):p.face; } p.queued={ang,t:.4}; } }
@@ -818,7 +827,7 @@ function nearestEnemy(p,range){ let best=null,bd=range; for(const e of liveEnemi
 /* wide reticle: snap the shot to the nearest enemy inside the aim cone */
 function snapAngle(p,ang,half,range){ let best=null,bd=1e9; for(const e of liveEnemies()){ const d=dist(e,p); if(d>range+e.r) continue; const a=Math.atan2(e.y-p.y,e.x-p.x); if(Math.abs(angDiff(ang,a))<=half+Math.atan2(e.r,Math.max(1,d))&&d<bd){ bd=d; best=a; } } return best===null?ang:best; }
 function fireAttack(p,ang){
-  p.atkCd=1/(p.rate*statMult(p,'rate')); p.attackT=.25; p.animT=.25; p.face=ang; if(!SAVE.hints.attack){ SAVE.hints.attack=true; showHint('Swipe or tap ➜ to dash'); } p.combo=(p.combo%3)+1; p.comboT=1; const third=p.combo===3; let dmg=p.dmg*(third?1.5:1);
+  p.atkCd=1/(p.rate*statMult(p,'rate')); p.attackT=.25; p.animT=.25; p.face=ang; if(!SAVE.hints.attack){ SAVE.hints.attack=true; showHint('Try your ability ✦'); } p.combo=(p.combo%3)+1; p.comboT=1; const third=p.combo===3; let dmg=p.dmg*(third?1.5:1);
   const ch=p.ch, cols=[ch.color,ch.glow]; if(ch.kind==='proj') ang=snapAngle(p,ang,ch.aim,ch.range); p.face=ang;
   p.lunge=ch.kind==='quake'?0:third?170:90; p.lungeA=ang; if(third) shake(2); const X=p.x+Math.cos(ang)*8, Y=p.y-4+Math.sin(ang)*8;
   if(p.name==='CLAY'){ const R=ch.range*(third?1.25:1); for(const e of liveEnemies()) if(inCircle(e,p.x,p.y,R)) damage(e,dmg,p,{kb:third?380:260,big:third}); G.ring={x:p.x,y:p.y,r:0,max:R,t:0,col:'#d9a34a'}; burst(p.x,p.y+8,['#d9a34a','#a16207','#78350f','#e7c98a'],third?34:20,260,.7,6,420); shake(third?6:3); vibrate(20); SFX.hit(); noise(.12,.15); }
@@ -1023,11 +1032,12 @@ function render(){
 function drawMenuBg(c){ const g=c.createLinearGradient(0,0,0,SH); g.addColorStop(0,'#1b1f3b'); g.addColorStop(1,'#0a0d1a'); c.fillStyle=g; c.fillRect(0,0,SW,SH); }
 function drawHUD(c,p){
   // top bar
-  const bw=Math.min(360,SW*.42); c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,10,10,bw,54,14); c.fill(); c.strokeStyle='rgba(255,255,255,.12)'; c.lineWidth=1; c.stroke();
+  const bw=Math.min(360,SW*.42); c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,10,10,bw,66,14); c.fill(); c.strokeStyle='rgba(255,255,255,.12)'; c.lineWidth=1; c.stroke();
   c.save(); c.beginPath(); c.arc(38,37,22,0,TAU); c.clip(); c.fillStyle=hexA(p.ch.color,.35); c.fillRect(0,0,80,80); drawSprite(c,CHARS[p.ch.sprite],'idle',G.time,1,1.15,38,60,null); c.restore(); c.strokeStyle=p.ch.color; c.lineWidth=2.5; c.beginPath(); c.arc(38,37,22,0,TAU); c.stroke();
   c.font='900 13px Arial'; c.textAlign='left'; c.fillStyle='#fff'; c.fillText(p.name,68,26); c.font='700 11px Arial'; c.fillStyle='#c4b5fd'; c.fillText('LV '+p.lv,68+c.measureText(p.name).width+14,26);
   const hx=68, hy=33, hw=bw-80; c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,hx,hy,hw,16,8); c.fill(); const hg=c.createLinearGradient(hx,hy,hx,hy+16); hg.addColorStop(0,'#4ade80'); hg.addColorStop(1,'#16a34a'); c.fillStyle=p.hp<p.maxHp*.3?'#ef4444':hg; if(p.hp>0){ roundRect(c,hx+1,hy+1,(hw-2)*clamp(p.hp/p.maxHp,0,1),14,7); c.fill(); }
   c.fillStyle='rgba(255,255,255,.25)'; roundRect(c,hx+3,hy+3,Math.max(0,(hw-6)*clamp(p.hp/p.maxHp,0,1)),4,2); c.fill(); c.font='800 11px Arial'; c.textAlign='center'; c.fillStyle='#fff'; c.fillText(Math.ceil(p.hp)+' / '+Math.ceil(p.maxHp),hx+hw/2,hy+12);
+  { const plv=playerLevel(), lo=plv>1?XP_NEED(plv-1):0, hi=XP_NEED(plv), k=clamp((SAVE.xpTotal-lo)/(hi-lo),0,1); c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,hx,hy+20,hw,8,4); c.fill(); c.fillStyle='#a855f7'; if(k>0){ roundRect(c,hx+1,hy+21,(hw-2)*k,6,3); c.fill(); } c.font='800 9px Arial'; c.textAlign='left'; c.fillStyle='#e9d5ff'; c.fillText('PLAYER LV '+plv+'   XP '+SAVE.xp,hx+4,hy+38); }
   // gold + wave
   c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,bw+20,10,120,26,13); c.fill(); c.drawImage(COIN_IMG,bw+26,13,20,20); c.font='900 13px Arial'; c.textAlign='left'; c.fillStyle='#fde68a'; c.fillText(String(SAVE.gold),bw+50,28);
   c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,bw+20,40,120,22,11); c.fill(); c.font='800 11px Arial'; c.fillStyle='#e2e8f0'; c.fillText(G.map.name.toUpperCase()+'   ☠ '+G.kills,bw+32,55);
@@ -1051,7 +1061,7 @@ function btnUI(c,b,cd,max,ready,pulse){ c.save(); c.fillStyle='rgba(8,10,24,.6)'
   c.font='900 '+(b.r*.9)+'px Arial'; c.textAlign='center'; c.fillStyle=ready?'#fff':'rgba(255,255,255,.5)'; c.fillText(b.l,b.x,b.y+b.r*.32); if(cd>0){ c.font='800 11px Arial'; c.fillStyle='#fff'; c.fillText(cd.toFixed(1),b.x,b.y+b.r+14); } c.restore(); }
 function drawControls(c,p){
   const L=sticks.L, R=sticks.R; stickUI(c,L,L?L.cx:110,L?L.cy:SH-95,UI.stickR); stickUI(c,R,R?R.cx:SW-100,R?R.cy:SH-95,UI.stickR,R&&R.moved?p.ch.color:'rgba(255,255,255,.85)');
-  const b=UI.btn(); btnUI(c,b.ability,Math.max(0,p.abCd),p.ch.skill.cd,p.abCd<=0,true); btnUI(c,b.dash,Math.max(0,p.dashCd),1.2,p.dashCd<=0,false);
+  const b=UI.btn(); btnUI(c,b.ability,Math.max(0,p.abCd),p.ch.skill.cd,p.abCd<=0,true);
   const cb=b.chars, combat=inCombat(); c.save(); c.fillStyle='rgba(8,10,24,.6)'; c.beginPath(); c.arc(cb.x,cb.y,cb.r,0,TAU); c.fill(); c.strokeStyle=combat?'rgba(255,255,255,.25)':cb.c; c.lineWidth=2.5; c.stroke(); c.save(); c.beginPath(); c.arc(cb.x,cb.y,cb.r-2,0,TAU); c.clip(); if(combat) c.globalAlpha=.35; drawSprite(c,CHARS[p.ch.sprite],'idle',G.time,1,.9,cb.x,cb.y+17,null); c.restore(); if(combat){ c.strokeStyle='#ef4444'; c.lineWidth=3; c.beginPath(); c.moveTo(cb.x-12,cb.y-12); c.lineTo(cb.x+12,cb.y+12); c.stroke(); } c.font='800 9px Arial'; c.textAlign='center'; c.fillStyle=combat?'rgba(255,255,255,.4)':'#fde68a'; c.fillText(combat?'IN COMBAT':'CHARACTERS',cb.x,cb.y+cb.r+12); c.restore();
 }
 
@@ -1094,11 +1104,11 @@ function buildCards(){
     d.insertAdjacentHTML('beforeend',`<div class="nm">${n}</div><div class="role">${ch.role}</div>`);
     d.onclick=()=>{ VIEW=n; if(un){ SAVE.selected=n; save(); } buildCards(); }; el.appendChild(d); }
   const n=VIEW, ch=CH[n], lv=SAVE.levels[n], m=LV_MULT(lv), un=!!SAVE.unlocked[n], sh=Math.min(10,SAVE.shards[n]||0), det=$('cdetail'); det.style.setProperty('--c',ch.color);
-  det.innerHTML=`<div class="dn">${n}</div><div style="flex:1"><div class="ds"><span>HP <b>${Math.round(ch.hp*m)}</b></span><span>DMG <b>${Math.round(ch.dmg*m)}</b></span><span>SPD <b>${Math.round(ch.spd/20)}</b></span><span>RATE <b>${ch.rate}/s</b></span>${un?'':`<span style="color:#fcd34d">SHARDS <b>${sh}/10</b></span>`}</div><div class="dt">⚔ ${ch.basic}<br>✦ <b>${ch.skill.name}</b> (${ch.skill.cd}s) – ${ch.skill.desc}${un?'':'<br>🔒 '+SHARD_SRC[n]}</div>${un?'':`<div class="shardbar" style="--c:${ch.color}"><i style="width:${sh*10}%"></i></div>`}</div>`;
-  const s=SAVE.selected, slv=SAVE.levels[s], cost=LEVEL_COST(slv+1), b=$('bUpgrade'); b.classList.toggle('dis',slv>=MAX_LV||SAVE.gold<cost); b.textContent=slv>=MAX_LV?s+' IS MAX LEVEL':`UPGRADE ${s} · LV ${slv+1} · ${cost} GOLD`;
+  det.innerHTML=`<div class="dn">${n}</div><div style="flex:1"><div class="ds"><span>HP <b>${Math.round(ch.hp*m)}</b></span><span>DMG <b>${Math.round(ch.dmg*m)}</b></span><span>SPD <b>${Math.round(ch.spd/20)}</b></span><span>RATE <b>${ch.rate}/s</b></span>${un?'':`<span style="color:#fcd34d">QUEST <b>${QUESTS[n].progress()}</b></span>`}</div><div class="dt">⚔ ${ch.basic}<br>✦ <b>${ch.skill.name}</b> (${ch.skill.cd}s) – ${ch.skill.desc}${un?'':'<br>🔒 '+QUESTS[n].text}</div>${un?'':`<div class="shardbar" style="--c:${ch.color}"><i style="width:${Math.round(QUESTS[n].pct()*100)}%"></i></div>`}</div>`;
+  const s=SAVE.selected, slv=SAVE.levels[s], cost=LEVEL_COST(slv+1), xc=XP_COST(slv+1), b=$('bUpgrade'); b.classList.toggle('dis',slv>=MAX_LV||SAVE.gold<cost||SAVE.xp<xc); b.textContent=slv>=MAX_LV?s+' IS MAX LEVEL':`UPGRADE ${s} · LV ${slv+1} · ${cost} GOLD + ${xc} XP`; $('goldChars').textContent=SAVE.gold+' gold · '+SAVE.xp+' XP · player LV '+playerLevel();
   $('bCharsPlay').textContent=G.charsFrom==='GAME'?'BACK TO GAME':'CHOOSE MAP';
 }
-$('bUpgrade').onclick=()=>{ const n=SAVE.selected, lv=SAVE.levels[n], cost=LEVEL_COST(lv+1); if(lv>=MAX_LV||SAVE.gold<cost) return; SAVE.gold-=cost; SAVE.levels[n]=lv+1; save(); SFX.levelup(); buildCards(); };
+$('bUpgrade').onclick=()=>{ const n=SAVE.selected, lv=SAVE.levels[n], cost=LEVEL_COST(lv+1), xc=XP_COST(lv+1); if(lv>=MAX_LV||SAVE.gold<cost||SAVE.xp<xc) return; SAVE.gold-=cost; SAVE.xp-=xc; SAVE.levels[n]=lv+1; save(); SFX.levelup(); buildCards(); };
 function buildSettings(){ document.querySelectorAll('.sw').forEach(s=>s.classList.toggle('on',!!SAVE.settings[s.dataset.k])); $('dbg').style.display=DEBUG.on?'flex':'none'; }
 document.querySelectorAll('.sw').forEach(s=>s.onclick=()=>{ SAVE.settings[s.dataset.k]=!SAVE.settings[s.dataset.k]; save(); buildSettings(); });
 function leaveChars(){ if(G.charsFrom==='GAME'&&G.map){ const o=G.player, frac=o.hp/o.maxHp; const p=makePlayer(SAVE.selected); p.x=o.x; p.y=o.y; p.hp=p.maxHp*(SAVE.selected===o.name?frac:1); p.face=o.face; G.player=p; G.npcCd=3; setState('PLAYING'); } else setState('MAP_SELECT'); }
@@ -1110,7 +1120,7 @@ $('bReset').onclick=()=>{ if(confirm('Reset all progress?')){ localStorage.remov
 $('ver').onclick=()=>{ DEBUG.taps++; if(DEBUG.taps>=5&&!DEBUG.on){ DEBUG.on=true; buildSettings(); $('ver').textContent='version 1.0.0 · DEBUG (nothing is saved)'; } };
 document.querySelectorAll('[data-dbg]').forEach(b=>b.onclick=()=>{ const k=b.dataset.dbg;
   if(k==='god'){ DEBUG.god=!DEBUG.god; b.textContent='God mode '+(DEBUG.god?'ON':'OFF'); }
-  else if(k==='coins') SAVE.gold+=1000; else if(k==='shards'){ for(const c in SAVE.shards){ SAVE.shards[c]+=10; if(SAVE.shards[c]>=10) SAVE.unlocked[c]=true; } }
+  else if(k==='coins'){ SAVE.gold+=1000; SAVE.xp+=1000; SAVE.xpTotal+=1000; } else if(k==='shards'){ SAVE.kills+=250; SAVE.bosses.hippo++; SAVE.bosses.croc++; checkUnlocks(); }
   else if(k==='unlock') ORDER.forEach(n=>SAVE.unlocked[n]=true);
   else if(k==='hitbox'){ DEBUG.hitbox=!DEBUG.hitbox; b.textContent='Hitboxes + FPS '+(DEBUG.hitbox?'ON':'OFF'); }
   else if(k==='hippo'||k==='croc'){ if(!G.map){ alert('Enter a map first, then open Settings from the pause menu.'); return; } const p=G.player; const e=makeEnemy(k,p.x+220,p.y); e.spawnT=0; collide(e); SFX.roar(); setState('PLAYING'); }
