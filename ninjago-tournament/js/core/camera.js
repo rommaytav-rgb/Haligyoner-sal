@@ -19,7 +19,7 @@ NT.Camera = class Camera {
     this.cx = W / 2; this.cy = H * 0.5;
     // scale so that ~880 world units fit the screen width on landscape, ~620 on portrait
     const landscape = W >= H;
-    const fitW = landscape ? 1250 : 820;
+    const fitW = landscape ? 1340 : 860;
     this.baseFocal = (W / fitW) * this.L;
     this.recalc();
   }
