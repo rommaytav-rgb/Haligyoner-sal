@@ -711,7 +711,7 @@ const WORLD={w:3200,h:2000,land:{x0:100,y0:100,x1:2900,y1:1900},corner:220,
     .concat([[1130,1740],[1440,1480],[2060,1730],[370,1770],[2760,1740],[1010,1490],[1740,1470]].map(([x,y])=>({x,y,k:'nest'})))
     .concat([[2790,220],[2810,1140],[2530,1050],[2850,1520],[2690,1300],[2910,1340],[2830,950]].map(([x,y])=>({x,y,k:'wreck'}))),
   chests:[[1350,700],[1880,760],[1000,1100],[2150,1100],[1150,1450],[1950,1500],[700,900],[2350,650],[500,1250],[1700,1600],[1100,600],[2200,1800]],
-  golden:[[2600,260],[2780,600],[2760,860],[2800,1300],[2640,1780]],
+  golden:[[2600,260],[2780,600],[2760,860],[2800,1300],[2560,1700]],
   hippoLairs:[[500,600],[1200,600],[1950,590],[2550,600]], crocLairs:[[700,1650],[1600,1760],[2450,1620]],
   playerSpawn:{x:1600,y:1030}, paths:[], rocks:[], trees:[], logs:[], bushes:[], patches:[], pebbles:[], flowers:[], shells:[], riverRocks:[], deadPlants:[], planks:[], campfires:[],
   colliders:[], cgrid:new Map(), CG:200, pathGrid:null, PG:32, chunks:new Map(), CS:640, mini:null, explored:null, FOG:64, ex:0, ey:0};
@@ -1016,7 +1016,7 @@ function playerUpdate(p,dt){
   if(p.hidden){ p.hideT-=dt; part(p.x+rnd(-14,14),p.y+rnd(-16,6),0,-30,'#a855f7',.5,5,0,true); if(p.hideT<=0) shadeReappear(p); }
   // coins pickup
   for(let i=G.coins.length-1;i>=0;i--){ const c=G.coins[i]; c.t+=dt; if(!c.fly){ c.x+=c.vx*dt; c.y+=c.vy*dt; c.vy+=600*dt; c.vx*=Math.pow(.05,dt); if(c.t>.14) c.fly=true; } else { const dx=p.x-c.x, dy=p.y-8-c.y, d=Math.hypot(dx,dy)||1; { const s=Math.min(d,(420+c.t*1100)*dt); c.x+=dx/d*s; c.y+=dy/d*s; } if(d<10){ G.coins.splice(i,1); SAVE.gold+=c.v; SFX.coin(); part(p.x,p.y-20,0,-40,'#fde047',.4,4,0,true); } } }
-  for(const c of G.chests) if(!c.open&&Math.hypot(c.x-p.x,c.y-p.y)<32) openChest(c);
+  for(const c of G.chests) if(!c.open&&Math.hypot(c.x-p.x,c.y-p.y)<40) openChest(c);
   explore(p.x,p.y);
 }
 /* footstep effects per surface (a few pooled particles per step) */
