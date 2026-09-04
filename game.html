@@ -1417,7 +1417,7 @@ function spinUpdate(p,dt){
 }
 function spinTick(p,C,n){
   const R=C.rad*TILE_PX; let base=p.dmg*C.pct/100;
-  for(const e of liveEnemies()){ if(!inCircle(e,p.x,p.y,R)) continue; let dmg=base, o={kb:C.extra==='rocks'?900:260,noHitstop:true,noBlock:true,spin:true,color:C.ring[2]};
+  for(const e of liveEnemies()){ if(!inCircle(e,p.x,p.y,R)) continue; let dmg=base, o={noKb:true,kb:0,noHitstop:true,noBlock:true,spin:true,color:C.ring[2]};   // Spinjitzu never pushes enemies: they stay in place
     if(e.boss) dmg*=.5;
     if(p.name==='SHADE'&&n%5===0){ dmg*=2; o.crit=true; }
     if(p.name==='BECK'&&Math.random()<.2){ damage(e,dmg,p,o); }
