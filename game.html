@@ -1107,7 +1107,7 @@ const WAVE_DMG=30;   /* every wave, anywhere, costs exactly 30 */
 function damage(e,amt,src,o){
   o=o||{}; if(!e.alive||e.spawnT>0) return 0;
   if(e.kind==='enemy'&&e.hidden) return 0;   // a submerged boss cannot be hit
-  if(e.kind==='player'){ if((e.inv>0&&!o.sure)||e.hidden||DEBUG.god||inSafeZone(e.x,e.y)) return 0; if(spinBusy(e)||e.spinGrace>0) return 0; if(e.status.shield&&!o.flat) amt*=.5; }   // during Spinjitzu (flash + spin) the ninja cannot lose HP else if(e.status.freeze) amt*=2;
+  if(e.kind==='player'){ if((e.inv>0&&!o.sure)||e.hidden||DEBUG.god||inSafeZone(e.x,e.y)) return 0; if(spinBusy(e)||e.spinGrace>0||e.abGrace>0) return 0; if(e.status.shield&&!o.flat) amt*=.5; }   // during Spinjitzu (flash + spin) the ninja cannot lose HP else if(e.status.freeze) amt*=2;
   if(e.kind==='enemy'&&src&&!o.noBlock){
     if(e.type==='priest'&&o.basic&&e.dodgeCd<=0&&Math.random()<.3){ e.dodgeCd=.4; const a=Math.atan2(src.y-e.y,src.x-e.x)+(Math.random()<.5?1:-1)*Math.PI/2; e.kvx+=Math.cos(a)*460; e.kvy+=Math.sin(a)*460; floatText(e.x,e.y-34,'DODGE','#a3e635'); SFX.dodge(); burst(e.x,e.y+6,['#8ab08a'],4,60,.3,3); return 0; }   // Insect Priest sidesteps a basic attack (short hop, 0.4 s cooldown)
     if(e.type==='pirate'&&!o.spin&&fromFront(e,src)) amt*=.7;   // heavy coat: 30% less damage from the front (behind / Spinjitzu bypass it)
@@ -1158,7 +1158,7 @@ function openChest(c){
 /* ---------- player ---------- */
 function playerUpdate(p,dt){
   if(!p.alive){ p.deadT-=dt; if(p.deadT<=0&&G.state==='PLAYING') onPlayerDead(); return; }
-  p.flash=Math.max(0,p.flash-dt); p.stagger=Math.max(0,p.stagger-dt); p.inv=Math.max(0,p.inv-dt); p.atkCd-=dt; p.dashCd-=dt; p.abCd-=dt; p.comboT-=dt; p.attackT=Math.max(0,p.attackT-dt); tickStatus(p,dt); if(p.comboT<=0) p.combo=0;
+  p.flash=Math.max(0,p.flash-dt); p.stagger=Math.max(0,p.stagger-dt); p.inv=Math.max(0,p.inv-dt); p.abGrace=Math.max(0,(p.abGrace||0)-dt); p.atkCd-=dt; p.dashCd-=dt; p.abCd-=dt; p.comboT-=dt; p.attackT=Math.max(0,p.attackT-dt); tickStatus(p,dt); if(p.comboT<=0) p.combo=0;
   spinUpdate(p,dt); chiUpdate(p,dt); groundFxUpdate(dt); const flash=p.spin&&p.spin.state==='FLASH';
   const zone=zoneOf(p.x,p.y); if(zone==='swamp') G.swampT+=dt; const max=p.spd*statMult(p,'spd')*terrainMod(p.x,p.y)*spinSpeedMul(p), canMove=p.stagger<=0&&p.dashT<=0&&p.jumpT<=0&&!p.hidden&&!flash&&!arenaBusy()&&!(p.dunk>0);
   p.kbT=(p.kbT||0)-dt; if(p.dunk>0){ p.dunk-=dt; p.vx=p.vy=0; if(Math.random()<.5) part(p.x+rnd(-12,12),p.y+rnd(0,8),0,-25,'#9ad0c0',.5,3,0,true); if(p.dunk<=0){ const n=WORLD.arena.nearestWalk(p.x,p.y); p.x=n.x; p.y=n.y; p.lx=n.x; p.ly=n.y; p.inv=.6; burst(p.x,p.y+6,['#9ad0c0','#ffffff'],10,90,.4,3,100); } }   // dunked: pulled back onto the nearest floor after a second
@@ -1216,12 +1216,12 @@ function fireAttack(p,ang){
 function slashFx(p,ang,r,half,cols){ for(let i=0;i<14;i++){ const a=ang+rnd(-half,half), d=rnd(r*.4,r); part(p.x+Math.cos(a)*d,p.y-6+Math.sin(a)*d,Math.cos(a)*60,Math.sin(a)*60,cols[i%2],.22,5,0,true); } G.slash={x:p.x,y:p.y-4,a:ang,r,h:half,t:.16,col:cols[0]}; }
 const ABILITY={
   CLAY(p){ shake(9); addStatus(p,'shield',3); for(const e of liveEnemies()) if(inCircle(e,p.x,p.y,150)){ damage(e,p.dmg*1.2,p,{kb:420,big:true}); addStatus(e,'stun',1); } burst(p.x,p.y+6,['#d9a34a','#a16207','#78350f'],46,320,.9,7,400); G.ring={x:p.x,y:p.y,r:0,max:150,t:0,col:'#d9a34a'}; floatText(p.x,p.y-50,'STONE WALL','#fde68a',true); },
-  BECK(p){ p.dAng=IN.aim?Math.atan2(IN.ay,IN.ax):((IN.mx||IN.my)?Math.atan2(IN.my,IN.mx):p.face); p.face=p.dAng; p.dashT=.3; p.dashDmg=true; p.dashHit=[]; p.inv=.32; addStatus(p,'haste',3); floatText(p.x,p.y-50,'TIDAL DASH','#cffafe',true); },
+  BECK(p){ p.dAng=IN.aim?Math.atan2(IN.ay,IN.ax):((IN.mx||IN.my)?Math.atan2(IN.my,IN.mx):p.face); p.face=p.dAng; p.dashT=.3; p.dashDmg=true; p.dashHit=[]; p.inv=2.3; p.abGrace=2.3; addStatus(p,'haste',3); floatText(p.x,p.y-50,'TIDAL DASH','#cffafe',true); },
   BOREAS(p){ for(const e of liveEnemies()) if(inCircle(e,p.x,p.y,220)){ addStatus(e,'freeze',2); e.vx=e.vy=0; burst(e.x,e.y-10,['#e0f2fe','#ffffff'],10,90,.7,4,0,true); } for(let i=0;i<60;i++){ const a=i/60*TAU; part(p.x,p.y,Math.cos(a)*420,Math.sin(a)*420,['#bae6fd','#ffffff','#7dd3fc'][i%3],.5,6,0,true); } G.ring={x:p.x,y:p.y,r:0,max:220,t:0,col:'#bae6fd'}; shake(4); floatText(p.x,p.y-50,'FROST NOVA','#e0f2fe',true); },
   APOLLO(p){ for(const e of liveEnemies()) if(inCircle(e,p.x,p.y,140)){ damage(e,p.dmg*2,p,{kb:260,big:true}); addStatus(e,'burn',3,{dps:5}); } burst(p.x,p.y-6,['#fb923c','#fde047','#ef4444','#ffffff'],70,380,.8,8,-120,true); G.ring={x:p.x,y:p.y,r:0,max:140,t:0,col:'#fb923c'}; shake(7); floatText(p.x,p.y-50,'INFERNO','#fff7ed',true); },
   SHADE(p){ p.hidden=true; p.hideT=1.5; p.inv=1.6; burst(p.x,p.y-10,['#a855f7','#5b21b6','#e9d5ff'],30,160,.8,6,0,true); floatText(p.x,p.y-50,'SHADOW STEP','#e9d5ff',true); },
 };
-function shadeReappear(p){ p.hidden=false; const t=nearestEnemy(p,520); if(t){ const bx=t.x-Math.cos(t.face)*(t.r+p.r+6), by=t.y-Math.sin(t.face)*(t.r+p.r+6); p.x=bx; p.y=by; collide(p); p.face=Math.atan2(t.y-p.y,t.x-p.x); damage(t,p.dmg*3,p,{kb:320,crit:true}); p.attackT=.25; p.animT=.25; slashFx(p,p.face,60,1,[p.ch.color,p.ch.glow]); shake(6); } burst(p.x,p.y-10,['#a855f7','#5b21b6','#e9d5ff'],30,160,.8,6,0,true); }
+function shadeReappear(p){ p.hidden=false; p.inv=Math.max(p.inv,2); p.abGrace=2; const t=nearestEnemy(p,520); if(t){ const bx=t.x-Math.cos(t.face)*(t.r+p.r+6), by=t.y-Math.sin(t.face)*(t.r+p.r+6); p.x=bx; p.y=by; collide(p); p.face=Math.atan2(t.y-p.y,t.x-p.x); damage(t,p.dmg*3,p,{kb:320,crit:true}); p.attackT=.25; p.animT=.25; slashFx(p,p.face,60,1,[p.ch.color,p.ch.glow]); shake(6); } burst(p.x,p.y-10,['#a855f7','#5b21b6','#e9d5ff'],30,160,.8,6,0,true); }
 
 /* ---------- projectiles / particles / floaters ---------- */
 function projUpdate(q,dt,p){
