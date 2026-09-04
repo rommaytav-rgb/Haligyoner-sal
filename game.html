@@ -1294,7 +1294,7 @@ function paintMini(){ const W=WORLD, m=document.createElement('canvas'); m.width
 /* =====================================================================
    ENTITIES + COMBAT — player, attacks, abilities, projectiles, particles
    ===================================================================== */
-const G={state:'MENU',time:0,hitstop:0,player:null,enemies:[],projs:[],parts:[],floats:[],coins:[],spawners:[],chests:[],chis:[],hearts:[],groundFx:[],kills:0,boss:null,bossPlan:null,banner:null,announce:null,shake:0,fps:0,frames:0,fpsT:0,map:null,mapT:0,swampT:0,fullMap:false,arrowTarget:null,hintT:0,npcCd:0,charsFrom:'MENU',camZoom:1,levelFx:null,slowmo:0,hudGold:0,plv:1,bossRollT:0,lastBossDeath:-999,bossMark:null};
+const G={state:'MENU',time:0,hitstop:0,player:null,enemies:[],projs:[],parts:[],floats:[],coins:[],spawners:[],chests:[],chis:[],groundFx:[],kills:0,boss:null,bossPlan:null,banner:null,announce:null,shake:0,fps:0,frames:0,fpsT:0,map:null,mapT:0,swampT:0,fullMap:false,arrowTarget:null,hintT:0,npcCd:0,charsFrom:'MENU',camZoom:1,levelFx:null,slowmo:0,hudGold:0,plv:1,bossRollT:0,lastBossDeath:-999,bossMark:null};
 const CAM={x:0,y:0,sx:0,sy:0};
 function shake(v){ if(SAVE.settings.shake) G.shake=Math.max(G.shake,v); }
 function hitstop(ms){ G.hitstop=Math.max(G.hitstop,ms/1000); }
@@ -1340,7 +1340,6 @@ function damage(e,amt,src,o){
   if(src&&!o.noKb&&!(e.kind==='player'&&spinBusy(e))){ if(e.boss) e.flinch=.14; else { const d=Math.max(1,dist(src,e)), kb=o.kb!==undefined?o.kb:180; e.kbx+=(e.x-src.x)/d*kb; e.kby+=(e.y-src.y)/d*kb; if(e.kind==='player'&&kb>=200) e.kbT=.35; } }   // bosses are too heavy to push: they only flinch
   if(SAVE.settings.dmgNums&&(!o.silent||amt>=1)) floatText(e.x+rnd(-6,6),e.y-e.r-18,String(amt),o.color||(e.kind==='player'?'#f87171':o.crit?'#fde047':'#ffffff'),o.big||o.crit,o.crit);
   if(e.kind==='enemy'&&!e.boss&&!o.silent&&!o.noHitstop){ hitstop(o.crit||o.big?60:40); shake(o.big||o.crit?5:1.3); }   // no hit-stop on bosses: flashes and numbers only
-  if(e.kind==='enemy'&&e.boss&&e.hp>0) bossHeartCheck(e);
   if(e.hp<=0){ e.hp=0; e.kind==='player'?playerDie():enemyDie(e); }
   return amt;
 }
@@ -1349,7 +1348,7 @@ function enemyDie(e){
   const per=Math.ceil(gold/n); for(let i=0;i<n;i++) G.coins.push({x:e.x,y:e.y,vx:rnd(-120,120),vy:rnd(-220,-80),v:per,t:0,fly:false,z:0});
   if(e.boss&&WORLD.arena){ if(G.boss===e) G.boss=null; arenaWin(e); return; }   // Boss Fight: separate rewards, nothing counts toward the open world
   if(e.boss){ e.deadT=3.2; burst(e.x,e.y-10,['#c8a878','#8a6a4a','#fde047','#ffffff'],80,260,1.4,6,200,true); shake(16); vibrate(300); SFX.death(); const bxp=e.d.xpBoss||XP_BOSS; floatText(e.x,e.y-60,'BOSS DEFEATED  +'+bxp+' XP','#fde047',true,true); if(G.boss===e) G.boss=null; G.lastBossDeath=G.time; G.bossMark=null; SAVE.bosses[e.type]=(SAVE.bosses[e.type]||0)+1; SAVE.xp+=bxp; SAVE.xpTotal+=bxp; dropChi(e.x,e.y,2); keyDrop(e.x,e.y); if(e.d.shards){ const n=rndi(e.d.shards[0],e.d.shards[1]); SAVE.shards=SAVE.shards||{}; SAVE.shards.BECK=(SAVE.shards.BECK||0)+n; floatText(e.x,e.y-90,'+'+n+' BECK SHARDS','#22d3ee',true); burst(e.x,e.y-20,['#22d3ee','#ecfeff'],20,180,.9,4,0,true); } checkUnlocks(); checkLevelUp(); }
-  else { deathFx(e); e.deadT=1.4; if(e.crew) dropHeart(e.x,e.y,1); if(e.spawner) e.spawner.alive--; SAVE.kills++; if(!e.summoned&&(Math.random()<.005||DEBUG.forceChi)) dropChi(e.x,e.y,1); { const p=G.player; if(p&&p.name==='SHADE'&&spinning(p)&&e.spinHitT===G.time&&Math.random()<.25) G.coins.push({x:e.x,y:e.y,vx:rnd(-80,80),vy:-120,v:5,t:0,fly:false,z:0}); } const xp=e.d.xp||XP_KILL; SAVE.xp+=xp; SAVE.xpTotal+=xp; floatText(e.x,e.y-44,'+'+xp+' XP','#c4b5fd'); if(!e.summoned){ SAVE.pity=(SAVE.pity||0)+1; if(Math.random()<.02||SAVE.pity>=80) keyDrop(e.x,e.y); } checkUnlocks(); checkLevelUp(); if(!SAVE.hints.kill){ SAVE.hints.kill=true; G.arrowTarget=null; showHint('Try your ability ✦'); } }
+  else { deathFx(e); e.deadT=1.4; if(e.spawner) e.spawner.alive--; SAVE.kills++; if(!e.summoned&&(Math.random()<.005||DEBUG.forceChi)) dropChi(e.x,e.y,1); { const p=G.player; if(p&&p.name==='SHADE'&&spinning(p)&&e.spinHitT===G.time&&Math.random()<.25) G.coins.push({x:e.x,y:e.y,vx:rnd(-80,80),vy:-120,v:5,t:0,fly:false,z:0}); } const xp=e.d.xp||XP_KILL; SAVE.xp+=xp; SAVE.xpTotal+=xp; floatText(e.x,e.y-44,'+'+xp+' XP','#c4b5fd'); if(!e.summoned){ SAVE.pity=(SAVE.pity||0)+1; if(Math.random()<.02||SAVE.pity>=80) keyDrop(e.x,e.y); } checkUnlocks(); checkLevelUp(); if(!SAVE.hints.kill){ SAVE.hints.kill=true; G.arrowTarget=null; showHint('Try your ability ✦'); } }
   save();
 }
 /* Chi key: 2% from any common enemy, always from a boss, pity after 80 kills; capped at 3 */
@@ -1380,7 +1379,7 @@ function openChest(c){
 function playerUpdate(p,dt){
   if(!p.alive){ p.deadT-=dt; if(p.deadT<=0&&G.state==='PLAYING') onPlayerDead(); return; }
   p.flash=Math.max(0,p.flash-dt); p.stagger=Math.max(0,p.stagger-dt); p.inv=Math.max(0,p.inv-dt); p.abGrace=Math.max(0,(p.abGrace||0)-dt); p.atkCd-=dt; p.dashCd-=dt; p.abCd-=dt; p.comboT-=dt; p.attackT=Math.max(0,p.attackT-dt); tickStatus(p,dt); if(p.comboT<=0) p.combo=0;
-  spinUpdate(p,dt); chiUpdate(p,dt); heartsUpdate(p,dt); groundFxUpdate(dt); const flash=p.spin&&p.spin.state==='FLASH';
+  spinUpdate(p,dt); chiUpdate(p,dt); groundFxUpdate(dt); const flash=p.spin&&p.spin.state==='FLASH';
   const zone=zoneOf(p.x,p.y); if(zone==='swamp') G.swampT+=dt; const max=p.spd*statMult(p,'spd')*terrainMod(p.x,p.y)*spinSpeedMul(p), canMove=p.stagger<=0&&p.dashT<=0&&p.jumpT<=0&&!p.hidden&&!flash&&!arenaBusy()&&!(p.dunk>0)&&!p.drag;
   if(p.drag){ const d=p.drag; d.t-=dt; const b=G.boss; if(b&&b.alive){ const tx=b.x+Math.cos(b.face)*(b.r+p.r+4), ty=b.y+Math.sin(b.face)*(b.r+p.r+4), k=1-Math.pow(.0005,dt); p.x=lerp(p.x,tx,k); p.y=lerp(p.y,ty,k); } p.vx=p.vy=0; p.kbx=p.kby=0; if(Math.random()<.5) part(p.x+rnd(-10,10),p.y+rnd(-10,4),rnd(-30,30),-40,'#9aa0aa',.3,2); if(d.t<=0) p.drag=null; }   /* hooked by the anchor: dragged to the captain for 0.4 s */
   p.kbT=(p.kbT||0)-dt; if(p.dunk>0){ p.dunk-=dt; p.vx=p.vy=0; if(Math.random()<.5) part(p.x+rnd(-12,12),p.y+rnd(0,8),0,-25,'#9ad0c0',.5,3,0,true); if(p.dunk<=0){ const n=WORLD.arena.nearestWalk(p.x,p.y); p.x=n.x; p.y=n.y; p.lx=n.x; p.ly=n.y; p.inv=.6; burst(p.x,p.y+6,['#9ad0c0','#ffffff'],10,90,.4,3,100); } }   // dunked: pulled back onto the nearest floor after a second
@@ -1609,7 +1608,7 @@ function spawnFrom(sp,instant){ const p=G.player, S=SPAWN[sp.k]; if(G.enemies.fi
   const a=Math.random()*TAU; const e=makeEnemy(S.type,sp.x+Math.cos(a)*44,sp.y+Math.sin(a)*44); e.spawner=sp; e.spawnT=instant?0:.6; collide(e); keepOutOfSafe(e,e.r+4); e.ai.home={x:e.x,y:e.y}; sp.count++; sp.alive++;
   if(!instant) burst(e.x,e.y,sp.k==='mush'?['#7a4aaa','#8ac06a']:sp.k==='nest'?['#2f6b52','#c8202a']:['#c9a24a','#8ab0a0'],10,90,.6,4,200); }
 function enterMap(def){
-  G.map=def; buildWorld(7); Object.assign(G,{time:0,hitstop:0,enemies:[],projs:[],parts:[],floats:[],coins:[],chis:[],hearts:[],groundFx:[],boss:null,banner:null,announce:null,shake:0,slash:null,ring:null,kills:0,mapT:0,swampT:0,fullMap:false,npcCd:2,lostGold:0,camZoom:1});
+  G.map=def; buildWorld(7); Object.assign(G,{time:0,hitstop:0,enemies:[],projs:[],parts:[],floats:[],coins:[],chis:[],groundFx:[],boss:null,banner:null,announce:null,shake:0,slash:null,ring:null,kills:0,mapT:0,swampT:0,fullMap:false,npcCd:2,lostGold:0,camZoom:1});
   const p=makePlayer(SAVE.selected); p.x=WORLD.playerSpawn.x; p.y=WORLD.playerSpawn.y; G.player=p; CAM.x=p.x; CAM.y=p.y;
   G.spawners=WORLD.spawners.map(s=>({x:s.x,y:s.y,k:s.k,count:0,alive:0,refill:0,t:0}));
   const today=new Date().toDateString();
@@ -1764,13 +1763,6 @@ SFX.spinFade=()=>{ tone(700,.6,'sawtooth',.14,-560); tone(70,.25,'sine',.35,-30,
 SFX.spinLoop=(n,ph)=>{ tone(90+Math.sin(ph)*25,.14,'sawtooth',.06); if(n==='APOLLO') noise(.05,.05); else if(n==='BECK') tone(500+Math.sin(ph*3)*120,.1,'sine',.04); else if(n==='BOREAS') tone(1800+Math.sin(ph*2)*300,.06,'triangle',.03); };
 /* ---------- Chi pickups ---------- */
 function dropChi(x,y,n){ for(let i=0;i<n;i++){ const a=Math.random()*TAU; G.chis.push({x,y,vx:Math.cos(a)*rnd(40,90),vy:Math.sin(a)*rnd(20,40),h:10,vh:rnd(120,180),t:0,landed:false,fly:false}); } SFX.chiDrop(); }
-/* health hearts: fly out of a boss at HP marks (hippo/croc every 20%, the Pirate Lord every 15% and each crew death), heal 20% of max HP on touch, fade after 14 s */
-function dropHeart(x,y,n){ G.hearts=G.hearts||[]; for(let i=0;i<(n||1);i++){ const a=Math.random()*TAU; G.hearts.push({x,y,vx:Math.cos(a)*rnd(60,140),vy:Math.sin(a)*rnd(40,90),z:20,vz:rnd(160,240),t:14}); } burst(x,y-10,['#ef4444','#fca5a5','#ffffff'],14,150,.6,4,0,true); floatText(x,y-60,'HEALTH!','#fca5a5',true); }
-function bossHeartCheck(e){ const marks=e.type==='lord'?[.85,.7,.55,.4,.25,.1]:[.8,.6,.4,.2]; e.hearted=e.hearted||[]; for(const m of marks) if(!e.hearted.includes(m)&&e.hp<e.maxHp*m){ e.hearted.push(m); dropHeart(e.x,e.y,e.type==='lord'?2:1); } }
-function heartsUpdate(p,dt){ const H=G.hearts; if(!H||!H.length) return; for(let i=H.length-1;i>=0;i--){ const h=H[i]; h.t-=dt; if(h.t<=0){ H.splice(i,1); continue; }
-    if(h.z>0||h.vz>0){ h.vz-=600*dt; h.z+=h.vz*dt; h.x+=h.vx*dt; h.y+=h.vy*dt; if(h.z<=0){ h.z=0; h.vz=0; h.vx=h.vy=0; if(!inLand(h.x,h.y)||isWater(h.x,h.y)) { h.x=p.x+rnd(-30,30); h.y=p.y+rnd(-20,20); } } }
-    else if(p.alive&&Math.hypot(p.x-h.x,p.y-h.y)<28){ H.splice(i,1); const heal=Math.round(p.maxHp*.2); p.hp=Math.min(p.maxHp,p.hp+heal); floatText(p.x,p.y-50,'+'+heal,'#4ade80',true); burst(p.x,p.y-10,['#ef4444','#fca5a5','#4ade80'],16,160,.6,4,0,true); SFX.coin(); } } }
-function drawHearts(c){ const H=G.hearts; if(!H||!H.length) return; for(const h of H){ const bob=h.z>0?0:Math.sin(G.time*5+h.x)*3, a=h.t<3?(.4+.6*Math.abs(Math.sin(G.time*8))):1; c.save(); c.globalAlpha=a; c.fillStyle='rgba(0,0,0,.25)'; c.beginPath(); c.ellipse(h.x,h.y+6,8,3,0,0,TAU); c.fill(); c.translate(h.x,h.y-h.z-bob-4); c.fillStyle='#ef4444'; c.fillRect(-7,-4,6,6); c.fillRect(1,-4,6,6); c.fillRect(-5,2,10,3); c.fillRect(-3,5,6,2); c.fillRect(-1,7,2,2); c.fillStyle='#fca5a5'; c.fillRect(-6,-3,2,2); c.fillStyle='#ffffff'; c.fillRect(-5,-2,1,1); c.restore(); } }
 function chiUpdate(p,dt){
   for(let i=G.chis.length-1;i>=0;i--){ const c=G.chis[i]; c.t+=dt;
     if(!c.landed){ c.x+=c.vx*dt; c.y+=c.vy*dt; c.h+=c.vh*dt; c.vh-=520*dt; if(c.h<=0){ c.h=0; c.landed=true; const o={x:c.x,y:c.y,r:8}; collide(o); c.x=o.x; c.y=o.y; } continue; }
@@ -1920,7 +1912,7 @@ function render(){
   if(G.ring){ const R=G.ring; c.globalAlpha=1-R.t*2; if(R.earth){ c.strokeStyle='#5a3a20'; c.lineWidth=9; c.beginPath(); for(let i=0;i<=36;i++){ const an=i/36*TAU, w=1+((i*7)%3)*.03; i?c.lineTo(R.x+Math.cos(an)*R.r*w,R.y+6+Math.sin(an)*R.r*.7*w):c.moveTo(R.x+R.r,R.y+6); } c.closePath(); c.stroke(); c.strokeStyle='#d9a34a'; c.lineWidth=4; c.stroke(); c.fillStyle='#8a6a4a'; for(let i=0;i<10;i++){ const an=i/10*TAU+.3; c.fillRect(R.x+Math.cos(an)*R.r-3,R.y+6+Math.sin(an)*R.r*.7-3-R.t*40,6,6); } } else if(R.poison){ c.strokeStyle='#166534'; c.lineWidth=8; c.beginPath(); for(let i=0;i<=40;i++){ const an=i/40*TAU, w=1+Math.sin(an*8+G.time*10)*.05; i?c.lineTo(R.x+Math.cos(an)*R.r*w,R.y+6+Math.sin(an)*R.r*.7*w):c.moveTo(R.x+R.r,R.y+6); } c.closePath(); c.stroke(); c.strokeStyle='#4ade80'; c.lineWidth=4; c.stroke(); c.fillStyle='#bbf7d0'; for(let i=0;i<12;i++){ const an=i/12*TAU; c.beginPath(); c.arc(R.x+Math.cos(an)*R.r,R.y+6+Math.sin(an)*R.r*.7-R.t*30,3,0,TAU); c.fill(); } } else { c.strokeStyle=R.col; c.lineWidth=6; c.beginPath(); c.ellipse(R.x,R.y+6,R.r,R.r*.7,0,0,TAU); c.stroke(); } c.globalAlpha=1; }
   drawAim(c,p);
   if(G.slash){ const s=G.slash; c.globalAlpha=s.t/.16; c.fillStyle=hexA(s.col,.5); c.beginPath(); c.moveTo(s.x,s.y); c.arc(s.x,s.y,s.r,s.a-s.h,s.a+s.h); c.closePath(); c.fill(); c.strokeStyle='#fff'; c.lineWidth=3; c.beginPath(); c.arc(s.x,s.y,s.r-4,s.a-s.h,s.a+s.h); c.stroke(); c.globalAlpha=1; }
-  drawGroundFx(c); drawChis(c); drawHearts(c);
+  drawGroundFx(c); drawChis(c);
   for(const cn of G.coins){ c.fillStyle='rgba(0,0,0,.25)'; c.beginPath(); c.ellipse(cn.x,cn.y+8,7,3,0,0,TAU); c.fill(); c.save(); c.translate(cn.x,cn.y); c.scale(Math.max(.15,Math.abs(Math.cos(G.time*7+cn.x))),1); c.shadowColor='#fde047'; c.shadowBlur=8; c.drawImage(COIN_IMG,-9,-9,18,18); c.restore(); }
   // sprites sorted by y
   const list=G.enemies.filter(e=>vis(e.x,e.y,120)); list.push(p); for(const n of WORLD.village.npcs) if(vis(n.x,n.y,80)) list.push({npc:n,x:n.x,y:n.y}); list.sort((a,b)=>a.y-b.y);
@@ -2155,7 +2147,7 @@ function bfStage(id){ return BF_STAGES.find(s=>s.id===id); }
 function enterArena(stage){
   if(WORLD.arena) WORLD=WORLD_MAIN;
   const W=makeArena(stage); WORLD=W; G.map={id:'bf_'+stage.id,name:'BOSS FIGHT',lvl:[stage.lvl,stage.lvl+1],tier:0};
-  Object.assign(G,{time:0,hitstop:0,enemies:[],projs:[],parts:[],floats:[],coins:[],chis:[],hearts:[],groundFx:[],boss:null,banner:null,announce:null,shake:0,slash:null,ring:null,kills:0,mapT:0,swampT:0,fullMap:false,npcCd:99,lostGold:0,camZoom:.8,levelFx:null,slowmo:0,bossMark:null,spawners:[],chests:[]});
+  Object.assign(G,{time:0,hitstop:0,enemies:[],projs:[],parts:[],floats:[],coins:[],chis:[],groundFx:[],boss:null,banner:null,announce:null,shake:0,slash:null,ring:null,kills:0,mapT:0,swampT:0,fullMap:false,npcCd:99,lostGold:0,camZoom:.8,levelFx:null,slowmo:0,bossMark:null,spawners:[],chests:[]});
   const p=makePlayer(SAVE.selected); p.x=W.playerSpawn.x; p.y=W.playerSpawn.y; p.face=Math.atan2(W.arena.bossStart.y-p.y,W.arena.bossStart.x-p.x); G.player=p; CAM.x=W.arena.bossStart.x; CAM.y=W.arena.bossStart.y;
   const e=makeEnemy(stage.boss,W.arena.bossStart.x,W.arena.bossStart.y); e.spawnT=0; e.engaged=true; e.lair={x:W.arena.center.x,y:W.arena.center.y}; e.leash=99999; e.canSwim=stage.id==='croc'; e.arena=true; e.face=Math.atan2(p.y-e.y,p.x-e.x); collide(e);
   SAVE.bossFightAttempts[stage.id]=(SAVE.bossFightAttempts[stage.id]||0)+1; save();
@@ -2242,11 +2234,13 @@ AI.lord=function(e,p,dt){
     if(k>=.30&&!a.s1){ a.s1=true; e.x+=Math.cos(a.aim)*22; e.y+=Math.sin(a.aim)*22; shake(4); SFX.hit(); if(inArc(p,e.x,e.y,a.aim,125,1.3)) damage(p,LORD_HIT.slash1,e,{kb:120}); }
     if(k>=.60&&!a.s2){ a.s2=true; e.x+=Math.cos(a.aim)*22; e.y+=Math.sin(a.aim)*22; shake(6); SFX.crit(); if(inArc(p,e.x,e.y,a.aim,135,1.7)) damage(p,LORD_HIT.slash2,e,{kb:220}); }   /* second blade from the other side: wider arc, still the front half */
     if(k>=1) lordEnd(e,LORD_CD,.2); return; }
-  if(a.state==='whirl'){ e.vx*=.5; e.vy*=.5; if(a.el>=.8){ a.state='whirling'; a.el=0; a.tele=null; a.hit=[]; a.broke=false; SFX.roar(); } return; }
-  if(a.state==='whirling'){ moveToward(e,p.x,p.y,dt,.9); if(Math.random()<.5) part(e.x+rnd(-40,40),e.y+rnd(-10,20),rnd(-40,40),-30,'#c8ccd4',.3,3,0,true);
-    if(!a.hit.includes(p)&&inCircle(p,e.x,e.y,95)&&p.alive){ a.hit.push(p); damage(p,LORD_HIT.whirl,e,{kb:560}); shake(8); }   /* 3 tiles of knockback */
+  if(a.state==='whirl'){ e.vx*=.5; e.vy*=.5; faceTo(e,p); if(a.el>=.8){ a.state='whirling'; a.el=0; a.tele=null; a.hit=[]; a.broke=false; a.aim=e.face; a.rehit=0; SFX.roar(); } return; }
+  if(a.state==='whirling'){ const want=Math.atan2(p.y-e.y,p.x-e.x); a.aim+=clamp(angDiff(want,a.aim),-2.2*dt,2.2*dt); const sp=e.spd*2.6; e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; e.face=a.aim;   /* a spinning charge: fast, steering only a little, so a sidestep gets out of the way */
+    if(Math.random()<.7) part(e.x+rnd(-40,40),e.y+rnd(-10,20),rnd(-40,40),-30,'#c8ccd4',.3,3,0,true); if(Math.random()<.5) part(e.x-Math.cos(a.aim)*30+rnd(-10,10),e.y+22,rnd(-30,30),-50,'#d0bd85',.5,5); a.rehit-=dt;
+    if(a.rehit<=0&&inCircle(p,e.x,e.y,90)&&p.alive){ a.rehit=.7; damage(p,LORD_HIT.whirl,e,{kb:560}); shake(8); }   /* every pass that connects hurts again */
+    if(wallAhead(e,a.aim)){ e.vx=e.vy=0; a.el=Math.max(a.el,1.3); }
     if(!a.broke&&WORLD.arena&&WORLD.arena.id==='lord') a.broke=lordBreakPier(e);
-    if(a.el>=1.2) lordEnd(e,LORD_CD,.25); return; }
+    if(a.el>=1.6) lordEnd(e,LORD_CD,.3); return; }
   if(a.state==='anchor'){ e.vx*=.5; e.vy*=.5; if(a.el>=.9){ a.state='anchoring'; a.el=0; a.tele=null; const h=e.hand||{x:e.x,y:e.y-20}; a.anchor={x:h.x,y:h.y,ox:e.x,oy:e.y,flew:0,ret:false,pulled:false,ang:a.aim}; SFX.shot(); shake(4); } return; }
   if(a.state==='anchoring'){ const q=a.anchor; if(!q){ lordEnd(e,LORD_CD,.2); return; }
     if(!q.ret){ const v=760*dt; q.flew+=v; const h=e.hand||{x:e.x,y:e.y-20}; q.x=h.x+Math.cos(q.ang)*q.flew; q.y=h.y+Math.sin(q.ang)*q.flew; const lx=q.ox+Math.cos(q.ang)*q.flew, ly=q.oy+Math.sin(q.ang)*q.flew; if(Math.random()<.4) part(q.x,q.y,rnd(-20,20),rnd(-20,20),'#9aa0aa',.3,2);
