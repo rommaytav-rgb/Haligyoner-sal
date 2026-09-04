@@ -1049,7 +1049,7 @@ function shadeReappear(p){ p.hidden=false; const t=nearestEnemy(p,520); if(t){ c
 function projUpdate(q,dt,p){
   if(q.type==='ring'){ if(q.delay>0){ q.delay-=dt; return; } q.r+=q.spd*dt; if(q.r>q.max){ q.alive=false; return; } const d=dist(p,q); if(!q.hit.includes(p)&&Math.abs(d-q.r)<12&&p.alive){ q.hit.push(p); damage(p,q.dmg,q,{kb:300,ranged:true}); } if(Math.random()<.8){ const a=Math.random()*TAU; part(q.x+Math.cos(a)*q.r,q.y+Math.sin(a)*q.r*.6,0,-40,'#d9a34a',.35,4); } return; }
   q.x+=q.vx*dt; q.y+=q.vy*dt; q.life-=dt; q.trail+=dt;
-  if(q.pellet){ if(q.trail>.03){ q.trail=0; part(q.x,q.y,rnd(-15,15),rnd(-25,-5),'#9ca3af',.35,2.5,-10); } if(hitsCollider(q.x,q.y+4)){ q.alive=false; burst(q.x,q.y,['#9ca3af','#d1d5db'],4,60,.3,2); return; } }   // smoke trail; trees, rocks and crates stop pellets
+  if(q.pellet){ if(q.trail>.025){ q.trail=0; part(q.x+rnd(-2,2),q.y+rnd(-2,2),rnd(-12,12),rnd(-22,-6),Math.random()<.3?'#d1d5db':'#9ca3af',.55,3.5,-10); } q.flew=(q.flew||0)+Math.hypot(q.vx,q.vy)*dt; if(q.flew>36&&hitsCollider(q.x,q.y+4)){ q.alive=false; burst(q.x,q.y,['#9ca3af','#d1d5db'],4,60,.3,2); return; } }   // smoke trail; trees, rocks and crates stop pellets
   else if(q.trail>.016){ q.trail=0; part(q.x+rnd(-3,3),q.y+rnd(-3,3),rnd(-30,30)-q.vx*.05,rnd(-30,30)-q.vy*.05,Math.random()<.5?q.col:q.glow,.4,q.vr*.9,0,true); }
   const targets=q.owner.kind==='player'?liveEnemies():[p];
   for(const e of targets) if(e.alive&&!q.hit.includes(e)&&inCircle(e,q.x,q.y+4,q.r)){ if(e.kind==='player'&&e.name==='SHADE'&&spinning(e)) continue; q.hit.push(e); damage(e,q.dmg,q.owner,{kb:q.kb,big:q.big,basic:q.basic,ranged:q.owner.kind!=='player'}); if(q.onHit) q.onHit(e); burst(q.x,q.y,[q.col,q.glow,'#ffffff'],10,160,.4,4,0,true); if(q.pierce-- <=0){ q.alive=false; return; } }
@@ -1163,7 +1163,7 @@ function bossPhase(e,dt){ const a=e.ai; if(!a.phase2&&e.hp<e.maxHp*.5){ a.phase2
   if(a.phase2&&a.addsLeft>0){ a.addsT-=dt; if(a.addsT<=0){ a.addsLeft--; summonAdds(e); floatText(e.x,e.y-90,'MORE ADDS!','#fca5a5',true); } } }
 function summonAdds(e){ for(let i=0;i<3;i++){ const an=i/3*TAU+e.ai.t; const s=makeEnemy(e.d.adds,e.x+Math.cos(an)*80,e.y+Math.sin(an)*80); s.spawnT=.4; s.summoned=true; s.biome=null; s.ai.state=s.type==='priest'?'circle':'chase'; s.ai.t=.8; s.ai.dir=1; G.chasers++; collide(s); burst(s.x,s.y,e.type==='hippo'?['#7a4aaa','#8ac06a']:['#c8202a','#8ab08a'],12,110,.6,4,200,true); } }
 /* the pirate's blunderbuss: five pellet projectiles in a narrow spread, ~7 tiles of travel, blocked by props */
-function firePellets(e,gx,gy,ang){ for(let i=0;i<5;i++){ const a=ang+(i-2)*.07+rnd(-.03,.03), v=rnd(500,560); proj({type:'bolt',pellet:true,basic:false,x:gx,y:gy,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:(7*TILE_PX)/v,r:5,vr:2,col:'#e5e7eb',glow:'#fbbf24',owner:e,dmg:4,kb:90,hit:[]}); }
+function firePellets(e,gx,gy,ang){ for(let i=0;i<5;i++){ const a=ang+(i-2)*.08+rnd(-.03,.03), v=rnd(230,260); proj({type:'bolt',pellet:true,basic:false,x:gx,y:gy,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:(7*TILE_PX)/v,r:6,vr:2,col:'#e5e7eb',glow:'#fbbf24',owner:e,dmg:4,kb:90,hit:[]}); }
   burst(gx,gy,['#fde68a','#ffffff','#fb923c'],10,140,.2,3,0,true); for(let i=0;i<8;i++) part(gx+rnd(-4,4),gy+rnd(-4,4),Math.cos(ang)*rnd(20,60)+rnd(-20,20),rnd(-40,-10),'#9ca3af',rnd(.5,.9),rnd(3,6),-30); shake(3); SFX.shot(); }
 function enemyUpdate(e,dt,p){
   if(!e.alive){ if(e.deadT!==undefined) e.deadT-=dt; return; }
@@ -1469,7 +1469,7 @@ function render(){
   }
   // projectiles + particles (additive)
   c.globalCompositeOperation='lighter';
-  for(const q of G.projs) if(q.alive&&q.pellet){ c.fillStyle='#fde68a'; c.fillRect(q.x-2,q.y-2,4,4); c.fillStyle='#ffffff'; c.fillRect(q.x-1,q.y-1,2,2); }   // blunderbuss pellets: small hot pixels
+  for(const q of G.projs) if(q.alive&&q.pellet){ const gl=c.createRadialGradient(q.x,q.y,1,q.x,q.y,11); gl.addColorStop(0,'rgba(255,240,180,.9)'); gl.addColorStop(1,'rgba(251,146,60,0)'); c.fillStyle=gl; c.beginPath(); c.arc(q.x,q.y,11,0,TAU); c.fill(); c.fillStyle='#1f2937'; c.fillRect(q.x-4,q.y-4,8,8); c.fillStyle='#fde68a'; c.fillRect(q.x-3,q.y-3,6,6); c.fillStyle='#ffffff'; c.fillRect(q.x-2,q.y-2,3,3); }   // blunderbuss pellets: small hot pixels
   for(const q of G.projs) if(q.alive&&q.type!=='ring'&&!q.pellet){ const g=c.createRadialGradient(q.x,q.y,1,q.x,q.y,q.vr*2.2); g.addColorStop(0,'#ffffff'); g.addColorStop(.35,q.glow); g.addColorStop(1,hexA(q.col,0)); c.fillStyle=g; c.beginPath(); c.arc(q.x,q.y,q.vr*2.2,0,TAU); c.fill(); }
   for(const a of G.parts) if(a.alive&&a.glow){ c.globalAlpha=clamp(a.t/a.life,0,1)*.9; c.fillStyle=a.col; c.beginPath(); c.arc(a.x,a.y,a.size*(a.t/a.life)+.5,0,TAU); c.fill(); }
   c.globalCompositeOperation='source-over';
