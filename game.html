@@ -1578,7 +1578,7 @@ function bossLeash(e,p,dt){ const a=e.ai; if(a.recover>0){ a.recover-=dt; e.vx*=
    Croc HP 2600 = about 120 level-7 SHADE hits (~70 s of fighting with dodging).  Each croc hit below is a fixed number, the same at every level:
    phase 1 (full HP) costs a level-7 SHADE 11-28% per hit, phase 2 (under 50%) 14-36%; nothing scales with the ninja's level. */
 const CROC_DMG={swing:[27,41],tail:[42,60],cleaver:[58,85],dash:[23,33],bite:[25,37],spit:[32,48],barrage:[22,31]};   /* [phase 1, phase 2] */
-function bossPhase(e,dt){ const a=e.ai; if(!a.phase2&&e.hp<e.maxHp*.5){ a.phase2=true; a.addsLeft=2; a.addsT=15; summonAdds(e); G.banner={text:'THE '+e.d.name+' GOES BERSERK',sub:'FASTER · HARDER · MORE OF THEM',t:2.4}; }
+function bossPhase(e,dt){ const a=e.ai; if(!a.phase2&&e.hp<e.maxHp*.5){ a.phase2=true; a.addsLeft=2; a.addsT=15; summonAdds(e); G.banner={text:'THE '+e.d.name+' GOES BERSERK',sub:'FASTER · HARDER · MORE OF THEM',t:.9};   /* under a second: it must not get in the way */ }
   if(a.phase2&&a.addsLeft>0){ a.addsT-=dt; if(a.addsT<=0){ a.addsLeft--; a.addsT=15; summonAdds(e); } } }   /* half HP: the boss goes berserk (+35% attack speed, +30% move speed, harder hits, 4 adds that return twice) */
 function summonAdds(e){ const col=e.type==='hippo'?'#c084fc':'#4ade80'; e.attackT=.6; e.animT=0; shake(9); vibrate(120); SFX.roar(); G.ring={x:e.x,y:e.y,r:0,max:200,t:0,col}; burst(e.x,e.y-20,[col,'#ffffff'],30,220,.8,5,0,true);
   const n=e.ai.phase2?4:3; for(let i=0;i<n;i++){ const an=i/n*TAU+e.ai.t; const s=makeEnemy(e.d.adds,e.x+Math.cos(an)*80,e.y+Math.sin(an)*80); s.spawnT=1; G.groundFx.push({kind:'summon',x:s.x,y:s.y+6,r:34,t:1,col}); s.summoned=true; s.biome=null; s.ai.state=s.type==='priest'?'circle':'chase'; s.ai.t=.8; s.ai.dir=1; G.chasers++; collide(s); burst(s.x,s.y,e.type==='hippo'?['#7a4aaa','#8ac06a']:['#c8202a','#8ab08a'],12,110,.6,4,200,true); } }
@@ -2225,7 +2225,7 @@ function lordStart(e,p,st){ const a=e.ai; a.state=st; a.el=0; a.aim=e.face; e.vx
 function lordEnd(e,cd,rec){ const a=e.ai; a.state='chase'; a.tele=null; e.abCd=cd; a.recover=rec; a.anchor=null; }
 function lordWaveAlive(e){ return !!(e.ai.wave&&e.ai.wave.some(s=>s.alive)); }
 function lordPhase(e){ const a=e.ai; const want=e.hp<e.maxHp*.3?2:e.hp<e.maxHp*.75?1:0; if(want<=(a.tier||0)) return; a.tier=want; a.phase2=true; shake(want===2?14:9); vibrate(160); SFX.roar();
-  G.banner=want===2?{text:'MY CREW NEVER RESTS',sub:'THE PIRATE LORD GOES BERSERK · FOUR CANNONS · BROADSIDE',t:2.6}:{text:'YOU DARE?',sub:'THE PIRATE LORD IS ANGRY · TWIN CANNONS',t:2.4};
+  G.banner=want===2?{text:'MY CREW NEVER RESTS',sub:'BERSERK · FOUR CANNONS · BROADSIDE',t:.9}:{text:'YOU DARE?',sub:'ANGRY · TWIN CANNONS',t:.8};   /* under a second */
   burst(e.x,e.y-30,['#a040ff','#ff2a2a','#ffffff'],want===2?60:36,300,1,6,0,true); G.ring={x:e.x,y:e.y,r:0,max:want===2?260:180,t:0,col:want===2?'#ff2a2a':'#a040ff'}; }
 AI.lord=function(e,p,dt){
   const a=e.ai, d=dist(e,p), rt=statMult(e,'rate')*LT(e).rate; a.t-=dt; e.abCd-=dt*rt; a.atkT-=dt*rt; a.el=(a.el||0)+dt*(a.state==='chase'?1:rt); lordPhase(e);
