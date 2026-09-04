@@ -1320,7 +1320,7 @@ const AI={
     else if(a.state==='slam'){ if(a.t<=0){ a.state='chase'; e.abCd=3; a.recover=.7; a.tele=null; e.holdAnim=false; e.attackT=.3; e.animT=.26; shake(12); vibrate(120); const ix=a.ix, iy=a.iy;
         if(inCircle(p,ix,iy,95)) damage(p,e.dmg,e,{kb:420}); else if(inCircle(p,ix,iy,170)&&p.alive){ const dd=Math.max(1,Math.hypot(p.x-ix,p.y-iy)); p.kbx+=(p.x-ix)/dd*380; p.kby+=(p.y-iy)/dd*380; }   // shockwave: knockback just outside the circle
         for(const o of G.enemies) if(o!==e&&o.alive&&!o.boss&&inCircle(o,ix,iy,170)){ const dd=Math.max(1,Math.hypot(o.x-ix,o.y-iy)); o.kbx+=(o.x-ix)/dd*300; o.kby+=(o.y-iy)/dd*300; }
-        burst(ix,iy,['#9ca3af','#4b5563','#d9a34a','#c9a86a'],44,320,.7,6,0,true); for(let i=0;i<14;i++) part(ix+rnd(-40,40),iy+rnd(-20,20),rnd(-90,90),rnd(-260,-120),i%2?'#8a6a4a':'#5a3a20',rnd(.5,.9),rnd(4,7),600); G.ring={x:ix,y:iy,r:0,max:170,t:0,col:'#d9a34a',earth:true}; noise(.25,.35); tone(60,.3,'sine',.4,-30); arenaHook('slam',ix,iy);
+        burst(ix,iy,['#9ca3af','#4b5563','#d9a34a','#c9a86a'],44,320,.7,6,0,true); for(let i=0;i<14;i++) part(ix+rnd(-40,40),iy+rnd(-20,20),rnd(-90,90),rnd(-260,-120),i%2?'#8a6a4a':'#5a3a20',rnd(.5,.9),rnd(4,7),600); G.ring={x:ix,y:iy,r:0,max:170,t:0,col:'#d9a34a',earth:true}; noise(.25,.35); tone(60,.3,'sine',.4,-30); proj({type:'ring',mud:true,x:ix,y:iy,r:30,life:9,spd:230,max:640,delay:.1,owner:e,dmg:WAVE_DMG,hit:[]}); floatText(ix,iy-30,'MUD WAVE','#c9a86a');
         if(a.phase2) proj({type:'ring',x:ix,y:iy,r:20,life:9,spd:240,max:220,delay:.4,owner:e,dmg:WAVE_DMG,hit:[]}); } }   // phase 2: the slam gains a second shockwave
     else if(a.state==='charge'){ if(a.t<=0){ a.state='charging'; a.t=.9; a.tele=null; a.hit=[]; SFX.roar(); } }
     else if(a.state==='charging'){ const sp=e.spd*5; e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; if(!a.hit.includes(p)&&inCircle(p,e.x,e.y,e.r+6)){ a.hit.push(p); damage(p,30,e,{kb:520}); } for(const o of G.enemies) if(o!==e&&o.alive&&!a.hit.includes(o)&&inCircle(o,e.x,e.y,e.r+6)){ a.hit.push(o); damage(o,20,e,{kb:400,noBlock:true}); } part(e.x+rnd(-24,24),e.y+22,rnd(-40,40),-60,'#c9a86a',.5,6); if(a.t<=0||wallAhead(e,a.aim)){ a.state='chase'; e.abCd=3; a.recover=.7; e.vx=e.vy=0; shake(6); crashBoulder(e); } }
@@ -1330,6 +1330,7 @@ const AI={
   croc(e,p,dt){
     const a=e.ai, d=dist(e,p), rt=statMult(e,'rate')*(a.phase2?1.2:1), cd=k=>CROC_DMG[k][a.phase2?1:0]; a.t-=dt; e.abCd-=dt*rt; a.atkT-=dt*rt; bossPhase(e,dt);
     if(a.state==='chase'){ if(bossLeash(e,p,dt)) return; const safe=inSafeZone(p.x,p.y); if(d<900&&!safe) moveToward(e,p.x,p.y,dt,a.phase2?1.15:1); else { e.vx*=.9; e.vy*=.9; } faceTo(e,p);
+      if(p.alive&&d<700&&!safe){ e.swimT=(e.swimT===undefined?6:e.swimT)-dt; if(e.swimT<=0&&!(a.recover>0)&&!e.status.freeze&&!e.status.stun){ e.sub={st:'dive',t:.6}; e.hidden=true; a.tele=null; e.vx=e.vy=0; burst(e.x,e.y+10,['#2c4a34','#9ad0c0','#ffffff'],30,220,.7,5,200,true); noise(.25,.25); floatText(e.x,e.y-70,'IT DIVES…','#9ad0c0',true); return; } }   /* the dive: vanish, travel under the ground, rise beside the ninja */
       if(e.abCd<=0&&p.alive&&d<700&&!safe){ const r=Math.random(); const pick=d<180?(r<.45?'tail':'cleaver'):d<330?(r<.35?'lunge':r<.65?'spit':'barrage'):(r<.45?'spit':r<.75?'lunge':'barrage'); a.state=pick; a.aim=e.face; e.vx=e.vy=0; e.animT=0; a.t=1;
         if(pick==='tail'){ a.t=1.2; telegraph(e,{s:'circ',r:160},1.2); } else if(pick==='cleaver') telegraph(e,{s:'line',a:a.aim,l:300,w:44},1); else if(pick==='lunge'){ telegraph(e,{s:'line',a:a.aim,l:400,w:50},1); a.dashN=0; } else if(pick==='spit'){ telegraph(e,{s:'line',a:a.aim,l:Math.min(460,d+80),w:70},1); e.holdAnim=true; e.animT=.05; } else { telegraph(e,{s:'circ',r:320},1); e.holdAnim=true; e.animT=.05; } }
       else if(d<e.d.range&&a.atkT<=0){ a.state='swing'; a.t=.5; a.aim=e.face; e.vx=e.vy=0; a.ix=e.x+Math.cos(a.aim)*(e.d.range*.6); a.iy=e.y+Math.sin(a.aim)*(e.d.range*.6); telegraph(e,{s:'circ',r:e.d.range*.85,ox:a.ix-e.x,oy:a.iy-e.y},.5); } }
@@ -1366,6 +1367,7 @@ function enemyUpdate(e,dt,p){
   if(!e.alive){ if(e.deadT!==undefined) e.deadT-=dt; return; }
   if(e.spawnT>0){ e.spawnT-=dt; return; }
   if(WORLD.arena&&arenaEnemyGate(e,dt,p)) return;
+  if(e.sub){ bossDive(e,dt,p); return; }
   const dd=dist(e,p);
   if(dd>1700&&!e.boss&&(e.spawner||e.summoned)){ e.alive=false; if(e.spawner){ e.spawner.alive--; e.spawner.count=Math.max(0,e.spawner.count-1); } return; }   // far enemies go back into their spawner
   if(e.boss){ e.aliveT=(e.aliveT||0)+dt; if(dd<420) e.engaged=true; if(e.aliveT>180&&!e.engaged){ e.alive=false; if(G.boss===e) G.boss=null; G.bossMark=null; G.banner={text:'THE '+e.d.name+' LEFT ITS LAIR',sub:'it will be back another time',t:2.6}; return; } }   // ignored for 3 minutes: the boss leaves
@@ -1815,7 +1817,7 @@ function emptyWorld(cols,rows){ return {w:cols*AT,h:rows*AT,land:{x0:0,y0:0,x1:c
   colliders:[],cgrid:new Map(),CG:200,pathGrid:null,PG:32,chunks:new Map(),CS:640,mini:null,explored:null,FOG:64,ex:0,ey:0,arena:null}; }
 function makeArena(stage){
   const cols=stage.id==='croc'?50:40, rows=stage.id==='croc'?36:30, W=emptyWorld(cols,rows), R=mulberry(stage.n*17+3), grid=new Array(cols*rows).fill('deep');
-  const A={id:stage.id,cols,rows,grid,bridges:[],swimT:6,zone:stage.id==='croc'?'swamp':'forest',
+  const A={id:stage.id,cols,rows,grid,bridges:[],zone:stage.id==='croc'?'swamp':'forest',
     tile(x,y){ const tx=Math.floor(x/AT), ty=Math.floor(y/AT); if(tx<0||ty<0||tx>=cols||ty>=rows) return 'wall'; return grid[ty*cols+tx]; },
     set(tx,ty,k){ if(tx>=0&&ty>=0&&tx<cols&&ty<rows) grid[ty*cols+tx]=k; },
     kindAt(x,y){ return BF_PAINT[A.tile(x,y)]||'mud'; },
@@ -1868,12 +1870,16 @@ function arenaHook(kind,x,y){ const A=WORLD.arena; if(!A) return;
     b.broken=true; for(let ty=b.y0;ty<=b.y1;ty++) for(let tx=b.x0;tx<=b.x1;tx++){ A.set(tx,ty,'deep'); burst((tx+.5)*AT,(ty+.5)*AT,['#7a5230','#5e3d22','#9ad0c0'],8,140,.8,4,300); } WORLD.chunks.clear(); shake(6); noise(.3,.3); floatText(((b.x0+b.x1)/2+.5)*AT,(b.y0+.5)*AT-20,'THE BRIDGE BREAKS!','#fca5a5',true);
     if(p&&p.alive&&A.tile(p.x,p.y)==='deep'&&!(p.dunk>0)) arenaDunk(p); } } }
 /* the crocodile swims: dives, crosses under the water and erupts beside the player's platform after a bubbling 1 s telegraph */
-function arenaSub(e,dt,p){ const A=WORLD.arena, s=e.sub; s.t-=dt;
-  if(s.st==='dive'){ if(Math.random()<.6) part(e.x+rnd(-30,30),e.y+rnd(-10,10),0,-30,'#9ad0c0',.5,3,0,true); if(s.t<=0){ let best=null,bd=1e9; for(let ty=0;ty<A.rows;ty++) for(let tx=0;tx<A.cols;tx++){ const x=(tx+.5)*AT, y=(ty+.5)*AT; if(A.tile(x,y)!=='deep') continue; if(!(A.walk(x-AT,y)||A.walk(x+AT,y)||A.walk(x,y-AT)||A.walk(x,y+AT))) continue; const d=Math.hypot(x-p.x,y-p.y); if(d<90) continue; const sc=Math.abs(d-150); if(sc<bd){ bd=sc; best={x,y}; } } s.tx=best?best.x:p.x; s.ty=best?best.y:p.y; s.st='travel'; } }
+function diveTarget(e,p){ const A=WORLD.arena; let best=null,bd=1e9;
+  if(A){ for(let ty=0;ty<A.rows;ty++) for(let tx=0;tx<A.cols;tx++){ const x=(tx+.5)*AT, y=(ty+.5)*AT; if(A.tile(x,y)!=='deep') continue; if(!(A.walk(x-AT,y)||A.walk(x+AT,y)||A.walk(x,y-AT)||A.walk(x,y+AT))) continue; const d=Math.hypot(x-p.x,y-p.y); if(d<90) continue; const sc=Math.abs(d-150); if(sc<bd){ bd=sc; best={x,y}; } } }
+  else { for(let i=0;i<24;i++) for(const R of [150,210]){ const an=i/24*TAU, x=p.x+Math.cos(an)*R, y=p.y+Math.sin(an)*R; if(!inLand(x,y)||inVillage(x,y)) continue; if(WORLD.colliders.some(o=>Math.hypot(o.x-x,o.y-y)<o.r+e.r)) continue; const sc=(isWater(x,y)?0:400)+Math.abs(R-150)+Math.random()*60; if(sc<bd){ bd=sc; best={x,y}; } } }   /* on the map: a spot near the ninja, a pool if there is one */
+  return best||{x:p.x,y:p.y}; }
+function bossDive(e,dt,p){ const s=e.sub; s.t-=dt;
+  if(s.st==='dive'){ if(Math.random()<.6) part(e.x+rnd(-30,30),e.y+rnd(-10,10),0,-30,'#9ad0c0',.5,3,0,true); if(s.t<=0){ const t=diveTarget(e,p); s.tx=t.x; s.ty=t.y; s.st='travel'; } }
   else if(s.st==='travel'){ const d=Math.hypot(s.tx-e.x,s.ty-e.y); if(d>8){ e.x+=(s.tx-e.x)/d*Math.min(d,420*dt); e.y+=(s.ty-e.y)/d*Math.min(d,420*dt); if(Math.random()<.5) part(e.x+rnd(-14,14),e.y+rnd(-8,8),0,-22,'#9ad0c0',.6,2.5,0,true); } else { s.st='rise'; s.t=1; e.ai.tele={s:'circ',r:90,t:0,dur:1}; } }
-  else if(s.st==='rise'){ if(Math.random()<.9) part(e.x+rnd(-40,40),e.y+rnd(-20,20),0,-30,Math.random()<.5?'#bbf7d0':'#9ad0c0',.5,3,0,true); if(s.t<=0){ e.sub=null; e.hidden=false; e.ai.tele=null; e.ai.state='chase'; e.abCd=1.2; e.ai.recover=.3; A.swimT=rnd(7,11); burst(e.x,e.y,['#2c4a34','#9ad0c0','#ffffff','#4ade80'],40,300,.8,5,200,true); shake(9); vibrate(80); SFX.roar(); faceTo(e,p); if(p.alive&&inCircle(p,e.x,e.y,95)) damage(p,20,e,{kb:340}); } }
+  else if(s.st==='rise'){ if(Math.random()<.9) part(e.x+rnd(-40,40),e.y+rnd(-20,20),0,-30,Math.random()<.5?'#bbf7d0':'#9ad0c0',.5,3,0,true); if(s.t<=0){ e.sub=null; e.hidden=false; e.ai.tele=null; e.ai.state='chase'; e.abCd=1.2; e.ai.recover=.3; e.swimT=rnd(7,11); burst(e.x,e.y,['#2c4a34','#9ad0c0','#ffffff','#4ade80'],40,300,.8,5,200,true); shake(9); vibrate(80); SFX.roar(); faceTo(e,p); if(p.alive&&inCircle(p,e.x,e.y,95)) damage(p,20,e,{kb:340}); } }
   e.lx=e.x; e.ly=e.y; }
-function arenaEnemyGate(e,dt,p){ const A=WORLD.arena, F=G.arena; if(!F||F.phase!=='fight'||F.over){ e.vx=e.vy=0; return true; } if(e.sub){ arenaSub(e,dt,p); return true; } if(e.crashT>0) e.crashT-=dt; return false; }
+function arenaEnemyGate(e,dt,p){ const A=WORLD.arena, F=G.arena; if(!F||F.phase!=='fight'||F.over){ e.vx=e.vy=0; return true; } if(e.sub){ bossDive(e,dt,p); return true; } if(e.crashT>0) e.crashT-=dt; return false; }
 function crashBoulder(e){ const W=WORLD; for(const o of W.colliders) if(o.crash&&Math.hypot(o.x-e.x,o.y-e.y)<o.r+e.r+12){ e.status.stun={t:1.5,tick:0}; e.crashT=1.5; e.vx=e.vy=0; burst(o.x,o.y-10,['#8a8a94','#a6a6b0','#6e6e78'],26,240,.8,5,300); shake(10); vibrate(100); floatText(e.x,e.y-100,'CRASHED! STUNNED','#fde047',true); noise(.3,.3); return true; } return false; }
 /* ---------- painting ---------- */
 function paintArena(c,ax,ay,aw,ah){ g=c; const W=WORLD, A=W.arena, vis=(x,y,m)=>x>ax-m&&x<ax+aw+m&&y>ay-m&&y<ay+ah+m, P=v=>v/PIX;
@@ -1919,8 +1925,7 @@ function arenaUpdate(dt){ const F=G.arena, A=WORLD.arena, p=G.player; if(!F) ret
   F.t+=dt;
   if(F.phase==='intro'){ if(F.t>.4&&!F.roared){ F.roared=true; SFX.roar(); shake(8); G.banner={text:G.boss.d.name,sub:F.stage.name+'  ·  ONE ATTEMPT',t:2.4}; } if(F.t>=2.4){ F.phase='count'; F.t=0; } }
   else if(F.phase==='count'){ const n=3-Math.floor(F.t); if(n!==F.lastN){ F.lastN=n; if(n>0) tone(660,.12,'square',.15); else { tone(990,.3,'square',.2); F.phase='fight'; F.t=0; F.fightFlash=.8; } } }
-  else { F.time+=dt; if(F.fightFlash>0) F.fightFlash-=dt;
-    if(false&&A.id==='croc'&&G.boss&&G.boss.alive&&!G.boss.sub){ A.swimT-=dt;   /* arena dive disabled: the Boss Fight crocodile is exactly the map crocodile */ const e=G.boss; if(A.swimT<=0&&e.ai.state==='chase'&&!(e.ai.recover>0)&&!e.status.freeze&&!e.status.stun){ e.sub={st:'dive',t:.6}; e.hidden=true; e.ai.tele=null; burst(e.x,e.y+10,['#2c4a34','#9ad0c0','#ffffff'],30,220,.7,5,200,true); noise(.25,.25); floatText(e.x,e.y-70,'IT DIVES…','#9ad0c0',true); } } }
+  else { F.time+=dt; if(F.fightFlash>0) F.fightFlash-=dt; }
 }
 function arenaTick(raw){ const F=G.arena; if(!F||!F.over) return; F.overT+=raw;
   if(F.over==='fail'&&F.overT>3){ const id=F.stage.id; leaveArena(); setState('BOSSLIST'); }
