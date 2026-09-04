@@ -952,7 +952,7 @@ const EN={
   pirate:{hp:95, dmg:15,spd:104,r:15,range:50,atk:1.3,coins:[6,8],gold:[12,18],xp:12,sprite:2,scale:1.5,biome:'beach', name:'PIRATE'},
   hippo:{hp:1900,dmg:45,spd:70, r:46,range:100,coins:[40,40],gold:[200,200],boss:true,name:'HIPPO',sprite:3,scale:3,adds:'mush'},
   croc: {hp:2600,dmg:58,spd:125,r:46,range:110,coins:[40,40],gold:[250,250],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
-  lord: {hp:2800,dmg:20,spd:116,r:40,range:96, coins:[40,40],gold:[400,400],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:400,shards:[3,4]},   /* drawn by the LORD rig, not a sprite */
+  lord: {hp:3100,dmg:20,spd:116,r:40,range:96, coins:[40,40],gold:[400,400],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:400,shards:[3,4]},   /* drawn by the LORD rig, not a sprite */
 };
 const STATUS={
   slow:  {tint:'#60a5fa',mult:{spd:.6,rate:.6}},
@@ -1355,7 +1355,7 @@ function enemyDie(e){
 function keyDrop(x,y){ SAVE.pity=0; if((SAVE.keys||0)>=3){ floatText(x,y-70,'KEY BAG FULL (3/3)','#fde68a',true); return; } SAVE.keys=(SAVE.keys||0)+1; burst(x,y-14,['#fde047','#ffffff','#f59e0b'],40,240,1,5,120,true); floatText(x,y-76,'🔑 CHI KEY!','#fde047',true,true); SFX.key(); vibrate(60); G.slowmo=.4; const p=G.player; if(p){ for(let i=0;i<10;i++) part(x,y-10,rnd(-40,40),rnd(-60,-20),'#fde047',.6,4,0,true); } }
 /* player level from total XP: full heal, +1% HP/damage for every ninja, and the level-up moment */
 function checkLevelUp(){ const lv=playerLevel(); if(lv<=G.plv) return; const from=G.plv; G.plv=lv; const p=G.player; if(!p||!p.alive) return; const ch=p.ch, m=LV_MULT(p.lv)*PLV_MULT(lv), oh=Math.round(p.maxHp), od=Math.round(p.dmg); const keep=p.hp; p.maxHp=ch.hp*m; p.dmg=ch.dmg*m; p.hp=p.maxHp;
-  if(WORLD.arena){ p.hp=Math.min(p.maxHp,keep+(Math.round(p.maxHp)-oh)); floatText(p.x,p.y-64,'LEVEL '+lv+'  ·  HP +'+(Math.round(p.maxHp)-oh),'#fde047',true); G.hudGold=3; return; }   /* Boss Fight: only Spinjitzu heals; a level-up adds its HP growth, nothing more */   /* Boss Fight: stats and full heal only, no freeze-frame or level-up screen mid-fight */
+  if(WORLD.arena){ p.hp=Math.min(p.maxHp,keep); floatText(p.x,p.y-64,'LEVEL '+lv,'#fde047',true); G.hudGold=3; return; }   /* Boss Fight: no heal at all on a level-up, only Spinjitzu heals */   /* Boss Fight: stats and full heal only, no freeze-frame or level-up screen mid-fight */
   const short=!!(G.boss&&G.boss.alive); G.levelFx={t:0,dur:short?1:2,short,from,to:lv,hp:Math.round(p.maxHp)-oh,dmg:Math.round(p.dmg)-od,col:ch.color,glow:ch.glow,name:p.name}; G.hudGold=3;
   for(const e of liveEnemies()) if(inCircle(e,p.x,p.y,220)&&!e.boss){ const d=Math.max(1,dist(e,p)); e.kbx+=(e.x-p.x)/d*260; e.kby+=(e.y-p.y)/d*260; }   // burst pushes enemies back (no damage)
   for(const q of G.projs) if(q.alive&&q.owner&&q.owner.kind!=='player'&&Math.hypot(q.x-p.x,q.y-p.y)<160) q.alive=false;   // and clears projectiles nearby
