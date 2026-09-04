@@ -952,7 +952,7 @@ const EN={
   priest:{hp:54, dmg:16,spd:197,r:13,range:44,atk:.8, coins:[6,8],gold:[15,22],xp:10,sprite:1,scale:1.5,biome:'swamp', name:'INSECT PRIEST'},
   pirate:{hp:127,dmg:15,spd:104,r:15,range:50,atk:1.3,coins:[6,8],gold:[12,18],xp:12,sprite:2,scale:1.5,biome:'beach', name:'PIRATE'},
   hippo:{hp:2550,dmg:48,spd:70, r:46,range:100,coins:[40,40],gold:[200,200],boss:true,name:'HIPPO',sprite:3,scale:3,adds:'mush'},
-  croc: {hp:4100,dmg:62,spd:125,r:46,range:110,coins:[40,40],gold:[250,250],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
+  croc: {hp:3750,dmg:62,spd:125,r:46,range:110,coins:[40,40],gold:[250,250],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
   lord: {hp:5200,dmg:20,spd:116,r:40,range:96, coins:[40,40],gold:[400,400],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:400,shards:[3,4]},   /* drawn by the LORD rig, not a sprite */
 };
 const STATUS={
@@ -2209,7 +2209,7 @@ function showBossWin(F){ const r=F.rewards, st=F.stage; $('bfWinTime').innerHTML
    ===================================================================== */
 const LORD_HIT={slash1:21,slash2:35,whirl:42,anchor:35,contact:28,shell:12,mortar:21};   /* a touch harder */
 const LORD_CD=1.2;
-/* tiers by HP: 0 calm (100-75%), 1 angry (75-30%), 2 berserk (under 30%) */
+/* tiers by HP: 0 calm (100-75%), 1 angry (75-35%), 2 berserk (under 35%) */
 const LORD_TIER=[{rate:1,spd:1,hit:1,mortarN:1,mortarT:2.4,mark:1,crew:3},{rate:1.2,spd:1.15,hit:1.15,mortarN:2,mortarT:1.6,mark:.9,crew:4},{rate:1.35,spd:1.3,hit:1.3,mortarN:4,mortarT:1.2,mark:.8,crew:5}];
 const LT=e=>LORD_TIER[e.ai.tier||0];
 const LH=(e,k)=>Math.round(LORD_HIT[k]*LT(e).hit);
@@ -2225,7 +2225,7 @@ function lordStart(e,p,st){ const a=e.ai; a.state=st; a.el=0; a.aim=e.face; e.vx
   else if(st==='broadside') lordBroadside(e,p); }
 function lordEnd(e,cd,rec){ const a=e.ai; a.state='chase'; a.tele=null; e.abCd=cd; a.recover=rec; a.anchor=null; }
 function lordWaveAlive(e){ return !!(e.ai.wave&&e.ai.wave.some(s=>s.alive)); }
-function lordPhase(e){ const a=e.ai; const want=e.hp<e.maxHp*.3?2:e.hp<e.maxHp*.75?1:0; if(want<=(a.tier||0)) return; a.tier=want; a.phase2=true; shake(want===2?14:9); vibrate(160); SFX.roar();
+function lordPhase(e){ const a=e.ai; const want=e.hp<e.maxHp*.35?2:e.hp<e.maxHp*.75?1:0; if(want<=(a.tier||0)) return; a.tier=want; a.phase2=true; shake(want===2?14:9); vibrate(160); SFX.roar();
   G.banner=want===2?{text:'MY CREW NEVER RESTS',sub:'BERSERK · FOUR CANNONS · BROADSIDE',t:.9}:{text:'YOU DARE?',sub:'ANGRY · TWIN CANNONS',t:.8};   /* under a second */
   burst(e.x,e.y-30,['#a040ff','#ff2a2a','#ffffff'],want===2?60:36,300,1,6,0,true); G.ring={x:e.x,y:e.y,r:0,max:want===2?260:180,t:0,col:want===2?'#ff2a2a':'#a040ff'}; }
 AI.lord=function(e,p,dt){
@@ -2273,7 +2273,7 @@ function lordMortar(e,p,dt){ const a=e.ai; if(!p.alive||inSafeZone(p.x,p.y)||dis
   if(T.mortarN>=4){ const an=Math.atan2(p.vy,p.vx)||Math.random()*TAU; shell(p.x+Math.cos(an+1.57)*70,p.y+Math.sin(an+1.57)*70); shell(p.x+Math.cos(an-1.57)*70,p.y+Math.sin(an-1.57)*70); }   /* berserk: two more boxing you in on both sides */ tone(300,.15,'square',.12,-100); }
 /* Broadside: three 1.5-tile strips get red warning lines for 1 s, then cannonballs crash down them; the gaps move every time */
 function lordBroadside(e,p){ const A=WORLD.arena; let y0,y1; if(A){ y0=2*AT; y1=(A.rows-2)*AT; } else { y0=p.y-230; y1=p.y+230; }
-  const w=1.5*TILE_PX, slots=[]; for(let i=0;i<7;i++) slots.push(i); const picks=[]; while(picks.length<3){ const i=slots.splice(rndi(0,slots.length-1),1)[0]; picks.push(i); }
+  const w=1.5*TILE_PX, slots=[], nStrips=e.ai.tier===2?4:3; for(let i=0;i<7;i++) slots.push(i); const picks=[]; while(picks.length<nStrips){ const i=slots.splice(rndi(0,slots.length-1),1)[0]; picks.push(i); }
   picks.sort((a,b)=>a-b); const cx=p.x;
   for(const i of picks){ const x=cx+(i-3)*(w+18); G.groundFx.push({kind:'strip',vec:true,x,y0,y1,w,t:1,owner:e,onEnd:f=>{ for(let n=0;n<6;n++){ const y=f.y0+(n+.5)*(f.y1-f.y0)/6; G.groundFx.push({kind:'shell',vec:true,x:f.x+rnd(-8,8),y,r:34,t:.3+n*.09,fall:.3+n*.09,owner:f.owner,onEnd:lordShellHit}); } } }); }
   SFX.drum(0); floatText(e.x,e.y-100,'BROADSIDE!','#fca5a5',true); }
