@@ -935,7 +935,7 @@ const PLV_MULT=lv=>1+0.01*(lv-1);        // every player level: +1% HP and damag
 function playerLevel(){ let lv=1; while(lv<99&&SAVE.xpTotal>=XP_NEED(lv)) lv++; return lv; }
 /* unlock quests */
 const QUESTS={CLAY:{text:'Defeat the Hippo boss and 250 enemies',check:()=>SAVE.bosses.hippo>=1&&SAVE.kills>=250,progress:()=>`Hippo ${Math.min(1,SAVE.bosses.hippo)}/1 · Enemies ${Math.min(250,SAVE.kills)}/250`,pct:()=>(Math.min(1,SAVE.bosses.hippo)*.5+Math.min(1,SAVE.kills/250)*.5)},
-              BECK:{text:'Defeat the Crocodile boss and 500 enemies — or collect 10 Pirate Lord shards',check:()=>(SAVE.bosses.croc>=1&&SAVE.kills>=500)||(SAVE.shards&&SAVE.shards.BECK>=10),progress:()=>`Crocodile ${Math.min(1,SAVE.bosses.croc)}/1 · Enemies ${Math.min(500,SAVE.kills)}/500 · Shards ${Math.min(10,(SAVE.shards&&SAVE.shards.BECK)||0)}/10`,pct:()=>Math.max(Math.min(1,SAVE.bosses.croc)*.5+Math.min(1,SAVE.kills/500)*.5,Math.min(1,((SAVE.shards&&SAVE.shards.BECK)||0)/10))},
+              BECK:{text:'Defeat the Crocodile boss and 500 enemies',check:()=>SAVE.bosses.croc>=1&&SAVE.kills>=500,progress:()=>`Crocodile ${Math.min(1,SAVE.bosses.croc)}/1 · Enemies ${Math.min(500,SAVE.kills)}/500`,pct:()=>(Math.min(1,SAVE.bosses.croc)*.5+Math.min(1,SAVE.kills/500)*.5)},
               APOLLO:{text:'Unlocked in Map 2 (coming soon)',check:()=>false,progress:()=>'Map 2',pct:()=>0},BOREAS:{text:'Unlocked in Map 2 (coming soon)',check:()=>false,progress:()=>'Map 2',pct:()=>0}};
 for(const n of ['CLAY','BECK']){ const q=QUESTS[n], need=n==='CLAY'?250:500, boss=n==='CLAY'?'hippo':'croc', bossName=n==='CLAY'?'Hippo':'Crocodile'; q.remaining=()=>{ const parts=[]; if(SAVE.bosses[boss]<1) parts.push('defeat the '+bossName); const k=need-SAVE.kills; if(k>0) parts.push(k+' more enemies'); return parts.length?'Left: '+parts.join(' · '):'Complete!'; }; }
 QUESTS.APOLLO.remaining=QUESTS.BOREAS.remaining=()=>'Coming with Map 2';
@@ -953,7 +953,7 @@ const EN={
   pirate:{hp:127,dmg:15,spd:104,r:15,range:50,atk:1.3,coins:[6,8],gold:[12,18],xp:12,sprite:2,scale:1.5,biome:'beach', name:'PIRATE'},
   hippo:{hp:2550,dmg:48,spd:70, r:46,range:100,coins:[40,40],gold:[200,200],boss:true,name:'HIPPO',sprite:3,scale:3,adds:'mush'},
   croc: {hp:3750,dmg:62,spd:125,r:46,range:110,coins:[40,40],gold:[250,250],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
-  lord: {hp:5200,dmg:20,spd:116,r:40,range:96, coins:[40,40],gold:[400,400],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:400,shards:[3,4]},   /* drawn by the LORD rig, not a sprite */
+  lord: {hp:5200,dmg:20,spd:116,r:40,range:96, coins:[40,40],gold:[400,400],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:400},   /* drawn by the LORD rig, not a sprite */
 };
 const STATUS={
   slow:  {tint:'#60a5fa',mult:{spd:.6,rate:.6}},
@@ -977,7 +977,7 @@ function roundRect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x
    SAVE
    ===================================================================== */
 const SAVE_KEY='elemental_ninjas_world_v3';
-const DEFAULT_SAVE=()=>({gold:0,levels:{SHADE:1,BOREAS:1,APOLLO:1,BECK:1,CLAY:1},unlocked:{SHADE:true},selected:'SHADE',kills:0,xp:0,xpTotal:0,chi:0,keys:0,pity:0,playTime:0,chiChests:{},bossFightCleared:{},bossFightBestTime:{},bossFightAttempts:{},bossFightFirstClearClaimed:{},bossFightStars:{},chests:{},golden:{},secret:{},bosses:{hippo:0,croc:0,lord:0},shards:{BECK:0},maps:{bone_shore:true},hints:{},settings:{sound:true,vibrate:true,dmgNums:true,shake:true}});
+const DEFAULT_SAVE=()=>({gold:0,levels:{SHADE:1,BOREAS:1,APOLLO:1,BECK:1,CLAY:1},unlocked:{SHADE:true},selected:'SHADE',kills:0,xp:0,xpTotal:0,chi:0,keys:0,pity:0,playTime:0,chiChests:{},bossFightCleared:{},bossFightBestTime:{},bossFightAttempts:{},bossFightFirstClearClaimed:{},bossFightStars:{},chests:{},golden:{},secret:{},bosses:{hippo:0,croc:0,lord:0},maps:{bone_shore:true},hints:{},settings:{sound:true,vibrate:true,dmgNums:true,shake:true}});
 let SAVE=DEFAULT_SAVE();
 try{ const s=JSON.parse(localStorage.getItem(SAVE_KEY)); if(s){ const d=DEFAULT_SAVE(); for(const k in d){ if(s[k]===undefined) continue; if(typeof d[k]==='object'&&d[k]!==null) Object.assign(d[k],s[k]); else d[k]=s[k]; } if(!CH[d.selected]||!d.unlocked[d.selected]) d.selected='SHADE'; SAVE=d; } }catch(e){}
 const DEBUG={on:false,god:false,hitbox:false,taps:0};
@@ -1348,7 +1348,7 @@ function enemyDie(e){
   e.alive=false; G.kills++; let n=rndi(e.d.coins[0],e.d.coins[1]), gold=rndi(e.d.gold[0],e.d.gold[1]); if(e.summoned){ n=Math.ceil(n/2); gold=Math.ceil(gold/2); }   // boss adds drop half
   const per=Math.ceil(gold/n); for(let i=0;i<n;i++) G.coins.push({x:e.x,y:e.y,vx:rnd(-120,120),vy:rnd(-220,-80),v:per,t:0,fly:false,z:0});
   if(e.boss&&WORLD.arena){ if(G.boss===e) G.boss=null; arenaWin(e); return; }   // Boss Fight: separate rewards, nothing counts toward the open world
-  if(e.boss){ e.deadT=3.2; burst(e.x,e.y-10,['#c8a878','#8a6a4a','#fde047','#ffffff'],80,260,1.4,6,200,true); shake(16); vibrate(300); SFX.death(); const bxp=e.d.xpBoss||XP_BOSS; floatText(e.x,e.y-60,'BOSS DEFEATED  +'+bxp+' XP','#fde047',true,true); if(G.boss===e) G.boss=null; G.lastBossDeath=G.time; G.bossMark=null; SAVE.bosses[e.type]=(SAVE.bosses[e.type]||0)+1; SAVE.xp+=bxp; SAVE.xpTotal+=bxp; dropChi(e.x,e.y,2); keyDrop(e.x,e.y); if(e.d.shards){ const n=rndi(e.d.shards[0],e.d.shards[1]); SAVE.shards=SAVE.shards||{}; SAVE.shards.BECK=(SAVE.shards.BECK||0)+n; floatText(e.x,e.y-90,'+'+n+' BECK SHARDS','#22d3ee',true); burst(e.x,e.y-20,['#22d3ee','#ecfeff'],20,180,.9,4,0,true); } checkUnlocks(); checkLevelUp(); }
+  if(e.boss){ e.deadT=3.2; burst(e.x,e.y-10,['#c8a878','#8a6a4a','#fde047','#ffffff'],80,260,1.4,6,200,true); shake(16); vibrate(300); SFX.death(); const bxp=e.d.xpBoss||XP_BOSS; floatText(e.x,e.y-60,'BOSS DEFEATED  +'+bxp+' XP','#fde047',true,true); if(G.boss===e) G.boss=null; G.lastBossDeath=G.time; G.bossMark=null; SAVE.bosses[e.type]=(SAVE.bosses[e.type]||0)+1; SAVE.xp+=bxp; SAVE.xpTotal+=bxp; dropChi(e.x,e.y,2); keyDrop(e.x,e.y); checkUnlocks(); checkLevelUp(); }
   else { deathFx(e); e.deadT=1.4; if(e.spawner) e.spawner.alive--; SAVE.kills++; if(!e.summoned&&(Math.random()<.005||DEBUG.forceChi)) dropChi(e.x,e.y,1); { const p=G.player; if(p&&p.name==='SHADE'&&spinning(p)&&e.spinHitT===G.time&&Math.random()<.25) G.coins.push({x:e.x,y:e.y,vx:rnd(-80,80),vy:-120,v:5,t:0,fly:false,z:0}); } const xp=e.d.xp||XP_KILL; SAVE.xp+=xp; SAVE.xpTotal+=xp; floatText(e.x,e.y-44,'+'+xp+' XP','#c4b5fd'); if(!e.summoned){ SAVE.pity=(SAVE.pity||0)+1; if(Math.random()<.02||SAVE.pity>=80) keyDrop(e.x,e.y); } checkUnlocks(); checkLevelUp(); if(!SAVE.hints.kill){ SAVE.hints.kill=true; G.arrowTarget=null; showHint('Try your ability ✦'); } }
   save();
 }
