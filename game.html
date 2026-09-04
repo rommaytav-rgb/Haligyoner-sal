@@ -943,13 +943,15 @@ function checkUnlocks(){ for(const n in QUESTS) if(!SAVE.unlocked[n]&&QUESTS[n].
 const MAPS=[{id:'bone_shore',name:'Bone Shore',lvl:[1,9],tier:0,bosses:'Hippo · Crocodile · Pirate Lord',desc:'Village in the centre, forest all around, mushroom clusters in the forest, pirate wrecks on the eastern beach, insect nests in the swamp to the south, river to the north.'},
             {id:'map2',name:'Map 2',lvl:[9,19],tier:1,bosses:'?',desc:'Coming soon',locked:true},{id:'map3',name:'Map 3',lvl:[19,30],tier:2,bosses:'?',desc:'Coming soon',locked:true}];
 const TIERS=[{hp:1,dmg:1},{hp:2.2,dmg:1.9},{hp:4.5,dmg:3.2},{hp:8,dmg:5}];
-/* enemy roster (sprite = index into ENEMIES from enemies-pixel.html). Common enemies are locked to one biome each; atk = seconds between swings. */
+/* enemy roster (sprite = index into ENEMIES from enemies-pixel.html). Common enemies are locked to one biome each; atk = seconds between swings.
+   Tuned to ninja levels (x1.08 / x1.32 / x1.48 / x1.64 of base for LV 2 / 5 / 7 / 9): Mushroom = LV 2, Insect Priest = LV 5, Pirate = LV 7;
+   Hippo = LV 5 (hard at 5), Crocodile = LV 7 (hard at 7), Pirate Lord = LV 9 (still a fight at 9). Nothing scales with the ninja's level. */
 const EN={
-  mush:  {hp:40, dmg:8, spd:118,r:14,range:46,atk:1.2,coins:[5,8],gold:[5,8],  xp:5,sprite:0,scale:1.5,biome:'forest',name:'MUSHROOM'},
-  priest:{hp:25, dmg:14,spd:197,r:13,range:44,atk:.8, coins:[6,8],gold:[15,22],xp:8,sprite:1,scale:1.5,biome:'swamp', name:'INSECT PRIEST'},
-  pirate:{hp:60, dmg:11,spd:104,r:15,range:50,atk:1.3,coins:[6,8],gold:[10,15],xp:7,sprite:2,scale:1.5,biome:'beach', name:'PIRATE'},
+  mush:  {hp:48, dmg:9, spd:118,r:14,range:46,atk:1.2,coins:[5,8],gold:[5,8],  xp:6,sprite:0,scale:1.5,biome:'forest',name:'MUSHROOM'},
+  priest:{hp:45, dmg:16,spd:197,r:13,range:44,atk:.8, coins:[6,8],gold:[15,22],xp:10,sprite:1,scale:1.5,biome:'swamp', name:'INSECT PRIEST'},
+  pirate:{hp:95, dmg:15,spd:104,r:15,range:50,atk:1.3,coins:[6,8],gold:[12,18],xp:12,sprite:2,scale:1.5,biome:'beach', name:'PIRATE'},
   hippo:{hp:1900,dmg:45,spd:70, r:46,range:100,coins:[40,40],gold:[200,200],boss:true,name:'HIPPO',sprite:3,scale:3,adds:'mush'},
-  croc: {hp:3400,dmg:65,spd:125,r:46,range:110,coins:[40,40],gold:[250,250],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
+  croc: {hp:2600,dmg:58,spd:125,r:46,range:110,coins:[40,40],gold:[250,250],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
   lord: {hp:2400,dmg:20,spd:77, r:40,range:96, coins:[40,40],gold:[400,400],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:400,shards:[3,4]},   /* drawn by the LORD rig, not a sprite */
 };
 const STATUS={
@@ -1571,16 +1573,16 @@ const AI={
 /* a boss waits at its lair: it fights inside ~650 px of it and walks back if dragged farther; after an attack it stands still for a short recovery window */
 function bossLeash(e,p,dt){ const a=e.ai; if(a.recover>0){ a.recover-=dt; e.vx*=.8; e.vy*=.8; faceTo(e,p); return true; } const L=e.lair||a.home; if(dist(e,L)>(e.leash||650)){ moveToward(e,L.x,L.y,dt,.9); e.face=Math.atan2(e.vy,e.vx); e.abCd=Math.max(e.abCd,.6); return true; } return false; }
 /* second phase at 50% HP: faster, one attack gains a hit, summons adds (they respawn once, 20 s later) */
-/* CROCODILE — built from the level-9 ninjas (x1.64 of base): HP  SHADE 230 · BECK 205 · BOREAS 189 · APOLLO 180 · CLAY 295;  hit  SHADE 25 · BECK 21 · BOREAS 26 · APOLLO 33 · CLAY 25
-   Croc HP 3400 = about 140 level-9 SHADE hits (~75 s of fighting with dodging).  Each croc hit below is a fixed number, the same at every level:
-   phase 1 (full HP) costs a level-9 SHADE 11-28% per hit, phase 2 (under 50%) 14-36%; nothing scales with the ninja's level. */
-const CROC_DMG={swing:[30,40],tail:[46,58],cleaver:[65,82],dash:[25,32],bite:[28,36],spit:[36,46],barrage:[24,30]};   /* [phase 1, phase 2] */
+/* CROCODILE — built from the level-7 ninjas (x1.48 of base): HP  SHADE 207 · BECK 185 · BOREAS 170 · APOLLO 163 · CLAY 266;  hit  SHADE 22 · BECK 19 · BOREAS 24 · APOLLO 30 · CLAY 22
+   Croc HP 2600 = about 120 level-7 SHADE hits (~70 s of fighting with dodging).  Each croc hit below is a fixed number, the same at every level:
+   phase 1 (full HP) costs a level-7 SHADE 11-28% per hit, phase 2 (under 50%) 14-36%; nothing scales with the ninja's level. */
+const CROC_DMG={swing:[27,36],tail:[42,52],cleaver:[58,74],dash:[23,29],bite:[25,32],spit:[32,42],barrage:[22,27]};   /* [phase 1, phase 2] */
 function bossPhase(e,dt){ const a=e.ai; if(!a.phase2&&e.hp<e.maxHp*.5){ a.phase2=true; a.addsLeft=1; a.addsT=20; summonAdds(e); }
   if(a.phase2&&a.addsLeft>0){ a.addsT-=dt; if(a.addsT<=0){ a.addsLeft--; summonAdds(e); } } }
 function summonAdds(e){ const col=e.type==='hippo'?'#c084fc':'#4ade80'; e.attackT=.6; e.animT=0; shake(9); vibrate(120); SFX.roar(); G.ring={x:e.x,y:e.y,r:0,max:200,t:0,col}; burst(e.x,e.y-20,[col,'#ffffff'],30,220,.8,5,0,true);
   for(let i=0;i<3;i++){ const an=i/3*TAU+e.ai.t; const s=makeEnemy(e.d.adds,e.x+Math.cos(an)*80,e.y+Math.sin(an)*80); s.spawnT=1; G.groundFx.push({kind:'summon',x:s.x,y:s.y+6,r:34,t:1,col}); s.summoned=true; s.biome=null; s.ai.state=s.type==='priest'?'circle':'chase'; s.ai.t=.8; s.ai.dir=1; G.chasers++; collide(s); burst(s.x,s.y,e.type==='hippo'?['#7a4aaa','#8ac06a']:['#c8202a','#8ab08a'],12,110,.6,4,200,true); } }
 /* the pirate's blunderbuss: five pellet projectiles in a narrow spread, ~7 tiles of travel, blocked by props */
-function firePellets(e,gx,gy,ang){ for(let i=0;i<5;i++){ const a=ang+(i-2)*.08+rnd(-.03,.03), v=rnd(230,260); proj({type:'bolt',pellet:true,basic:false,x:gx,y:gy,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:(7*TILE_PX)/v,r:6,vr:2,col:'#e5e7eb',glow:'#fbbf24',owner:e,dmg:4,kb:90,hit:[]}); }
+function firePellets(e,gx,gy,ang){ for(let i=0;i<5;i++){ const a=ang+(i-2)*.08+rnd(-.03,.03), v=rnd(230,260); proj({type:'bolt',pellet:true,basic:false,x:gx,y:gy,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:(7*TILE_PX)/v,r:6,vr:2,col:'#e5e7eb',glow:'#fbbf24',owner:e,dmg:6,kb:90,hit:[]}); }
   burst(gx,gy,['#fde68a','#ffffff','#fb923c'],10,140,.2,3,0,true); for(let i=0;i<8;i++) part(gx+rnd(-4,4),gy+rnd(-4,4),Math.cos(ang)*rnd(20,60)+rnd(-20,20),rnd(-40,-10),'#9ca3af',rnd(.5,.9),rnd(3,6),-30); shake(3); SFX.shot(); }
 function enemyUpdate(e,dt,p){
   if(!e.alive){ if(e.deadT!==undefined) e.deadT-=dt; return; }
@@ -2032,7 +2034,7 @@ function drawFullMap(c,p){
 const AT=32;   // arena tile = one world tile
 const BF_STAGES=[
   {id:'hippo',n:1,name:'THE RIVER PIT',boss:'hippo',lvl:5,coins:150,xp:250},
-  {id:'croc', n:2,name:'THE SWAMP HEART',boss:'croc',lvl:9,coins:200,xp:300},
+  {id:'croc', n:2,name:'THE SWAMP HEART',boss:'croc',lvl:7,coins:200,xp:300},
   {id:'lord', n:3,name:'THE BROKEN PIER',boss:'lord',lvl:9,coins:250,xp:350}];
 const BF_PAINT={wall:'rockwall',mud:'mud',shallow:'shallow',stone:'stone',sluice:'water',deep:'swampw',plank:'plank',bridge:'plank',island:'mud'};
 function emptyWorld(cols,rows){ return {w:cols*AT,h:rows*AT,land:{x0:0,y0:0,x1:cols*AT,y1:rows*AT},corner:0,river:{bridges:[],bh:0,fords:[],fw:0,broken:-99999},lakes:[],pools:[],
