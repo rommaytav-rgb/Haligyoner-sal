@@ -1236,7 +1236,7 @@ function enterMap(def){
   for(const sp of G.spawners){ const n=sp.k==='wreck'?2:dist(sp,p)<1300?1:2; for(let i=0;i<n;i++) spawnFrom(sp,true); }   // pirates stand in pairs by their campfire
   // rare boss on entry (short timer) or guaranteed after time on the map / in the swamp
   G.bossRollT=0; G.lastBossDeath=-999; G.bossMark=null; G.plv=playerLevel();
-  G.arrowTarget=SAVE.hints.kill?null:G.spawners.reduce((a,b)=>dist(a,p)<dist(b,p)?a:b);
+  G.arrowTarget=null;   // no guide arrow
   explore(p.x,p.y); G.banner={text:def.name.toUpperCase(),sub:'LEVELS '+def.lvl[0]+'–'+def.lvl[1],t:2.6};
   showHint(SAVE.hints.attack?null:'Drag the right stick to aim, release to fire');
 }
