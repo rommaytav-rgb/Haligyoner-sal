@@ -952,7 +952,7 @@ const EN={
   pirate:{hp:95, dmg:15,spd:104,r:15,range:50,atk:1.3,coins:[6,8],gold:[12,18],xp:12,sprite:2,scale:1.5,biome:'beach', name:'PIRATE'},
   hippo:{hp:1900,dmg:45,spd:70, r:46,range:100,coins:[40,40],gold:[200,200],boss:true,name:'HIPPO',sprite:3,scale:3,adds:'mush'},
   croc: {hp:2600,dmg:58,spd:125,r:46,range:110,coins:[40,40],gold:[250,250],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
-  lord: {hp:2800,dmg:20,spd:108,r:40,range:96, coins:[40,40],gold:[400,400],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:400,shards:[3,4]},   /* drawn by the LORD rig, not a sprite */
+  lord: {hp:2800,dmg:20,spd:116,r:40,range:96, coins:[40,40],gold:[400,400],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:400,shards:[3,4]},   /* drawn by the LORD rig, not a sprite */
 };
 const STATUS={
   slow:  {tint:'#60a5fa',mult:{spd:.6,rate:.6}},
@@ -2203,8 +2203,8 @@ function showBossWin(F){ const r=F.rewards, st=F.stage; $('bfWinTime').innerHTML
    Drawing = LORD kit (boss-pirate-lord.html rig). Moves: Double Slash, Sword Whirl, Anchor Pull (+drag, +slash),
    Call the Crew (75/50/25%), Broadside (phase 2). Each move punishes a different habit.
    ===================================================================== */
-const LORD_HIT={slash1:18,slash2:30,whirl:36,anchor:30,contact:24,shell:10,mortar:18};
-const LORD_CD=1.3;
+const LORD_HIT={slash1:20,slash2:33,whirl:40,anchor:33,contact:26,shell:11,mortar:20};   /* a touch harder */
+const LORD_CD=1.2;
 /* tiers by HP: 0 calm (100-75%), 1 angry (75-30%), 2 berserk (under 30%) */
 const LORD_TIER=[{rate:1,spd:1,hit:1,mortarN:1,mortarT:2.4,mark:1,crew:3},{rate:1.2,spd:1.15,hit:1.15,mortarN:2,mortarT:1.6,mark:.9,crew:4},{rate:1.35,spd:1.3,hit:1.3,mortarN:4,mortarT:1.2,mark:.8,crew:5}];
 const LT=e=>LORD_TIER[e.ai.tier||0];
