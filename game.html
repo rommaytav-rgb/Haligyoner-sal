@@ -951,9 +951,9 @@ const EN={
   mush:  {hp:50, dmg:9, spd:118,r:14,range:46,atk:1.2,coins:[5,8],gold:[5,8],  xp:6,sprite:0,scale:1.5,biome:'forest',name:'MUSHROOM'},
   priest:{hp:54, dmg:16,spd:197,r:13,range:44,atk:.8, coins:[6,8],gold:[15,22],xp:10,sprite:1,scale:1.5,biome:'swamp', name:'INSECT PRIEST'},
   pirate:{hp:127,dmg:15,spd:104,r:15,range:50,atk:1.3,coins:[6,8],gold:[12,18],xp:12,sprite:2,scale:1.5,biome:'beach', name:'PIRATE'},
-  hippo:{hp:2250,dmg:45,spd:70, r:46,range:100,coins:[40,40],gold:[200,200],boss:true,name:'HIPPO',sprite:3,scale:3,adds:'mush'},
-  croc: {hp:3450,dmg:58,spd:125,r:46,range:110,coins:[40,40],gold:[250,250],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
-  lord: {hp:4650,dmg:20,spd:116,r:40,range:96, coins:[40,40],gold:[400,400],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:400,shards:[3,4]},   /* drawn by the LORD rig, not a sprite */
+  hippo:{hp:2400,dmg:48,spd:70, r:46,range:100,coins:[40,40],gold:[200,200],boss:true,name:'HIPPO',sprite:3,scale:3,adds:'mush'},
+  croc: {hp:3700,dmg:62,spd:125,r:46,range:110,coins:[40,40],gold:[250,250],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
+  lord: {hp:4900,dmg:20,spd:116,r:40,range:96, coins:[40,40],gold:[400,400],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:400,shards:[3,4]},   /* drawn by the LORD rig, not a sprite */
 };
 const STATUS={
   slow:  {tint:'#60a5fa',mult:{spd:.6,rate:.6}},
@@ -1328,7 +1328,7 @@ const WAVE_DMG=30;   /* every wave, anywhere, costs exactly 30 */
 function damage(e,amt,src,o){
   o=o||{}; if(!e.alive||e.spawnT>0) return 0;
   if(e.kind==='enemy'&&e.hidden) return 0;   // a submerged boss cannot be hit
-  if(e.kind==='player'){ if((e.inv>0&&!o.sure)||e.hidden||DEBUG.god||inSafeZone(e.x,e.y)) return 0; if(spinBusy(e)||e.spinGrace>0||e.abGrace>0) return 0; if(e.status.shield&&!o.flat) amt*=.5; }   // during Spinjitzu (flash + spin) the ninja cannot lose HP else if(e.status.freeze) amt*=2;
+  if(e.kind==='player'){ if(G.arena&&G.arena.over) return 0; if((e.inv>0&&!o.sure)||e.hidden||DEBUG.god||inSafeZone(e.x,e.y)) return 0; if(spinBusy(e)||e.spinGrace>0||e.abGrace>0) return 0; if(e.status.shield&&!o.flat) amt*=.5; }   // during Spinjitzu (flash + spin) the ninja cannot lose HP else if(e.status.freeze) amt*=2;
   if(e.kind==='enemy'&&src&&!o.noBlock){
     if(e.type==='priest'&&o.basic&&e.dodgeCd<=0&&Math.random()<.3){ e.dodgeCd=.4; const a=Math.atan2(src.y-e.y,src.x-e.x)+(Math.random()<.5?1:-1)*Math.PI/2; e.kvx+=Math.cos(a)*460; e.kvy+=Math.sin(a)*460; floatText(e.x,e.y-34,'DODGE','#a3e635'); SFX.dodge(); burst(e.x,e.y+6,['#8ab08a'],4,60,.3,3); return 0; }   // Insect Priest sidesteps a basic attack (short hop, 0.4 s cooldown)
     if(e.type==='pirate'&&!o.spin&&fromFront(e,src)) amt*=.7;   // heavy coat: 30% less damage from the front (behind / Spinjitzu bypass it)
@@ -1379,7 +1379,7 @@ function openChest(c){
 
 /* ---------- player ---------- */
 function playerUpdate(p,dt){
-  if(!p.alive){ p.deadT-=dt; if(p.deadT<=0&&G.state==='PLAYING') onPlayerDead(); return; }
+  if(!p.alive){ p.deadT-=dt; if(p.deadT<=0&&G.state==='PLAYING'&&!WORLD.arena) onPlayerDead(); return; }   /* in the arena the fight itself decides win or fail */
   p.flash=Math.max(0,p.flash-dt); p.stagger=Math.max(0,p.stagger-dt); p.inv=Math.max(0,p.inv-dt); p.abGrace=Math.max(0,(p.abGrace||0)-dt); p.spinCd=Math.max(0,(p.spinCd||0)-dt); p.atkCd-=dt; p.dashCd-=dt; p.abCd-=dt; p.comboT-=dt; p.attackT=Math.max(0,p.attackT-dt); tickStatus(p,dt); if(p.comboT<=0) p.combo=0;
   spinUpdate(p,dt); chiUpdate(p,dt); groundFxUpdate(dt); const flash=p.spin&&p.spin.state==='FLASH';
   const zone=zoneOf(p.x,p.y); if(zone==='swamp') G.swampT+=dt; const max=p.spd*statMult(p,'spd')*terrainMod(p.x,p.y)*spinSpeedMul(p), canMove=p.stagger<=0&&p.dashT<=0&&p.jumpT<=0&&!p.hidden&&!flash&&!arenaBusy()&&!(p.dunk>0)&&!p.drag;
@@ -1539,14 +1539,14 @@ const AI={
         if(pick==='slam'){ a.t=1.2; a.ix=e.x+Math.cos(a.aim)*120; a.iy=e.y+Math.sin(a.aim)*120; telegraph(e,{s:'circ',r:95,ox:a.ix-e.x,oy:a.iy-e.y},1.2); e.holdAnim=true; e.animT=.05; }   // flail held high, cracking ground at the impact point
         else if(pick==='charge') telegraph(e,{s:'line',a:a.aim,l:600,w:56},1); else telegraph(e,{s:'circ',r:90},1); }
       else if(d<e.d.range&&a.atkT<=0){ a.state='swing'; a.t=.5; a.aim=e.face; e.vx=e.vy=0; a.ix=e.x+Math.cos(a.aim)*(e.d.range*.6); a.iy=e.y+Math.sin(a.aim)*(e.d.range*.6); telegraph(e,{s:'circ',r:e.d.range*.85,ox:a.ix-e.x,oy:a.iy-e.y},.5); } }
-    else if(a.state==='swing'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='chase'; a.atkT=2; a.tele=null; e.attackT=.3; e.animT=.25; shake(4); SFX.hit(); if(inCircle(p,a.ix,a.iy,e.d.range*.85)) damage(p,Math.round(30*P2),e,{kb:220}); } }
+    else if(a.state==='swing'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='chase'; a.atkT=2; a.tele=null; e.attackT=.3; e.animT=.25; shake(4); SFX.hit(); if(inCircle(p,a.ix,a.iy,e.d.range*.85)) damage(p,Math.round(32*P2),e,{kb:220}); } }
     else if(a.state==='slam'){ if(a.t<=0){ a.state='chase'; e.abCd=3; a.recover=.7; a.tele=null; e.holdAnim=false; e.attackT=.3; e.animT=.26; shake(12); vibrate(120); const ix=a.ix, iy=a.iy;
         if(inCircle(p,ix,iy,95)) damage(p,Math.round(e.dmg*P2),e,{kb:420}); else if(inCircle(p,ix,iy,170)&&p.alive){ const dd=Math.max(1,Math.hypot(p.x-ix,p.y-iy)); p.kbx+=(p.x-ix)/dd*380; p.kby+=(p.y-iy)/dd*380; }   // shockwave: knockback just outside the circle
         for(const o of G.enemies) if(o!==e&&o.alive&&!o.boss&&inCircle(o,ix,iy,170)){ const dd=Math.max(1,Math.hypot(o.x-ix,o.y-iy)); o.kbx+=(o.x-ix)/dd*300; o.kby+=(o.y-iy)/dd*300; }
         burst(ix,iy,['#9ca3af','#4b5563','#d9a34a','#c9a86a'],44,320,.7,6,0,true); for(let i=0;i<14;i++) part(ix+rnd(-40,40),iy+rnd(-20,20),rnd(-90,90),rnd(-260,-120),i%2?'#8a6a4a':'#5a3a20',rnd(.5,.9),rnd(4,7),600); G.ring={x:ix,y:iy,r:0,max:170,t:0,col:'#d9a34a',earth:true}; noise(.25,.35); tone(60,.3,'sine',.4,-30); proj({type:'ring',mud:true,x:ix,y:iy,r:30,life:9,spd:230,max:640,delay:.1,owner:e,dmg:WAVE_DMG,hit:[]}); floatText(ix,iy-30,'MUD WAVE','#c9a86a');
         if(a.phase2) proj({type:'ring',x:ix,y:iy,r:20,life:9,spd:240,max:220,delay:.4,owner:e,dmg:WAVE_DMG,hit:[]}); } }   // phase 2: the slam gains a second shockwave
     else if(a.state==='charge'){ if(a.t<=0){ a.state='charging'; a.t=.9; a.tele=null; a.hit=[]; SFX.roar(); } }
-    else if(a.state==='charging'){ const sp=e.spd*5; e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; if(!a.hit.includes(p)&&inCircle(p,e.x,e.y,e.r+6)){ a.hit.push(p); damage(p,Math.round(30*P2),e,{kb:520}); } for(const o of G.enemies) if(o!==e&&o.alive&&!a.hit.includes(o)&&inCircle(o,e.x,e.y,e.r+6)){ a.hit.push(o); damage(o,20,e,{kb:400,noBlock:true}); } part(e.x+rnd(-24,24),e.y+22,rnd(-40,40),-60,'#c9a86a',.5,6); if(a.t<=0||wallAhead(e,a.aim)){ a.state='chase'; e.abCd=3; a.recover=.7; e.vx=e.vy=0; shake(6); crashBoulder(e); } }
+    else if(a.state==='charging'){ const sp=e.spd*5; e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; if(!a.hit.includes(p)&&inCircle(p,e.x,e.y,e.r+6)){ a.hit.push(p); damage(p,Math.round(32*P2),e,{kb:520}); } for(const o of G.enemies) if(o!==e&&o.alive&&!a.hit.includes(o)&&inCircle(o,e.x,e.y,e.r+6)){ a.hit.push(o); damage(o,20,e,{kb:400,noBlock:true}); } part(e.x+rnd(-24,24),e.y+22,rnd(-40,40),-60,'#c9a86a',.5,6); if(a.t<=0||wallAhead(e,a.aim)){ a.state='chase'; e.abCd=3; a.recover=.7; e.vx=e.vy=0; shake(6); crashBoulder(e); } }
     else if(a.state==='stomp'){ if(a.t<=0){ a.state='chase'; e.abCd=3; a.recover=.7; a.tele=null; shake(12); vibrate(120); for(let i=0;i<2;i++) proj({type:'ring',x:e.x,y:e.y+10,r:20,life:9,spd:200,max:300,delay:i*.9,owner:e,dmg:WAVE_DMG,hit:[]}); burst(e.x,e.y+10,['#8a6a4a','#d9a34a'],30,220,.6,6,300); } }
   },
   /* ---- CROCODILE boss: cleaver, tail spin, lunge + bite combo; phase 2 at 50% ---- */
@@ -1578,7 +1578,7 @@ function bossLeash(e,p,dt){ const a=e.ai; if(a.recover>0){ a.recover-=dt; e.vx*=
 /* CROCODILE — built from the level-7 ninjas (x1.48 of base): HP  SHADE 207 · BECK 185 · BOREAS 170 · APOLLO 163 · CLAY 266;  hit  SHADE 22 · BECK 19 · BOREAS 24 · APOLLO 30 · CLAY 22
    Croc HP 2600 = about 120 level-7 SHADE hits (~70 s of fighting with dodging).  Each croc hit below is a fixed number, the same at every level:
    phase 1 (full HP) costs a level-7 SHADE 11-28% per hit, phase 2 (under 50%) 14-36%; nothing scales with the ninja's level. */
-const CROC_DMG={swing:[27,41],tail:[42,60],cleaver:[58,85],dash:[23,33],bite:[25,37],spit:[32,48],barrage:[22,31]};   /* [phase 1, phase 2] */
+const CROC_DMG={swing:[29,43],tail:[45,64],cleaver:[62,90],dash:[24,35],bite:[27,39],spit:[34,51],barrage:[23,33]};   /* [phase 1, phase 2] */
 function bossPhase(e,dt){ const a=e.ai; if(!a.phase2&&e.hp<e.maxHp*.5){ a.phase2=true; a.addsLeft=2; a.addsT=15; summonAdds(e); G.banner={text:'THE '+e.d.name+' GOES BERSERK',sub:'FASTER · HARDER · MORE OF THEM',t:.9};   /* under a second: it must not get in the way */ }
   if(a.phase2&&a.addsLeft>0){ a.addsT-=dt; if(a.addsT<=0){ a.addsLeft--; a.addsT=15; summonAdds(e); } } }   /* half HP: the boss goes berserk (+35% attack speed, +30% move speed, harder hits, 4 adds that return twice) */
 function summonAdds(e){ const col=e.type==='hippo'?'#c084fc':'#4ade80'; e.attackT=.6; e.animT=0; shake(9); vibrate(120); SFX.roar(); G.ring={x:e.x,y:e.y,r:0,max:200,t:0,col}; burst(e.x,e.y-20,[col,'#ffffff'],30,220,.8,5,0,true);
@@ -2171,7 +2171,7 @@ function arenaTick(raw){ const F=G.arena; if(!F||!F.over) return; F.overT+=raw;
   if(F.over==='fail'&&F.overT>3){ const id=F.stage.id; leaveArena(); setState('BOSSLIST'); }
   if(F.over==='win'&&F.overT>3.2&&!F.claimed){ F.claimed=true; bfGrantRewards(F); showBossWin(F); } }
 function arenaFail(quiet){ const F=G.arena; if(!F||F.over) return; F.over='fail'; F.overT=0; F.bossLeft=G.boss&&G.boss.alive?Math.round(G.boss.hp/G.boss.maxHp*100):0; F.chiSpent=F.startChi-(SAVE.chi||0); save(); if(quiet){ leaveArena(); setState('BOSSLIST'); } }
-function arenaWin(e){ const F=G.arena; if(!F||F.over) return; F.over='win'; F.overT=0; G.slowmo=1.1; e.deadT=3; shake(14); vibrate(300); SFX.death(); burst(e.x,e.y-20,['#fde047','#ffffff','#c8a878'],90,300,1.6,6,150,true); }
+function arenaWin(e){ const F=G.arena; if(!F||F.over) return; F.over='win'; F.overT=0; G.slowmo=1.1; e.deadT=3; for(const o of G.enemies) if(o!==e&&o.alive){ o.alive=false; o.deadT=1; deathFx(o); } for(const q of G.projs) if(q.alive&&q.owner&&q.owner.kind!=='player') q.alive=false; G.groundFx=G.groundFx.filter(f=>!(f.kind==='shell'||f.kind==='strip'||f.kind==='aimshell'||f.kind==='venom')); const p=G.player; if(p){ p.drag=null; p.status={}; }   /* the moment the boss dies the fight is won: adds, shots and shells vanish */ shake(14); vibrate(300); SFX.death(); burst(e.x,e.y-20,['#fde047','#ffffff','#c8a878'],90,300,1.6,6,150,true); }
 function bfGrantRewards(F){ const st=F.stage, id=st.id, first=!SAVE.bossFightFirstClearClaimed[id]; const r={chi:1,coins:st.coins,xp:st.xp,first};
   SAVE.chi=(SAVE.chi||0)+1; SAVE.gold+=st.coins; SAVE.xp+=st.xp; SAVE.xpTotal+=st.xp; G.plv=playerLevel();
   if(first){ SAVE.bossFightFirstClearClaimed[id]=true; SAVE.chi+=2; SAVE.keys=Math.min(3,(SAVE.keys||0)+1); r.bonusChi=2; r.bonusKey=(SAVE.keys<=3); }
@@ -2207,7 +2207,7 @@ function showBossWin(F){ const r=F.rewards, st=F.stage; $('bfWinTime').innerHTML
    Drawing = LORD kit (boss-pirate-lord.html rig). Moves: Double Slash, Sword Whirl, Anchor Pull (+drag, +slash),
    Call the Crew (75/50/25%), Broadside (phase 2). Each move punishes a different habit.
    ===================================================================== */
-const LORD_HIT={slash1:20,slash2:33,whirl:40,anchor:33,contact:26,shell:11,mortar:20};   /* a touch harder */
+const LORD_HIT={slash1:21,slash2:35,whirl:42,anchor:35,contact:28,shell:12,mortar:21};   /* a touch harder */
 const LORD_CD=1.2;
 /* tiers by HP: 0 calm (100-75%), 1 angry (75-30%), 2 berserk (under 30%) */
 const LORD_TIER=[{rate:1,spd:1,hit:1,mortarN:1,mortarT:2.4,mark:1,crew:3},{rate:1.2,spd:1.15,hit:1.15,mortarN:2,mortarT:1.6,mark:.9,crew:4},{rate:1.35,spd:1.3,hit:1.3,mortarN:4,mortarT:1.2,mark:.8,crew:5}];
