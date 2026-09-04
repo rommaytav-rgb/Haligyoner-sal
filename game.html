@@ -1981,7 +1981,7 @@ function drawHUD(c,p){
   // pause button
   const pb=UI.pause(); c.fillStyle='rgba(8,10,24,.55)'; roundRect(c,pb.x-20,8,40,28,10); c.fill(); c.fillStyle='rgba(255,255,255,.75)'; c.fillRect(pb.x-8,14,5,16); c.fillRect(pb.x+3,14,5,16);
   // boss bar
-  if(G.boss&&G.boss.alive&&(G.boss.engaged||dist(G.boss,p)<1000)){ const b=G.boss, mm=UI.mini(), w=Math.min(170,SW*.2), x=SW-w-10, y=WORLD.arena?10:mm.y+mm.h+12; c.fillStyle='rgba(8,10,24,.7)'; roundRect(c,x,y,w,26,8); c.fill(); c.font='900 9px Arial'; c.textAlign='left'; c.fillStyle='#fca5a5'; c.fillText(b.d.name+(b.ai.phase2?' · ENRAGED':''),x+8,y+10); c.fillStyle='#3b0a0a'; roundRect(c,x+6,y+14,w-12,7,3); c.fill(); c.fillStyle='#ef4444'; roundRect(c,x+6,y+14,(w-12)*clamp(b.hp/b.maxHp,0,1),7,3); c.fill(); c.font='800 8px Arial'; c.textAlign='right'; c.fillStyle='#e5e7eb'; c.fillText(Math.round(b.hp/b.maxHp*100)+'%',x+w-8,y+10); }   // small boss bar in the top-right corner, out of the way
+  if(G.boss&&G.boss.alive&&(G.boss.engaged||dist(G.boss,p)<1000)){ const b=G.boss, mm=UI.mini(), w=Math.min(170,SW*.2), x=SW-w-10, y=WORLD.arena?10:mm.y+mm.h+12; c.fillStyle='rgba(8,10,24,.7)'; roundRect(c,x,y,w,26,8); c.fill(); c.font='900 9px Arial'; c.textAlign='left'; c.fillStyle='#fca5a5'; c.fillText(b.d.name+(b.ai.tier===2?' · BERSERK':b.ai.phase2?(b.type==='lord'?' · ANGRY':' · BERSERK'):''),x+8,y+10); c.fillStyle='#3b0a0a'; roundRect(c,x+6,y+14,w-12,7,3); c.fill(); c.fillStyle='#ef4444'; roundRect(c,x+6,y+14,(w-12)*clamp(b.hp/b.maxHp,0,1),7,3); c.fill(); c.font='800 8px Arial'; c.textAlign='right'; c.fillStyle='#e5e7eb'; c.fillText(Math.round(b.hp/b.maxHp*100)+'%',x+w-8,y+10); }   // small boss bar in the top-right corner, out of the way
   if(!arena)
   // minimap: a small window on the area around the player (tap it to open the full map); boss marker with an edge arrow when it is off the window
   { const mm=UI.mini(), mw=mm.w, mh=mm.h, mx=mm.x, my=mm.y, span=mm.span, sc=mw/span, spanY=mh/sc, wx0=p.x-span/2, wy0=p.y-spanY/2, ms=WORLD.mini.width/WORLD.w, fs=1/WORLD.FOG;
@@ -2048,7 +2048,7 @@ function emptyWorld(cols,rows){ return {w:cols*AT,h:rows*AT,land:{x0:0,y0:0,x1:c
   landmarks:[],spawners:[],chests:[],golden:[],hippoLairs:[],crocLairs:[],chiChests:[],playerSpawn:{x:0,y:0},paths:[],rocks:[],trees:[],logs:[],bushes:[],patches:[],pebbles:[],flowers:[],shells:[],riverRocks:[],deadPlants:[],planks:[],campfires:[],reeds:[],bones:[],lights:[],
   colliders:[],cgrid:new Map(),CG:200,pathGrid:null,PG:32,chunks:new Map(),CS:640,mini:null,explored:null,FOG:64,ex:0,ey:0,arena:null}; }
 function makeArena(stage){
-  const cols=stage.id==='croc'?44:stage.id==='lord'?30:40, rows=stage.id==='croc'?32:stage.id==='lord'?23:30, W=emptyWorld(cols,rows), R=mulberry(stage.n*17+3), grid=new Array(cols*rows).fill('deep');
+  const cols=stage.id==='croc'?46:stage.id==='lord'?32:40, rows=stage.id==='croc'?34:stage.id==='lord'?25:30, W=emptyWorld(cols,rows), R=mulberry(stage.n*17+3), grid=new Array(cols*rows).fill('deep');
   const A={id:stage.id,cols,rows,grid,bridges:[],zone:stage.id==='croc'?'swamp':'forest',
     tile(x,y){ const tx=Math.floor(x/AT), ty=Math.floor(y/AT); if(tx<0||ty<0||tx>=cols||ty>=rows) return 'wall'; return grid[ty*cols+tx]; },
     set(tx,ty,k){ if(tx>=0&&ty>=0&&tx<cols&&ty<rows) grid[ty*cols+tx]=k; },
@@ -2072,14 +2072,14 @@ function makeArena(stage){
   } else {
     // "The Swamp Heart": a round mud island in the middle, four wooden decks (N/E/S/W) joined to it by straight plank bridges; the N/E/S bridges break, the W one (start) holds
     const rect=(x0,y0,x1,y1,k)=>{ for(let ty=y0;ty<=y1;ty++) for(let tx=x0;tx<=x1;tx++) A.set(tx,ty,k); };
-    for(let ty=0;ty<rows;ty++) for(let tx=0;tx<cols;tx++){ const d=Math.hypot((tx+.5-22.5)/7.6,(ty+.5-16.5)/5.4); if(d<=1) A.set(tx,ty,'island'); }
-    rect(17,2,27,6,'plank'); rect(17,27,27,31,'plank'); rect(2,12,7,21,'plank'); rect(37,12,42,21,'plank');
+    for(let ty=0;ty<rows;ty++) for(let tx=0;tx<cols;tx++){ const d=Math.hypot((tx+.5-23.5)/7.8,(ty+.5-17.5)/5.6); if(d<=1) A.set(tx,ty,'island'); }
+    rect(18,2,28,6,'plank'); rect(18,29,28,33,'plank'); rect(2,13,7,22,'plank'); rect(39,13,44,22,'plank');
     const B=(x0,y0,x1,y1,br)=>{ rect(x0,y0,x1,y1,'bridge'); A.bridges.push({x0,y0,x1,y1,breakable:br,broken:false}); };
-    B(21,7,23,11,true); B(21,22,23,26,true); B(8,15,14,17,false); B(30,15,36,17,true);
-    for(const [cx2,cy2] of [[9,5],[35,5],[9,27],[35,27]]) for(let ty=cy2-1;ty<=cy2+1;ty++) for(let tx=cx2-1;tx<=cx2+1;tx++) if(Math.abs(tx-cx2)+Math.abs(ty-cy2)<=1) A.set(tx,ty,'island');   // four small islets in the corners (decor)
-    A.center={x:22.5*AT,y:16.5*AT}; W.playerSpawn={x:4.5*AT,y:16.5*AT}; A.bossStart={x:39.5*AT,y:16.5*AT};
-    for(const [tx,ty] of [[9,5],[35,5],[9,27],[35,27],[1,1],[42,1],[1,30],[42,30],[14,1],[30,31],[1,8],[42,24]]) W.trees.push({x:(tx+.5)*AT,y:(ty+.5)*AT,cr:32+R()*6,r:10,s:R(),kind:'swamp'});
-    A.posts=[]; for(const [x0,y0,x1,y1] of [[17,2,27,6],[17,27,27,31],[2,12,7,21],[37,12,42,21]]) for(const [tx,ty] of [[x0,y0],[x1,y0],[x0,y1],[x1,y1]]) A.posts.push({x:(tx+.5)*AT,y:(ty+.5)*AT,lamp:true});   // lantern posts at every deck corner
+    B(22,7,24,11,true); B(22,23,24,28,true); B(8,16,15,18,false); B(31,16,38,18,true);
+    for(const [cx2,cy2] of [[9,5],[37,5],[9,29],[37,29]]) for(let ty=cy2-1;ty<=cy2+1;ty++) for(let tx=cx2-1;tx<=cx2+1;tx++) if(Math.abs(tx-cx2)+Math.abs(ty-cy2)<=1) A.set(tx,ty,'island');   // four small islets in the corners (decor)
+    A.center={x:23.5*AT,y:17.5*AT}; W.playerSpawn={x:4.5*AT,y:17.5*AT}; A.bossStart={x:41.5*AT,y:17.5*AT};
+    for(const [tx,ty] of [[9,5],[37,5],[9,29],[37,29],[1,1],[44,1],[1,32],[44,32],[15,1],[31,33],[1,9],[44,25]]) W.trees.push({x:(tx+.5)*AT,y:(ty+.5)*AT,cr:32+R()*6,r:10,s:R(),kind:'swamp'});
+    A.posts=[]; for(const [x0,y0,x1,y1] of [[18,2,28,6],[18,29,28,33],[2,13,7,22],[39,13,44,22]]) for(const [tx,ty] of [[x0,y0],[x1,y0],[x0,y1],[x1,y1]]) A.posts.push({x:(tx+.5)*AT,y:(ty+.5)*AT,lamp:true});   // lantern posts at every deck corner
     for(const b of A.bridges){ const v=b.x1-b.x0<b.y1-b.y0; if(v){ A.posts.push({x:(b.x0-.2)*AT,y:(b.y0+.5)*AT},{x:(b.x1+1.2)*AT,y:(b.y0+.5)*AT},{x:(b.x0-.2)*AT,y:(b.y1+.5)*AT},{x:(b.x1+1.2)*AT,y:(b.y1+.5)*AT}); } else { A.posts.push({x:(b.x0+.5)*AT,y:(b.y0-.2)*AT},{x:(b.x0+.5)*AT,y:(b.y1+1.2)*AT},{x:(b.x1+.5)*AT,y:(b.y0-.2)*AT},{x:(b.x1+.5)*AT,y:(b.y1+1.2)*AT}); } }
     W.lights=A.posts.filter(p=>p.lamp).map(p=>({x:p.x,y:p.y-14,s:R()}));
     A.pads=[]; for(let i=0;i<60;i++){ const x=R()*W.w, y=R()*W.h; if(A.tile(x,y)==='deep'&&!A.walk(x-AT,y)&&!A.walk(x+AT,y)&&!A.walk(x,y-AT)&&!A.walk(x,y+AT)) A.pads.push({x,y,s:R()}); }   // lily pads on open water
@@ -2204,7 +2204,10 @@ function showBossWin(F){ const r=F.rewards, st=F.stage; $('bfWinTime').innerHTML
    ===================================================================== */
 const LORD_HIT={slash1:18,slash2:30,whirl:36,anchor:30,contact:24,shell:10,mortar:18};
 const LORD_CD=1.3;
-const LH=(e,k)=>Math.round(LORD_HIT[k]*(e.ai.phase2?1.3:1));   /* berserk: every hit x1.3 */   /* seconds between moves (was 2.0): he presses constantly */
+/* tiers by HP: 0 calm (100-75%), 1 angry (75-50%), 2 berserk (under 50%) */
+const LORD_TIER=[{rate:1,spd:1,hit:1,mortarN:1,mortarT:2.4,mark:1,crew:3},{rate:1.2,spd:1.15,hit:1.15,mortarN:2,mortarT:1.6,mark:.9,crew:4},{rate:1.35,spd:1.3,hit:1.3,mortarN:4,mortarT:1.2,mark:.8,crew:5}];
+const LT=e=>LORD_TIER[e.ai.tier||0];
+const LH=(e,k)=>Math.round(LORD_HIT[k]*LT(e).hit);
 /* piecewise timeline: segs=[[seconds,kSpan],...] -> k in 0..1 for the drawing rig */
 function segK(el,segs){ let k=0; for(const [d,s] of segs){ if(el<=d) return k+s*(el/d); el-=d; k+=s; } return 1; }
 const LORD_SLASH_SEGS=w=>[[w,.28],[.15,.14],[.2,.16],[.15,.14],[.4,.28]];   /* wind-up w, strike 1, hold, strike 2 (0.35 s after the first), recovery */
@@ -2217,18 +2220,20 @@ function lordStart(e,p,st){ const a=e.ai; a.state=st; a.el=0; a.aim=e.face; e.vx
   else if(st==='broadside') lordBroadside(e,p); }
 function lordEnd(e,cd,rec){ const a=e.ai; a.state='chase'; a.tele=null; e.abCd=cd; a.recover=rec; a.anchor=null; }
 function lordWaveAlive(e){ return !!(e.ai.wave&&e.ai.wave.some(s=>s.alive)); }
-function lordPhase(e){ const a=e.ai; if(!a.phase2&&e.hp<e.maxHp*.5){ a.phase2=true; shake(12); vibrate(160); SFX.roar(); G.banner={text:'MY CREW NEVER RESTS',sub:'THE PIRATE LORD GOES BERSERK · CANNONS READY',t:2.6}; burst(e.x,e.y-30,['#a040ff','#ff2a2a','#ffffff'],50,300,1,6,0,true); G.ring={x:e.x,y:e.y,r:0,max:240,t:0,col:'#a040ff'}; } }
+function lordPhase(e){ const a=e.ai; const want=e.hp<e.maxHp*.5?2:e.hp<e.maxHp*.75?1:0; if(want<=(a.tier||0)) return; a.tier=want; a.phase2=true; shake(want===2?14:9); vibrate(160); SFX.roar();
+  G.banner=want===2?{text:'MY CREW NEVER RESTS',sub:'THE PIRATE LORD GOES BERSERK · FOUR CANNONS · BROADSIDE',t:2.6}:{text:'YOU DARE?',sub:'THE PIRATE LORD IS ANGRY · TWIN CANNONS',t:2.4};
+  burst(e.x,e.y-30,['#a040ff','#ff2a2a','#ffffff'],want===2?60:36,300,1,6,0,true); G.ring={x:e.x,y:e.y,r:0,max:want===2?260:180,t:0,col:want===2?'#ff2a2a':'#a040ff'}; }
 AI.lord=function(e,p,dt){
-  const a=e.ai, d=dist(e,p), rt=statMult(e,'rate')*(a.phase2?1.35:1); a.t-=dt; e.abCd-=dt*rt; a.atkT-=dt*rt; a.el=(a.el||0)+dt*(a.state==='chase'?1:rt); lordPhase(e);
+  const a=e.ai, d=dist(e,p), rt=statMult(e,'rate')*LT(e).rate; a.t-=dt; e.abCd-=dt*rt; a.atkT-=dt*rt; a.el=(a.el||0)+dt*(a.state==='chase'?1:rt); lordPhase(e);
   if(a.state==='chase'){ if(bossLeash(e,p,dt)) return; const safe=inSafeZone(p.x,p.y), beach=WORLD.arena||(zoneOf(p.x,p.y)==='beach'&&zoneOf(e.x,e.y)==='beach');
     if(!beach){ const L=e.lair||a.home; if(dist(e,L)>40){ moveToward(e,L.x,L.y,dt,.9); e.face=Math.atan2(e.vy,e.vx); } else { e.vx*=.8; e.vy*=.8; faceTo(e,p); } e.abCd=Math.max(e.abCd,.6); return; }   /* beach only: off the sand he goes back to his lair */
-    if(d<900&&!safe) moveToward(e,p.x,p.y,dt,a.phase2?1.3:1); else { e.vx*=.9; e.vy*=.9; } faceTo(e,p);
+    if(d<900&&!safe) moveToward(e,p.x,p.y,dt,LT(e).spd); else { e.vx*=.9; e.vy*=.9; } faceTo(e,p);
     lordMortar(e,p,dt);
-    if(a.phase2&&p.alive&&d<700){ a.crewT=(a.crewT===undefined?18:a.crewT)-dt; if(a.crewT<=0&&!lordWaveAlive(e)){ a.crewT=18; lordStart(e,p,'summon'); return; } }   /* berserk: a fresh crew every 18 s once the last one is dead */
+    if(a.tier===2&&p.alive&&d<700){ a.crewT=(a.crewT===undefined?18:a.crewT)-dt; if(a.crewT<=0&&!lordWaveAlive(e)){ a.crewT=18; lordStart(e,p,'summon'); return; } }   /* berserk: a fresh crew every 18 s once the last one is dead */
     const th=[.75,.5,.25].find(v=>e.hp<e.maxHp*v&&!(a.summoned||[]).includes(v));
     if(th!==undefined&&p.alive&&d<700){ (a.summoned=a.summoned||[]).push(th); if(!lordWaveAlive(e)){ lordStart(e,p,'summon'); return; } }   /* a wave still alive: this summon is skipped */
     if(e.abCd<=0&&p.alive&&d<700&&!safe){ a.moveN=(a.moveN||0)+1; let pick; const r=Math.random();
-      if(a.phase2&&a.moveN%3===0) pick='broadside'; else if(d<150) pick=r<.5?'slash':'whirl'; else if(d<270) pick=r<.45?'anchor':r<.7?'whirl':'slash'; else pick=r<.6?'anchor':'whirl';
+      if(a.tier===2&&a.moveN%3===0) pick='broadside'; else if(d<150) pick=r<.5?'slash':'whirl'; else if(d<270) pick=r<.45?'anchor':r<.7?'whirl':'slash'; else pick=r<.6?'anchor':'whirl';
       if(pick==='anchor'&&d>8*TILE_PX+30) pick='whirl'; lordStart(e,p,pick); return; }
     if(d<e.d.range&&a.atkT<=0){ lordStart(e,p,'swing'); } return; }
   if(a.state!=='chase') lordMortar(e,p,dt);
@@ -2252,14 +2257,15 @@ AI.lord=function(e,p,dt){
     else { const h=e.hand||{x:e.x,y:e.y}; const dd=Math.hypot(h.x-q.x,h.y-q.y); if(q.pulled) moveToward(e,p.x,p.y,dt,2.3); else { e.vx*=.5; e.vy*=.5; } if(q.pulled&&p.drag){ q.x=p.x; q.y=p.y-6; } else if(dd>30){ q.x+=(h.x-q.x)/dd*900*dt; q.y+=(h.y-q.y)/dd*900*dt; } else { a.anchor=null; if(q.pulled){ faceTo(e,p); a.fast=true; lordStart(e,p,'slash'); } else lordEnd(e,LORD_CD,.2); } }
     return; }
   if(a.state==='summon'){ e.vx=e.vy=0; if(a.el>=1){ a.tele=null; shake(9); vibrate(120); SFX.roar(); a.wave=[]; G.ring={x:e.x,y:e.y,r:0,max:180,t:0,col:'#6a2a38'};
-      const n=a.phase2?5:3; for(let i=0;i<n;i++){ const an=i/n*TAU+a.t; const s=makeEnemy('pirate',e.x+Math.cos(an)*70,e.y+Math.sin(an)*70); s.spawnT=1; s.summoned=true; s.biome=null; s.crew=true; s.hp=s.maxHp=s.maxHp*2.2; s.dmg=Math.round(s.dmg*1.6); s.spd=Math.round(s.spd*1.25); floatText(s.x,s.y-40,'CREW','#fca5a5'); s.ai.state='chase'; s.ai.t=.8; G.chasers++; collide(s); a.wave.push(s); G.groundFx.push({kind:'summon',vec:true,x:s.x,y:s.y+6,r:30,t:1,col:'#d0bd85'}); burst(s.x,s.y,['#d0bd85','#c0ad75'],12,110,.6,4,200,true); }
+      const n=LT(e).crew; for(let i=0;i<n;i++){ const an=i/n*TAU+a.t; const s=makeEnemy('pirate',e.x+Math.cos(an)*70,e.y+Math.sin(an)*70); s.spawnT=1; s.summoned=true; s.biome=null; s.crew=true; s.hp=s.maxHp=s.maxHp*2.2; s.dmg=Math.round(s.dmg*1.6); s.spd=Math.round(s.spd*1.25); floatText(s.x,s.y-40,'CREW','#fca5a5'); s.ai.state='chase'; s.ai.t=.8; G.chasers++; collide(s); a.wave.push(s); G.groundFx.push({kind:'summon',vec:true,x:s.x,y:s.y+6,r:30,t:1,col:'#d0bd85'}); burst(s.x,s.y,['#d0bd85','#c0ad75'],12,110,.6,4,200,true); }
       lordEnd(e,LORD_CD,.3); } return; }
   if(a.state==='broadside'){ e.vx=e.vy=0; faceTo(e,p); if(a.el>=1) lordEnd(e,LORD_CD,.2); return; }
 };
 /* the ship's mortar: every few seconds a cannonball is aimed at where the ninja stands; the mark shows for 1.5 s, then it lands */
-function lordMortar(e,p,dt){ const a=e.ai; if(!p.alive||inSafeZone(p.x,p.y)||dist(e,p)>760) return; a.mortarT=(a.mortarT===undefined?2:a.mortarT)-dt; if(a.mortarT>0) return; a.mortarT=a.phase2?1.2:2.4; const mk=a.phase2?.8:1, dm=LH(e,'mortar');
-  G.groundFx.push({kind:'aimshell',vec:true,x:p.x,y:p.y,r:46,t:mk,fall:mk,owner:e,onEnd:f=>{ f.r=46; f.dmg=dm; lordShellHit(f); }});   /* one second from the mark to the blast (0.8 s berserk) */
-  if(a.phase2){ const lead=.5; G.groundFx.push({kind:'aimshell',vec:true,x:p.x+p.vx*lead,y:p.y+p.vy*lead,r:46,t:mk,fall:mk,owner:e,onEnd:f=>{ f.r=46; f.dmg=dm; lordShellHit(f); }}); }   /* berserk: a second ball aimed where you are running */ tone(300,.15,'square',.12,-100); }
+function lordMortar(e,p,dt){ const a=e.ai; if(!p.alive||inSafeZone(p.x,p.y)||dist(e,p)>760) return; a.mortarT=(a.mortarT===undefined?2:a.mortarT)-dt; if(a.mortarT>0) return; const T=LT(e); a.mortarT=T.mortarT; const mk=T.mark, dm=LH(e,'mortar'); const shell=(x,y)=>G.groundFx.push({kind:'aimshell',vec:true,x,y,r:46,t:mk,fall:mk,owner:e,onEnd:f=>{ f.r=46; f.dmg=dm; lordShellHit(f); }});
+  shell(p.x,p.y);   /* calm: one ball on where you stand */
+  if(T.mortarN>=2) shell(p.x+p.vx*.5,p.y+p.vy*.5);   /* angry: a second ball where you are running */
+  if(T.mortarN>=4){ const an=Math.atan2(p.vy,p.vx)||Math.random()*TAU; shell(p.x+Math.cos(an+1.57)*70,p.y+Math.sin(an+1.57)*70); shell(p.x+Math.cos(an-1.57)*70,p.y+Math.sin(an-1.57)*70); }   /* berserk: two more boxing you in on both sides */ tone(300,.15,'square',.12,-100); }
 /* Broadside: three 1.5-tile strips get red warning lines for 1 s, then cannonballs crash down them; the gaps move every time */
 function lordBroadside(e,p){ const A=WORLD.arena; let y0,y1; if(A){ y0=2*AT; y1=(A.rows-2)*AT; } else { y0=p.y-230; y1=p.y+230; }
   const w=1.5*TILE_PX, slots=[]; for(let i=0;i<7;i++) slots.push(i); const picks=[]; while(picks.length<3){ const i=slots.splice(rndi(0,slots.length-1),1)[0]; picks.push(i); }
@@ -2289,19 +2295,19 @@ function lordPortrait(size){ const cv2=document.createElement('canvas'); cv2.wid
 function lordAnnounceFx(a,dt){ if(Math.random()<.5){ const g=part(a.x+rnd(-160,160),a.y+rnd(-40,40),rnd(60,160),rnd(-120,-60),'#ffffff',1.2,3,-60); if(g) g.gull=true; } if(Math.random()<.3) part(a.x+rnd(-80,80),a.y+rnd(-20,20),0,-30,'#6a2a38',.9,4,0,true); }
 /* ---------- Boss Fight stage 3: "The Broken Pier" (34 x 26) ---------- */
 function makeLordArena(A,W,R){ const cols=A.cols, rows=A.rows, grid=A.grid; A.zone='beach'; A.paint={wall:'rockwall',sand:'sand',deep:'water',plank:'plank',shallow:'shallow'};
-  const shoreX=ty=>18+4*Math.sin(Math.PI*(ty+.5-2)/(rows-4));   /* crescent of sand bulging into the sea at mid height */
+  const shoreX=ty=>19.5+4.3*Math.sin(Math.PI*(ty+.5-2)/(rows-4));   /* crescent of sand bulging into the sea at mid height */
   for(let ty=0;ty<rows;ty++) for(let tx=0;tx<cols;tx++){ let k='deep'; if(ty<2||tx<2||ty>=rows-2) k='wall'; else if(tx+.5<shoreX(ty)) k='sand'; grid[ty*cols+tx]=k; }
-  A.pier=[]; const py0=10, py1=12, px0=Math.floor(shoreX(11)); for(let s=0;s<3;s++){ const x0=px0+s*3, x1=x0+2; for(let ty=py0;ty<=py1;ty++) for(let tx=x0;tx<=x1;tx++) A.set(tx,ty,'plank'); A.pier.push({x0,y0:py0,x1,y1:py1,broken:false}); }
+  A.pier=[]; const py0=11, py1=13, px0=Math.floor(shoreX(12)); for(let s=0;s<3;s++){ const x0=px0+s*3, x1=x0+2; for(let ty=py0;ty<=py1;ty++) for(let tx=x0;tx<=x1;tx++) A.set(tx,ty,'plank'); A.pier.push({x0,y0:py0,x1,y1:py1,broken:false}); }
   A.shore=new Int8Array(cols*rows).fill(99); for(let ty=0;ty<rows;ty++) for(let tx=0;tx<cols;tx++){ if(grid[ty*cols+tx]!=='sand') continue; let best=99; for(let dy=-3;dy<=3;dy++) for(let dx=-3;dx<=3;dx++){ const x=tx+dx, y=ty+dy; if(x<0||y<0||x>=cols||y>=rows) continue; if(grid[y*cols+x]==='deep') best=Math.min(best,Math.max(Math.abs(dx),Math.abs(dy))); } A.shore[ty*cols+tx]=best; }
   A.tide=0; A.tideT=25; A.tidePull=0;
   const base=A.tile; A.tile=(x,y)=>{ const k=base(x,y); if(k==='sand'&&A.tide>0){ const tx=Math.floor(x/AT), ty=Math.floor(y/AT); if(A.shore[ty*cols+tx]<=3) return 'shallow'; } return k; };
   A.kindAt=(x,y)=>{ const k=A.tile(x,y); if(k==='sand'){ const tx=Math.floor(x/AT), ty=Math.floor(y/AT); if(A.shore[ty*cols+tx]<=1) return 'sandwet'; } return A.paint[k]||'sand'; };
-  A.center={x:11*AT,y:11.5*AT}; W.playerSpawn={x:5.5*AT,y:11.5*AT}; A.bossStart={x:15.5*AT,y:6.5*AT};
+  A.center={x:12*AT,y:12.5*AT}; W.playerSpawn={x:5.5*AT,y:12.5*AT}; A.bossStart={x:16.5*AT,y:7*AT};
   const add=(x,y,r,extra)=>W.colliders.push(Object.assign({x,y,r},extra||{}));
   for(const [tx,ty,r] of [[8,6,32],[12,16,30]]){ const x=(tx+.5)*AT, y=(ty+.5)*AT; W.rocks.push({x,y,r,s:R()}); add(x,y,r,{crash:true,cover:true}); }   /* two big rocks: block the anchor (and the way) */
-  A.boat={x:14.5*AT,y:14.5*AT}; for(const dx of [-30,0,30]) add(A.boat.x+dx,A.boat.y,dx?15:18,{cover:true});
-  A.barrels=[[4.6,4.8],[5.7,5.0],[4.9,18.2]].map(([tx,ty])=>({x:tx*AT,y:ty*AT})); for(const b of A.barrels) add(b.x,b.y,11,{cover:true});
-  A.ropes=[{x:9.5*AT,y:3.8*AT},{x:7*AT,y:19*AT}]; A.posts=[{x:5.5*AT,y:8.5*AT,lamp:true}]; A.mast={x:25*AT,y:16*AT}; W.lights=[{x:5.5*AT,y:8.5*AT-14,s:.3}];
+  A.boat={x:15.5*AT,y:15.5*AT}; for(const dx of [-30,0,30]) add(A.boat.x+dx,A.boat.y,dx?15:18,{cover:true});
+  A.barrels=[[4.6,5],[5.7,5.2],[4.9,19.8]].map(([tx,ty])=>({x:tx*AT,y:ty*AT})); for(const b of A.barrels) add(b.x,b.y,11,{cover:true});
+  A.ropes=[{x:9.5*AT,y:4*AT},{x:7*AT,y:20.6*AT}]; A.posts=[{x:5.8*AT,y:9*AT,lamp:true}]; A.mast={x:27*AT,y:17*AT}; W.lights=[{x:5.8*AT,y:9*AT-14,s:.3}];
   for(let i=0;i<40;i++){ const tx=2+R()*(cols-4), ty=2+R()*(rows-4); const x=(tx+.5)*AT, y=(ty+.5)*AT; if(base(x,y)==='sand') W.shells.push({x,y,s:R()}); }
 }
 function lordArenaUpdate(dt){ const A=WORLD.arena; if(A.tide>0){ A.tide-=dt; if(A.tide<=0){ A.tide=0; A.tideT=25; WORLD.chunks.clear(); } }
@@ -2315,8 +2321,8 @@ function lordArenaPaint(c,ax,ay,aw,ah,vis,P){ const A=WORLD.arena;
 }
 function lordArenaFx(c,ox,oy,vw,vh,t,vis,P){ const A=WORLD.arena, W=WORLD, live=G.state==='PLAYING';
   for(let i=0;i<4;i++){ const fx=((i*173+t*22*(1+i%2*.4))%(W.w/PIX+120))-60, fy=14+i*7+Math.sin(t*1.3+i)*5, fl=Math.sin(t*8+i*2)*2; c.fillStyle='#f4f4f8'; c.fillRect(fx|0,fy|0,2,1); c.fillRect((fx-3)|0,(fy-1-fl)|0,3,1); c.fillRect((fx+2)|0,(fy-1-fl)|0,3,1); }   /* gulls */
-  if(live&&Math.random()<.4){ const ty=2+Math.random()*(A.rows-4); const x=(18+4*Math.sin(Math.PI*(ty-2)/(A.rows-4)))*AT; part(x+rnd(-6,10),ty*AT,rnd(-30,10),rnd(-40,-10),'#ffffff',.6,2,-20,true); }   /* sea spray on the shore */
-  if(A.tidePull>0){ c.globalAlpha=.7; for(let ty=2;ty<A.rows-2;ty++){ const sx=(18+4*Math.sin(Math.PI*(ty+.5-2)/(A.rows-4)))*AT; const x=P(sx+A.tidePull*40)|0, y=P((ty+.5)*AT)|0; c.fillStyle='#ffffff'; c.fillRect(x,y,4,1); c.fillRect(x+6,y+2,3,1); } c.globalAlpha=1; }   /* the water pulls back before the tide */
+  if(live&&Math.random()<.4){ const ty=2+Math.random()*(A.rows-4); const x=(19.5+4.3*Math.sin(Math.PI*(ty-2)/(A.rows-4)))*AT; part(x+rnd(-6,10),ty*AT,rnd(-30,10),rnd(-40,-10),'#ffffff',.6,2,-20,true); }   /* sea spray on the shore */
+  if(A.tidePull>0){ c.globalAlpha=.7; for(let ty=2;ty<A.rows-2;ty++){ const sx=(19.5+4.3*Math.sin(Math.PI*(ty+.5-2)/(A.rows-4)))*AT; const x=P(sx+A.tidePull*40)|0, y=P((ty+.5)*AT)|0; c.fillStyle='#ffffff'; c.fillRect(x,y,4,1); c.fillRect(x+6,y+2,3,1); } c.globalAlpha=1; }   /* the water pulls back before the tide */
 }
 /* =====================================================================
    MENUS, STATE MACHINE, CAMERA, MAIN LOOP
