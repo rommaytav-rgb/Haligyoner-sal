@@ -999,7 +999,7 @@ function inCircle(e,x,y,r){ return Math.hypot(e.x-x,e.y-y)<=r+e.r; }
 function damage(e,amt,src,o){
   o=o||{}; if(!e.alive||e.spawnT>0) return 0;
   if(e.kind==='enemy'&&e.hidden) return 0;   // a submerged boss cannot be hit
-  if(e.kind==='player'){ if((e.inv>0&&!o.sure)||e.hidden||DEBUG.god||inSafeZone(e.x,e.y)) return 0; if(spinBusy(e)) return 0; if(e.status.shield) amt*=.5; }   // during Spinjitzu (flash + spin) the ninja cannot lose HP else if(e.status.freeze) amt*=2;
+  if(e.kind==='player'){ if((e.inv>0&&!o.sure)||e.hidden||DEBUG.god||inSafeZone(e.x,e.y)) return 0; if(spinBusy(e)||e.spinGrace>0) return 0; if(e.status.shield) amt*=.5; }   // during Spinjitzu (flash + spin) the ninja cannot lose HP else if(e.status.freeze) amt*=2;
   if(e.kind==='enemy'&&src&&!o.noBlock){
     if(e.type==='priest'&&o.basic&&e.dodgeCd<=0&&Math.random()<.3){ e.dodgeCd=.4; const a=Math.atan2(src.y-e.y,src.x-e.x)+(Math.random()<.5?1:-1)*Math.PI/2; e.kvx+=Math.cos(a)*460; e.kvy+=Math.sin(a)*460; floatText(e.x,e.y-34,'DODGE','#a3e635'); SFX.dodge(); burst(e.x,e.y+6,['#8ab08a'],4,60,.3,3); return 0; }   // Insect Priest sidesteps a basic attack (short hop, 0.4 s cooldown)
     if(e.type==='pirate'&&!o.spin&&fromFront(e,src)) amt*=.7;   // heavy coat: 30% less damage from the front (behind / Spinjitzu bypass it)
@@ -1207,7 +1207,8 @@ const AI={
       if(e.abCd<=0&&p.alive&&d<700&&!safe){ const pick=d<230?(Math.random()<.65?'slam':a.phase2?'stomp':'charge'):(a.phase2&&Math.random()<.4?'stomp':'charge'); a.state=pick; a.t=1; a.aim=e.face; e.vx=e.vy=0; e.animT=0;
         if(pick==='slam'){ a.ix=e.x+Math.cos(a.aim)*120; a.iy=e.y+Math.sin(a.aim)*120; telegraph(e,{s:'circ',r:95,ox:a.ix-e.x,oy:a.iy-e.y},1); e.holdAnim=true; e.animT=.05; }   // flail held high, cracking ground at the impact point
         else if(pick==='charge') telegraph(e,{s:'line',a:a.aim,l:600,w:56},1); else telegraph(e,{s:'circ',r:90},1); }
-      else if(d<e.d.range&&a.atkT<=0){ a.atkT=2; e.attackT=.3; e.animT=.25; damage(p,30,e,{kb:220}); } }
+      else if(d<e.d.range&&a.atkT<=0){ a.state='swing'; a.t=.5; a.aim=e.face; e.vx=e.vy=0; a.ix=e.x+Math.cos(a.aim)*(e.d.range*.6); a.iy=e.y+Math.sin(a.aim)*(e.d.range*.6); telegraph(e,{s:'circ',r:e.d.range*.85,ox:a.ix-e.x,oy:a.iy-e.y},.5); } }
+    else if(a.state==='swing'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='chase'; a.atkT=2; a.tele=null; e.attackT=.3; e.animT=.25; shake(4); SFX.hit(); if(inCircle(p,a.ix,a.iy,e.d.range*.85)) damage(p,30,e,{kb:220}); } }
     else if(a.state==='slam'){ if(a.t<=0){ a.state='chase'; e.abCd=3; a.recover=.7; a.tele=null; e.holdAnim=false; e.attackT=.3; e.animT=.26; shake(12); vibrate(120); const ix=a.ix, iy=a.iy;
         if(inCircle(p,ix,iy,95)) damage(p,e.dmg,e,{kb:420}); else if(inCircle(p,ix,iy,170)&&p.alive){ const dd=Math.max(1,Math.hypot(p.x-ix,p.y-iy)); p.kbx+=(p.x-ix)/dd*380; p.kby+=(p.y-iy)/dd*380; }   // shockwave: knockback just outside the circle
         for(const o of G.enemies) if(o!==e&&o.alive&&!o.boss&&inCircle(o,ix,iy,170)){ const dd=Math.max(1,Math.hypot(o.x-ix,o.y-iy)); o.kbx+=(o.x-ix)/dd*300; o.kby+=(o.y-iy)/dd*300; }
@@ -1223,7 +1224,8 @@ const AI={
     if(a.state==='chase'){ if(bossLeash(e,p,dt)) return; const safe=inSafeZone(p.x,p.y); if(d<900&&!safe) moveToward(e,p.x,p.y,dt,1); else { e.vx*=.9; e.vy*=.9; } faceTo(e,p);
       if(e.abCd<=0&&p.alive&&d<700&&!safe){ const r=Math.random(); const pick=d<180?(r<.45?'tail':'cleaver'):d<330?(r<.35?'lunge':r<.65?'spit':'barrage'):(r<.45?'spit':r<.75?'lunge':'barrage'); a.state=pick; a.aim=e.face; e.vx=e.vy=0; e.animT=0; a.t=1;
         if(pick==='tail') telegraph(e,{s:'circ',r:160},1); else if(pick==='cleaver') telegraph(e,{s:'line',a:a.aim,l:300,w:44},1); else if(pick==='lunge'){ telegraph(e,{s:'line',a:a.aim,l:400,w:50},1); a.dashN=0; } else if(pick==='spit'){ telegraph(e,{s:'line',a:a.aim,l:Math.min(460,d+80),w:70},1); e.holdAnim=true; e.animT=.05; } else { telegraph(e,{s:'circ',r:320},1); e.holdAnim=true; e.animT=.05; } }
-      else if(d<e.d.range&&a.atkT<=0){ a.atkT=1.8; e.attackT=.3; e.animT=.25; damage(p,32,e,{kb:200}); } }
+      else if(d<e.d.range&&a.atkT<=0){ a.state='swing'; a.t=.5; a.aim=e.face; e.vx=e.vy=0; a.ix=e.x+Math.cos(a.aim)*(e.d.range*.6); a.iy=e.y+Math.sin(a.aim)*(e.d.range*.6); telegraph(e,{s:'circ',r:e.d.range*.85,ox:a.ix-e.x,oy:a.iy-e.y},.5); } }
+    else if(a.state==='swing'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='chase'; a.atkT=1.8; a.tele=null; e.attackT=.3; e.animT=.25; shake(4); SFX.hit(); if(inCircle(p,a.ix,a.iy,e.d.range*.85)) damage(p,32,e,{kb:200}); } }
     else if(a.state==='tail'){ if(a.t<=0){ a.state='chase'; e.abCd=2; a.recover=.6; a.tele=null; e.attackT=.3; e.animT=.25; shake(7); if(inCircle(p,e.x,e.y,160)){ damage(p,44,e,{kb:460}); addStatus(p,'poison',3); } burst(e.x,e.y,['#3e6b2a','#7aa050','#4ade80'],40,320,.5,5,0,true); for(let i=0;i<16;i++){ const an=i/16*TAU; part(e.x+Math.cos(an)*60,e.y+Math.sin(an)*40,Math.cos(an)*120,Math.sin(an)*80-40,'#4ade80',rnd(.5,.9),4,140,true); } G.ring={x:e.x,y:e.y,r:0,max:160,t:0,col:'#4ade80',poison:true}; arenaHook('tail',e.x,e.y); } }
     else if(a.state==='cleaver'){ if(a.t<=0){ a.state='chase'; e.abCd=2; a.recover=.6; a.tele=null; e.attackT=.3; e.animT=.25; shake(7); if(inLine(p,e.x,e.y,a.aim,300,44)) damage(p,e.dmg,e,{kb:280}); for(let i=0;i<16;i++){ part(e.x+Math.cos(a.aim)*i*19,e.y+Math.sin(a.aim)*i*19,0,-60,'#c8202a',.45,6,0,true); part(e.x+Math.cos(a.aim)*i*19+rnd(-10,10),e.y+Math.sin(a.aim)*i*19,rnd(-20,20),rnd(-50,-20),'#4ade80',.6,3,-20,true); } } }
     else if(a.state==='lunge'){ if(a.t<=0){ a.state='lunging'; a.t=.4; a.tele=null; a.hit=[]; SFX.roar(); } }
@@ -1243,7 +1245,7 @@ function bossLeash(e,p,dt){ const a=e.ai; if(a.recover>0){ a.recover-=dt; e.vx*=
 /* second phase at 50% HP: faster, one attack gains a hit, summons adds (they respawn once, 20 s later) */
 function bossPhase(e,dt){ const a=e.ai; if(!a.phase2&&e.hp<e.maxHp*.5){ a.phase2=true; a.addsLeft=1; a.addsT=20; summonAdds(e); }
   if(a.phase2&&a.addsLeft>0){ a.addsT-=dt; if(a.addsT<=0){ a.addsLeft--; summonAdds(e); } } }
-function summonAdds(e){ const col=e.type==='hippo'?'#c084fc':'#4ade80'; e.attackT=.6; e.animT=0; shake(9); vibrate(120); SFX.roar(); G.banner={text:e.type==='hippo'?'THE HIPPO CALLS THE MUSHROOMS':'THE CROCODILE CALLS ITS PRIESTS',sub:'ADDS INCOMING',t:1.8}; G.ring={x:e.x,y:e.y,r:0,max:200,t:0,col}; burst(e.x,e.y-20,[col,'#ffffff'],30,220,.8,5,0,true);
+function summonAdds(e){ const col=e.type==='hippo'?'#c084fc':'#4ade80'; e.attackT=.6; e.animT=0; shake(9); vibrate(120); SFX.roar(); G.ring={x:e.x,y:e.y,r:0,max:200,t:0,col}; burst(e.x,e.y-20,[col,'#ffffff'],30,220,.8,5,0,true);
   for(let i=0;i<3;i++){ const an=i/3*TAU+e.ai.t; const s=makeEnemy(e.d.adds,e.x+Math.cos(an)*80,e.y+Math.sin(an)*80); s.spawnT=1; G.groundFx.push({kind:'summon',x:s.x,y:s.y+6,r:34,t:1,col}); s.summoned=true; s.biome=null; s.ai.state=s.type==='priest'?'circle':'chase'; s.ai.t=.8; s.ai.dir=1; G.chasers++; collide(s); burst(s.x,s.y,e.type==='hippo'?['#7a4aaa','#8ac06a']:['#c8202a','#8ab08a'],12,110,.6,4,200,true); } }
 /* the pirate's blunderbuss: five pellet projectiles in a narrow spread, ~7 tiles of travel, blocked by props */
 function firePellets(e,gx,gy,ang){ for(let i=0;i<5;i++){ const a=ang+(i-2)*.08+rnd(-.03,.03), v=rnd(230,260); proj({type:'bolt',pellet:true,basic:false,x:gx,y:gy,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:(7*TILE_PX)/v,r:6,vr:2,col:'#e5e7eb',glow:'#fbbf24',owner:e,dmg:4,kb:90,hit:[]}); }
@@ -1444,6 +1446,7 @@ function startSpinjitzu(p){
   SFX.spinCharge(); G.zoomPulse=1.08; CAM.flashDim=1;
 }
 function spinUpdate(p,dt){
+  if(p.spinGrace>0) p.spinGrace-=dt;   /* grace after the spin: nothing can hurt the ninja for 1.5 s */
   const s=p.spin; if(!s||!s.state) return;
   s.t-=dt; const C=s.C;
   if(s.state==='FLASH'){ p.vx=p.vy=0; if(s.t<=0){ s.state='ACTIVE'; s.t=C.dur; s.tot=C.dur; shake(7); vibrate(60); burst(p.x,p.y+4,[C.ring[2],C.core,C.ring[1]],30,220,.7,4,0,true); } return; }
@@ -1453,7 +1456,7 @@ function spinUpdate(p,dt){
     s.tickT-=dt; if(s.tickT<=0){ s.tickT=1/C.tick; s.ticks++; spinTick(p,C,s.ticks); }
     if(p.name==='BOREAS'){ const f=G.groundFx.find(f=>f.kind==='frost'&&Math.hypot(f.x-p.x,f.y-p.y)<20); if(!f) G.groundFx.push({kind:'frost',x:p.x,y:p.y,r:C.rad*TILE_PX,t:3}); }
     if(p.name==='APOLLO'&&Math.random()<dt*3) G.groundFx.push({kind:'scorch',x:p.x+rnd(-10,10),y:p.y+rnd(-6,6),r:C.rad*TILE_PX*.8,t:2});
-    if(s.t<=0){ s.state='FADE'; s.t=.8; s.tot=.8; SFX.spinFade(); }
+    if(s.t<=0){ s.state='FADE'; s.t=.8; s.tot=.8; p.spinGrace=1.5; SFX.spinFade(); }
     return;
   }
   if(s.state==='FADE'){ if(s.t<=0){ s.state='RECOVER'; s.t=1.3; burst(p.x,p.y+12,['#d8c7a0','#b8a880'],14,80,.5,4,120); shake(3); } return; }
