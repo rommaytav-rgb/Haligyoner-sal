@@ -1006,6 +1006,7 @@ function damage(e,amt,src,o){
     if(e.type==='mush'&&fromFront(e,src)&&Math.random()<.25){ G.groundFx.push({kind:'spore',x:e.x,y:e.y+4,r:44,t:1}); burst(e.x,e.y-6,['#7a4aaa','#b78cf0'],10,70,.6,4,-20,true); SFX.spore(); }   // spore puff: a purple cloud that slows the player 20%
   }
   if(e.boss&&e.crashT>0) amt*=1.3;   // crashed into a boulder: takes extra damage while stunned
+  if(WORLD.arena&&G.arena){ const f=arenaLevelFactor(); if(e.boss) amt*=f.dealt; else if(e.kind==='player') amt*=f.taken; }   // Boss Fight: character level vs the stage's recommended level decides how hard the fight is
   amt=Math.round(amt); e.hp-=amt; e.flash=.09; if(e.boss) e.engaged=true;
   const heavy=o.big||o.crit||o.spin||(o.kb!==undefined&&o.kb>=250);   // the priest is too quick to be staggered by normal hits; Spinjitzu and knockback abilities do
   if(!o.silent){ if(e.kind==='player'||(!e.boss&&(e.type!=='priest'||heavy))) e.stagger=Math.max(e.stagger,.15); if(e.kind==='player'){ SFX.hurt(); shake(3); vibrate(30); } else (o.crit?SFX.crit:SFX.hit)(); }
@@ -1713,15 +1714,20 @@ function makeArena(stage){
     for(let i=0;i<14;i++){ const a=R()*TAU, d=(2+R()*7)*AT; const x=cx*AT+Math.cos(a)*d, y=cy*AT+Math.sin(a)*d*.87; if(A.tile(x,y)==='mud') W.bones.push({x,y,s:R()}); }
     for(let i=0;i<70;i++){ const a=R()*TAU, d=(10.3+R()*1.2)*AT; const x=cx*AT+Math.cos(a)*d, y=cy*AT+Math.sin(a)*d*.87; if(A.tile(x,y)==='shallow') W.reeds.push({x,y,s:R()}); }
   } else {
-    // "The Swamp Heart": wooden platforms and mud islands on dark water, plank bridges (three of them break), dead willows and swamp lights
+    // "The Swamp Heart": a round mud island in the middle, four wooden decks (N/E/S/W) joined to it by straight plank bridges; the N/E/S bridges break, the W one (start) holds
     const rect=(x0,y0,x1,y1,k)=>{ for(let ty=y0;ty<=y1;ty++) for(let tx=x0;tx<=x1;tx++) A.set(tx,ty,k); };
-    rect(3,18,11,26,'plank'); rect(16,12,24,19,'island'); rect(4,3,11,9,'plank'); rect(28,6,36,13,'plank'); rect(27,19,36,26,'island');
+    for(let ty=0;ty<rows;ty++) for(let tx=0;tx<cols;tx++){ const d=Math.hypot((tx+.5-20.5)/6.4,(ty+.5-15.5)/4.6); if(d<=1) A.set(tx,ty,'island'); }
+    rect(16,2,24,6,'plank'); rect(16,24,24,28,'plank'); rect(2,11,7,19,'plank'); rect(33,11,38,19,'plank');
     const B=(x0,y0,x1,y1,br)=>{ rect(x0,y0,x1,y1,'bridge'); A.bridges.push({x0,y0,x1,y1,breakable:br,broken:false}); };
-    B(12,21,15,22,false); B(7,10,8,17,true); B(25,12,27,13,true); B(25,19,26,20,false); B(31,14,32,18,true);
-    A.center={x:20.5*AT,y:15.5*AT}; W.playerSpawn={x:7.5*AT,y:22.5*AT}; A.bossStart={x:32.5*AT,y:9.5*AT};
-    for(const [tx,ty] of [[1,1],[14,2],[22,5],[38,2],[1,14],[13,28],[21,26],[38,17],[26,28],[2,28],[30,1],[38,28]]) W.trees.push({x:(tx+.5)*AT,y:(ty+.5)*AT,cr:30+R()*10,r:10,s:R(),kind:'swamp'});
-    for(let i=0;i<9;i++) W.lights.push({x:R()*W.w,y:R()*W.h,s:R()});
-    for(let i=0;i<60;i++){ const tx=Math.floor(R()*cols), ty=Math.floor(R()*rows); const x=(tx+.5)*AT, y=(ty+.5)*AT; if(A.tile(x,y)==='deep'&&(A.walk(x-AT,y)||A.walk(x+AT,y)||A.walk(x,y-AT)||A.walk(x,y+AT))) W.reeds.push({x:x+(R()-.5)*20,y:y+(R()-.5)*20,s:R()}); }
+    B(19,7,21,10,true); B(19,20,21,23,true); B(8,14,13,16,false); B(27,14,32,16,true);
+    for(const [cx2,cy2] of [[9,5],[31,5],[9,25],[31,25]]) for(let ty=cy2-1;ty<=cy2+1;ty++) for(let tx=cx2-1;tx<=cx2+1;tx++) if(Math.abs(tx-cx2)+Math.abs(ty-cy2)<=1) A.set(tx,ty,'island');   // four small islets in the corners (decor)
+    A.center={x:20.5*AT,y:15.5*AT}; W.playerSpawn={x:4.5*AT,y:15.5*AT}; A.bossStart={x:35.5*AT,y:15.5*AT};
+    for(const [tx,ty] of [[9,5],[31,5],[9,25],[31,25],[1,1],[38,1],[1,28],[38,28],[14,1],[26,29]]) W.trees.push({x:(tx+.5)*AT,y:(ty+.5)*AT,cr:32+R()*6,r:10,s:R(),kind:'swamp'});
+    A.posts=[]; for(const [x0,y0,x1,y1] of [[16,2,24,6],[16,24,24,28],[2,11,7,19],[33,11,38,19]]) for(const [tx,ty] of [[x0,y0],[x1,y0],[x0,y1],[x1,y1]]) A.posts.push({x:(tx+.5)*AT,y:(ty+.5)*AT,lamp:true});   // lantern posts at every deck corner
+    for(const b of A.bridges){ const v=b.x1-b.x0<b.y1-b.y0; if(v){ A.posts.push({x:(b.x0-.2)*AT,y:(b.y0+.5)*AT},{x:(b.x1+1.2)*AT,y:(b.y0+.5)*AT},{x:(b.x0-.2)*AT,y:(b.y1+.5)*AT},{x:(b.x1+1.2)*AT,y:(b.y1+.5)*AT}); } else { A.posts.push({x:(b.x0+.5)*AT,y:(b.y0-.2)*AT},{x:(b.x0+.5)*AT,y:(b.y1+1.2)*AT},{x:(b.x1+.5)*AT,y:(b.y0-.2)*AT},{x:(b.x1+.5)*AT,y:(b.y1+1.2)*AT}); } }
+    W.lights=A.posts.filter(p=>p.lamp).map(p=>({x:p.x,y:p.y-14,s:R()}));
+    A.pads=[]; for(let i=0;i<40;i++){ const x=R()*W.w, y=R()*W.h; if(A.tile(x,y)==='deep'&&!A.walk(x-AT,y)&&!A.walk(x+AT,y)&&!A.walk(x,y-AT)&&!A.walk(x,y+AT)) A.pads.push({x,y,s:R()}); }   // lily pads on open water
+    for(let i=0;i<80;i++){ const tx=Math.floor(R()*cols), ty=Math.floor(R()*rows); const x=(tx+.5)*AT, y=(ty+.5)*AT; if(A.tile(x,y)==='deep'&&(A.tile(x-AT,y)==='island'||A.tile(x+AT,y)==='island'||A.tile(x,y-AT)==='island'||A.tile(x,y+AT)==='island')) W.reeds.push({x:x+(R()-.5)*20,y:y+(R()-.5)*20,s:R()}); }   // reeds hug the mud shores
   }
   W.cgrid.clear(); for(const o of W.colliders){ const k=Math.floor(o.x/W.CG)+','+Math.floor(o.y/W.CG); let a=W.cgrid.get(k); if(!a){ a=[]; W.cgrid.set(k,a); } a.push(o); }
   return W;
@@ -1756,7 +1762,12 @@ function paintArena(c,ax,ay,aw,ah){ g=c; const W=WORLD, A=W.arena, vis=(x,y,m)=>
   for(let ty=ty0;ty<=ty1;ty++) for(let tx=tx0;tx<=tx1;tx++){ const kind=K(tx,ty), x=tx*TS, y=ty*TS, s=tx*7.3+ty*3.1; (tileFns[kind]||tileFns.mud)(x,y,s);
     for(const [d,dx,dy] of [['N',0,-1],['S',0,1],['W',-1,0],['E',1,0]]){ const nk=K(tx+dx,ty+dy); if(nk!==kind&&EDGE[nk]&&kind!=='rockwall'&&!(kind==='water'||nk==='rockwall')) dither(x,y,EDGE[nk],d,4); }
     if(kind==='water'||kind==='swampw'){ const up=K(tx,ty-1), lf=K(tx-1,ty), foam=kind==='water'?'#bfe4f7':'#4a7a5a'; if(up!=='water'&&up!=='swampw') for(let i=0;i<TS;i+=2) px(x+i,y,foam); if(lf!=='water'&&lf!=='swampw') for(let j=0;j<TS;j+=2) px(x,y+j,foam); }
-    if(kind==='plank'){ const w=A.tile((tx*TS+8)*PIX,(ty*TS+8)*PIX)==='bridge'; if(w){ rect(x,y,TS,1,'#3a2414'); rect(x,y+TS-1,TS,1,'#3a2414'); } } }
+    if(kind==='plank'){ const wx=(tx*TS+8)*PIX, wy=(ty*TS+8)*PIX, br=A.tile(wx,wy)==='bridge'; const edge=(dx,dy)=>A.tile(wx+dx*AT,wy+dy*AT)==='deep';
+      if(br){ const v=A.tile(wx,wy-AT)!=='deep'&&A.tile(wx,wy+AT)!=='deep'&&(A.tile(wx-AT,wy)==='deep'||A.tile(wx+AT,wy)==='deep'); if(v){ rect(x,y,1,TS,'#3a2414'); rect(x+TS-1,y,1,TS,'#3a2414'); rect(x+1,y,1,TS,'#c9a24a'); rect(x+TS-2,y,1,TS,'#c9a24a'); } else { rect(x,y,TS,1,'#3a2414'); rect(x,y+TS-1,TS,1,'#3a2414'); rect(x,y+1,TS,1,'#c9a24a'); rect(x,y+TS-2,TS,1,'#c9a24a'); } }   // rope rails along bridges
+      else { if(edge(0,-1)) rect(x,y,TS,2,'#3a2414'); if(edge(0,1)){ rect(x,y+TS-2,TS,2,'#3a2414'); rect(x,y+TS-1,TS,1,'#1c1c22'); } if(edge(-1,0)) rect(x,y,2,TS,'#3a2414'); if(edge(1,0)) rect(x+TS-2,y,2,TS,'#3a2414'); } }   // dark boards around each deck
+    if(kind==='mud'&&A.id==='croc'){ const wx=(tx*TS+8)*PIX, wy=(ty*TS+8)*PIX; for(const [dx,dy] of [[0,-1],[0,1],[-1,0],[1,0]]) if(A.tile(wx+dx*AT,wy+dy*AT)==='deep'){ for(let i=0;i<4;i++){ const sx=x+(dx?(dx<0?1:TS-4):i*4+1), sy=y+(dy?(dy<0?1:TS-4):i*4+1); rect(sx,sy,3,2,i%2?'#8d8d99':'#6e6e78'); px(sx,sy,'#a0a0ac'); } } } }   // stone rim on the island shores
+  if(A.pads) for(const p of A.pads) if(vis(P(p.x),P(p.y),8)){ const x=P(p.x)|0, y=P(p.y)|0, r=3+(p.s*2|0); rect(x-r,y-r+1,r*2+1,r*2-1,'#3f7a3a'); rect(x-r+1,y-r,r*2-1,r*2+1,'#3f7a3a'); rect(x-r+1,y-r+1,2,2,'#6cae51'); rect(x+1,y-1,r,r,'#2c4a34'); if(p.s>.7){ px(x-1,y-r-1,'#f0a0d0'); px(x,y-r-2,'#ffffff'); } }   // lily pads
+  if(A.posts) for(const q of A.posts) if(vis(P(q.x),P(q.y),10)){ const x=P(q.x)|0, y=P(q.y)|0; rect(x-1,y-9,3,11,'#3a2414'); rect(x-1,y-9,1,11,'#5e3d22'); rect(x-2,y+1,5,1,'rgba(0,0,0,.3)'); if(q.lamp){ rect(x-2,y-14,5,5,'#f59e0b'); rect(x-1,y-13,3,3,'#fde68a'); rect(x-3,y-15,7,1,'#3a2414'); } }   // posts and lanterns
   for(const b of W.bones) if(vis(P(b.x),P(b.y),12)){ const x=P(b.x)|0, y=P(b.y)|0; rect(x-1,y+3,10,2,'rgba(0,0,0,.25)'); rect(x,y,7,2,'#efe8d4'); px(x,y,'#c9c0a6'); px(x+6,y+1,'#c9c0a6'); rect(x+2,y-3,4,3,'#efe8d4'); px(x+3,y-2,'#2a2020'); }
   for(const r of W.reeds) if(vis(P(r.x),P(r.y),10)) pxReeds(P(r.x)-5,P(r.y)-8,r.s);
   for(const o of W.rocks) if(vis(P(o.x),P(o.y),P(o.r)*2)) pxRock(P(o.x)-P(o.r),P(o.y)-P(o.r)*.75,P(o.r)*2|0);
@@ -1771,6 +1782,8 @@ function arenaWorldFx(c,ox,oy,vw,vh,t){ const W=WORLD, A=W.arena, live=G.state==
 function arenaForeground(c,ox,oy,vw,vh,p,t){ const A=WORLD.arena; if(A.id==='hippo'){ const y=P2(3.2*AT), x0=P2(8*AT), x1=P2(33*AT); c.globalAlpha=.9; for(let x=x0;x<x1;x+=7){ if((x/7|0)%9===4||(x/7|0)%9===5) continue; rect(x,y-2,6,5,'#2a1a0e'); rect(x,y-2,6,1,'#3a2a1a'); } rect(x0-4,y-4,8,9,'#1e1208'); rect(x1-4,y-4,8,9,'#1e1208'); rect(x0,y-6,x1-x0,1,'#1e1208'); c.globalAlpha=1; } }   // caved-in bridge overhead
 const P2=v=>v/PIX|0;
 /* ---------- flow ---------- */
+/* under-levelled ninjas deal much less and take much more; over-levelled ones cruise (±18% dealt, ∓14% taken per level of difference) */
+function arenaLevelFactor(){ const p=G.player, st=G.arena&&G.arena.stage; if(!p||!st) return {dealt:1,taken:1,diff:0}; const diff=p.lv-st.lvl; return {dealt:clamp(1+.18*diff,.35,1.9),taken:clamp(1-.14*diff,.45,2.2),diff}; }
 function arenaBusy(){ const F=G.arena; return !!(F&&(F.phase!=='fight'||F.over)); }
 function bfStage(id){ return BF_STAGES.find(s=>s.id===id); }
 function enterArena(stage){
@@ -1821,7 +1834,7 @@ function buildBossList(){ const el=$('bfList'); el.innerHTML='';
 }
 let BF_SEL=null;
 function openBossPre(st){ BF_SEL=st; const n=SAVE.selected, lv=SAVE.levels[n]; const po=$('bfPrePortrait'); po.innerHTML=''; po.appendChild(bossPortrait(st,150));
-  $('bfPreTitle').textContent='STAGE '+st.n+' — '+EN[st.boss].name; $('bfPreSub').textContent=st.name+' · recommended LV '+st.lvl+' · your '+n+' is LV '+lv+(lv<st.lvl?' (risky)':'');
+  $('bfPreTitle').textContent='STAGE '+st.n+' — '+EN[st.boss].name; const diff=lv-st.lvl, dealt=Math.round(clamp(1+.18*diff,.35,1.9)*100), taken=Math.round(clamp(1-.14*diff,.45,2.2)*100); $('bfPreSub').innerHTML=st.name+' · recommended LV '+st.lvl+' · your <b>'+n+'</b> is LV '+lv+'<br>At this level you deal <b style="color:'+(diff<0?'#f87171':'#4ade80')+'">'+dealt+'%</b> damage and take <b style="color:'+(diff<0?'#f87171':'#4ade80')+'">'+taken+'%</b>'+(diff<=-3?' — almost impossible':diff<0?' — very hard':diff>=2?' — comfortable':' — a fair fight');
   $('bfPreChi').textContent='You bring '+(SAVE.chi||0)+' Chi — Chi spent in a failed attempt is gone. Rewards: 1 Chi, '+st.xp+' XP, '+st.coins+' gold'+(SAVE.bossFightFirstClearClaimed[st.id]?'':' (+2 Chi and a Chi key on the first clear)')+'.';
   setState('BOSSPRE'); }
 function showBossWin(F){ const r=F.rewards, st=F.stage; $('bfWinTime').innerHTML='TIME <b>'+fmtT(F.time)+'</b>'+(r.newBest?' <span class="bfok">NEW BEST!</span>':'  ·  best '+fmtT(SAVE.bossFightBestTime[st.id]));
