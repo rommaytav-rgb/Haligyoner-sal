@@ -905,8 +905,8 @@ function buildWorld(seed){
   W.bushes=[]; for(let i=0;i<170;i++){ const x=L.x0+30+R()*(L.x1-L.x0-60), y=L.y0+30+R()*(L.y1-L.y0-60); if(isWater(x,y)||onPath(x,y)||Math.abs(y-riverY(x))<riverHW(x)+20) continue; const z=zoneOf(x,y); if(z==='beach'&&R()<.7) continue; W.bushes.push({x,y,r:12+R()*12,s:R(),dark:z==='swamp',village:z==='village'}); }
   W.campfires=[...W.village.campfires.map(([x,y])=>({x,y,big:true})),...W.spawners.filter(s=>s.k==='wreck').map(s=>({x:s.x+50,y:s.y+14,big:false}))];   // pirates camp by a fire next to their wreck
   // collision grid: rocks, trunks, logs, props, shrine pillars, wreck hull
-  W.colliders=[]; const add=(x,y,r)=>W.colliders.push({x,y,r});
-  for(const o of W.rocks) add(o.x,o.y,o.r); for(const t of W.trees) add(t.x,t.y,t.r); for(const g of W.logs){ add(g.x+Math.cos(g.a)*16,g.y+Math.sin(g.a)*16*.6,9); add(g.x-Math.cos(g.a)*16,g.y-Math.sin(g.a)*16*.6,9); }
+  W.colliders=[]; const add=(x,y,r,extra)=>W.colliders.push(Object.assign({x,y,r},extra||null));
+  for(const o of W.rocks) add(o.x,o.y,o.r,o.r>=26?{crash:true}:null);   /* big rocks stop a charging hippo and stun it, like the arena boulders */ for(const t of W.trees) add(t.x,t.y,t.r); for(const g of W.logs){ add(g.x+Math.cos(g.a)*16,g.y+Math.sin(g.a)*16*.6,9); add(g.x-Math.cos(g.a)*16,g.y-Math.sin(g.a)*16*.6,9); }
   const v=W.village; for(const [x,y] of [...v.barrels,...v.crates]) add(x,y,11); for(const [x,y] of v.dummies) add(x,y,9); for(const [x,y] of v.lanterns) add(x,y,5); for(const [x,y] of v.flags) add(x,y,5);
   for(const f of v.fences){ const n=Math.ceil(Math.hypot(f[2]-f[0],f[3]-f[1])/24); for(let i=0;i<=n;i++) add(lerp(f[0],f[2],i/n),lerp(f[1],f[3],i/n),7); }
   const sh=W.shrine; [[-70,-30],[70,-30],[-70,50],[70,50]].forEach(([dx,dy])=>add(sh.x+dx,sh.y+dy,12)); add(sh.x-40,sh.y-90,7); add(sh.x+40,sh.y-90,7);
