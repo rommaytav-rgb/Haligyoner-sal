@@ -1531,26 +1531,26 @@ const AI={
   },
   /* ---- HIPPO boss: overhead flail slam (impact circle in front), charge, stomp rings; phase 2 at 50% ---- */
   hippo(e,p,dt){
-    const a=e.ai, d=dist(e,p), rt=statMult(e,'rate')*(a.phase2?1.2:1); a.t-=dt; e.abCd-=dt*rt; a.atkT-=dt*rt; bossPhase(e,dt);
-    if(a.state==='chase'){ if(bossLeash(e,p,dt)) return; const safe=inSafeZone(p.x,p.y); if(d<900&&!safe) moveToward(e,p.x,p.y,dt,1); else { e.vx*=.9; e.vy*=.9; } faceTo(e,p);
+    const a=e.ai, d=dist(e,p), rt=statMult(e,'rate')*(a.phase2?1.35:1), P2=a.phase2?1.25:1; a.t-=dt; e.abCd-=dt*rt; a.atkT-=dt*rt; bossPhase(e,dt);
+    if(a.state==='chase'){ if(bossLeash(e,p,dt)) return; const safe=inSafeZone(p.x,p.y); if(d<900&&!safe) moveToward(e,p.x,p.y,dt,a.phase2?1.3:1); else { e.vx*=.9; e.vy*=.9; } faceTo(e,p);
       if(e.abCd<=0&&p.alive&&d<700&&!safe){ const pick=d<230?(Math.random()<.65?'slam':a.phase2?'stomp':'charge'):(a.phase2&&Math.random()<.4?'stomp':'charge'); a.state=pick; a.t=1; a.aim=e.face; e.vx=e.vy=0; e.animT=0;
         if(pick==='slam'){ a.t=1.2; a.ix=e.x+Math.cos(a.aim)*120; a.iy=e.y+Math.sin(a.aim)*120; telegraph(e,{s:'circ',r:95,ox:a.ix-e.x,oy:a.iy-e.y},1.2); e.holdAnim=true; e.animT=.05; }   // flail held high, cracking ground at the impact point
         else if(pick==='charge') telegraph(e,{s:'line',a:a.aim,l:600,w:56},1); else telegraph(e,{s:'circ',r:90},1); }
       else if(d<e.d.range&&a.atkT<=0){ a.state='swing'; a.t=.5; a.aim=e.face; e.vx=e.vy=0; a.ix=e.x+Math.cos(a.aim)*(e.d.range*.6); a.iy=e.y+Math.sin(a.aim)*(e.d.range*.6); telegraph(e,{s:'circ',r:e.d.range*.85,ox:a.ix-e.x,oy:a.iy-e.y},.5); } }
-    else if(a.state==='swing'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='chase'; a.atkT=2; a.tele=null; e.attackT=.3; e.animT=.25; shake(4); SFX.hit(); if(inCircle(p,a.ix,a.iy,e.d.range*.85)) damage(p,30,e,{kb:220}); } }
+    else if(a.state==='swing'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='chase'; a.atkT=2; a.tele=null; e.attackT=.3; e.animT=.25; shake(4); SFX.hit(); if(inCircle(p,a.ix,a.iy,e.d.range*.85)) damage(p,Math.round(30*P2),e,{kb:220}); } }
     else if(a.state==='slam'){ if(a.t<=0){ a.state='chase'; e.abCd=3; a.recover=.7; a.tele=null; e.holdAnim=false; e.attackT=.3; e.animT=.26; shake(12); vibrate(120); const ix=a.ix, iy=a.iy;
-        if(inCircle(p,ix,iy,95)) damage(p,e.dmg,e,{kb:420}); else if(inCircle(p,ix,iy,170)&&p.alive){ const dd=Math.max(1,Math.hypot(p.x-ix,p.y-iy)); p.kbx+=(p.x-ix)/dd*380; p.kby+=(p.y-iy)/dd*380; }   // shockwave: knockback just outside the circle
+        if(inCircle(p,ix,iy,95)) damage(p,Math.round(e.dmg*P2),e,{kb:420}); else if(inCircle(p,ix,iy,170)&&p.alive){ const dd=Math.max(1,Math.hypot(p.x-ix,p.y-iy)); p.kbx+=(p.x-ix)/dd*380; p.kby+=(p.y-iy)/dd*380; }   // shockwave: knockback just outside the circle
         for(const o of G.enemies) if(o!==e&&o.alive&&!o.boss&&inCircle(o,ix,iy,170)){ const dd=Math.max(1,Math.hypot(o.x-ix,o.y-iy)); o.kbx+=(o.x-ix)/dd*300; o.kby+=(o.y-iy)/dd*300; }
         burst(ix,iy,['#9ca3af','#4b5563','#d9a34a','#c9a86a'],44,320,.7,6,0,true); for(let i=0;i<14;i++) part(ix+rnd(-40,40),iy+rnd(-20,20),rnd(-90,90),rnd(-260,-120),i%2?'#8a6a4a':'#5a3a20',rnd(.5,.9),rnd(4,7),600); G.ring={x:ix,y:iy,r:0,max:170,t:0,col:'#d9a34a',earth:true}; noise(.25,.35); tone(60,.3,'sine',.4,-30); proj({type:'ring',mud:true,x:ix,y:iy,r:30,life:9,spd:230,max:640,delay:.1,owner:e,dmg:WAVE_DMG,hit:[]}); floatText(ix,iy-30,'MUD WAVE','#c9a86a');
         if(a.phase2) proj({type:'ring',x:ix,y:iy,r:20,life:9,spd:240,max:220,delay:.4,owner:e,dmg:WAVE_DMG,hit:[]}); } }   // phase 2: the slam gains a second shockwave
     else if(a.state==='charge'){ if(a.t<=0){ a.state='charging'; a.t=.9; a.tele=null; a.hit=[]; SFX.roar(); } }
-    else if(a.state==='charging'){ const sp=e.spd*5; e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; if(!a.hit.includes(p)&&inCircle(p,e.x,e.y,e.r+6)){ a.hit.push(p); damage(p,30,e,{kb:520}); } for(const o of G.enemies) if(o!==e&&o.alive&&!a.hit.includes(o)&&inCircle(o,e.x,e.y,e.r+6)){ a.hit.push(o); damage(o,20,e,{kb:400,noBlock:true}); } part(e.x+rnd(-24,24),e.y+22,rnd(-40,40),-60,'#c9a86a',.5,6); if(a.t<=0||wallAhead(e,a.aim)){ a.state='chase'; e.abCd=3; a.recover=.7; e.vx=e.vy=0; shake(6); crashBoulder(e); } }
+    else if(a.state==='charging'){ const sp=e.spd*5; e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; if(!a.hit.includes(p)&&inCircle(p,e.x,e.y,e.r+6)){ a.hit.push(p); damage(p,Math.round(30*P2),e,{kb:520}); } for(const o of G.enemies) if(o!==e&&o.alive&&!a.hit.includes(o)&&inCircle(o,e.x,e.y,e.r+6)){ a.hit.push(o); damage(o,20,e,{kb:400,noBlock:true}); } part(e.x+rnd(-24,24),e.y+22,rnd(-40,40),-60,'#c9a86a',.5,6); if(a.t<=0||wallAhead(e,a.aim)){ a.state='chase'; e.abCd=3; a.recover=.7; e.vx=e.vy=0; shake(6); crashBoulder(e); } }
     else if(a.state==='stomp'){ if(a.t<=0){ a.state='chase'; e.abCd=3; a.recover=.7; a.tele=null; shake(12); vibrate(120); for(let i=0;i<2;i++) proj({type:'ring',x:e.x,y:e.y+10,r:20,life:9,spd:200,max:300,delay:i*.9,owner:e,dmg:WAVE_DMG,hit:[]}); burst(e.x,e.y+10,['#8a6a4a','#d9a34a'],30,220,.6,6,300); } }
   },
   /* ---- CROCODILE boss: cleaver, tail spin, lunge + bite combo; phase 2 at 50% ---- */
   croc(e,p,dt){
-    const a=e.ai, d=dist(e,p), rt=statMult(e,'rate')*(a.phase2?1.2:1), cd=k=>CROC_DMG[k][a.phase2?1:0]; a.t-=dt; e.abCd-=dt*rt; a.atkT-=dt*rt; bossPhase(e,dt);
-    if(a.state==='chase'){ if(bossLeash(e,p,dt)) return; const safe=inSafeZone(p.x,p.y); if(d<900&&!safe) moveToward(e,p.x,p.y,dt,a.phase2?1.15:1); else { e.vx*=.9; e.vy*=.9; } faceTo(e,p);
+    const a=e.ai, d=dist(e,p), rt=statMult(e,'rate')*(a.phase2?1.35:1), cd=k=>CROC_DMG[k][a.phase2?1:0]; a.t-=dt; e.abCd-=dt*rt; a.atkT-=dt*rt; bossPhase(e,dt);
+    if(a.state==='chase'){ if(bossLeash(e,p,dt)) return; const safe=inSafeZone(p.x,p.y); if(d<900&&!safe) moveToward(e,p.x,p.y,dt,a.phase2?1.3:1); else { e.vx*=.9; e.vy*=.9; } faceTo(e,p);
       if(p.alive&&d<700&&!safe){ e.swimT=(e.swimT===undefined?6:e.swimT)-dt; if(e.swimT<=0&&!(a.recover>0)&&!e.status.freeze&&!e.status.stun){ e.sub={st:'dive',t:.6}; e.hidden=true; a.tele=null; e.vx=e.vy=0; burst(e.x,e.y+10,['#2c4a34','#9ad0c0','#ffffff'],30,220,.7,5,200,true); noise(.25,.25); floatText(e.x,e.y-70,'IT DIVES…','#9ad0c0',true); return; } }   /* the dive: vanish, travel under the ground, rise beside the ninja */
       if(e.abCd<=0&&p.alive&&d<700&&!safe){ const r=Math.random(); const pick=d<180?(r<.45?'tail':'cleaver'):d<330?(r<.35?'lunge':r<.65?'spit':'barrage'):(r<.45?'spit':r<.75?'lunge':'barrage'); a.state=pick; a.aim=e.face; e.vx=e.vy=0; e.animT=0; a.t=1;
         if(pick==='tail'){ a.t=1.2; telegraph(e,{s:'circ',r:160},1.2); } else if(pick==='cleaver') telegraph(e,{s:'line',a:a.aim,l:300,w:44},1); else if(pick==='lunge'){ telegraph(e,{s:'line',a:a.aim,l:400,w:50},1); a.dashN=0; } else if(pick==='spit'){ telegraph(e,{s:'line',a:a.aim,l:Math.min(460,d+80),w:70},1); e.holdAnim=true; e.animT=.05; } else { telegraph(e,{s:'circ',r:320},1); e.holdAnim=true; e.animT=.05; } }
@@ -1576,11 +1576,11 @@ function bossLeash(e,p,dt){ const a=e.ai; if(a.recover>0){ a.recover-=dt; e.vx*=
 /* CROCODILE — built from the level-7 ninjas (x1.48 of base): HP  SHADE 207 · BECK 185 · BOREAS 170 · APOLLO 163 · CLAY 266;  hit  SHADE 22 · BECK 19 · BOREAS 24 · APOLLO 30 · CLAY 22
    Croc HP 2600 = about 120 level-7 SHADE hits (~70 s of fighting with dodging).  Each croc hit below is a fixed number, the same at every level:
    phase 1 (full HP) costs a level-7 SHADE 11-28% per hit, phase 2 (under 50%) 14-36%; nothing scales with the ninja's level. */
-const CROC_DMG={swing:[27,36],tail:[42,52],cleaver:[58,74],dash:[23,29],bite:[25,32],spit:[32,42],barrage:[22,27]};   /* [phase 1, phase 2] */
-function bossPhase(e,dt){ const a=e.ai; if(!a.phase2&&e.hp<e.maxHp*.5){ a.phase2=true; a.addsLeft=1; a.addsT=20; summonAdds(e); }
-  if(a.phase2&&a.addsLeft>0){ a.addsT-=dt; if(a.addsT<=0){ a.addsLeft--; summonAdds(e); } } }
+const CROC_DMG={swing:[27,41],tail:[42,60],cleaver:[58,85],dash:[23,33],bite:[25,37],spit:[32,48],barrage:[22,31]};   /* [phase 1, phase 2] */
+function bossPhase(e,dt){ const a=e.ai; if(!a.phase2&&e.hp<e.maxHp*.5){ a.phase2=true; a.addsLeft=2; a.addsT=15; summonAdds(e); G.banner={text:'THE '+e.d.name+' GOES BERSERK',sub:'FASTER · HARDER · MORE OF THEM',t:2.4}; }
+  if(a.phase2&&a.addsLeft>0){ a.addsT-=dt; if(a.addsT<=0){ a.addsLeft--; a.addsT=15; summonAdds(e); } } }   /* half HP: the boss goes berserk (+35% attack speed, +30% move speed, harder hits, 4 adds that return twice) */
 function summonAdds(e){ const col=e.type==='hippo'?'#c084fc':'#4ade80'; e.attackT=.6; e.animT=0; shake(9); vibrate(120); SFX.roar(); G.ring={x:e.x,y:e.y,r:0,max:200,t:0,col}; burst(e.x,e.y-20,[col,'#ffffff'],30,220,.8,5,0,true);
-  for(let i=0;i<3;i++){ const an=i/3*TAU+e.ai.t; const s=makeEnemy(e.d.adds,e.x+Math.cos(an)*80,e.y+Math.sin(an)*80); s.spawnT=1; G.groundFx.push({kind:'summon',x:s.x,y:s.y+6,r:34,t:1,col}); s.summoned=true; s.biome=null; s.ai.state=s.type==='priest'?'circle':'chase'; s.ai.t=.8; s.ai.dir=1; G.chasers++; collide(s); burst(s.x,s.y,e.type==='hippo'?['#7a4aaa','#8ac06a']:['#c8202a','#8ab08a'],12,110,.6,4,200,true); } }
+  const n=e.ai.phase2?4:3; for(let i=0;i<n;i++){ const an=i/n*TAU+e.ai.t; const s=makeEnemy(e.d.adds,e.x+Math.cos(an)*80,e.y+Math.sin(an)*80); s.spawnT=1; G.groundFx.push({kind:'summon',x:s.x,y:s.y+6,r:34,t:1,col}); s.summoned=true; s.biome=null; s.ai.state=s.type==='priest'?'circle':'chase'; s.ai.t=.8; s.ai.dir=1; G.chasers++; collide(s); burst(s.x,s.y,e.type==='hippo'?['#7a4aaa','#8ac06a']:['#c8202a','#8ab08a'],12,110,.6,4,200,true); } }
 /* the pirate's blunderbuss: five pellet projectiles in a narrow spread, ~7 tiles of travel, blocked by props */
 function firePellets(e,gx,gy,ang){ for(let i=0;i<5;i++){ const a=ang+(i-2)*.08+rnd(-.03,.03), v=rnd(230,260); proj({type:'bolt',pellet:true,basic:false,x:gx,y:gy,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:(7*TILE_PX)/v,r:6,vr:2,col:'#e5e7eb',glow:'#fbbf24',owner:e,dmg:e.crew?10:6,kb:90,hit:[]}); }
   burst(gx,gy,['#fde68a','#ffffff','#fb923c'],10,140,.2,3,0,true); for(let i=0;i<8;i++) part(gx+rnd(-4,4),gy+rnd(-4,4),Math.cos(ang)*rnd(20,60)+rnd(-20,20),rnd(-40,-10),'#9ca3af',rnd(.5,.9),rnd(3,6),-30); shake(3); SFX.shot(); }
@@ -1847,7 +1847,8 @@ function animOf(e){ if(e.jumpT>0) return 'jump'; if(e.attackT>0||(e.ai&&['tele',
 function gait(e,t,spd){ const v=Math.hypot((e.vx||0)+(e.kvx||0),(e.vy||0)+(e.kvy||0)), run=v>25, ph=(e.animT||0)*8*Math.PI; return {run, bounce:run?Math.abs(Math.sin(ph))*1.6:Math.sin(t*2.5)*.6, lean:run?clamp(((e.vx||0)+(e.kvx||0))/spd,-1,1)*.04:0, squash:run?Math.abs(Math.sin(ph))*.015:0}; }
 function drawNinja(c,ch,e,t){ if(e.dunk>0){ c.save(); c.translate(0,12); c.globalAlpha=.55; } const face=Math.cos(e.face)>=0?1:-1, anim=animOf(e), g=gait(e,t,e.spd||200); if(anim==='jump'){ g.bounce=0; g.squash=0; g.lean=0; } const at=anim==='jump'?(JUMP_DUR-e.jumpT)/JUMP_DUR:e.animT;   // jump: the 8 frames of the model's jump cycle over the jump's duration
   c.save(); if(e.hidden) c.globalAlpha=.25; else if(e.inv>0&&e.dashT<=0&&e.jumpT<=0&&Math.floor(t*24)%2) c.globalAlpha=.55; const shr=anim==='jump'?.6:1; c.fillStyle=hexA(ch.color,.18); c.beginPath(); c.ellipse(e.x,e.y+13,(22+Math.sin(t*4)*2-g.bounce)*shr,(9-g.bounce*.5)*shr,0,0,TAU); c.fill(); c.translate(e.x,e.y+14); c.rotate(g.lean); c.scale(1+g.squash*.6,1-g.squash); drawSprite(c,CHARS[ch.sprite],anim,at,face,1.5,0,-g.bounce,tintFor(e)); c.restore(); if(e.dunk>0) c.restore(); }
-function drawEnemy(c,e,t){ if(e.type==='lord') return drawLord(c,e,t); const d=e.d, face=Math.cos(e.face)>=0?1:-1, g=gait(e,t,e.spd||130); c.save(); if(e.spawnT>0){ c.globalAlpha=Math.max(0,1-e.spawnT/.6); c.translate(0,e.spawnT*60); } c.translate(e.x,e.y+e.r*.9); if(e.flinch>0) c.translate(Math.sin(G.time*70)*2.5,0); c.rotate(g.lean*(e.boss?.4:1)); c.scale(1+g.squash*.5,1-g.squash*.8); drawSprite(c,ENEMIES[d.sprite],animOf(e),e.animT,face,d.scale,0,-g.bounce*(e.boss?.6:1),tintFor(e)); c.restore(); }
+function drawBerserk(c,e,t){ if(!(e.boss&&e.ai.phase2&&e.alive)) return; const k=.5+.5*Math.sin(t*9), R=e.r*1.6; c.save(); const gl=c.createRadialGradient(e.x,e.y+e.r*.8,R*.2,e.x,e.y+e.r*.8,R); gl.addColorStop(0,'rgba(239,68,68,'+(.22+.14*k)+')'); gl.addColorStop(1,'rgba(239,68,68,0)'); c.fillStyle=gl; c.beginPath(); c.ellipse(e.x,e.y+e.r*.8,R,R*.5,0,0,TAU); c.fill(); if(G.state==='PLAYING'&&Math.random()<.4) part(e.x+rnd(-e.r,e.r),e.y+rnd(-e.r,e.r*.6),rnd(-15,15),rnd(-70,-30),Math.random()<.5?'#ef4444':'#fca5a5',.6,3,0,true); c.restore(); }   /* the berserk aura: red pulse and rising embers */
+function drawEnemy(c,e,t){ drawBerserk(c,e,t); if(e.type==='lord') return drawLord(c,e,t); const d=e.d, face=Math.cos(e.face)>=0?1:-1, g=gait(e,t,e.spd||130); c.save(); if(e.spawnT>0){ c.globalAlpha=Math.max(0,1-e.spawnT/.6); c.translate(0,e.spawnT*60); } c.translate(e.x,e.y+e.r*.9); if(e.flinch>0) c.translate(Math.sin(G.time*70)*2.5,0); c.rotate(g.lean*(e.boss?.4:1)); c.scale(1+g.squash*.5,1-g.squash*.8); drawSprite(c,ENEMIES[d.sprite],animOf(e),e.animT,face,d.scale,0,-g.bounce*(e.boss?.6:1),tintFor(e)); c.restore(); }
 /* spawners are painted into the terrain; here: ambient life + refill bar */
 function drawSpawner(c,sp,t){ const S=SPAWN[sp.k]; if(sp.count>=S.max&&sp.refill>0){ c.fillStyle='rgba(239,68,68,.7)'; c.fillRect(sp.x-16,sp.y+18,32*(1-sp.refill/S.refill),3); }
   if(G.state!=='PLAYING'||sp.alive>=S.max) return; if(sp.k==='mush'&&Math.random()<.04) part(sp.x+rnd(-16,16),sp.y-4,rnd(-6,6),-18,'#f2ead6',1,2.5,-8,true); else if(sp.k==='nest'&&Math.random()<.05){ const b=part(sp.x+rnd(-10,10),sp.y+rnd(-4,4),rnd(-40,40),rnd(-20,20),'#1c1c22',.8,2.5,0); if(b) b.beetle=true; } else if(sp.k==='wreck'&&Math.random()<.03) part(sp.x+rnd(-20,20),sp.y-10,rnd(-8,8),-14,'#c9c0a6',1.2,2.5,0); }
@@ -2202,7 +2203,8 @@ function showBossWin(F){ const r=F.rewards, st=F.stage; $('bfWinTime').innerHTML
    Call the Crew (75/50/25%), Broadside (phase 2). Each move punishes a different habit.
    ===================================================================== */
 const LORD_HIT={slash1:18,slash2:30,whirl:36,anchor:30,contact:24,shell:10,mortar:18};
-const LORD_CD=1.3;   /* seconds between moves (was 2.0): he presses constantly */
+const LORD_CD=1.3;
+const LH=(e,k)=>Math.round(LORD_HIT[k]*(e.ai.phase2?1.3:1));   /* berserk: every hit x1.3 */   /* seconds between moves (was 2.0): he presses constantly */
 /* piecewise timeline: segs=[[seconds,kSpan],...] -> k in 0..1 for the drawing rig */
 function segK(el,segs){ let k=0; for(const [d,s] of segs){ if(el<=d) return k+s*(el/d); el-=d; k+=s; } return 1; }
 const LORD_SLASH_SEGS=w=>[[w,.28],[.15,.14],[.2,.16],[.15,.14],[.4,.28]];   /* wind-up w, strike 1, hold, strike 2 (0.35 s after the first), recovery */
@@ -2215,13 +2217,14 @@ function lordStart(e,p,st){ const a=e.ai; a.state=st; a.el=0; a.aim=e.face; e.vx
   else if(st==='broadside') lordBroadside(e,p); }
 function lordEnd(e,cd,rec){ const a=e.ai; a.state='chase'; a.tele=null; e.abCd=cd; a.recover=rec; a.anchor=null; }
 function lordWaveAlive(e){ return !!(e.ai.wave&&e.ai.wave.some(s=>s.alive)); }
-function lordPhase(e){ const a=e.ai; if(!a.phase2&&e.hp<e.maxHp*.5){ a.phase2=true; shake(12); vibrate(160); SFX.roar(); G.banner={text:'MY CREW NEVER RESTS',sub:'THE PIRATE LORD IS ENRAGED · CANNONS READY',t:2.6}; burst(e.x,e.y-30,['#a040ff','#ff2a2a','#ffffff'],50,300,1,6,0,true); G.ring={x:e.x,y:e.y,r:0,max:240,t:0,col:'#a040ff'}; } }
+function lordPhase(e){ const a=e.ai; if(!a.phase2&&e.hp<e.maxHp*.5){ a.phase2=true; shake(12); vibrate(160); SFX.roar(); G.banner={text:'MY CREW NEVER RESTS',sub:'THE PIRATE LORD GOES BERSERK · CANNONS READY',t:2.6}; burst(e.x,e.y-30,['#a040ff','#ff2a2a','#ffffff'],50,300,1,6,0,true); G.ring={x:e.x,y:e.y,r:0,max:240,t:0,col:'#a040ff'}; } }
 AI.lord=function(e,p,dt){
-  const a=e.ai, d=dist(e,p), rt=statMult(e,'rate')*(a.phase2?1.3:1); a.t-=dt; e.abCd-=dt*rt; a.atkT-=dt*rt; a.el=(a.el||0)+dt*(a.state==='chase'?1:rt); lordPhase(e);
+  const a=e.ai, d=dist(e,p), rt=statMult(e,'rate')*(a.phase2?1.35:1); a.t-=dt; e.abCd-=dt*rt; a.atkT-=dt*rt; a.el=(a.el||0)+dt*(a.state==='chase'?1:rt); lordPhase(e);
   if(a.state==='chase'){ if(bossLeash(e,p,dt)) return; const safe=inSafeZone(p.x,p.y), beach=WORLD.arena||(zoneOf(p.x,p.y)==='beach'&&zoneOf(e.x,e.y)==='beach');
     if(!beach){ const L=e.lair||a.home; if(dist(e,L)>40){ moveToward(e,L.x,L.y,dt,.9); e.face=Math.atan2(e.vy,e.vx); } else { e.vx*=.8; e.vy*=.8; faceTo(e,p); } e.abCd=Math.max(e.abCd,.6); return; }   /* beach only: off the sand he goes back to his lair */
-    if(d<900&&!safe) moveToward(e,p.x,p.y,dt,1); else { e.vx*=.9; e.vy*=.9; } faceTo(e,p);
+    if(d<900&&!safe) moveToward(e,p.x,p.y,dt,a.phase2?1.3:1); else { e.vx*=.9; e.vy*=.9; } faceTo(e,p);
     lordMortar(e,p,dt);
+    if(a.phase2&&p.alive&&d<700){ a.crewT=(a.crewT===undefined?18:a.crewT)-dt; if(a.crewT<=0&&!lordWaveAlive(e)){ a.crewT=18; lordStart(e,p,'summon'); return; } }   /* berserk: a fresh crew every 18 s once the last one is dead */
     const th=[.75,.5,.25].find(v=>e.hp<e.maxHp*v&&!(a.summoned||[]).includes(v));
     if(th!==undefined&&p.alive&&d<700){ (a.summoned=a.summoned||[]).push(th); if(!lordWaveAlive(e)){ lordStart(e,p,'summon'); return; } }   /* a wave still alive: this summon is skipped */
     if(e.abCd<=0&&p.alive&&d<700&&!safe){ a.moveN=(a.moveN||0)+1; let pick; const r=Math.random();
@@ -2229,40 +2232,41 @@ AI.lord=function(e,p,dt){
       if(pick==='anchor'&&d>8*TILE_PX+30) pick='whirl'; lordStart(e,p,pick); return; }
     if(d<e.d.range&&a.atkT<=0){ lordStart(e,p,'swing'); } return; }
   if(a.state!=='chase') lordMortar(e,p,dt);
-  if(a.state==='swing'){ e.vx*=.5; e.vy*=.5; if(a.el>=.5){ a.atkT=2; e.attackT=.3; shake(3); SFX.hit(); if(inCircle(p,a.ix,a.iy,80)) damage(p,LORD_HIT.contact,e,{kb:180}); lordEnd(e,Math.max(e.abCd,.3),.15); } return; }
+  if(a.state==='swing'){ e.vx*=.5; e.vy*=.5; if(a.el>=.5){ a.atkT=2; e.attackT=.3; shake(3); SFX.hit(); if(inCircle(p,a.ix,a.iy,80)) damage(p,LH(e,'contact'),e,{kb:180}); lordEnd(e,Math.max(e.abCd,.3),.15); } return; }
   if(a.state==='slash'){ const k=a.k=segK(a.el,LORD_SLASH_SEGS(a.wind)); e.vx*=.6; e.vy*=.6; if(k>=.28) a.tele=null;
-    if(k>=.30&&!a.s1){ a.s1=true; e.x+=Math.cos(a.aim)*22; e.y+=Math.sin(a.aim)*22; shake(4); SFX.hit(); if(inArc(p,e.x,e.y,a.aim,125,1.3)) damage(p,LORD_HIT.slash1,e,{kb:120}); }
-    if(k>=.60&&!a.s2){ a.s2=true; e.x+=Math.cos(a.aim)*22; e.y+=Math.sin(a.aim)*22; shake(6); SFX.crit(); if(inArc(p,e.x,e.y,a.aim,135,1.7)) damage(p,LORD_HIT.slash2,e,{kb:220}); }   /* second blade from the other side: wider arc, still the front half */
+    if(k>=.30&&!a.s1){ a.s1=true; e.x+=Math.cos(a.aim)*22; e.y+=Math.sin(a.aim)*22; shake(4); SFX.hit(); if(inArc(p,e.x,e.y,a.aim,125,1.3)) damage(p,LH(e,'slash1'),e,{kb:120}); }
+    if(k>=.60&&!a.s2){ a.s2=true; e.x+=Math.cos(a.aim)*22; e.y+=Math.sin(a.aim)*22; shake(6); SFX.crit(); if(inArc(p,e.x,e.y,a.aim,135,1.7)) damage(p,LH(e,'slash2'),e,{kb:220}); }   /* second blade from the other side: wider arc, still the front half */
     if(k>=1) lordEnd(e,LORD_CD,.2); return; }
   if(a.state==='whirl'){ e.vx*=.5; e.vy*=.5; faceTo(e,p); if(a.el>=.8){ a.state='whirling'; a.el=0; a.tele=null; a.hit=[]; a.broke=false; a.aim=e.face; a.rehit=0; SFX.roar(); } return; }
   if(a.state==='whirling'){ const want=Math.atan2(p.y-e.y,p.x-e.x); a.aim+=clamp(angDiff(want,a.aim),-2.2*dt,2.2*dt); const sp=e.spd*2.6; e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; e.face=a.aim;   /* a spinning charge: fast, steering only a little, so a sidestep gets out of the way */
     if(Math.random()<.7) part(e.x+rnd(-40,40),e.y+rnd(-10,20),rnd(-40,40),-30,'#c8ccd4',.3,3,0,true); if(Math.random()<.5) part(e.x-Math.cos(a.aim)*30+rnd(-10,10),e.y+22,rnd(-30,30),-50,'#d0bd85',.5,5); a.rehit-=dt;
-    if(a.rehit<=0&&inCircle(p,e.x,e.y,90)&&p.alive){ a.rehit=.7; damage(p,LORD_HIT.whirl,e,{kb:560}); shake(8); }   /* every pass that connects hurts again */
+    if(a.rehit<=0&&inCircle(p,e.x,e.y,90)&&p.alive){ a.rehit=.7; damage(p,LH(e,'whirl'),e,{kb:560}); shake(8); }   /* every pass that connects hurts again */
     if(wallAhead(e,a.aim)){ e.vx=e.vy=0; a.el=Math.max(a.el,1.3); }
     if(!a.broke&&WORLD.arena&&WORLD.arena.id==='lord') a.broke=lordBreakPier(e);
     if(a.el>=1.6) lordEnd(e,LORD_CD,.3); return; }
   if(a.state==='anchor'){ e.vx*=.5; e.vy*=.5; if(a.el>=.9){ a.state='anchoring'; a.el=0; a.tele=null; const h=e.hand||{x:e.x,y:e.y-20}; a.anchor={x:h.x,y:h.y,ox:e.x,oy:e.y,flew:0,ret:false,pulled:false,ang:a.aim}; SFX.shot(); shake(4); } return; }
   if(a.state==='anchoring'){ const q=a.anchor; if(!q){ lordEnd(e,LORD_CD,.2); return; }
     if(!q.ret){ const v=760*dt; q.flew+=v; const h=e.hand||{x:e.x,y:e.y-20}; q.x=h.x+Math.cos(q.ang)*q.flew; q.y=h.y+Math.sin(q.ang)*q.flew; const lx=q.ox+Math.cos(q.ang)*q.flew, ly=q.oy+Math.sin(q.ang)*q.flew; if(Math.random()<.4) part(q.x,q.y,rnd(-20,20),rnd(-20,20),'#9aa0aa',.3,2);
-      if(p.alive&&!q.hitP&&Math.hypot(p.x-lx,p.y-ly)<30+p.r){ q.hitP=true; q.ret=true; q.pulled=true; damage(p,LORD_HIT.anchor,e,{noKb:true}); p.drag={t:.4}; p.stagger=Math.max(p.stagger,.5); p.vx=p.vy=0; floatText(p.x,p.y-50,'HOOKED!','#fca5a5',true); SFX.hurt(); shake(6); }
+      if(p.alive&&!q.hitP&&Math.hypot(p.x-lx,p.y-ly)<30+p.r){ q.hitP=true; q.ret=true; q.pulled=true; damage(p,LH(e,'anchor'),e,{noKb:true}); p.drag={t:.4}; p.stagger=Math.max(p.stagger,.5); p.vx=p.vy=0; floatText(p.x,p.y-50,'HOOKED!','#fca5a5',true); SFX.hurt(); shake(6); }
       else if(q.flew>=8*TILE_PX||hitsCollider(lx,ly)||!inLand(lx,ly)){ q.ret=true; if(q.flew<8*TILE_PX){ burst(q.x,q.y,['#9aa0aa','#c8ccd4'],10,120,.4,3); floatText(q.x,q.y-24,'BLOCKED','#cbd5e1'); } } }
     else { const h=e.hand||{x:e.x,y:e.y}; const dd=Math.hypot(h.x-q.x,h.y-q.y); if(q.pulled) moveToward(e,p.x,p.y,dt,2.3); else { e.vx*=.5; e.vy*=.5; } if(q.pulled&&p.drag){ q.x=p.x; q.y=p.y-6; } else if(dd>30){ q.x+=(h.x-q.x)/dd*900*dt; q.y+=(h.y-q.y)/dd*900*dt; } else { a.anchor=null; if(q.pulled){ faceTo(e,p); a.fast=true; lordStart(e,p,'slash'); } else lordEnd(e,LORD_CD,.2); } }
     return; }
   if(a.state==='summon'){ e.vx=e.vy=0; if(a.el>=1){ a.tele=null; shake(9); vibrate(120); SFX.roar(); a.wave=[]; G.ring={x:e.x,y:e.y,r:0,max:180,t:0,col:'#6a2a38'};
-      for(let i=0;i<3;i++){ const an=i/3*TAU+a.t; const s=makeEnemy('pirate',e.x+Math.cos(an)*70,e.y+Math.sin(an)*70); s.spawnT=1; s.summoned=true; s.biome=null; s.crew=true; s.hp=s.maxHp=s.maxHp*2.2; s.dmg=Math.round(s.dmg*1.6); s.spd=Math.round(s.spd*1.25); floatText(s.x,s.y-40,'CREW','#fca5a5'); s.ai.state='chase'; s.ai.t=.8; G.chasers++; collide(s); a.wave.push(s); G.groundFx.push({kind:'summon',vec:true,x:s.x,y:s.y+6,r:30,t:1,col:'#d0bd85'}); burst(s.x,s.y,['#d0bd85','#c0ad75'],12,110,.6,4,200,true); }
+      const n=a.phase2?5:3; for(let i=0;i<n;i++){ const an=i/n*TAU+a.t; const s=makeEnemy('pirate',e.x+Math.cos(an)*70,e.y+Math.sin(an)*70); s.spawnT=1; s.summoned=true; s.biome=null; s.crew=true; s.hp=s.maxHp=s.maxHp*2.2; s.dmg=Math.round(s.dmg*1.6); s.spd=Math.round(s.spd*1.25); floatText(s.x,s.y-40,'CREW','#fca5a5'); s.ai.state='chase'; s.ai.t=.8; G.chasers++; collide(s); a.wave.push(s); G.groundFx.push({kind:'summon',vec:true,x:s.x,y:s.y+6,r:30,t:1,col:'#d0bd85'}); burst(s.x,s.y,['#d0bd85','#c0ad75'],12,110,.6,4,200,true); }
       lordEnd(e,LORD_CD,.3); } return; }
   if(a.state==='broadside'){ e.vx=e.vy=0; faceTo(e,p); if(a.el>=1) lordEnd(e,LORD_CD,.2); return; }
 };
 /* the ship's mortar: every few seconds a cannonball is aimed at where the ninja stands; the mark shows for 1.5 s, then it lands */
-function lordMortar(e,p,dt){ const a=e.ai; if(!p.alive||inSafeZone(p.x,p.y)||dist(e,p)>760) return; a.mortarT=(a.mortarT===undefined?2:a.mortarT)-dt; if(a.mortarT>0) return; a.mortarT=a.phase2?1.8:2.4;
-  G.groundFx.push({kind:'aimshell',vec:true,x:p.x,y:p.y,r:46,t:1,fall:1,owner:e,onEnd:f=>{ f.r=46; f.dmg=LORD_HIT.mortar; lordShellHit(f); }});   /* one second from the mark to the blast */ tone(300,.15,'square',.12,-100); }
+function lordMortar(e,p,dt){ const a=e.ai; if(!p.alive||inSafeZone(p.x,p.y)||dist(e,p)>760) return; a.mortarT=(a.mortarT===undefined?2:a.mortarT)-dt; if(a.mortarT>0) return; a.mortarT=a.phase2?1.2:2.4; const mk=a.phase2?.8:1, dm=LH(e,'mortar');
+  G.groundFx.push({kind:'aimshell',vec:true,x:p.x,y:p.y,r:46,t:mk,fall:mk,owner:e,onEnd:f=>{ f.r=46; f.dmg=dm; lordShellHit(f); }});   /* one second from the mark to the blast (0.8 s berserk) */
+  if(a.phase2){ const lead=.5; G.groundFx.push({kind:'aimshell',vec:true,x:p.x+p.vx*lead,y:p.y+p.vy*lead,r:46,t:mk,fall:mk,owner:e,onEnd:f=>{ f.r=46; f.dmg=dm; lordShellHit(f); }}); }   /* berserk: a second ball aimed where you are running */ tone(300,.15,'square',.12,-100); }
 /* Broadside: three 1.5-tile strips get red warning lines for 1 s, then cannonballs crash down them; the gaps move every time */
 function lordBroadside(e,p){ const A=WORLD.arena; let y0,y1; if(A){ y0=2*AT; y1=(A.rows-2)*AT; } else { y0=p.y-230; y1=p.y+230; }
   const w=1.5*TILE_PX, slots=[]; for(let i=0;i<7;i++) slots.push(i); const picks=[]; while(picks.length<3){ const i=slots.splice(rndi(0,slots.length-1),1)[0]; picks.push(i); }
   picks.sort((a,b)=>a-b); const cx=p.x;
   for(const i of picks){ const x=cx+(i-3)*(w+18); G.groundFx.push({kind:'strip',vec:true,x,y0,y1,w,t:1,owner:e,onEnd:f=>{ for(let n=0;n<6;n++){ const y=f.y0+(n+.5)*(f.y1-f.y0)/6; G.groundFx.push({kind:'shell',vec:true,x:f.x+rnd(-8,8),y,r:34,t:.3+n*.09,fall:.3+n*.09,owner:f.owner,onEnd:lordShellHit}); } } }); }
   SFX.drum(0); floatText(e.x,e.y-100,'BROADSIDE!','#fca5a5',true); }
-function lordShellHit(f){ const p=G.player; burst(f.x,f.y,['#fb923c','#fde68a','#1f2937','#ffffff'],18,200,.5,4,120,true); shake(3); noise(.12,.15); if(p&&p.alive&&inCircle(p,f.x,f.y,f.r)) damage(p,f.dmg||LORD_HIT.shell,f.owner,{kb:90,ranged:true}); }
+function lordShellHit(f){ const p=G.player; burst(f.x,f.y,['#fb923c','#fde68a','#1f2937','#ffffff'],18,200,.5,4,120,true); shake(3); noise(.12,.15); if(p&&p.alive&&inCircle(p,f.x,f.y,f.r)) damage(p,f.dmg||LH(f.owner,'shell'),f.owner,{kb:90,ranged:true}); }
 /* the Sword Whirl smashes one pier section per whirl when it reaches it */
 function lordBreakPier(e){ const A=WORLD.arena; for(const s of A.pier){ if(s.broken) continue; let near=false; for(let ty=s.y0;ty<=s.y1&&!near;ty++) for(let tx=s.x0;tx<=s.x1;tx++) if(Math.hypot((tx+.5)*AT-e.x,(ty+.5)*AT-e.y)<80){ near=true; break; } if(!near) continue;
   s.broken=true; for(let ty=s.y0;ty<=s.y1;ty++) for(let tx=s.x0;tx<=s.x1;tx++){ A.set(tx,ty,'deep'); burst((tx+.5)*AT,(ty+.5)*AT,['#6b4526','#4a2f19','#bfe4f7'],8,140,.8,4,300); } WORLD.chunks.clear(); shake(7); noise(.3,.3); floatText(((s.x0+s.x1)/2+.5)*AT,(s.y0+.5)*AT-20,'THE PIER BREAKS!','#fca5a5',true);
