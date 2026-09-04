@@ -1354,8 +1354,8 @@ function enemyDie(e){
 /* Chi key: 2% from any common enemy, always from a boss, pity after 80 kills; capped at 3 */
 function keyDrop(x,y){ SAVE.pity=0; if((SAVE.keys||0)>=3){ floatText(x,y-70,'KEY BAG FULL (3/3)','#fde68a',true); return; } SAVE.keys=(SAVE.keys||0)+1; burst(x,y-14,['#fde047','#ffffff','#f59e0b'],40,240,1,5,120,true); floatText(x,y-76,'🔑 CHI KEY!','#fde047',true,true); SFX.key(); vibrate(60); G.slowmo=.4; const p=G.player; if(p){ for(let i=0;i<10;i++) part(x,y-10,rnd(-40,40),rnd(-60,-20),'#fde047',.6,4,0,true); } }
 /* player level from total XP: full heal, +1% HP/damage for every ninja, and the level-up moment */
-function checkLevelUp(){ const lv=playerLevel(); if(lv<=G.plv) return; const from=G.plv; G.plv=lv; const p=G.player; if(!p||!p.alive) return; const ch=p.ch, m=LV_MULT(p.lv)*PLV_MULT(lv), oh=Math.round(p.maxHp), od=Math.round(p.dmg); p.maxHp=ch.hp*m; p.dmg=ch.dmg*m; p.hp=p.maxHp;
-  if(WORLD.arena){ floatText(p.x,p.y-64,'LEVEL '+lv+'  ·  HP +'+(Math.round(p.maxHp)-oh),'#fde047',true); G.hudGold=3; return; }   /* Boss Fight: stats and full heal only, no freeze-frame or level-up screen mid-fight */
+function checkLevelUp(){ const lv=playerLevel(); if(lv<=G.plv) return; const from=G.plv; G.plv=lv; const p=G.player; if(!p||!p.alive) return; const ch=p.ch, m=LV_MULT(p.lv)*PLV_MULT(lv), oh=Math.round(p.maxHp), od=Math.round(p.dmg); const keep=p.hp; p.maxHp=ch.hp*m; p.dmg=ch.dmg*m; p.hp=p.maxHp;
+  if(WORLD.arena){ p.hp=Math.min(p.maxHp,keep+(Math.round(p.maxHp)-oh)); floatText(p.x,p.y-64,'LEVEL '+lv+'  ·  HP +'+(Math.round(p.maxHp)-oh),'#fde047',true); G.hudGold=3; return; }   /* Boss Fight: only Spinjitzu heals; a level-up adds its HP growth, nothing more */   /* Boss Fight: stats and full heal only, no freeze-frame or level-up screen mid-fight */
   const short=!!(G.boss&&G.boss.alive); G.levelFx={t:0,dur:short?1:2,short,from,to:lv,hp:Math.round(p.maxHp)-oh,dmg:Math.round(p.dmg)-od,col:ch.color,glow:ch.glow,name:p.name}; G.hudGold=3;
   for(const e of liveEnemies()) if(inCircle(e,p.x,p.y,220)&&!e.boss){ const d=Math.max(1,dist(e,p)); e.kbx+=(e.x-p.x)/d*260; e.kby+=(e.y-p.y)/d*260; }   // burst pushes enemies back (no damage)
   for(const q of G.projs) if(q.alive&&q.owner&&q.owner.kind!=='player'&&Math.hypot(q.x-p.x,q.y-p.y)<160) q.alive=false;   // and clears projectiles nearby
@@ -1379,7 +1379,7 @@ function openChest(c){
 /* ---------- player ---------- */
 function playerUpdate(p,dt){
   if(!p.alive){ p.deadT-=dt; if(p.deadT<=0&&G.state==='PLAYING') onPlayerDead(); return; }
-  p.flash=Math.max(0,p.flash-dt); p.stagger=Math.max(0,p.stagger-dt); p.inv=Math.max(0,p.inv-dt); p.abGrace=Math.max(0,(p.abGrace||0)-dt); p.atkCd-=dt; p.dashCd-=dt; p.abCd-=dt; p.comboT-=dt; p.attackT=Math.max(0,p.attackT-dt); tickStatus(p,dt); if(p.comboT<=0) p.combo=0;
+  p.flash=Math.max(0,p.flash-dt); p.stagger=Math.max(0,p.stagger-dt); p.inv=Math.max(0,p.inv-dt); p.abGrace=Math.max(0,(p.abGrace||0)-dt); p.spinCd=Math.max(0,(p.spinCd||0)-dt); p.atkCd-=dt; p.dashCd-=dt; p.abCd-=dt; p.comboT-=dt; p.attackT=Math.max(0,p.attackT-dt); tickStatus(p,dt); if(p.comboT<=0) p.combo=0;
   spinUpdate(p,dt); chiUpdate(p,dt); groundFxUpdate(dt); const flash=p.spin&&p.spin.state==='FLASH';
   const zone=zoneOf(p.x,p.y); if(zone==='swamp') G.swampT+=dt; const max=p.spd*statMult(p,'spd')*terrainMod(p.x,p.y)*spinSpeedMul(p), canMove=p.stagger<=0&&p.dashT<=0&&p.jumpT<=0&&!p.hidden&&!flash&&!arenaBusy()&&!(p.dunk>0)&&!p.drag;
   if(p.drag){ const d=p.drag; d.t-=dt; const b=G.boss; if(b&&b.alive){ const tx=b.x+Math.cos(b.face)*(b.r+p.r+4), ty=b.y+Math.sin(b.face)*(b.r+p.r+4), k=1-Math.pow(.0005,dt); p.x=lerp(p.x,tx,k); p.y=lerp(p.y,ty,k); } p.vx=p.vy=0; p.kbx=p.kby=0; if(Math.random()<.5) part(p.x+rnd(-10,10),p.y+rnd(-10,4),rnd(-30,30),-40,'#9aa0aa',.3,2); if(d.t<=0) p.drag=null; }   /* hooked by the anchor: dragged to the captain for 0.4 s */
@@ -1452,7 +1452,7 @@ function projUpdate(q,dt,p){
   if(q.pellet){ if(q.trail>.025){ q.trail=0; part(q.x+rnd(-2,2),q.y+rnd(-2,2),rnd(-12,12),rnd(-22,-6),Math.random()<.3?'#d1d5db':'#9ca3af',.55,3.5,-10); } q.flew=(q.flew||0)+Math.hypot(q.vx,q.vy)*dt; if(q.flew>36&&hitsCollider(q.x,q.y+4)){ q.alive=false; burst(q.x,q.y,['#9ca3af','#d1d5db'],4,60,.3,2); return; } }   // smoke trail; trees, rocks and crates stop pellets
   else if(q.trail>.016){ q.trail=0; part(q.x+rnd(-3,3),q.y+rnd(-3,3),rnd(-30,30)-q.vx*.05,rnd(-30,30)-q.vy*.05,Math.random()<.5?q.col:q.glow,.4,q.vr*.9,0,true); }
   const targets=q.owner.kind==='player'?liveEnemies():[p];
-  for(const e of targets) if(e.alive&&!q.hit.includes(e)&&inCircle(e,q.x,q.y+4,q.r)&&!(q.venom&&q.life>q.life0*.25)){ if(e.kind==='player'&&e.name==='SHADE'&&spinning(e)) continue; q.hit.push(e); damage(e,q.dmg,q.owner,{kb:q.kb,big:q.big,basic:q.basic,ranged:q.owner.kind!=='player'}); if(q.onHit) q.onHit(e); if(q.venom){ addStatus(e,'poison',3); q.alive=false; venomSplash(q,p); return; } burst(q.x,q.y,[q.col,q.glow,'#ffffff'],10,160,.4,4,0,true); if(q.pierce-- <=0){ q.alive=false; return; } }
+  for(const e of targets) if(e.alive&&!q.venom&&!q.hit.includes(e)&&inCircle(e,q.x,q.y+4,q.r)){ if(e.kind==='player'&&e.name==='SHADE'&&spinning(e)) continue; q.hit.push(e); damage(e,q.dmg,q.owner,{kb:q.kb,big:q.big,basic:q.basic,ranged:q.owner.kind!=='player'}); if(q.onHit) q.onHit(e); if(q.venom){ addStatus(e,'poison',3); q.alive=false; venomSplash(q,p); return; } burst(q.x,q.y,[q.col,q.glow,'#ffffff'],10,160,.4,4,0,true); if(q.pierce-- <=0){ q.alive=false; return; } }
   if(q.venom&&q.life<=0){ q.alive=false; venomSplash(q,p); return; }
   if(q.life<=0||!inLand(q.x,q.y)){ q.alive=false; burst(q.x,q.y,[q.col,q.glow],6,100,.3,3,0,true); }
 }
@@ -1640,6 +1640,7 @@ function balanceReport(){ const rows=[]; for(const n of ORDER) for(const lv of [
    CHI + SPINJITZU — drawing functions copied from chi-spinjitzu.html (adapted to the
    game's art-pixel camera: art pixel = PIX world units, helpers rect/px draw into `g`)
    ===================================================================== */
+const SPIN_CD=25;   /* seconds between Spinjitzus */
 const SPIN={
  CLAY:  {ring:['#e0b96a','#c89a4e','#8a6a34'], core:'#fff0c0', suit:'#5b3a1c', head:'#f1c39c', eye:'#ffcc33', extra:'rocks',  dur:9.0, rad:1.9, pct:22, tick:4, spd:20, dr:75, regen:2.5},
  BECK:  {ring:['#4fd0ff','#1f9a8a','#bffaff'], core:'#ffffff', suit:'#1c3f7a', head:'#9fc8e8', eye:'#33e0ff', extra:'drops',  dur:5.0, rad:1.1, pct:30, tick:7, spd:80, dr:50, regen:1.5},
@@ -1778,8 +1779,9 @@ function spinBusy(p){ return !!(p&&p.spin&&(p.spin.state==='FLASH'||p.spin.state
 function startSpinjitzu(p){
   if(!p||!p.alive||G.state!=='PLAYING') return; if(p.spin&&p.spin.state){ return; }
   if((SAVE.chi||0)<1){ showHint('No Chi — enemies drop it'); G.chiShake=.4; SFX.block(); return; }
+  if(p.spinCd>0){ showHint('Spinjitzu recharging — '+Math.ceil(p.spinCd)+' s'); G.chiShake=.4; SFX.block(); return; }
   if(inSafeZone(p.x,p.y)){ showHint('Leave the blue circle to fight'); return; }
-  SAVE.chi--; save(); const C=SPIN[p.name]; p.spin={state:'FLASH',t:.5,C,tickT:0,ticks:0,loopT:0,tot:.5}; p.vx=p.vy=0; p.queued=null; p.hidden=false; p.hideT=0;
+  SAVE.chi--; save(); p.spinCd=SPIN_CD; const C=SPIN[p.name]; p.spin={state:'FLASH',t:.5,C,tickT:0,ticks:0,loopT:0,tot:.5}; p.vx=p.vy=0; p.queued=null; p.hidden=false; p.hideT=0;
   SFX.spinCharge(); G.zoomPulse=1.08; CAM.flashDim=1;
 }
 function spinUpdate(p,dt){
@@ -1830,11 +1832,12 @@ function groundFxUpdate(dt){ for(let i=G.groundFx.length-1;i>=0;i--){ const f=G.
   if(f.kind==='venom'){ const p=G.player; if(p&&p.alive&&inCircle(p,f.x,f.y,f.r)){ addStatus(p,'poison',3); addStatus(p,'spore',.25); } if(G.state==='PLAYING'&&Math.random()<.15) part(f.x+rnd(-f.r,f.r)*.8,f.y+rnd(-f.r,f.r)*.4,0,-20,Math.random()<.5?'#4ade80':'#bbf7d0',.6,2.5,-10,true); }   // poison puddle: poison + slow, bubbling   // slows the player 20% while standing in it
   if(f.kind==='scorch') for(const e of liveEnemies()) if(inCircle(e,f.x,f.y,f.r)&&!e.status.burn) addStatus(e,'burn',2,{dps:4,stacks:1}); } }
 function drawChiSlot(c,b,p){
-  const has=(SAVE.chi||0)>0, busy=spinBusy(p)||(p.spin&&p.spin.state); const sh=G.chiShake>0?Math.sin(G.time*60)*3:0; if(G.chiShake>0) G.chiShake-=1/60;
+  const cd=p.spinCd||0, has=(SAVE.chi||0)>0&&cd<=0, busy=spinBusy(p)||(p.spin&&p.spin.state); const sh=G.chiShake>0?Math.sin(G.time*60)*3:0; if(G.chiShake>0) G.chiShake-=1/60;
   c.save(); c.translate(b.x+sh,b.y); c.scale(2,2); g=c;
   const glow=has&&!busy&&Math.sin(G.time*5)>0; c.lineWidth=1.2; c.strokeStyle=has?(glow?'#bff0ff':'#4fb0e8'):'#2a3a4a'; c.beginPath(); c.arc(0,0,14,0,TAU); c.stroke(); if(glow){ c.strokeStyle='rgba(79,176,232,.6)'; c.lineWidth=1; c.beginPath(); c.arc(0,0,15.3,0,TAU); c.stroke(); }
   rect(-9,-9,18,18,'#132030');
   if(has){ chiOrb(0,0,G.time); c.fillStyle='#bff0ff'; c.font='7px monospace'; c.textAlign='center'; c.fillText('x'+SAVE.chi,11,13); }
+  else if(cd>0&&(SAVE.chi||0)>0){ c.globalAlpha=.35; chiOrb(0,0,G.time); c.globalAlpha=1; c.strokeStyle='#4fb0e8'; c.lineWidth=1.6; c.beginPath(); c.arc(0,0,14,-Math.PI/2,-Math.PI/2+TAU*(1-cd/SPIN_CD)); c.stroke(); c.fillStyle='#bff0ff'; c.font='7px monospace'; c.textAlign='center'; c.fillText(Math.ceil(cd)+'s',0,3); c.fillText('x'+SAVE.chi,11,13); }   /* recharging: dim orb, ring wipes clockwise, seconds left */
   else { c.fillStyle='#3a4a5a'; c.font='7px monospace'; c.textAlign='center'; c.fillText('CHI',0,3); }
   c.restore(); c.font='800 9px Arial'; c.textAlign='center'; c.fillStyle=has?'#7fd8f8':'rgba(255,255,255,.35)'; c.fillText('SPINJITZU',b.x,b.y+b.r+12);
 }
