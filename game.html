@@ -924,7 +924,8 @@ const CH={
 for(const k in CH){ CH[k].name=k; CH[k].sprite=CHARS.findIndex(m=>m.name===k); }
 const ORDER=['SHADE','BOREAS','APOLLO','BECK','CLAY'];
 const COIN_IMG=new Image(); COIN_IMG.src=COIN_URI;
-const LV_MULT=lv=>1+0.08*(lv-1);           // +8% HP and damage per level
+const LV_MULT=lv=>1+0.08*(lv-1);           // +8% HP per level
+const LV_DMG=lv=>Math.pow(1.12,lv-1);       // damage: x1.12 per level, compounding (LV 5 x1.57, LV 7 x1.97, LV 9 x2.48) — every upgrade is felt
 const LEVEL_COST=n=>40*n*n;                 // gold to buy level n
 const MAX_LV=30;
 const XP_COST=n=>30*n*n;                 // XP spent to buy character level n
@@ -944,15 +945,15 @@ const MAPS=[{id:'bone_shore',name:'Bone Shore',lvl:[1,9],tier:0,bosses:'Hippo ·
             {id:'map2',name:'Map 2',lvl:[9,19],tier:1,bosses:'?',desc:'Coming soon',locked:true},{id:'map3',name:'Map 3',lvl:[19,30],tier:2,bosses:'?',desc:'Coming soon',locked:true}];
 const TIERS=[{hp:1,dmg:1},{hp:2.2,dmg:1.9},{hp:4.5,dmg:3.2},{hp:8,dmg:5}];
 /* enemy roster (sprite = index into ENEMIES from enemies-pixel.html). Common enemies are locked to one biome each; atk = seconds between swings.
-   Tuned to ninja levels (x1.08 / x1.32 / x1.48 / x1.64 of base for LV 2 / 5 / 7 / 9): Mushroom = LV 2, Insect Priest = LV 5, Pirate = LV 7;
+   Tuned to ninja levels (damage x1.12 / x1.57 / x1.97 / x2.48 of base for LV 2 / 5 / 7 / 9): Mushroom = LV 2, Insect Priest = LV 5, Pirate = LV 7;
    Hippo = LV 5 (hard at 5), Crocodile = LV 7 (hard at 7), Pirate Lord = LV 9 (still a fight at 9). Nothing scales with the ninja's level. */
 const EN={
-  mush:  {hp:48, dmg:9, spd:118,r:14,range:46,atk:1.2,coins:[5,8],gold:[5,8],  xp:6,sprite:0,scale:1.5,biome:'forest',name:'MUSHROOM'},
-  priest:{hp:45, dmg:16,spd:197,r:13,range:44,atk:.8, coins:[6,8],gold:[15,22],xp:10,sprite:1,scale:1.5,biome:'swamp', name:'INSECT PRIEST'},
-  pirate:{hp:95, dmg:15,spd:104,r:15,range:50,atk:1.3,coins:[6,8],gold:[12,18],xp:12,sprite:2,scale:1.5,biome:'beach', name:'PIRATE'},
-  hippo:{hp:1900,dmg:45,spd:70, r:46,range:100,coins:[40,40],gold:[200,200],boss:true,name:'HIPPO',sprite:3,scale:3,adds:'mush'},
-  croc: {hp:2600,dmg:58,spd:125,r:46,range:110,coins:[40,40],gold:[250,250],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
-  lord: {hp:3100,dmg:20,spd:116,r:40,range:96, coins:[40,40],gold:[400,400],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:400,shards:[3,4]},   /* drawn by the LORD rig, not a sprite */
+  mush:  {hp:50, dmg:9, spd:118,r:14,range:46,atk:1.2,coins:[5,8],gold:[5,8],  xp:6,sprite:0,scale:1.5,biome:'forest',name:'MUSHROOM'},
+  priest:{hp:54, dmg:16,spd:197,r:13,range:44,atk:.8, coins:[6,8],gold:[15,22],xp:10,sprite:1,scale:1.5,biome:'swamp', name:'INSECT PRIEST'},
+  pirate:{hp:127,dmg:15,spd:104,r:15,range:50,atk:1.3,coins:[6,8],gold:[12,18],xp:12,sprite:2,scale:1.5,biome:'beach', name:'PIRATE'},
+  hippo:{hp:2250,dmg:45,spd:70, r:46,range:100,coins:[40,40],gold:[200,200],boss:true,name:'HIPPO',sprite:3,scale:3,adds:'mush'},
+  croc: {hp:3450,dmg:58,spd:125,r:46,range:110,coins:[40,40],gold:[250,250],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
+  lord: {hp:4650,dmg:20,spd:116,r:40,range:96, coins:[40,40],gold:[400,400],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:400,shards:[3,4]},   /* drawn by the LORD rig, not a sprite */
 };
 const STATUS={
   slow:  {tint:'#60a5fa',mult:{spd:.6,rate:.6}},
@@ -1313,7 +1314,7 @@ function burst(x,y,cols,n,spd,life,size,grav,glow){ for(let i=0;i<n;i++){ const 
 function floatText(x,y,txt,col,big,crit){ G.floats.push({x,y,txt,col:col||'#fff',t:0,vy:-70,vx:rnd(-20,20),big:!!big,crit:!!crit}); }
 
 const JUMP_DUR=.6, JUMP_CD=0;   // no cooldown: you can jump again as soon as you land
-function makePlayer(name){ const ch=CH[name], lv=SAVE.levels[name], m=LV_MULT(lv)*PLV_MULT(playerLevel()); return {kind:'player',name,ch,lv,x:0,y:0,vx:0,vy:0,r:15,animT:0,face:0,hp:ch.hp*m,maxHp:ch.hp*m,dmg:ch.dmg*m,jumpT:0,jumpCd:0,spd:ch.spd,rate:ch.rate,attackT:0,atkCd:0,queued:null,combo:0,comboT:0,lunge:0,lungeA:0,dashT:0,dashCd:0,dAng:0,abCd:0,status:{},flash:0,stagger:0,inv:0,alive:true,hidden:false,hideT:0,kbx:0,kby:0,dashHit:[],deadT:0,bob:0}; }
+function makePlayer(name){ const ch=CH[name], lv=SAVE.levels[name], m=LV_MULT(lv)*PLV_MULT(playerLevel()), md=LV_DMG(lv)*PLV_MULT(playerLevel()); return {kind:'player',name,ch,lv,x:0,y:0,vx:0,vy:0,r:15,animT:0,face:0,hp:ch.hp*m,maxHp:ch.hp*m,dmg:ch.dmg*md,jumpT:0,jumpCd:0,spd:ch.spd,rate:ch.rate,attackT:0,atkCd:0,queued:null,combo:0,comboT:0,lunge:0,lungeA:0,dashT:0,dashCd:0,dAng:0,abCd:0,status:{},flash:0,stagger:0,inv:0,alive:true,hidden:false,hideT:0,kbx:0,kby:0,dashHit:[],deadT:0,bob:0}; }
 function makeEnemy(type,x,y){ const d=EN[type], tier=TIERS[G.map?G.map.tier:0]; const e={kind:'enemy',type,d,x,y,vx:0,vy:0,r:d.r,face:0,hp:d.hp*tier.hp,maxHp:d.hp*tier.hp,dmg:d.dmg*tier.dmg,spd:d.spd,status:{},flash:0,stagger:0,flinch:0,hidden:false,sub:null,canSwim:false,crashT:0,alive:true,ai:{state:'idle',t:rnd(.3,2),angle:Math.random()*TAU,atkT:rnd(.5,1.2),tele:null,retreated:false,hit:[],home:{x,y},phase2:false},boss:!!d.boss,biome:d.biome||null,summoned:false,dodgeCd:0,holdAnim:false,kbx:0,kby:0,kvx:0,kvy:0,attackT:0,abCd:2,spawnT:.6,deadT:undefined,animT:Math.random()*3,spawner:null}; if(d.boss){ G.boss=e; e.ai.state='chase'; } G.enemies.push(e); return e; }
 function fromFront(e,src){ return Math.abs(angDiff(e.face,Math.atan2(src.y-e.y,src.x-e.x)))<1.1; }
 /* is this world point inside a prop collider (tree trunk, rock, crate…)? used by pellets so cover works */
@@ -1354,7 +1355,7 @@ function enemyDie(e){
 /* Chi key: 2% from any common enemy, always from a boss, pity after 80 kills; capped at 3 */
 function keyDrop(x,y){ SAVE.pity=0; if((SAVE.keys||0)>=3){ floatText(x,y-70,'KEY BAG FULL (3/3)','#fde68a',true); return; } SAVE.keys=(SAVE.keys||0)+1; burst(x,y-14,['#fde047','#ffffff','#f59e0b'],40,240,1,5,120,true); floatText(x,y-76,'🔑 CHI KEY!','#fde047',true,true); SFX.key(); vibrate(60); G.slowmo=.4; const p=G.player; if(p){ for(let i=0;i<10;i++) part(x,y-10,rnd(-40,40),rnd(-60,-20),'#fde047',.6,4,0,true); } }
 /* player level from total XP: full heal, +1% HP/damage for every ninja, and the level-up moment */
-function checkLevelUp(){ const lv=playerLevel(); if(lv<=G.plv) return; const from=G.plv; G.plv=lv; const p=G.player; if(!p||!p.alive) return; const ch=p.ch, m=LV_MULT(p.lv)*PLV_MULT(lv), oh=Math.round(p.maxHp), od=Math.round(p.dmg); const keep=p.hp; p.maxHp=ch.hp*m; p.dmg=ch.dmg*m; p.hp=p.maxHp;
+function checkLevelUp(){ const lv=playerLevel(); if(lv<=G.plv) return; const from=G.plv; G.plv=lv; const p=G.player; if(!p||!p.alive) return; const ch=p.ch, m=LV_MULT(p.lv)*PLV_MULT(lv), md=LV_DMG(p.lv)*PLV_MULT(lv), oh=Math.round(p.maxHp), od=Math.round(p.dmg); const keep=p.hp; p.maxHp=ch.hp*m; p.dmg=ch.dmg*md; p.hp=p.maxHp;
   if(WORLD.arena){ p.hp=Math.min(p.maxHp,keep); floatText(p.x,p.y-64,'LEVEL '+lv,'#fde047',true); G.hudGold=3; return; }   /* Boss Fight: no heal at all on a level-up, only Spinjitzu heals */   /* Boss Fight: stats and full heal only, no freeze-frame or level-up screen mid-fight */
   const short=!!(G.boss&&G.boss.alive); G.levelFx={t:0,dur:short?1:2,short,from,to:lv,hp:Math.round(p.maxHp)-oh,dmg:Math.round(p.dmg)-od,col:ch.color,glow:ch.glow,name:p.name}; G.hudGold=3;
   for(const e of liveEnemies()) if(inCircle(e,p.x,p.y,220)&&!e.boss){ const d=Math.max(1,dist(e,p)); e.kbx+=(e.x-p.x)/d*260; e.kby+=(e.y-p.y)/d*260; }   // burst pushes enemies back (no damage)
@@ -1635,7 +1636,7 @@ function worldUpdate(dt){
   for(const e of G.enemies) enemyUpdate(e,dt,p);
 }
 /* balance check against the ninjas (debug: Settings → Balance table): hits and seconds an average combo needs per common enemy */
-function balanceReport(){ const rows=[]; for(const n of ORDER) for(const lv of [1,6]){ const ch=CH[n], m=LV_MULT(lv), hit=ch.dmg*m, dps=hit*ch.rate*(1+.5/3); for(const t of ['mush','priest','pirate']){ const hp=EN[t].hp*(t==='pirate'?1/.7:1); rows.push({ninja:n,lv,enemy:t,hp:Math.round(hp),hits:Math.ceil(hp/(hit*1.17)),ttk:+(hp/dps).toFixed(2),enemyDps:+(EN[t].dmg/EN[t].atk).toFixed(1)}); } } return rows; }
+function balanceReport(){ const rows=[]; for(const n of ORDER) for(const lv of [1,6]){ const ch=CH[n], m=LV_DMG(lv), hit=ch.dmg*m, dps=hit*ch.rate*(1+.5/3); for(const t of ['mush','priest','pirate']){ const hp=EN[t].hp*(t==='pirate'?1/.7:1); rows.push({ninja:n,lv,enemy:t,hp:Math.round(hp),hits:Math.ceil(hp/(hit*1.17)),ttk:+(hp/dps).toFixed(2),enemyDps:+(EN[t].dmg/EN[t].atk).toFixed(1)}); } } return rows; }
 /* =====================================================================
    CHI + SPINJITZU — drawing functions copied from chi-spinjitzu.html (adapted to the
    game's art-pixel camera: art pixel = PIX world units, helpers rect/px draw into `g`)
@@ -2364,16 +2365,16 @@ function buildCards(){
 const ABILITY_MULT={CLAY:1.2,BECK:1.5,BOREAS:0,APOLLO:2,SHADE:3};   /* the special's hit as a multiple of DMG (Frost Nova only freezes) */
 function spinTotal(n,m){ const C=SPIN[n]; return Math.round(CH[n].dmg*m*C.pct/100*C.tick*C.dur); }   /* whole-spin damage on one enemy: DMG x pct x ticks; grows with every upgrade like DMG does */
 function showCharDetail(n,anim){
-  const ch=CH[n], lv=SAVE.levels[n], m=LV_MULT(lv), m2=LV_MULT(lv+1), un=!!SAVE.unlocked[n], sel=SAVE.selected===n, q=QUESTS[n], cost=LEVEL_COST(lv+1), xc=XP_COST(lv+1), can=un&&lv<MAX_LV&&SAVE.gold>=cost&&SAVE.xp>=xc;
+  const ch=CH[n], lv=SAVE.levels[n], m=LV_MULT(lv), m2=LV_MULT(lv+1), dm=LV_DMG(lv), dm2=LV_DMG(lv+1), un=!!SAVE.unlocked[n], sel=SAVE.selected===n, q=QUESTS[n], cost=LEVEL_COST(lv+1), xc=XP_COST(lv+1), can=un&&lv<MAX_LV&&SAVE.gold>=cost&&SAVE.xp>=xc;
   $('cgrid').style.display='none'; const det=$('cdetail'); det.classList.add('on'); det.style.setProperty('--c',ch.color); $('charsTitle').textContent=n;
   const segs=Array.from({length:10},(_,i)=>`<i class="${i<Math.round(lv/MAX_LV*10)?'':'off'}"></i>`).join('');
   det.innerHTML=`<div class="bportrait"><div class="bname">${n}</div><div class="brole">${ch.role}</div><div class="backb" id="bAllNinjas">◀ ALL NINJAS</div>${un?`<div class="selb ${sel?'on':''}" id="bSelectChar">${sel?'✔ SELECTED':'SELECT'}</div>`:''}</div>
   <div class="bstats">
     <div class="prow"><div class="pbadge">${un?lv:'🔒'}</div><span class="pl">POWER</span><span class="pm">MAX ${MAX_LV}</span></div><div class="pbar">${segs}</div>
     <div class="srow"><div class="ic" style="background:#16a34a">❤</div><div><div class="lab" style="color:#86efac">HEALTH</div><div class="val">${Math.round(ch.hp*m)}${un&&lv<MAX_LV?`<span class="gain">+${Math.round(ch.hp*m2)-Math.round(ch.hp*m)}</span>`:''}</div></div>${un&&lv<MAX_LV?'<div class="arrow">⬆</div>':''}</div>
-    <div class="srow"><div class="ic" style="background:#dc2626">💥</div><div><div class="lab" style="color:#fca5a5">ATTACK</div><div class="val">${Math.round(ch.dmg*m)}${un&&lv<MAX_LV?`<span class="gain">+${Math.round(ch.dmg*m2)-Math.round(ch.dmg*m)}</span>`:''}</div></div>${un&&lv<MAX_LV?'<div class="arrow">⬆</div>':''}</div>
-    <div class="srow"><div class="ic abslot" style="background:#111827;border:1px solid ${ch.color}"></div><div><div class="lab" style="color:#fde68a">SUPER</div><div class="val">${ch.skill.name} <span style="font-size:10px;color:#9ca3af;font-weight:700">(${ch.skill.cd}s)</span>${ABILITY_MULT[n]?` · ${Math.round(ch.dmg*m*ABILITY_MULT[n])} dmg${un&&lv<MAX_LV?`<span class="gain">+${Math.round(ch.dmg*m2*ABILITY_MULT[n])-Math.round(ch.dmg*m*ABILITY_MULT[n])}</span>`:''}`:' · freeze 2s'}</div></div>${un&&lv<MAX_LV&&ABILITY_MULT[n]?'<div class="arrow">⬆</div>':''}</div>
-    <div class="srow"><div class="ic" style="background:radial-gradient(circle at 50% 45%,${SPIN[n].core},${SPIN[n].ring[0]} 45%,${SPIN[n].ring[1]} 80%)"></div><div><div class="lab" style="color:${SPIN[n].ring[2]}">SPINJITZU</div><div class="val">${spinTotal(n,m)} dmg over ${SPIN[n].dur}s${un&&lv<MAX_LV?`<span class="gain">+${spinTotal(n,m2)-spinTotal(n,m)}</span>`:''}</div></div>${un&&lv<MAX_LV?'<div class="arrow">⬆</div>':''}</div>
+    <div class="srow"><div class="ic" style="background:#dc2626">💥</div><div><div class="lab" style="color:#fca5a5">ATTACK</div><div class="val">${Math.round(ch.dmg*dm)}${un&&lv<MAX_LV?`<span class="gain">+${Math.round(ch.dmg*dm2)-Math.round(ch.dmg*dm)}</span>`:''}</div></div>${un&&lv<MAX_LV?'<div class="arrow">⬆</div>':''}</div>
+    <div class="srow"><div class="ic abslot" style="background:#111827;border:1px solid ${ch.color}"></div><div><div class="lab" style="color:#fde68a">SUPER</div><div class="val">${ch.skill.name} <span style="font-size:10px;color:#9ca3af;font-weight:700">(${ch.skill.cd}s)</span>${ABILITY_MULT[n]?` · ${Math.round(ch.dmg*dm*ABILITY_MULT[n])} dmg${un&&lv<MAX_LV?`<span class="gain">+${Math.round(ch.dmg*dm2*ABILITY_MULT[n])-Math.round(ch.dmg*dm*ABILITY_MULT[n])}</span>`:''}`:' · freeze 2s'}</div></div>${un&&lv<MAX_LV&&ABILITY_MULT[n]?'<div class="arrow">⬆</div>':''}</div>
+    <div class="srow"><div class="ic" style="background:radial-gradient(circle at 50% 45%,${SPIN[n].core},${SPIN[n].ring[0]} 45%,${SPIN[n].ring[1]} 80%)"></div><div><div class="lab" style="color:${SPIN[n].ring[2]}">SPINJITZU</div><div class="val">${spinTotal(n,dm)} dmg over ${SPIN[n].dur}s${un&&lv<MAX_LV?`<span class="gain">+${spinTotal(n,dm2)-spinTotal(n,dm)}</span>`:''}</div></div>${un&&lv<MAX_LV?'<div class="arrow">⬆</div>':''}</div>
     ${un?`<div class="bupg ${can?'':'dis'}" id="bUpgradeNow">${lv>=MAX_LV?'MAX POWER':'UPGRADE'}${lv<MAX_LV?`<small>🪙 ${cost} gold · ⚡ ${xc} XP</small>`:''}</div>`:`<div class="bquest"><b>QUEST:</b> ${q.text}<div class="questbar"><i style="width:${Math.round(q.pct()*100)}%"></i></div><div>${q.progress()}</div><div class="qr">${q.remaining()}</div></div>`}
   </div>`;
   det.querySelector('.bportrait').appendChild(charCanvas(ch,!un,7,220,300,.96)); det.querySelector('.abslot').appendChild(abilityIconCanvas(n,'width:86%;height:86%'));
