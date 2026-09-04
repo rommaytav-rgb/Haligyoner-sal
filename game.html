@@ -2212,7 +2212,9 @@ function lordWaveAlive(e){ return !!(e.ai.wave&&e.ai.wave.some(s=>s.alive)); }
 function lordPhase(e){ const a=e.ai; if(!a.phase2&&e.hp<e.maxHp*.5){ a.phase2=true; shake(12); vibrate(160); SFX.roar(); G.banner={text:'MY CREW NEVER RESTS',sub:'THE PIRATE LORD IS ENRAGED · CANNONS READY',t:2.6}; burst(e.x,e.y-30,['#a040ff','#ff2a2a','#ffffff'],50,300,1,6,0,true); G.ring={x:e.x,y:e.y,r:0,max:240,t:0,col:'#a040ff'}; } }
 AI.lord=function(e,p,dt){
   const a=e.ai, d=dist(e,p), rt=statMult(e,'rate')*(a.phase2?1.15:1); a.t-=dt; e.abCd-=dt*rt; a.atkT-=dt*rt; a.el=(a.el||0)+dt*(a.state==='chase'?1:rt); lordPhase(e);
-  if(a.state==='chase'){ if(bossLeash(e,p,dt)) return; const safe=inSafeZone(p.x,p.y); if(d<900&&!safe) moveToward(e,p.x,p.y,dt,1); else { e.vx*=.9; e.vy*=.9; } faceTo(e,p);
+  if(a.state==='chase'){ if(bossLeash(e,p,dt)) return; const safe=inSafeZone(p.x,p.y), beach=WORLD.arena||(zoneOf(p.x,p.y)==='beach'&&zoneOf(e.x,e.y)==='beach');
+    if(!beach){ const L=e.lair||a.home; if(dist(e,L)>40){ moveToward(e,L.x,L.y,dt,.9); e.face=Math.atan2(e.vy,e.vx); } else { e.vx*=.8; e.vy*=.8; faceTo(e,p); } e.abCd=Math.max(e.abCd,.6); return; }   /* beach only: off the sand he goes back to his lair */
+    if(d<900&&!safe) moveToward(e,p.x,p.y,dt,1); else { e.vx*=.9; e.vy*=.9; } faceTo(e,p);
     const th=[.75,.5,.25].find(v=>e.hp<e.maxHp*v&&!(a.summoned||[]).includes(v));
     if(th!==undefined&&p.alive&&d<700){ (a.summoned=a.summoned||[]).push(th); if(!lordWaveAlive(e)){ lordStart(e,p,'summon'); return; } }   /* a wave still alive: this summon is skipped */
     if(e.abCd<=0&&p.alive&&d<700&&!safe){ a.moveN=(a.moveN||0)+1; let pick; const r=Math.random();
