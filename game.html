@@ -99,7 +99,7 @@
   .mrow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
   .mbtn.boss{background:linear-gradient(180deg,#3b0a0a,#1a0505 55%,#0a0202);border-color:#dc2626;box-shadow:0 0 0 2px #7f1d1d,0 0 22px rgba(220,38,38,.55),0 10px 20px rgba(0,0,0,.5);color:#fecaca;min-width:min(70vw,360px)}
   .bflist{display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:66vh;padding:4px 2px;width:min(92vw,560px)}
-  .bfcard{position:relative;display:flex;align-items:center;gap:12px;padding:8px 14px;border-radius:12px;cursor:pointer;min-height:64px;background:linear-gradient(180deg,#2a0b0b,#150404);border:2px solid #b91c1c;box-shadow:0 0 14px rgba(220,38,38,.35),inset 0 0 20px rgba(0,0,0,.5);color:#fee2e2}
+  .bfcard{position:relative;flex:none;display:flex;align-items:center;gap:12px;padding:8px 14px;border-radius:12px;cursor:pointer;min-height:64px;background:linear-gradient(180deg,#2a0b0b,#150404);border:2px solid #b91c1c;box-shadow:0 0 14px rgba(220,38,38,.35),inset 0 0 20px rgba(0,0,0,.5);color:#fee2e2}
   .bfcard canvas{width:64px;height:64px;image-rendering:pixelated;flex:none}
   .bfcard.locked{opacity:.5;pointer-events:none;border-color:#7f1d1d;filter:grayscale(.6)}
   .bfcard.soon{opacity:.55;pointer-events:none;border-style:dashed;background:#160808}
@@ -171,15 +171,15 @@
   .xbtn{width:34px;height:34px;border-radius:50%;border:2px solid #8b7ac0;background:#2a1f4a;color:#e9d5ff;font-weight:900;display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 12px rgba(139,122,192,.5)}
   /* map selection */
   .maplist{display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:66vh;padding:4px 2px;scrollbar-width:thin}
-  .mapcard{position:relative;display:flex;align-items:center;gap:12px;padding:10px 16px;border-radius:12px;cursor:pointer;min-height:64px}
+  .mapcard{position:relative;display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:12px;cursor:pointer;min-height:64px;flex:none}.mapcard .grow{min-width:0}
   .mapcard.open{background:linear-gradient(180deg,#efdcb0,#c9a86a 70%,#b8955a);border:3px solid #a8823a;box-shadow:0 0 0 2px #5a4320,0 0 22px rgba(251,191,36,.35),inset 0 0 30px rgba(120,80,20,.25);color:#2a1a0a}
   .mapcard.open .mt{font-family:Georgia,serif;font-weight:700;font-size:clamp(14px,2.8vh,19px);color:#3a2408}
-  .mapcard.open .md{color:#4a3212;font-size:clamp(10px,1.9vh,12px);line-height:1.35}
+  .mapcard.open .md{color:#2a1a0a;font-size:clamp(12px,2.3vh,14px);line-height:1.4;font-weight:600}.mapcard .mb{margin-top:5px;font-weight:800}
   .mapcard.open .mlv{color:#6b4a22;font-size:12px;font-weight:700}
   .mthumb{width:clamp(80px,14vw,120px);height:auto;border-radius:8px;border:2px solid #7a5a2a;box-shadow:0 2px 8px rgba(0,0,0,.4);image-rendering:auto;flex:none}
   .palm{position:absolute;top:-6px;font-size:22px;filter:drop-shadow(0 2px 2px rgba(0,0,0,.5))}.palm.l{left:-4px}.palm.r{right:-4px;transform:scaleX(-1)}
   .mapcard.locked{background:linear-gradient(180deg,#1e2240,#12142a);border:2px solid #4b5a8a;opacity:.9;pointer-events:none;color:#9aa3c7}
-  .mapcard.locked .mt{font-weight:800;font-size:clamp(14px,2.6vh,18px);color:#cbd5e1}.mapcard.locked .mlv{font-size:12px;color:#8b93b5}.mapcard.locked .md{font-size:clamp(10px,1.8vh,12px);line-height:1.35}
+  .mapcard.locked .mt{font-weight:800;font-size:clamp(14px,2.6vh,18px);color:#cbd5e1}.mapcard.locked .mlv{font-size:12px;color:#8b93b5}.mapcard.locked .md{font-size:clamp(12px,2.2vh,14px);line-height:1.4}
   .mlock{position:relative;width:64px;height:48px;border-radius:8px;background:linear-gradient(180deg,#3b3f5c,#232338);border:1px solid #5b6a9a;display:flex;align-items:center;justify-content:center;font-size:24px;flex:none}
   .mlock span{position:absolute;right:4px;bottom:2px;font-size:16px}
   .stamp{font-family:Georgia,serif;font-size:clamp(14px,3vh,22px);letter-spacing:2px;color:#cbd5e1;text-shadow:0 0 10px rgba(203,213,225,.4);margin-left:auto;padding-right:10px}
@@ -270,8 +270,8 @@
   <div class="sub" style="margin:2px 0 8px">OPEN-WORLD PIXEL ACTION</div>
   <div class="mbtns">
     <div class="mbtn play" id="bPlay">PLAY</div>
-    <div class="mbtn earth" id="bChars">CHARACTERS &amp; SHOP</div>
     <div class="mbtn boss" id="bBoss">☠ BOSS FIGHT</div>
+    <div class="mbtn earth" id="bChars">CHARACTERS &amp; SHOP</div>
     <div class="mrow"><div class="mbtn ice" id="bSettings">SETTINGS</div><div class="mbtn fire" id="bAbout">ABOUT &amp; CREDITS</div></div>
   </div>
   <div class="foot">Keyboard: WASD move · hold &amp; release mouse to aim / fire · E ability · Shift dash · M map</div>
@@ -1864,7 +1864,6 @@ function arenaCollide(e){ const A=WORLD.arena, r=e.r; e.x=clamp(e.x,r,WORLD.w-r)
   e.lx=e.x; e.ly=e.y; }
 function arenaDunk(p){ p.dunk=1; p.vx=p.vy=0; p.kbx=p.kby=0; p.stagger=Math.max(p.stagger,1.05); damage(p,15,null,{noKb:true,color:'#60a5fa'}); burst(p.x,p.y,['#2c4a34','#3a5e42','#9ad0c0'],20,150,.7,4,200); SFX.hurt(); floatText(p.x,p.y-50,'SPLASH!','#93c5fd',true); }
 function arenaHook(kind,x,y){ const A=WORLD.arena; if(!A) return;
-  if(kind==='slam'&&A.id==='hippo'){ proj({type:'ring',mud:true,x,y,r:30,life:9,spd:230,max:640,delay:.1,owner:G.boss,dmg:WAVE_DMG,hit:[]}); floatText(x,y-30,'MUD WAVE','#c9a86a'); }   // a wave through the shallow ring: only hits a player standing in the water
   if(kind==='tail'&&A.id==='croc'){ const p=G.player; for(const b of A.bridges){ if(!b.breakable||b.broken) continue; let near=false; for(let ty=b.y0;ty<=b.y1&&!near;ty++) for(let tx=b.x0;tx<=b.x1;tx++) if(Math.hypot((tx+.5)*AT-x,(ty+.5)*AT-y)<190){ near=true; break; } if(!near) continue;
     b.broken=true; for(let ty=b.y0;ty<=b.y1;ty++) for(let tx=b.x0;tx<=b.x1;tx++){ A.set(tx,ty,'deep'); burst((tx+.5)*AT,(ty+.5)*AT,['#7a5230','#5e3d22','#9ad0c0'],8,140,.8,4,300); } WORLD.chunks.clear(); shake(6); noise(.3,.3); floatText(((b.x0+b.x1)/2+.5)*AT,(b.y0+.5)*AT-20,'THE BRIDGE BREAKS!','#fca5a5',true);
     if(p&&p.alive&&A.tile(p.x,p.y)==='deep'&&!(p.dunk>0)) arenaDunk(p); } } }
@@ -1921,7 +1920,7 @@ function arenaUpdate(dt){ const F=G.arena, A=WORLD.arena, p=G.player; if(!F) ret
   if(F.phase==='intro'){ if(F.t>.4&&!F.roared){ F.roared=true; SFX.roar(); shake(8); G.banner={text:G.boss.d.name,sub:F.stage.name+'  ·  ONE ATTEMPT',t:2.4}; } if(F.t>=2.4){ F.phase='count'; F.t=0; } }
   else if(F.phase==='count'){ const n=3-Math.floor(F.t); if(n!==F.lastN){ F.lastN=n; if(n>0) tone(660,.12,'square',.15); else { tone(990,.3,'square',.2); F.phase='fight'; F.t=0; F.fightFlash=.8; } } }
   else { F.time+=dt; if(F.fightFlash>0) F.fightFlash-=dt;
-    if(A.id==='croc'&&G.boss&&G.boss.alive&&!G.boss.sub){ A.swimT-=dt; const e=G.boss; if(A.swimT<=0&&e.ai.state==='chase'&&!(e.ai.recover>0)&&!e.status.freeze&&!e.status.stun){ e.sub={st:'dive',t:.6}; e.hidden=true; e.ai.tele=null; burst(e.x,e.y+10,['#2c4a34','#9ad0c0','#ffffff'],30,220,.7,5,200,true); noise(.25,.25); floatText(e.x,e.y-70,'IT DIVES…','#9ad0c0',true); } } }
+    if(false&&A.id==='croc'&&G.boss&&G.boss.alive&&!G.boss.sub){ A.swimT-=dt;   /* arena dive disabled: the Boss Fight crocodile is exactly the map crocodile */ const e=G.boss; if(A.swimT<=0&&e.ai.state==='chase'&&!(e.ai.recover>0)&&!e.status.freeze&&!e.status.stun){ e.sub={st:'dive',t:.6}; e.hidden=true; e.ai.tele=null; burst(e.x,e.y+10,['#2c4a34','#9ad0c0','#ffffff'],30,220,.7,5,200,true); noise(.25,.25); floatText(e.x,e.y-70,'IT DIVES…','#9ad0c0',true); } } }
 }
 function arenaTick(raw){ const F=G.arena; if(!F||!F.over) return; F.overT+=raw;
   if(F.over==='fail'&&F.overT>3){ const id=F.stage.id; leaveArena(); setState('BOSSLIST'); }
@@ -1970,8 +1969,8 @@ function showHint(t){ const h=$('hint'); if(!t){ h.style.display='none'; G.hintT
 function buildMapList(){
   const el=$('mapList'); el.innerHTML=''; $('mapMsg').style.display='none'; const n=SAVE.selected, lv=SAVE.levels[n]; if(!WORLD.mini) buildWorld(7);
   for(const m of MAPS){ const locked=m.locked||!SAVE.maps[m.id]; const d=document.createElement('div'); d.className='mapcard'+(locked?' locked':' open');
-    if(locked) d.innerHTML=`<div class="mlock">💀<span>🔒</span></div><div class="grow"><div class="mt">${m.name} <span class="mlv">· Levels ${m.lvl[0]}–${m.lvl[1]}</span></div><div class="md">${m.desc}<br>Bosses: ${m.bosses} · 🔒 Locked</div></div><div class="stamp">LOCKED</div>`;
-    else { const cv2=document.createElement('canvas'); cv2.width=WORLD.mini.width; cv2.height=WORLD.mini.height; cv2.getContext('2d').drawImage(WORLD.mini,0,0); cv2.className='mthumb'; d.innerHTML=`<span class="palm l">🌴</span><span class="palm r">🌴</span>`; d.appendChild(cv2); d.insertAdjacentHTML('beforeend',`<div class="grow"><div class="mt">${m.name} <span class="mlv">· Levels ${m.lvl[0]}–${m.lvl[1]}</span></div><div class="md">${m.desc}<br>Bosses: ${m.bosses} · Your <b>${n}</b> is level <b>${lv}</b>${lv>m.lvl[1]?' (above range — no next map yet, you can still enter)':''}</div></div>`); }
+    if(locked) d.innerHTML=`<div class="mlock">💀<span>🔒</span></div><div class="grow"><div class="mt">${m.name} <span class="mlv">· Levels ${m.lvl[0]}–${m.lvl[1]}</span></div><div class="md">${m.desc}<div class="mb">Bosses: ${m.bosses} · 🔒 Locked</div></div></div><div class="stamp">LOCKED</div>`;
+    else { const cv2=document.createElement('canvas'); cv2.width=WORLD.mini.width; cv2.height=WORLD.mini.height; cv2.getContext('2d').drawImage(WORLD.mini,0,0); cv2.className='mthumb'; d.innerHTML=`<span class="palm l">🌴</span><span class="palm r">🌴</span>`; d.appendChild(cv2); d.insertAdjacentHTML('beforeend',`<div class="grow"><div class="mt">${m.name} <span class="mlv">· Levels ${m.lvl[0]}–${m.lvl[1]}</span></div><div class="md">${m.desc}<div class="mb">Bosses: ${m.bosses} · Your <b>${n}</b> is level <b>${lv}</b>${lv>m.lvl[1]?' (above range — no next map yet, you can still enter)':''}</div></div></div>`); }
     if(!locked) d.onclick=()=>{ const msg=$('mapMsg'); if(lv<m.lvl[0]){ msg.textContent='Too weak for this map — upgrade '+n+' to level '+m.lvl[0]+' first.'; msg.style.display='block'; return; } audioInit(); enterMap(m); setState('PLAYING'); if(lv>m.lvl[1]) showHint('Above this map\'s level range — enemies will be easy here'); };
     el.appendChild(d); }
 }
