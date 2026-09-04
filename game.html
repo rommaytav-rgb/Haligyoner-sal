@@ -1037,7 +1037,7 @@ function playerUpdate(p,dt){
   // dash
   // jump: a dodge — airborne for 0.6 s (invulnerable while off the ground), moves in the stick direction, no attacking mid-air
   p.jumpCd-=dt; if(IN.jump){ IN.jump=false; if(p.jumpCd<=0&&p.jumpT<=0&&p.alive&&!p.hidden&&!spinBusy(p)&&p.dashT<=0&&p.stagger<=0){ p.jumpT=JUMP_DUR; p.jumpCd=JUMP_CD; p.inv=.5; p.jAng=(IN.mx||IN.my)?Math.atan2(IN.my,IN.mx):p.face; p.jMove=!!(IN.mx||IN.my); p.queued=null; SFX.dash(); vibrate(15); for(let i=0;i<6;i++) part(p.x+rnd(-8,8),p.y+12,rnd(-30,30),rnd(-20,-5),'rgba(230,220,200,.7)',.35,3,60); CAM.px=Math.cos(p.jAng)*14; CAM.py=Math.sin(p.jAng)*14; } }
-  if(p.jumpT>0){ p.jumpT-=dt; if(p.jMove){ p.vx=Math.cos(p.jAng)*max*1.7; p.vy=Math.sin(p.jAng)*max*1.7; } else { p.vx*=Math.pow(.05,dt); p.vy*=Math.pow(.05,dt); } if(p.jumpT<=0){ p.jumpT=0; for(let i=0;i<7;i++) part(p.x+rnd(-10,10),p.y+13,rnd(-40,40),rnd(-25,-5),'rgba(230,220,200,.7)',.4,3.5,60); } }
+  if(p.jumpT>0){ p.jumpT-=dt; if(p.jMove){ p.vx=Math.cos(p.jAng)*max*1.05; p.vy=Math.sin(p.jAng)*max*1.05; } else { p.vx*=Math.pow(.05,dt); p.vy*=Math.pow(.05,dt); } if(p.jumpT<=0){ p.jumpT=0; for(let i=0;i<7;i++) part(p.x+rnd(-10,10),p.y+13,rnd(-40,40),rnd(-25,-5),'rgba(230,220,200,.7)',.4,3.5,60); } }
   // attack: released stick / click -> fire (or queue for a moment if on cooldown)
   if(spinBusy(p)){ IN.fire=null; IN.ability=false; p.queued=null; }
   const safeNow=inSafeZone(p.x,p.y); if(safeNow&&(IN.fire||IN.ability)){ IN.fire=null; IN.ability=false; p.queued=null; if((p.safeHintT||0)<=0){ showHint('Leave the blue circle to fight'); p.safeHintT=4; } } p.safeHintT=(p.safeHintT||0)-dt;
