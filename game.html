@@ -996,10 +996,11 @@ function inArc(e,x,y,ang,range,half){ const d=Math.hypot(e.x-x,e.y-y); if(d>rang
 function inLine(e,x,y,ang,len,wid){ const dx=e.x-x,dy=e.y-y,cx=Math.cos(ang),cy=Math.sin(ang),al=dx*cx+dy*cy,ac=Math.abs(-dx*cy+dy*cx); return al>-e.r&&al<len+e.r&&ac<wid+e.r; }
 function inCircle(e,x,y,r){ return Math.hypot(e.x-x,e.y-y)<=r+e.r; }
 
+const WAVE_DMG=30;   /* every wave, anywhere, costs exactly 30 */
 function damage(e,amt,src,o){
   o=o||{}; if(!e.alive||e.spawnT>0) return 0;
   if(e.kind==='enemy'&&e.hidden) return 0;   // a submerged boss cannot be hit
-  if(e.kind==='player'){ if((e.inv>0&&!o.sure)||e.hidden||DEBUG.god||inSafeZone(e.x,e.y)) return 0; if(spinBusy(e)||e.spinGrace>0) return 0; if(e.status.shield) amt*=.5; }   // during Spinjitzu (flash + spin) the ninja cannot lose HP else if(e.status.freeze) amt*=2;
+  if(e.kind==='player'){ if((e.inv>0&&!o.sure)||e.hidden||DEBUG.god||inSafeZone(e.x,e.y)) return 0; if(spinBusy(e)||e.spinGrace>0) return 0; if(e.status.shield&&!o.flat) amt*=.5; }   // during Spinjitzu (flash + spin) the ninja cannot lose HP else if(e.status.freeze) amt*=2;
   if(e.kind==='enemy'&&src&&!o.noBlock){
     if(e.type==='priest'&&o.basic&&e.dodgeCd<=0&&Math.random()<.3){ e.dodgeCd=.4; const a=Math.atan2(src.y-e.y,src.x-e.x)+(Math.random()<.5?1:-1)*Math.PI/2; e.kvx+=Math.cos(a)*460; e.kvy+=Math.sin(a)*460; floatText(e.x,e.y-34,'DODGE','#a3e635'); SFX.dodge(); burst(e.x,e.y+6,['#8ab08a'],4,60,.3,3); return 0; }   // Insect Priest sidesteps a basic attack (short hop, 0.4 s cooldown)
     if(e.type==='pirate'&&!o.spin&&fromFront(e,src)) amt*=.7;   // heavy coat: 30% less damage from the front (behind / Spinjitzu bypass it)
@@ -1117,7 +1118,7 @@ function shadeReappear(p){ p.hidden=false; const t=nearestEnemy(p,520); if(t){ c
 
 /* ---------- projectiles / particles / floaters ---------- */
 function projUpdate(q,dt,p){
-  if(q.type==='ring'){ if(q.delay>0){ q.delay-=dt; return; } q.r+=q.spd*dt; if(q.r>q.max){ q.alive=false; return; } const d=Math.hypot(p.x-q.x,(p.y-q.y)/.6); if(!q.hit.includes(p)&&Math.abs(d-q.r)<22+p.r&&p.alive){ if(p.jumpT>0){ q.hit.push(p); floatText(p.x,p.y-40,'DODGED','#86efac'); } else { q.hit.push(p); damage(p,q.dmg,q,{kb:q.mud?220:300,ranged:true,sure:true}); } } /* ground waves: on the ground they always hurt; in the air (jump) they pass underneath */ if(Math.random()<.8){ const a=Math.random()*TAU; part(q.x+Math.cos(a)*q.r,q.y+Math.sin(a)*q.r*.6,0,-40,'#d9a34a',.35,4); } return; }
+  if(q.type==='ring'){ if(q.delay>0){ q.delay-=dt; return; } q.r+=q.spd*dt; if(q.r>q.max){ q.alive=false; return; } const d=Math.hypot(p.x-q.x,(p.y-q.y)/.6); if(!q.hit.includes(p)&&Math.abs(d-q.r)<22+p.r&&p.alive){ if(p.jumpT>0){ q.hit.push(p); floatText(p.x,p.y-40,'DODGED','#86efac'); } else { q.hit.push(p); damage(p,WAVE_DMG,q,{kb:q.mud?220:300,ranged:true,sure:true,flat:true}); } } /* ground waves: on the ground they always hurt; in the air (jump) they pass underneath */ if(Math.random()<.8){ const a=Math.random()*TAU; part(q.x+Math.cos(a)*q.r,q.y+Math.sin(a)*q.r*.6,0,-40,'#d9a34a',.35,4); } return; }
   q.x+=q.vx*dt; q.y+=q.vy*dt; q.life-=dt; q.trail+=dt;
   if(q.pellet){ if(q.trail>.025){ q.trail=0; part(q.x+rnd(-2,2),q.y+rnd(-2,2),rnd(-12,12),rnd(-22,-6),Math.random()<.3?'#d1d5db':'#9ca3af',.55,3.5,-10); } q.flew=(q.flew||0)+Math.hypot(q.vx,q.vy)*dt; if(q.flew>36&&hitsCollider(q.x,q.y+4)){ q.alive=false; burst(q.x,q.y,['#9ca3af','#d1d5db'],4,60,.3,2); return; } }   // smoke trail; trees, rocks and crates stop pellets
   else if(q.trail>.016){ q.trail=0; part(q.x+rnd(-3,3),q.y+rnd(-3,3),rnd(-30,30)-q.vx*.05,rnd(-30,30)-q.vy*.05,Math.random()<.5?q.col:q.glow,.4,q.vr*.9,0,true); }
@@ -1213,10 +1214,10 @@ const AI={
         if(inCircle(p,ix,iy,95)) damage(p,e.dmg,e,{kb:420}); else if(inCircle(p,ix,iy,170)&&p.alive){ const dd=Math.max(1,Math.hypot(p.x-ix,p.y-iy)); p.kbx+=(p.x-ix)/dd*380; p.kby+=(p.y-iy)/dd*380; }   // shockwave: knockback just outside the circle
         for(const o of G.enemies) if(o!==e&&o.alive&&!o.boss&&inCircle(o,ix,iy,170)){ const dd=Math.max(1,Math.hypot(o.x-ix,o.y-iy)); o.kbx+=(o.x-ix)/dd*300; o.kby+=(o.y-iy)/dd*300; }
         burst(ix,iy,['#9ca3af','#4b5563','#d9a34a','#c9a86a'],44,320,.7,6,0,true); for(let i=0;i<14;i++) part(ix+rnd(-40,40),iy+rnd(-20,20),rnd(-90,90),rnd(-260,-120),i%2?'#8a6a4a':'#5a3a20',rnd(.5,.9),rnd(4,7),600); G.ring={x:ix,y:iy,r:0,max:170,t:0,col:'#d9a34a',earth:true}; noise(.25,.35); tone(60,.3,'sine',.4,-30); arenaHook('slam',ix,iy);
-        if(a.phase2) proj({type:'ring',x:ix,y:iy,r:20,life:9,spd:240,max:220,delay:.4,owner:e,dmg:20,hit:[]}); } }   // phase 2: the slam gains a second shockwave
+        if(a.phase2) proj({type:'ring',x:ix,y:iy,r:20,life:9,spd:240,max:220,delay:.4,owner:e,dmg:WAVE_DMG,hit:[]}); } }   // phase 2: the slam gains a second shockwave
     else if(a.state==='charge'){ if(a.t<=0){ a.state='charging'; a.t=.9; a.tele=null; a.hit=[]; SFX.roar(); } }
     else if(a.state==='charging'){ const sp=e.spd*5; e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; if(!a.hit.includes(p)&&inCircle(p,e.x,e.y,e.r+6)){ a.hit.push(p); damage(p,30,e,{kb:520}); } for(const o of G.enemies) if(o!==e&&o.alive&&!a.hit.includes(o)&&inCircle(o,e.x,e.y,e.r+6)){ a.hit.push(o); damage(o,20,e,{kb:400,noBlock:true}); } part(e.x+rnd(-24,24),e.y+22,rnd(-40,40),-60,'#c9a86a',.5,6); if(a.t<=0||wallAhead(e,a.aim)){ a.state='chase'; e.abCd=3; a.recover=.7; e.vx=e.vy=0; shake(6); crashBoulder(e); } }
-    else if(a.state==='stomp'){ if(a.t<=0){ a.state='chase'; e.abCd=3; a.recover=.7; a.tele=null; shake(12); vibrate(120); for(let i=0;i<2;i++) proj({type:'ring',x:e.x,y:e.y+10,r:20,life:9,spd:200,max:300,delay:i*.9,owner:e,dmg:25,hit:[]}); burst(e.x,e.y+10,['#8a6a4a','#d9a34a'],30,220,.6,6,300); } }
+    else if(a.state==='stomp'){ if(a.t<=0){ a.state='chase'; e.abCd=3; a.recover=.7; a.tele=null; shake(12); vibrate(120); for(let i=0;i<2;i++) proj({type:'ring',x:e.x,y:e.y+10,r:20,life:9,spd:200,max:300,delay:i*.9,owner:e,dmg:WAVE_DMG,hit:[]}); burst(e.x,e.y+10,['#8a6a4a','#d9a34a'],30,220,.6,6,300); } }
   },
   /* ---- CROCODILE boss: cleaver, tail spin, lunge + bite combo; phase 2 at 50% ---- */
   croc(e,p,dt){
@@ -1748,7 +1749,7 @@ function arenaCollide(e){ const A=WORLD.arena, r=e.r; e.x=clamp(e.x,r,WORLD.w-r)
   e.lx=e.x; e.ly=e.y; }
 function arenaDunk(p){ p.dunk=1; p.vx=p.vy=0; p.kbx=p.kby=0; p.stagger=Math.max(p.stagger,1.05); damage(p,15,null,{noKb:true,color:'#60a5fa'}); burst(p.x,p.y,['#2c4a34','#3a5e42','#9ad0c0'],20,150,.7,4,200); SFX.hurt(); floatText(p.x,p.y-50,'SPLASH!','#93c5fd',true); }
 function arenaHook(kind,x,y){ const A=WORLD.arena; if(!A) return;
-  if(kind==='slam'&&A.id==='hippo'){ proj({type:'ring',mud:true,x,y,r:30,life:9,spd:230,max:640,delay:.1,owner:G.boss,dmg:10,hit:[]}); floatText(x,y-30,'MUD WAVE','#c9a86a'); }   // a wave through the shallow ring: only hits a player standing in the water
+  if(kind==='slam'&&A.id==='hippo'){ proj({type:'ring',mud:true,x,y,r:30,life:9,spd:230,max:640,delay:.1,owner:G.boss,dmg:WAVE_DMG,hit:[]}); floatText(x,y-30,'MUD WAVE','#c9a86a'); }   // a wave through the shallow ring: only hits a player standing in the water
   if(kind==='tail'&&A.id==='croc'){ const p=G.player; for(const b of A.bridges){ if(!b.breakable||b.broken) continue; let near=false; for(let ty=b.y0;ty<=b.y1&&!near;ty++) for(let tx=b.x0;tx<=b.x1;tx++) if(Math.hypot((tx+.5)*AT-x,(ty+.5)*AT-y)<190){ near=true; break; } if(!near) continue;
     b.broken=true; for(let ty=b.y0;ty<=b.y1;ty++) for(let tx=b.x0;tx<=b.x1;tx++){ A.set(tx,ty,'deep'); burst((tx+.5)*AT,(ty+.5)*AT,['#7a5230','#5e3d22','#9ad0c0'],8,140,.8,4,300); } WORLD.chunks.clear(); shake(6); noise(.3,.3); floatText(((b.x0+b.x1)/2+.5)*AT,(b.y0+.5)*AT-20,'THE BRIDGE BREAKS!','#fca5a5',true);
     if(p&&p.alive&&A.tile(p.x,p.y)==='deep'&&!(p.dunk>0)) arenaDunk(p); } } }
