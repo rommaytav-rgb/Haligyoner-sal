@@ -668,7 +668,7 @@ let SW=800, SH=360, DPR=1, ZOOM=1, ZOOM_BASE=1;
 function resize(){ SW=innerWidth; SH=innerHeight; DPR=Math.min(2,devicePixelRatio||1); cv.width=Math.round(SW*DPR); cv.height=Math.round(SH*DPR); ZOOM=clamp(SH/430,.6,2.2); ZOOM_BASE=ZOOM; }
 addEventListener('resize',resize); resize();
 
-const UI={ stickR:52, mini(){ const mw=Math.min(120,Math.round(SW*.15)), mh=Math.round(mw*.7); return {x:SW-mw-10,y:10,w:mw,h:mh,span:1000}; }, /* small local minimap (span = world units across); tap to open the full map */ pause(){ return {x:Math.min(360,SW*.42)+170,y:22}; }, btn(){ return { ability:{x:SW-266,y:SH-50,r:24,c:'#c084fc',l:'✦'}, jump:{x:SW-190,y:SH-44,r:28,c:'#4ade80',l:'⤒'}, chi:{x:SW-190,y:SH-136,r:24,c:'#4fb0e8',l:''}, chars:{x:46,y:Math.round(SH*.42),r:22,c:'#fbbf24',l:''} }; } };
+const UI={ stickR:52, mini(){ const mw=Math.min(120,Math.round(SW*.15)), mh=Math.round(mw*.7); return {x:SW-mw-10,y:10,w:mw,h:mh,span:1000}; }, /* small local minimap (span = world units across); tap to open the full map */ pause(){ return {x:Math.min(360,SW*.42)+170,y:22}; }, btn(){ return { ability:{x:SW-190,y:SH-136,r:26,c:'#c084fc',l:'✦'}, jump:{x:SW-190,y:SH-44,r:28,c:'#4ade80',l:'⤒'}, chi:{x:SW-92,y:Math.round((UI.mini().h+26+SH-128)/2),r:24,c:'#4fb0e8',l:''} /* chi sits between the minimap and the right stick */, chars:{x:46,y:Math.round(SH*.42),r:22,c:'#fbbf24',l:''} }; } };
 const IN={mx:0,my:0,aim:false,ax:1,ay:0,fire:null,ability:false,jump:false,dash:false,keys:{},mouse:{x:0,y:0,down:false,aiming:false}};
 const sticks={L:null,R:null}; const touchMap=new Map();
 const KEYMAP={KeyW:'u',ArrowUp:'u',KeyS:'d',ArrowDown:'d',KeyA:'l',ArrowLeft:'l',KeyD:'r',ArrowRight:'r',KeyE:'ability',Space:'jump',ShiftLeft:'jump',KeyQ:'chi',Escape:'pause',KeyM:'map'};
