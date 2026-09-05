@@ -294,19 +294,19 @@
   .nrow{display:flex;gap:8px;width:100%} .nrow .mbtn{flex:1;min-width:0;padding-left:8px;padding-right:8px;font-size:clamp(12px,2.4vh,16px);letter-spacing:2px}
   .mbtn.dis{filter:grayscale(.8);opacity:.45;pointer-events:none}
   /* ---- profile card (menu / map select / characters) ---- */
-  #profCard{position:fixed;left:8px;top:8px;z-index:12;display:none;align-items:center;gap:8px;padding:6px 10px 6px 6px;border-radius:12px;background:linear-gradient(180deg,rgba(40,26,80,.95),rgba(14,9,36,.97));border:2px solid #5b4a8a;box-shadow:0 0 0 2px #0b0820,0 6px 20px rgba(0,0,0,.5);cursor:pointer;max-width:min(46vw,250px);font-size:10px;color:#e9d5ff}
+  #profCard{position:fixed;left:6px;top:6px;z-index:12;display:none;align-items:center;gap:6px;padding:4px 9px 4px 4px;border-radius:12px;background:linear-gradient(180deg,rgba(40,26,80,.82),rgba(14,9,36,.9));border:1.5px solid rgba(139,122,192,.7);box-shadow:0 0 0 1px #0b0820,0 4px 14px rgba(0,0,0,.45);cursor:pointer;max-width:180px;font-size:9px;color:#e9d5ff;backdrop-filter:blur(4px)}
   #profCard.on{display:flex} #profCard:active{transform:translateY(2px)}
-  #profCard.mini{padding:3px 8px 3px 3px;gap:6px;max-width:min(40vw,190px);border-radius:10px} #profCard.mini .pport{width:30px;height:30px;border-width:2px} #profCard.mini .pport canvas{width:30px;height:36px;margin-bottom:-4px} #profCard.mini .pxp,#profCard.mini .pxpt,#profCard.mini .pres,#profCard.mini .pstat{display:none} #profCard.mini .pname{font-size:11px} #profCard.mini .plv{font-size:8px}
-  .pport{width:44px;height:44px;border-radius:50%;flex:none;overflow:hidden;background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.25),rgba(0,0,0,.4));border:3px solid var(--c,#a855f7);box-shadow:0 0 10px var(--c,#a855f7);display:flex;align-items:flex-end;justify-content:center} .pport canvas{width:44px;height:52px;margin-bottom:-6px;image-rendering:pixelated}
-  .pport.big{width:72px;height:72px} .pport.big canvas{width:72px;height:85px;margin-bottom:-8px}
-  .pbody{display:flex;flex-direction:column;gap:2px;min-width:0}
-  .pname{font-weight:900;font-size:13px;color:#fff;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .pname.big{font-size:20px}
-  .plv{font-weight:800;font-size:10px;color:#c4b5fd;letter-spacing:1px}
-  .pxp{height:5px;border-radius:3px;background:#0b0820;border:1px solid #312e81;overflow:hidden} .pxp i{display:block;height:100%;background:linear-gradient(90deg,#a855f7,#c4b5fd)}
-  .pxpt{font-size:8px;font-weight:800;color:#a5b4fc}
-  .pres{display:flex;gap:8px;font-weight:900;font-size:11px;color:#fde68a;align-items:center} .pres span{display:flex;align-items:center;gap:3px}
-  .coinic{width:13px;height:13px;image-rendering:pixelated} .chiorb{display:inline-block;width:11px;height:11px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#7fd8f8 40%,#0ea5e9 75%);box-shadow:0 0 6px #38bdf8}
-  .pstat{font-size:8px;font-weight:800;color:#9ca3af;letter-spacing:.5px;white-space:nowrap}
+  #profCard.mini .pxp,#profCard.mini .pres{display:none} #profCard.mini{padding:3px 8px 3px 3px}
+  .pport{width:34px;height:34px;border-radius:50%;flex:none;overflow:hidden;background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.25),rgba(0,0,0,.4));border:2px solid var(--c,#a855f7);box-shadow:0 0 8px var(--c,#a855f7);display:flex;align-items:flex-end;justify-content:center} .pport canvas{width:34px;height:40px;margin-bottom:-5px;image-rendering:pixelated}
+  .pport.big{width:72px;height:72px;border-width:3px} .pport.big canvas{width:72px;height:85px;margin-bottom:-8px}
+  .pbody{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .pname{font-weight:900;font-size:11px;color:#fff;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1} .pname.big{font-size:20px;letter-spacing:1px}
+  .plv{font-weight:800;font-size:8px;color:#c4b5fd;letter-spacing:.8px;line-height:1.1;white-space:nowrap} #ovProfile .plv{font-size:11px}
+  .pxp{height:4px;margin:1px 0;border-radius:3px;background:#0b0820;border:1px solid #312e81;overflow:hidden} .pxp i{display:block;height:100%;background:linear-gradient(90deg,#a855f7,#c4b5fd)}
+  .pxpt{display:none}
+  .pres{display:flex;gap:6px;font-weight:900;font-size:9px;color:#fde68a;align-items:center} .pres span{display:flex;align-items:center;gap:2px} #ovProfile .pres{font-size:12px;gap:10px}
+  .coinic{width:11px;height:11px;image-rendering:pixelated} .chiorb{display:inline-block;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#7fd8f8 40%,#0ea5e9 75%);box-shadow:0 0 6px #38bdf8}
+  .pstat{display:none}
   /* ---- full profile panel ---- */
   .phead{display:flex;align-items:center;gap:14px;padding:6px 0 8px;border-bottom:1px solid #312e81;margin-bottom:6px}
   .psec{font-family:Georgia,serif;font-weight:700;letter-spacing:3px;font-size:13px;color:#f3e8d8;margin:6px 0 4px}
@@ -1219,7 +1219,7 @@ function bossesKilled(){ let n=0; for(const k in (SAVE.bosses||{})) n+=SAVE.boss
 function fmtTime(s){ s=Math.floor(s||0); const h=Math.floor(s/3600), m=Math.floor(s%3600/60); return h>0?h+'h '+(m<10?'0':'')+m+'m':m+'m '+(s%60<10?'0':'')+(s%60)+'s'; }
 function profileCardRefresh(){ const el=$('profCard'); if(!el) return; const n=SAVE.selected, ch=CH[n], plv=playerLevel(), lo=plv>1?XP_NEED(plv-1):0, hi=XP_NEED(plv), cur=(SAVE.xpTotal||0)-lo, need=hi-lo;
   el.style.setProperty('--c',ch.color);
-  el.innerHTML=`<div class="pport"></div><div class="pbody"><div class="pname">${escapeHtml(playerName()||'NINJA')}</div><div class="plv">PLAYER LEVEL ${plv}</div><div class="pxp"><i style="width:${Math.round(clamp(cur/need,0,1)*100)}%"></i></div><div class="pxpt">${cur} / ${need} XP</div>
+  el.innerHTML=`<div class="pport"></div><div class="pbody"><div class="pname">${escapeHtml(playerName()||'NINJA')}</div><div class="plv">PLAYER LV ${plv}</div><div class="pxp"><i style="width:${Math.round(clamp(cur/need,0,1)*100)}%"></i></div><div class="pxpt">${cur} / ${need} XP</div>
   <div class="pres"><span><img class="coinic" src="${COIN_URI}" alt="">${SAVE.gold}</span><span>🔑 ${SAVE.keys||0}</span><span><i class="chiorb"></i>${SAVE.chi||0}</span></div>
   <div class="pstat">NINJAS ${ORDER.filter(x=>SAVE.unlocked[x]).length}/${ORDER.length} · SECRETS ${secretsFound()}/${SECRETS_TOTAL} · BOSSES ${bossesKilled()}</div></div>`;
   el.querySelector('.pport').appendChild(charCanvas(ch,false,2.3,66,78,.97)); }
