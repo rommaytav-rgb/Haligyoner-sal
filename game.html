@@ -82,6 +82,15 @@
   @keyframes blink{50%{opacity:.25}}
   .ov.in{animation:ovIn .28s cubic-bezier(.2,.8,.3,1) both}@keyframes ovIn{0%{opacity:0;transform:scale(.97) translateY(8px)}100%{opacity:1;transform:none}}
   #splashNinja{image-rendering:pixelated;filter:drop-shadow(0 6px 0 rgba(0,0,0,.45))}
+  .ov.gmenu{background:radial-gradient(ellipse at 50% 60%,rgba(27,21,64,.9) 0%,rgba(10,9,32,.94) 55%,rgba(5,5,16,.97) 100%);overflow:hidden}
+  .ov.gmenu>*:not(.spark):not(.stars):not(.frame):not(.runes):not(.star4){position:relative;z-index:1}
+  .ov.gmenu .stitle{font-size:clamp(26px,7.5vh,50px);margin:2px 0 6px;letter-spacing:6px}
+  .ov.gmenu.dead{background:radial-gradient(ellipse at 50% 60%,rgba(64,16,24,.9) 0%,rgba(28,8,20,.94) 55%,rgba(8,4,12,.97) 100%)}
+  .ov.gmenu .fell{background:linear-gradient(90deg,#fde68a,#f97316 40%,#ef4444 70%,#be123c);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 3px 0 rgba(0,0,0,.6)) drop-shadow(0 0 22px rgba(239,68,68,.55))}
+  .ov.gmenu .skull{font-size:clamp(28px,7vh,44px);color:#fca5a5;text-shadow:0 0 18px #ef4444,0 3px 0 #450a0a;animation:bob 2.4s ease-in-out infinite}
+  .ov.gmenu .dstat{color:#fecaca;font-weight:800;margin:0 0 6px;display:flex;align-items:center;gap:6px}
+  .ov.gmenu .mbtn.sm{min-width:min(60vw,280px);font-size:clamp(13px,2.6vh,18px);padding:clamp(7px,1.5vh,11px) 26px}
+  .ov.gmenu .mrow .mbtn.sm{min-width:min(29vw,180px)}
   .ov.menu{background:radial-gradient(ellipse at 50% 60%,#1b1540 0%,#0a0920 55%,#050510 100%);overflow:hidden}
   .neb{position:absolute;border-radius:50%;filter:blur(7px);opacity:.85;pointer-events:none;animation:spin 26s linear infinite;-webkit-mask:radial-gradient(circle,transparent 26%,#000 40%,#000 58%,transparent 72%);mask:radial-gradient(circle,transparent 26%,#000 40%,#000 58%,transparent 72%)}
   .neb.n1{width:46vh;height:46vh;left:6vw;top:6vh;background:conic-gradient(from 0deg,transparent 0 20%,#38bdf8 32%,#e0f2fe 38%,transparent 46%,#1d4ed8 62%,transparent 72%,#7dd3fc 84%,transparent 92%)}
@@ -345,12 +354,24 @@
   <div class="ver" id="ver">version 1.0.0</div>
 </div>
 
-<div id="ovPause" class="ov"><h2>PAUSED</h2><div class="row" style="flex-direction:column;align-items:center"><div class="btn primary" id="bResume">RESUME</div><div class="btn" id="bSwitch">CHARACTERS</div><div class="btn" id="bPauseSettings">SETTINGS</div><div class="btn" id="bQuit">QUIT TO MENU</div></div></div>
+<div id="ovPause" class="ov gmenu">
+  <div class="stars"></div><div class="frame"></div>
+  <div class="runes top">ᚠᚢᚦᚨᚱᚲᚷᚹ</div><div class="runes top r">ᚺᚾᛁᛃᛇᛈᛉᛊ</div><div class="runes bottom">ᛏᛒᛖᛗᛚᛜᛞᛟ</div><div class="runes bottom r">ᚠᚱᛏᚨᛊᛗᚦᛁ</div>
+  <div class="star4" style="left:14px;top:12px">✦</div><div class="star4" style="right:14px;top:12px;color:#f87171">✦</div><div class="star4" style="left:14px;bottom:12px;color:#60a5fa">✦</div><div class="star4" style="right:14px;bottom:12px;color:#4ade80">✦</div>
+  <div class="orbs"><i class="orb" style="--c:#a855f7"></i><i class="orb" style="--c:#38bdf8"></i><i class="orb" style="--c:#7dd3fc"></i><i class="orb" style="--c:#4ade80"></i><i class="orb" style="--c:#f97316"></i></div>
+  <h1 class="title stitle">PAUSED</h1>
+  <div class="mbtns"><div class="mbtn play sm" id="bResume">RESUME</div><div class="mrow"><div class="mbtn earth sm" id="bSwitch">CHARACTERS</div><div class="mbtn ice sm" id="bPauseSettings">SETTINGS</div></div><div class="mbtn fire sm" id="bQuit">QUIT TO MENU</div></div>
+</div>
 
-<div id="ovDead" class="ov">
-  <p class="big red">YOU FELL</p>
-  <div class="stat">You lost <b id="rLost">0</b> gold</div>
-  <div class="row" style="margin-top:12px"><div class="btn primary" id="bRespawn">RESPAWN IN THE VILLAGE</div><div class="btn" id="bDeadMenu">MENU</div></div>
+<div id="ovDead" class="ov gmenu dead">
+  <div class="stars"></div><div class="frame"></div>
+  <div class="runes top" style="color:#f87171">ᚠᚢᚦᚨᚱᚲᚷᚹ</div><div class="runes top r">ᚺᚾᛁᛃᛇᛈᛉᛊ</div><div class="runes bottom" style="color:#fb923c">ᛏᛒᛖᛗᛚᛜᛞᛟ</div><div class="runes bottom r">ᚠᚱᛏᚨᛊᛗᚦᛁ</div>
+  <div class="star4" style="left:14px;top:12px;color:#f87171">✦</div><div class="star4" style="right:14px;top:12px;color:#f87171">✦</div><div class="star4" style="left:14px;bottom:12px;color:#fb923c">✦</div><div class="star4" style="right:14px;bottom:12px;color:#fb923c">✦</div>
+  <div class="skull">☠</div>
+  <h1 class="title stitle fell">YOU FELL</h1>
+  <div class="stat dstat">You lost <span class="goldpill" style="display:inline-flex;padding:2px 10px;font-size:1em"><i></i><b id="rLost">0</b></span> gold</div>
+  <div class="mbtns"><div class="mbtn play sm" id="bRespawn">RESPAWN IN THE VILLAGE</div><div class="mbtn fire sm" id="bDeadMenu">MENU</div></div>
+</div>
 </div>
 <script>
 'use strict';
@@ -601,18 +622,18 @@ ENEMIES[0].head=['.....MMMMMM.....','...MMMMMMMMMM...','..MMMmMMMMmMMM..','.MMMM
 ENEMIES[0].headOff=[-3,-4]; ENEMIES[0].eyeOff=[[5,9],[8,9]];
 
 /* ---------- sprite cache: drawChar renders each animation frame once into an offscreen canvas ---------- */
-const SPR_CACHE=new Map();
+const SPR_CACHE=new Map(), SPR_PAD=16;   /* extra rows above the model: the jump cycle rises above the layout box */
 /* enemies use the enemy kit's engine, ninjas the ninja engine */
 const LAYOUT=ch=>ch.enemy?ENEMY_KIT.layoutOf(ch):layoutOf(ch), ENGINE=ch=>ch.enemy?ENEMY_KIT.drawChar:drawChar;
 function sprite(ch,anim,t,face,s){
   const f=Math.floor(t*8)%24, key=ch.name+anim+f+face+s; let c=SPR_CACHE.get(key);
-  if(!c){ const L=LAYOUT(ch); c=document.createElement('canvas'); c.width=(L.cw+OX+2)*s; c.height=(L.ch+OY+2)*s; ENGINE(ch)(c.getContext('2d'),s,ch,anim,f/8+0.001,face); SPR_CACHE.set(key,c); }
+  if(!c){ const L=LAYOUT(ch); c=document.createElement('canvas'); c.width=(L.cw+OX+2)*s; c.height=(L.ch+OY+2+SPR_PAD)*s; const cx2=c.getContext('2d'); cx2.translate(0,SPR_PAD*s); ENGINE(ch)(cx2,s,ch,anim,f/8+0.001,face); SPR_CACHE.set(key,c); }
   return c;
 }
 const TINT_C=document.createElement('canvas'), TINT_X=TINT_C.getContext('2d');
 /* draws a model with its shadow centred on (x,y); tint = rgba colour blended onto the sprite */
 function drawSprite(c,ch,anim,t,face,s,x,y,tint,alpha){
-  const img=sprite(ch,anim,t,face,s), L=LAYOUT(ch), dx=Math.round(x-(OX+L.shadow[0]+L.shadow[2]/2)*s), dy=Math.round(y-(OY+L.shadow[1]+1)*s);
+  const img=sprite(ch,anim,t,face,s), L=LAYOUT(ch), dx=Math.round(x-(OX+L.shadow[0]+L.shadow[2]/2)*s), dy=Math.round(y-(OY+L.shadow[1]+1+SPR_PAD)*s);
   const sm=c.imageSmoothingEnabled; c.imageSmoothingEnabled=false; if(alpha!==undefined&&alpha<1) c.globalAlpha=alpha;
   if(tint){ if(TINT_C.width!==img.width||TINT_C.height!==img.height){ TINT_C.width=img.width; TINT_C.height=img.height; } TINT_X.globalCompositeOperation='source-over'; TINT_X.clearRect(0,0,img.width,img.height); TINT_X.drawImage(img,0,0); TINT_X.globalCompositeOperation='source-atop'; TINT_X.fillStyle=tint; TINT_X.fillRect(0,0,img.width,img.height); c.drawImage(TINT_C,dx,dy); }
   else c.drawImage(img,dx,dy);
@@ -2532,7 +2553,7 @@ function frame(now){
   render();
 }
 /* floating element sparks on the menu screens */
-(function sparks(){ const cols=['#a855f7','#38bdf8','#4ade80','#f97316','#fde047','#e0f2fe']; for(const id of ['ovMenu','ovChars','ovMaps','splash']){ const ov=$(id); for(let i=0;i<16;i++){ const s=document.createElement('i'); s.className='spark'; s.style.left=(Math.random()*100)+'%'; s.style.top=(30+Math.random()*70)+'%'; s.style.color=cols[i%cols.length]; s.style.animationDuration=(4+Math.random()*5)+'s'; s.style.animationDelay=(-Math.random()*8)+'s'; s.style.width=s.style.height=(3+Math.random()*5)+'px'; ov.appendChild(s); } } })();
+(function sparks(){ const cols=['#a855f7','#38bdf8','#4ade80','#f97316','#fde047','#e0f2fe']; for(const id of ['ovMenu','ovChars','ovMaps','splash','ovPause','ovDead']){ const ov=$(id); for(let i=0;i<16;i++){ const s=document.createElement('i'); s.className='spark'; s.style.left=(Math.random()*100)+'%'; s.style.top=(30+Math.random()*70)+'%'; s.style.color=cols[i%cols.length]; s.style.animationDuration=(4+Math.random()*5)+'s'; s.style.animationDelay=(-Math.random()*8)+'s'; s.style.width=s.style.height=(3+Math.random()*5)+'px'; ov.appendChild(s); } } })();
 /* LOADING SCREEN — the bar fills while the sprite caches warm up, then one tap enters the game (and unlocks audio for the menu music) */
 const SPLASH={on:true,t:0,started:false,ready:false,tip:0};
 const SPLASH_EL=['SHADE','BOREAS','BECK','CLAY','APOLLO'], SP_T=3.9;
