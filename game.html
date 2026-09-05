@@ -1306,7 +1306,7 @@ const CAM={x:0,y:0,sx:0,sy:0};
 function shake(v){ if(SAVE.settings.shake) G.shake=Math.max(G.shake,v); }
 function hitstop(ms){ G.hitstop=Math.max(G.hitstop,ms/1000); }
 function addStatus(e,k,dur,data){ if(e.kind==='player'&&spinBusy(e)&&k!=='shield'&&k!=='haste') return;
-  if(e.kind==='enemy'&&e.boss&&(k==='freeze'||k==='stun')){ if((e.ccImm||0)>G.time) return; dur=k==='freeze'?1:.5; e.ccImm=G.time+dur+8; }   // bosses: 1 s freeze / 0.5 s stun, then 8 s of immunity (no chain-locking)
+  if(e.kind==='enemy'&&e.boss&&(k==='freeze'||k==='stun')){ if((e.ccImm||0)>G.time) return; dur=k==='freeze'?1.5:.5; e.ccImm=G.time+dur+8; }   // bosses: 1.5 s freeze / 0.5 s stun, then 8 s of immunity (no chain-locking)
   const s=e.status[k]; if(s){ s.t=Math.max(s.t,dur); if(data) Object.assign(s,data); } else e.status[k]=Object.assign({t:dur,tick:0},data||{}); }
 function statMult(e,k){ let m=1; for(const s in e.status){ const d=STATUS[s]; if(d.mult&&d.mult[k]!==undefined) m*=(e.boss&&(s==='slow'||s==='soak'))?1-(1-d.mult[k])/2:d.mult[k]; } return m; }   // bosses take slows at half strength
 function tickStatus(e,dt){ for(const k in e.status){ const s=e.status[k]; s.t-=dt;
