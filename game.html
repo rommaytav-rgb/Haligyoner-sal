@@ -311,11 +311,11 @@
   .phead{display:flex;align-items:center;gap:14px;padding:6px 0 8px;border-bottom:1px solid #312e81;margin-bottom:6px}
   .psec{font-family:Georgia,serif;font-weight:700;letter-spacing:3px;font-size:13px;color:#f3e8d8;margin:6px 0 4px}
   .plist{display:flex;flex-direction:column;gap:4px}
-  .prow2{display:grid;grid-template-columns:70px 58px 1fr 110px 92px;align-items:center;gap:8px;background:#111827;border-radius:8px;padding:4px 8px;border-left:4px solid var(--c);font-size:11px;font-weight:800;color:#e5e7eb} .prow2.lk{opacity:.45}
+  .prow2{display:grid;grid-template-columns:70px 80px 1fr 150px;align-items:center;gap:8px;background:#111827;border-radius:8px;padding:4px 8px;border-left:4px solid var(--c);font-size:11px;font-weight:800;color:#e5e7eb} .prow2.lk{opacity:.45}
   .prow2 .pn{font-weight:900;letter-spacing:1px;color:var(--c)} .prow2 .pl{color:#fde68a} .prow2 .pxs,.prow2 .pu{font-size:10px;color:#a5b4fc;text-align:right;white-space:nowrap}
   .pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:6px}
   .pbox{background:#111827;border-radius:10px;padding:6px 10px;font-size:12px;color:#d1d5db;font-weight:700} .pbox b{color:#fde68a}
-  @media (max-width:640px){ .prow2{grid-template-columns:60px 50px 1fr 90px;font-size:10px} .prow2 .pu{grid-column:2/5;text-align:left} }
+  @media (max-width:640px){ .prow2{grid-template-columns:60px 70px 1fr 120px;font-size:10px} }
   /* ---- key merchant prompt (in game) ---- */
   #merch{position:fixed;left:50%;bottom:clamp(70px,16vh,130px);transform:translateX(-50%);z-index:6;display:none;flex-direction:column;align-items:center;gap:6px;width:min(64vw,300px);box-sizing:border-box;padding:8px 12px;border-radius:12px;background:rgba(14,9,36,.94);border:2px solid #f59e0b;box-shadow:0 0 18px rgba(245,158,11,.4);color:#fde68a;font-size:12px;font-weight:800;letter-spacing:.5px;text-align:center}
   #merch.on{display:flex} #merch .btn.sm{padding:6px 12px;font-size:12px;background:linear-gradient(180deg,#f59e0b,#b45309);border-color:#fde68a;color:#fff} #merch .btn.sm.dis{filter:grayscale(.8);opacity:.5;pointer-events:none} #merch .xbtn{width:26px;height:26px;font-size:12px}
@@ -1025,7 +1025,7 @@ const ORDER=['SHADE','BOREAS','APOLLO','BECK','CLAY'];
 const COIN_IMG=new Image(); COIN_IMG.src=COIN_URI;
 const LV_MULT=lv=>1+0.08*(lv-1);           // +8% HP per level
 const LV_DMG=lv=>Math.pow(1.12,lv-1);       // damage: x1.12 per level, compounding (LV 5 x1.57, LV 7 x1.97, LV 9 x2.48) — every upgrade is felt
-/* levels are earned with XP (see progress.js), never bought */
+const LEVEL_COST=n=>30*n*n;                 // gold to buy character level n: 120, 270, 480 ... 3,000 for LV 10, 27,000 for LV 30 (every level costs more)
 const MAX_LV=30;
 const XP_KILL=12, XP_BOSS=400;
 const XP_NEED=lv=>300*lv*(lv+1);         // account XP needed to reach player level lv+1 (600 x lv per level: LV 2 at 600, LV 5 at 6,000, LV 10 at 33,000; never caps)
@@ -1083,7 +1083,7 @@ function roundRect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x
    SAVE
    ===================================================================== */
 const SAVE_KEY='elemental_ninjas_world_v3';
-const DEFAULT_SAVE=()=>({gold:0,levels:{SHADE:1,BOREAS:1,APOLLO:1,BECK:1,CLAY:1},unlocked:{SHADE:true},selected:'SHADE',kills:0,xp:0,xpTotal:0,chi:0,keys:0,pity:0,playTime:0,chiChests:{},bossFightCleared:{},bossFightBestTime:{},bossFightAttempts:{},bossFightFirstClearClaimed:{},bossFightStars:{},chests:{},golden:{},secret:{},bosses:{hippo:0,croc:0,lord:0,titan:0,yeti:0},killsBy:{},ready:{},secrets:{},secretsBonus:{},maps:{bone_shore:true},hints:{},settings:{sound:true,vibrate:true,music:true,dmgNums:true,shake:true},player:{name:''},cxp:null,upg:{},merchant:{day:'',n:0}});
+const DEFAULT_SAVE=()=>({gold:0,levels:{SHADE:1,BOREAS:1,APOLLO:1,BECK:1,CLAY:1},unlocked:{SHADE:true},selected:'SHADE',kills:0,xp:0,xpTotal:0,chi:0,keys:0,pity:0,playTime:0,chiChests:{},bossFightCleared:{},bossFightBestTime:{},bossFightAttempts:{},bossFightFirstClearClaimed:{},bossFightStars:{},chests:{},golden:{},secret:{},bosses:{hippo:0,croc:0,lord:0,titan:0,yeti:0},killsBy:{},ready:{},secrets:{},secretsBonus:{},maps:{bone_shore:true},hints:{},settings:{sound:true,vibrate:true,music:true,dmgNums:true,shake:true},player:{name:''},merchant:{day:'',n:0}});
 let SAVE=DEFAULT_SAVE();
 /* a returning player: skips the tutorial hints and starts with the map already revealed */
 function isVeteran(){ return (SAVE.kills||0)>=15||(SAVE.playTime||0)>240||Object.values(SAVE.bosses||{}).some(v=>v>0); }
@@ -1169,41 +1169,24 @@ function pollInput(){
   IN.aim=false; if(sticks.R&&sticks.R.moved){ IN.aim=true; const a=Math.atan2(sticks.R.dy,sticks.R.dx); IN.ax=Math.cos(a); IN.ay=Math.sin(a); }
   else if(IN.mouse.aiming){ IN.aim=true; const a=mouseAngle(); IN.ax=Math.cos(a); IN.ay=Math.sin(a); }
 }
-/* ===== PROGRESSION: XP levels, coin upgrades, Chi key merchant, player profile =====
-   Levels are no longer bought. Every kill grants XP; a character levels up the moment its bar fills (cap 30, +8% HP/DMG per level).
-   Shared XP: 30% of every gain goes to every other unlocked ninja. Catch-up: a ninja below the highest ninja level earns double.
-   Coins buy HP / DMG upgrade tracks (10 steps of +5%, 120 x n coins) and Chi keys at the village merchant (600, two a day). */
-const CXP_NEXT=n=>Math.round(80*n*1.35);                                   // XP to go from character level n to n+1 (108 x n)
-const CXP_TOTAL=lv=>{ let t=0; for(let n=1;n<lv;n++) t+=CXP_NEXT(n); return t; };   // total XP a character needs to be level lv
-function lvFromXp(x){ let lv=1; while(lv<MAX_LV&&x>=CXP_TOTAL(lv+1)) lv++; return lv; }
-const UPG_MAX=10, UPG_STEP=.05, UPG_COST=n=>120*n;                         // upgrade n (1..10) costs 120 x n coins, each step +5%
-const ACC_LEVEL_COINS=200;                                                 // a new account level: banner + 200 coins, nothing else
-const XP_SHARE=.3;
-function upgOf(n){ SAVE.upg=SAVE.upg||{}; if(!SAVE.upg[n]) SAVE.upg[n]={hp:0,dmg:0}; return SAVE.upg[n]; }
-function upgHpMult(n){ return 1+UPG_STEP*(upgOf(n).hp||0); }
-function upgDmgMult(n){ return 1+UPG_STEP*(upgOf(n).dmg||0); }
-function cxpOf(n){ SAVE.cxp=SAVE.cxp||{}; if(SAVE.cxp[n]===undefined) SAVE.cxp[n]=CXP_TOTAL(SAVE.levels[n]||1); return SAVE.cxp[n]; }
-function highestLevel(){ let h=1; for(const n of ORDER) if(SAVE.unlocked[n]) h=Math.max(h,SAVE.levels[n]||1); return h; }
-function isCatchUp(n){ return (SAVE.levels[n]||1)<highestLevel(); }
-/* the one entry point for XP. amount = base XP of the source; x,y = where the number floats (optional) */
-function gainXP(amount,x,y,label){
-  if(!(amount>0)) return; const sel=SAVE.selected, hi=highestLevel(), got={};
-  for(const n of ORDER){ if(!SAVE.unlocked[n]) continue; let a=n===sel?amount:Math.round(amount*XP_SHARE); if((SAVE.levels[n]||1)<hi) a*=2; if(a<=0) continue;
-    const before=SAVE.levels[n]||1; SAVE.cxp[n]=cxpOf(n)+a; const after=lvFromXp(SAVE.cxp[n]); SAVE.levels[n]=after; got[n]=a; if(after>before&&n===sel) charLevelUp(before,after); }
-  SAVE.xpTotal=(SAVE.xpTotal||0)+amount;                                   // account XP: the base amount of everything ever earned
-  if(x!==undefined&&got[sel]) floatText(x,y,'+'+got[sel]+' XP'+(label||''),'#c4b5fd',!!label,!!label);
-  checkAccountLevel();
-}
-/* the selected ninja's stats after a level or upgrade change (keeps current HP unless heal) */
-function refreshPlayerStats(p,heal){ if(!p) return; const ch=p.ch, lv=SAVE.levels[p.name]||1, plv=playerLevel(); p.lv=lv; const frac=p.maxHp>0?p.hp/p.maxHp:1; p.maxHp=ch.hp*LV_MULT(lv)*PLV_MULT(plv)*upgHpMult(p.name); p.dmg=ch.dmg*LV_DMG(lv)*PLV_MULT(plv)*upgDmgMult(p.name); p.hp=heal?p.maxHp:Math.min(p.maxHp,p.maxHp*frac); }
-function charLevelUp(from,to){ const p=G.player; if(!p||!p.alive||p.name!==SAVE.selected) return; const oh=Math.round(p.maxHp), od=Math.round(p.dmg); refreshPlayerStats(p,!WORLD.arena); G.hudGold=3;
-  if(WORLD.arena){ floatText(p.x,p.y-64,'LEVEL '+to,'#fde047',true); return; }   /* Boss Fight: stats only, no heal, no freeze-frame */
-  const short=!!(G.boss&&G.boss.alive); G.levelFx={t:0,dur:short?1:2,short,from,to,hp:Math.round(p.maxHp)-oh,dmg:Math.round(p.dmg)-od,col:p.ch.color,glow:p.ch.glow,name:p.name}; SFX.levelup();
-  for(const e of liveEnemies()) if(inCircle(e,p.x,p.y,220)&&!e.boss){ const d=Math.max(1,dist(e,p)); e.kbx+=(e.x-p.x)/d*260; e.kby+=(e.y-p.y)/d*260; }
-  for(const q of G.projs) if(q.alive&&q.owner&&q.owner.kind!=='player'&&Math.hypot(q.x-p.x,q.y-p.y)<160) q.alive=false; SFX.boom(); shake(6); vibrate(80); save(); }
-function checkAccountLevel(){ const lv=playerLevel(); if(G.plv===undefined) G.plv=lv; if(lv<=G.plv) return; const gained=lv-G.plv; G.plv=lv; SAVE.gold+=ACC_LEVEL_COINS*gained; if(G.player){ refreshPlayerStats(G.player,false); if(!WORLD.arena) G.banner={text:'PLAYER LEVEL '+lv,sub:'+'+(ACC_LEVEL_COINS*gained)+' GOLD',t:2.8}; SFX.key(); } save(); }
+/* ===== PROGRESSION: gold buys character levels, XP feeds the player (account) level, Chi key merchant, player profile =====
+   Character levels (cap 30, +8% HP / x1.12 DMG per level) are bought with gold; every level costs more (LEVEL_COST in p2).
+   Every kill, chest and boss grants XP that only raises the PLAYER LEVEL: a banner, 200 gold and +1% to every ninja per level. */
+const ACC_LEVEL_COINS=200;
+/* the one entry point for XP. amount = XP of the source; x,y = where the number floats (optional) */
+function gainXP(amount,x,y,label){ if(!(amount>0)) return; SAVE.xpTotal=(SAVE.xpTotal||0)+amount; if(x!==undefined) floatText(x,y,'+'+amount+' XP'+(label||''),'#c4b5fd',!!label,!!label); checkAccountLevel(); }
+/* the selected ninja's stats after a level change (keeps the HP fraction unless heal) */
+function refreshPlayerStats(p,heal){ if(!p) return; const ch=p.ch, lv=SAVE.levels[p.name]||1, plv=playerLevel(); p.lv=lv; const frac=p.maxHp>0?p.hp/p.maxHp:1; p.maxHp=ch.hp*LV_MULT(lv)*PLV_MULT(plv); p.dmg=ch.dmg*LV_DMG(lv)*PLV_MULT(plv); p.hp=heal?p.maxHp:Math.min(p.maxHp,p.maxHp*frac); }
+function checkAccountLevel(){ const lv=playerLevel(); if(G.plv===undefined) G.plv=lv; if(lv<=G.plv) return; const gained=lv-G.plv, from=G.plv; G.plv=lv; SAVE.gold+=ACC_LEVEL_COINS*gained; const p=G.player;
+  if(p&&p.alive){ const oh=Math.round(p.maxHp), od=Math.round(p.dmg); refreshPlayerStats(p,!WORLD.arena); G.hudGold=3;
+    if(WORLD.arena){ floatText(p.x,p.y-64,'PLAYER LEVEL '+lv,'#fde047',true); }   /* Boss Fight: stats only, no heal, no freeze-frame */
+    else { const short=!!(G.boss&&G.boss.alive); G.levelFx={t:0,dur:short?1:2,short,from,to:lv,hp:Math.round(p.maxHp)-oh,dmg:Math.round(p.dmg)-od,gold:ACC_LEVEL_COINS*gained,col:p.ch.color,glow:p.ch.glow,name:p.name}; SFX.levelup();
+      for(const e of liveEnemies()) if(inCircle(e,p.x,p.y,220)&&!e.boss){ const d=Math.max(1,dist(e,p)); e.kbx+=(e.x-p.x)/d*260; e.kby+=(e.y-p.y)/d*260; }
+      for(const q of G.projs) if(q.alive&&q.owner&&q.owner.kind!=='player'&&Math.hypot(q.x-p.x,q.y-p.y)<160) q.alive=false; SFX.boom(); shake(6); vibrate(80); } }
+  save(); }
 function checkLevelUp(){ checkAccountLevel(); }   /* old hook name, kept for the call sites */
-function buyUpgrade(n,k){ const u=upgOf(n), cur=u[k]||0; if(cur>=UPG_MAX) return false; const cost=UPG_COST(cur+1); if(SAVE.gold<cost) return false; SAVE.gold-=cost; u[k]=cur+1; save(); if(G.player&&G.player.name===n) refreshPlayerStats(G.player,false); return true; }
+/* buying a character level with gold (characters screen) */
+function buyLevel(n){ const lv=SAVE.levels[n]||1; if(lv>=MAX_LV) return false; const cost=LEVEL_COST(lv+1); if(SAVE.gold<cost) return false; SAVE.gold-=cost; SAVE.levels[n]=lv+1; save(); if(G.player&&G.player.name===n) refreshPlayerStats(G.player,false); return true; }
 /* ---- Chi key merchant (village) ---- */
 const MERCH_PRICE=600, MERCH_DAILY=2;
 function merchLeft(){ const day=new Date().toDateString(); SAVE.merchant=SAVE.merchant||{day:'',n:0}; if(SAVE.merchant.day!==day){ SAVE.merchant.day=day; SAVE.merchant.n=0; } return MERCH_DAILY-SAVE.merchant.n; }
@@ -1233,16 +1216,16 @@ function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':
 function buildProfile(){ const el=$('profBody'); const plv=playerLevel(), lo=plv>1?XP_NEED(plv-1):0, hi=XP_NEED(plv);
   let h=`<div class="phead"><div class="pport big"></div><div><div class="pname big">${escapeHtml(playerName()||'NINJA')}</div><div class="plv">PLAYER LEVEL ${plv} · ${(SAVE.xpTotal||0)-lo} / ${hi-lo} XP · ${SAVE.xpTotal||0} XP total</div><div class="pres"><span><img class="coinic" src="${COIN_URI}" alt="">${SAVE.gold}</span><span>🔑 ${SAVE.keys||0}</span><span><i class="chiorb"></i>${SAVE.chi||0}</span></div></div></div>`;
   h+='<div class="psec">NINJAS</div><div class="plist">';
-  for(const n of ORDER){ const ch=CH[n], un=!!SAVE.unlocked[n], lv=SAVE.levels[n]||1, x=cxpOf(n), base=CXP_TOTAL(lv), need=lv>=MAX_LV?1:CXP_TOTAL(lv+1)-base, u=upgOf(n);
-    h+=`<div class="prow2 ${un?'':'lk'}" style="--c:${ch.color}"><div class="pn">${n}</div><div class="pl">${un?'LV '+lv:'LOCKED'}</div><div class="pxp"><i style="width:${un?(lv>=MAX_LV?100:Math.round((x-base)/need*100)):0}%"></i></div><div class="pxs">${un?(lv>=MAX_LV?'MAX':(x-base)+' / '+need+' XP'):''}${un&&isCatchUp(n)?' · ×2':''}</div><div class="pu">❤ ${u.hp||0}/${UPG_MAX} · 💥 ${u.dmg||0}/${UPG_MAX}</div></div>`; }
+  for(const n of ORDER){ const ch=CH[n], un=!!SAVE.unlocked[n], lv=SAVE.levels[n]||1;
+    h+=`<div class="prow2 ${un?'':'lk'}" style="--c:${ch.color}"><div class="pn">${n}</div><div class="pl">${un?'LV '+lv+' / '+MAX_LV:'LOCKED'}</div><div class="pxp"><i style="width:${un?Math.round(lv/MAX_LV*100):0}%"></i></div><div class="pxs">${un?(lv>=MAX_LV?'MAX':'next level '+LEVEL_COST(lv+1)+' gold'):''}</div></div>`; }
   h+='</div>';
   const B=SAVE.bosses||{}, names={hippo:'Hippo',croc:'Crocodile',lord:'Pirate Lord',titan:'Magma Titan',yeti:'The Yeti'};
   h+=`<div class="pgrid"><div class="pbox"><div class="psec">RECORD</div><div>Total kills: <b>${SAVE.kills||0}</b></div><div>Playtime: <b>${fmtTime(SAVE.playTime)}</b></div><div>Secrets found: <b>${secretsFound()} / ${SECRETS_TOTAL}</b></div><div>Account XP: <b>${SAVE.xpTotal||0}</b></div></div>`;
   h+=`<div class="pbox"><div class="psec">BOSSES DEFEATED</div>${Object.keys(names).map(k=>`<div>${names[k]}: <b>${B[k]||0}</b></div>`).join('')}</div>`;
   const bt=SAVE.bossFightBestTime||{}; h+=`<div class="pbox"><div class="psec">BOSS FIGHT BEST TIMES</div>${BF_STAGES.map(s=>`<div>${s.name}: <b>${bt[s.id]?bt[s.id].toFixed(1)+'s':'—'}</b>${(SAVE.bossFightStars&&SAVE.bossFightStars[s.id])?' '+'★'.repeat(SAVE.bossFightStars[s.id]):''}</div>`).join('')}</div></div>`;
   el.innerHTML=h; el.querySelector('.pport').appendChild(charCanvas(CH[SAVE.selected],false,3,88,104,.97)); }
-/* ---- save migration: purchased levels become the XP those levels require; coins stay; account level from summed XP ---- */
-function migrateSave(){ SAVE.player=SAVE.player||{name:''}; SAVE.upg=SAVE.upg||{}; SAVE.merchant=SAVE.merchant||{day:'',n:0}; if(!SAVE.cxp){ SAVE.cxp={}; for(const n of ORDER){ const lv=Math.min(MAX_LV,Math.max(1,SAVE.levels[n]||1)); SAVE.cxp[n]=CXP_TOTAL(lv); } if(SAVE.xp>0){ SAVE.cxp[SAVE.selected]+=SAVE.xp; SAVE.levels[SAVE.selected]=lvFromXp(SAVE.cxp[SAVE.selected]); } SAVE.xp=0; SAVE.migrated=1; } for(const n of ORDER){ cxpOf(n); upgOf(n); SAVE.levels[n]=lvFromXp(SAVE.cxp[n]); } }
+/* ---- save defaults for older saves ---- */
+function migrateSave(){ SAVE.player=SAVE.player||{name:''}; SAVE.merchant=SAVE.merchant||{day:'',n:0}; for(const n of ORDER) SAVE.levels[n]=Math.min(MAX_LV,Math.max(1,SAVE.levels[n]||1)); }
 migrateSave();
 /* =====================================================================
    WORLD — "Bone Shore": one connected hand-shaped world.
@@ -1762,7 +1745,7 @@ function burst(x,y,cols,n,spd,life,size,grav,glow){ for(let i=0;i<n;i++){ const 
 function floatText(x,y,txt,col,big,crit){ G.floats.push({x,y,txt,col:col||'#fff',t:0,vy:-70,vx:rnd(-20,20),big:!!big,crit:!!crit}); }
 
 const JUMP_DUR=.6, JUMP_CD=0;   // no cooldown: you can jump again as soon as you land
-function makePlayer(name){ const ch=CH[name], lv=SAVE.levels[name], m=LV_MULT(lv)*PLV_MULT(playerLevel())*upgHpMult(name), md=LV_DMG(lv)*PLV_MULT(playerLevel())*upgDmgMult(name); return {kind:'player',name,ch,lv,x:0,y:0,vx:0,vy:0,r:15,animT:0,face:0,hp:ch.hp*m,maxHp:ch.hp*m,dmg:ch.dmg*md,jumpT:0,jumpCd:0,spd:ch.spd,rate:ch.rate,attackT:0,atkCd:0,queued:null,combo:0,comboT:0,lunge:0,lungeA:0,dashT:0,dashCd:0,dAng:0,abCd:0,status:{},flash:0,stagger:0,inv:0,alive:true,hidden:false,hideT:0,kbx:0,kby:0,dashHit:[],deadT:0,bob:0}; }
+function makePlayer(name){ const ch=CH[name], lv=SAVE.levels[name], m=LV_MULT(lv)*PLV_MULT(playerLevel()), md=LV_DMG(lv)*PLV_MULT(playerLevel()); return {kind:'player',name,ch,lv,x:0,y:0,vx:0,vy:0,r:15,animT:0,face:0,hp:ch.hp*m,maxHp:ch.hp*m,dmg:ch.dmg*md,jumpT:0,jumpCd:0,spd:ch.spd,rate:ch.rate,attackT:0,atkCd:0,queued:null,combo:0,comboT:0,lunge:0,lungeA:0,dashT:0,dashCd:0,dAng:0,abCd:0,status:{},flash:0,stagger:0,inv:0,alive:true,hidden:false,hideT:0,kbx:0,kby:0,dashHit:[],deadT:0,bob:0}; }
 function makeEnemy(type,x,y){ const d=EN[type], tier=TIERS[G.map?G.map.tier:0]; const e={kind:'enemy',type,d,x,y,vx:0,vy:0,r:d.r,face:0,hp:d.hp*tier.hp,maxHp:d.hp*tier.hp,dmg:d.dmg*tier.dmg,spd:d.spd,status:{},flash:0,stagger:0,flinch:0,hidden:false,sub:null,canSwim:false,crashT:0,alive:true,ai:{state:'idle',t:rnd(.3,2),angle:Math.random()*TAU,atkT:rnd(.5,1.2),tele:null,retreated:false,hit:[],home:{x,y},phase2:false},boss:!!d.boss,biome:d.biome||null,summoned:false,dodgeCd:0,holdAnim:false,kbx:0,kby:0,kvx:0,kvy:0,attackT:0,abCd:2,spawnT:.6,deadT:undefined,animT:Math.random()*3,spawner:null}; if(d.boss){ G.boss=e; e.ai.state='chase'; } G.enemies.push(e); return e; }
 function fromFront(e,src){ return Math.abs(angDiff(e.face,Math.atan2(src.y-e.y,src.x-e.x)))<1.1; }
 /* is this world point inside a prop collider (tree trunk, rock, crate…)? used by pellets so cover works */
@@ -2767,9 +2750,9 @@ function drawLevelWorld(c,p,f){ const t=f.t, fade=f.dur-t<.4?(f.dur-t)/.4:1, col
   c.restore(); }
 function bounceOut(k){ if(k<1/2.75) return 7.5625*k*k; if(k<2/2.75){ k-=1.5/2.75; return 7.5625*k*k+.75; } if(k<2.5/2.75){ k-=2.25/2.75; return 7.5625*k*k+.9375; } k-=2.625/2.75; return 7.5625*k*k+.984375; }
 function drawLevelText(c,f){ const t=f.t, sh=f.short, fade=f.dur-t<.4?(f.dur-t)/.4:1, cy=SH*(sh?.22:.3); c.save(); c.globalAlpha=fade; c.textAlign='center';
-  const k=Math.min(1,t/(sh?.35:.6)), y=lerp(-60,cy,bounceOut(k)); c.font='900 '+(sh?26:40)+'px Arial'; c.lineWidth=8; c.strokeStyle='rgba(0,0,0,.75)'; c.strokeText('LEVEL UP!',SW/2,y); c.fillStyle='#fde047'; c.fillText('LEVEL UP!',SW/2,y); c.fillStyle='#ffffff'; c.font='900 '+(sh?24:36)+'px Arial'; c.globalAlpha=fade*.35; c.fillText('LEVEL UP!',SW/2,y-2); c.globalAlpha=fade;
+  const k=Math.min(1,t/(sh?.35:.6)), y=lerp(-60,cy,bounceOut(k)); c.font='900 '+(sh?26:40)+'px Arial'; c.lineWidth=8; c.strokeStyle='rgba(0,0,0,.75)'; const T=f.gold?'PLAYER LEVEL UP!':'LEVEL UP!'; c.strokeText(T,SW/2,y); c.fillStyle='#fde047'; c.fillText(T,SW/2,y); c.fillStyle='#ffffff'; c.font='900 '+(sh?24:36)+'px Arial'; c.globalAlpha=fade*.35; c.fillText(T,SW/2,y-2); c.globalAlpha=fade;
   if(t>(sh?.2:.5)){ const cnt=t>(sh?.5:.9), pop=cnt?1+Math.max(0,.25-(t-(sh?.5:.9)))*3:1; c.font='900 '+(sh?15:20)+'px Arial'; c.lineWidth=5; const txt='LV '+f.from+'  →  LV '+(cnt?f.to:f.from); c.save(); c.translate(SW/2,y+30); c.scale(pop,pop); c.strokeText(txt,0,0); c.fillStyle='#e9d5ff'; c.fillText(txt,0,0); c.restore(); }
-  if(t>(sh?.4:1)){ const kk=Math.min(1,(t-(sh?.4:1))/.3), dx=(1-kk)*200; c.font='800 14px Arial'; c.lineWidth=4; const lines=['HP +'+f.hp+'  ▲','DMG +'+f.dmg+'  ▲','FULL HEAL']; lines.forEach((ln,i)=>{ const yy=y+56+i*20; c.strokeText(ln,SW/2+dx*(i%2?-1:1),yy); c.fillStyle=i===2?'#86efac':'#4ade80'; c.fillText(ln,SW/2+dx*(i%2?-1:1),yy); if(i===1) drawAbilityIcon(c,f.name,SW/2-dx+c.measureText(ln).width/2+10,yy-24,2,{t:G.time}); }); }   /* the ability icon marks that the move improves too */
+  if(t>(sh?.4:1)){ const kk=Math.min(1,(t-(sh?.4:1))/.3), dx=(1-kk)*200; c.font='800 14px Arial'; c.lineWidth=4; const lines=['HP +'+f.hp+'  ▲','DMG +'+f.dmg+'  ▲',f.gold?'+'+f.gold+' GOLD  ·  FULL HEAL':'FULL HEAL']; lines.forEach((ln,i)=>{ const yy=y+56+i*20; c.strokeText(ln,SW/2+dx*(i%2?-1:1),yy); c.fillStyle=i===2?'#86efac':'#4ade80'; c.fillText(ln,SW/2+dx*(i%2?-1:1),yy); if(i===1) drawAbilityIcon(c,f.name,SW/2-dx+c.measureText(ln).width/2+10,yy-24,2,{t:G.time}); }); }   /* the ability icon marks that the move improves too */
   c.restore(); }
 function drawMenuBg(c){ const g=c.createLinearGradient(0,0,0,SH); g.addColorStop(0,'#1b1f3b'); g.addColorStop(1,'#0a0d1a'); c.fillStyle=g; c.fillRect(0,0,SW,SH); }
 function drawHUD(c,p){
@@ -2780,7 +2763,7 @@ function drawHUD(c,p){
   const hx=68, hy=33, hw=bw-80; c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,hx,hy,hw,16,8); c.fill(); const hg=c.createLinearGradient(hx,hy,hx,hy+16); hg.addColorStop(0,'#4ade80'); hg.addColorStop(1,'#16a34a'); p.hpShow=p.hpShow===undefined?p.hp:p.hpShow+(p.hp-p.hpShow)*(p.hp>p.hpShow?.06:1); c.fillStyle=p.hp<p.maxHp*.3?'#ef4444':hg; if(p.hpShow>0){ roundRect(c,hx+1,hy+1,(hw-2)*clamp(p.hpShow/p.maxHp,0,1),14,7); c.fill(); }
   c.fillStyle='rgba(255,255,255,.25)'; roundRect(c,hx+3,hy+3,Math.max(0,(hw-6)*clamp(p.hp/p.maxHp,0,1)),4,2); c.fill(); c.font='800 11px Arial'; c.textAlign='center'; c.fillStyle='#fff'; c.fillText(Math.ceil(p.hp)+' / '+Math.ceil(p.maxHp),hx+hw/2,hy+12);
   if(p.status.poison){ const s=p.status.poison, ix=hx+hw+2, iy=hy+8; c.fillStyle='#14532d'; c.beginPath(); c.arc(ix,iy,10,0,TAU); c.fill(); c.strokeStyle='#4ade80'; c.lineWidth=2; c.stroke(); c.font='900 11px Arial'; c.textAlign='center'; c.fillStyle='#86efac'; c.fillText('☠',ix,iy+4); c.font='800 9px Arial'; c.fillStyle='#4ade80'; c.fillText(Math.ceil(s.t)+'s',ix,iy+20); }   // poison icon + countdown
-  if(spinning(p)){ const C=p.spin.C; c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,hx,hy+20,hw,8,4); c.fill(); c.fillStyle='#6ce87a'; roundRect(c,hx+1,hy+21,(hw-2)*clamp(p.spin.t/C.dur,0,1),6,3); c.fill(); c.font='800 9px Arial'; c.textAlign='left'; c.fillStyle='#6ce87a'; c.fillText('SPINJITZU  INVULNERABLE  '+p.spin.t.toFixed(1)+'s',hx+4,hy+38); } else { const plv=playerLevel(), clv=SAVE.levels[p.name]||1, cb=CXP_TOTAL(clv), cn=clv>=MAX_LV?1:CXP_TOTAL(clv+1)-cb, k=clv>=MAX_LV?1:clamp((cxpOf(p.name)-cb)/cn,0,1); c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,hx,hy+20,hw,8,4); c.fill(); c.fillStyle='#a855f7'; if(k>0){ roundRect(c,hx+1,hy+21,(hw-2)*k,6,3); c.fill(); } c.font='800 9px Arial'; c.textAlign='left'; c.fillStyle='#e9d5ff'; c.fillText('LV '+clv+'  '+(clv>=MAX_LV?'MAX':(cxpOf(p.name)-cb)+' / '+cn+' XP')+'   ·   PLAYER LV '+plv,hx+4,hy+38); }
+  if(spinning(p)){ const C=p.spin.C; c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,hx,hy+20,hw,8,4); c.fill(); c.fillStyle='#6ce87a'; roundRect(c,hx+1,hy+21,(hw-2)*clamp(p.spin.t/C.dur,0,1),6,3); c.fill(); c.font='800 9px Arial'; c.textAlign='left'; c.fillStyle='#6ce87a'; c.fillText('SPINJITZU  INVULNERABLE  '+p.spin.t.toFixed(1)+'s',hx+4,hy+38); } else { const plv=playerLevel(), lo=plv>1?XP_NEED(plv-1):0, hi=XP_NEED(plv), k=clamp((SAVE.xpTotal-lo)/(hi-lo),0,1); c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,hx,hy+20,hw,8,4); c.fill(); c.fillStyle='#a855f7'; if(k>0){ roundRect(c,hx+1,hy+21,(hw-2)*k,6,3); c.fill(); } c.font='800 9px Arial'; c.textAlign='left'; c.fillStyle='#e9d5ff'; c.fillText('PLAYER LV '+plv+'   '+(SAVE.xpTotal-lo)+' / '+(hi-lo)+' XP',hx+4,hy+38); }
   const arena=!!WORLD.arena;
   if(!arena){ const qn=['CLAY','BECK'].find(k=>!SAVE.unlocked[k]); if(qn){ const q=QUESTS[qn], k=q.pct(); c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,10,82,bw,34,10); c.fill(); c.font='900 10px Arial'; c.textAlign='left'; c.fillStyle=CH[qn].color; c.fillText('UNLOCK '+qn,18,95); c.font='700 9px Arial'; c.fillStyle='#e5e7eb'; c.fillText(q.progress(),18+c.measureText('UNLOCK '+qn+'  ').width+8,95); c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,18,100,bw-16,9,4); c.fill(); if(k>0){ c.fillStyle='#4ade80'; roundRect(c,19,101,(bw-18)*k,7,3); c.fill(); }} } else drawArenaHUD(c,p,bw);
   // gold + wave
@@ -3175,10 +3158,10 @@ function buildCards(){
   const el=$('cgrid'); el.innerHTML=''; el.style.display='grid'; $('cdetail').classList.remove('on'); $('charsTitle').textContent='NINJAS '+ORDER.filter(n=>SAVE.unlocked[n]).length+'/'+ORDER.length;
   for(const n of ORDER){ const ch=CH[n], lv=SAVE.levels[n], sel=SAVE.selected===n, un=!!SAVE.unlocked[n], q=QUESTS[n], ready=!un&&!!(SAVE.ready&&SAVE.ready[n]);
     const d=document.createElement('div'); d.className='bcard'+(sel?' sel':'')+(un?'':' locked')+(ready?' ready':''); d.style.setProperty('--c',ch.color); d.dataset.name=n;
-    const u=upgOf(n), canUp=un&&((u.hp<UPG_MAX&&SAVE.gold>=UPG_COST(u.hp+1))||(u.dmg<UPG_MAX&&SAVE.gold>=UPG_COST(u.dmg+1))), cx=cxpOf(n), pct=lv>=MAX_LV?100:Math.round((cx-CXP_TOTAL(lv))/(CXP_TOTAL(lv+1)-CXP_TOTAL(lv))*100);
+    const canUp=un&&lv<MAX_LV&&SAVE.gold>=LEVEL_COST(lv+1);
     d.innerHTML=`<div class="top"><span class="${un?'lvb':'lkb'}">${un?'LV '+lv:'LOCKED'}</span><span>${sel?'✔':''}</span></div>`; d.appendChild(charCanvas(ch,!un,4,120,150,.92));
     if(!un) d.insertAdjacentHTML('beforeend','<div class="lockic">🔒</div>');
-    d.insertAdjacentHTML('beforeend',`<div class="name">${n}</div>`+(un?`<div class="bar ${lv>=MAX_LV?'max':canUp?'up':'pow'}">${canUp?'⬆ UPGRADE':lv>=MAX_LV?'MAX LEVEL':'LV '+lv+' · '+pct+'%'}</div>`:`<div class="qmini"><i style="width:${Math.round(q.pct()*100)}%"></i></div><div class="bar lock">${ready?'100% · TAP TO UNLOCK':q.check?Math.round(q.pct()*100)+'% · QUEST':''}</div>`));
+    d.insertAdjacentHTML('beforeend',`<div class="name">${n}</div>`+(un?`<div class="bar ${lv>=MAX_LV?'max':canUp?'up':'pow'}">${lv>=MAX_LV?'MAX POWER':canUp?'⬆ UPGRADE':'POWER '+lv}</div>`:`<div class="qmini"><i style="width:${Math.round(q.pct()*100)}%"></i></div><div class="bar lock">${ready?'100% · TAP TO UNLOCK':q.check?Math.round(q.pct()*100)+'% · QUEST':''}</div>`));
     d.onclick=()=>{ if(ready){ unlockNinja(n,d); return; } VIEW=n; CVIEW='detail'; if(un){ SAVE.selected=n; save(); } showCharDetail(n); }; el.appendChild(d); }
 }
 const ABILITY_MULT={CLAY:1.4,BECK:3.3,BOREAS:0,APOLLO:2.6,SHADE:3};   /* BECK: three rings x 110% */   /* the special's hit as a multiple of DMG (Frost Nova only freezes) */
@@ -3188,7 +3171,7 @@ let UNLOCKING=false;
 function unlockNinja(n,card){ if(UNLOCKING) return; UNLOCKING=true; audioInit(); card.classList.add('unlocking'); SFX.key(); setTimeout(()=>{ sparkle(card,()=>CH[n].color,24); const l=document.createElement('div'); l.className='lvup'; l.textContent='UNLOCKED!'; card.appendChild(l); SFX.levelup(); },550);
   setTimeout(()=>{ SAVE.unlocked[n]=true; if(SAVE.ready) delete SAVE.ready[n]; SAVE.selected=n; save(); UNLOCKING=false; VIEW=n; CVIEW='detail'; showCharDetail(n,true); },1500); }
 function showCharDetail(n,anim){
-  const ch=CH[n], lv=SAVE.levels[n], u=upgOf(n), uh=upgHpMult(n), ud=upgDmgMult(n), m=LV_MULT(lv)*uh, m2=LV_MULT(lv+1)*uh, dm=LV_DMG(lv)*ud, dm2=LV_DMG(lv+1)*ud, un=!!SAVE.unlocked[n], sel=SAVE.selected===n, q=QUESTS[n], cx=cxpOf(n), xb=CXP_TOTAL(lv), xn=lv>=MAX_LV?1:CXP_TOTAL(lv+1)-xb, xpct=lv>=MAX_LV?100:Math.round((cx-xb)/xn*100), catchUp=un&&isCatchUp(n), hc=UPG_COST(u.hp+1), dc=UPG_COST(u.dmg+1), canH=un&&u.hp<UPG_MAX&&SAVE.gold>=hc, canD=un&&u.dmg<UPG_MAX&&SAVE.gold>=dc;
+  const ch=CH[n], lv=SAVE.levels[n], m=LV_MULT(lv), m2=LV_MULT(lv+1), dm=LV_DMG(lv), dm2=LV_DMG(lv+1), un=!!SAVE.unlocked[n], sel=SAVE.selected===n, q=QUESTS[n], cost=LEVEL_COST(lv+1), can=un&&lv<MAX_LV&&SAVE.gold>=cost;
   $('cgrid').style.display='none'; const det=$('cdetail'); det.classList.add('on'); det.style.setProperty('--c',ch.color); $('charsTitle').textContent=n;
   const segs=Array.from({length:10},(_,i)=>`<i class="${i<Math.round(lv/MAX_LV*10)?'':'off'}"></i>`).join('');
   det.innerHTML=`<div class="bportrait"><div class="bname">${n}</div><div class="brole">${ch.role}</div><div class="backb" id="bAllNinjas">◀ ALL NINJAS</div>${un?`<div class="selb ${sel?'on':''}" id="bSelectChar">${sel?'✔ SELECTED':'SELECT'}</div>`:''}</div>
@@ -3198,15 +3181,14 @@ function showCharDetail(n,anim){
     <div class="srow"><div class="ic" style="background:#dc2626">💥</div><div><div class="lab" style="color:#fca5a5">ATTACK</div><div class="val">${Math.round(ch.dmg*dm)}${un&&lv<MAX_LV?`<span class="gain">+${Math.round(ch.dmg*dm2)-Math.round(ch.dmg*dm)}</span>`:''}</div></div>${un&&lv<MAX_LV?'<div class="arrow">⬆</div>':''}</div>
     <div class="srow"><div class="ic abslot" style="background:#111827;border:1px solid ${ch.color}"></div><div><div class="lab" style="color:#fde68a">SUPER</div><div class="val">${ch.skill.name} <span style="font-size:10px;color:#9ca3af;font-weight:700">(${ch.skill.cd}s)</span>${ABILITY_MULT[n]?` · ${Math.round(ch.dmg*dm*ABILITY_MULT[n])} dmg${un&&lv<MAX_LV?`<span class="gain">+${Math.round(ch.dmg*dm2*ABILITY_MULT[n])-Math.round(ch.dmg*dm*ABILITY_MULT[n])}</span>`:''}`:' · freeze 2s'}</div></div>${un&&lv<MAX_LV&&ABILITY_MULT[n]?'<div class="arrow">⬆</div>':''}</div>
     <div class="srow"><div class="ic" style="background:radial-gradient(circle at 50% 45%,${SPIN[n].core},${SPIN[n].ring[0]} 45%,${SPIN[n].ring[1]} 80%)"></div><div><div class="lab" style="color:${SPIN[n].ring[2]}">SPINJITZU</div><div class="val">${spinTotal(n,dm)} dmg over ${SPIN[n].dur}s${un&&lv<MAX_LV?`<span class="gain">+${spinTotal(n,dm2)-spinTotal(n,dm)}</span>`:''}</div></div>${un&&lv<MAX_LV?'<div class="arrow">⬆</div>':''}</div>
-    ${un?`<div class="xprow"><div class="xlab"><span>LEVEL ${lv}${lv>=MAX_LV?' · MAX':''}</span><span>${lv>=MAX_LV?'MAX LEVEL':(cx-xb)+' / '+xn+' XP'}</span></div><div class="xbar"><i style="width:${xpct}%"></i></div><div class="xnote">${catchUp?'CATCH-UP: DOUBLE XP until LV '+highestLevel():'earns 30% of every other ninja\'s XP'}</div></div>
-    <div class="uprow"><div class="bupg ${canH?'':'dis'}" data-upg="hp">❤ HP +5%<small>${u.hp>=UPG_MAX?'MAX':u.hp+'/'+UPG_MAX+' · 🪙 '+hc+' gold'}</small></div><div class="bupg red ${canD?'':'dis'}" data-upg="dmg">💥 DMG +5%<small>${u.dmg>=UPG_MAX?'MAX':u.dmg+'/'+UPG_MAX+' · 🪙 '+dc+' gold'}</small></div></div>`:`<div class="bquest"><b>QUEST:</b> ${q.text}<div class="questbar"><i style="width:${Math.round(q.pct()*100)}%"></i></div><div>${q.progress()}</div><div class="qr">${q.remaining()}</div></div>`}
+    ${un?`<div class="bupg ${can?'':'dis'}" id="bUpgradeNow">${lv>=MAX_LV?'MAX POWER':'UPGRADE TO LV '+(lv+1)}${lv<MAX_LV?`<small>🪙 ${cost} gold${SAVE.gold<cost?' · you have '+SAVE.gold:''}</small>`:''}</div>`:`<div class="bquest"><b>QUEST:</b> ${q.text}<div class="questbar"><i style="width:${Math.round(q.pct()*100)}%"></i></div><div>${q.progress()}</div><div class="qr">${q.remaining()}</div></div>`}
   </div>`;
   det.querySelector('.bportrait').appendChild(charCanvas(ch,!un,7,220,300,.96)); det.querySelector('.abslot').appendChild(abilityIconCanvas(n,'width:86%;height:86%'));
   $('bAllNinjas').onclick=()=>{ CVIEW='grid'; buildCards(); };
   const sb=$('bSelectChar'); if(sb) sb.onclick=()=>{ SAVE.selected=n; save(); showCharDetail(n); };
   const st=$('bSelectTop'); st.style.display=un?'':'none'; st.textContent=sel?'✔ SELECTED':'SELECT'; st.classList.toggle('grey',sel); st.classList.toggle('blue',!sel); st.onclick=sel?null:()=>{ SAVE.selected=n; save(); showCharDetail(n); };   /* SELECT next to the gold: switch to this ninja */
-  det.querySelectorAll('[data-upg]').forEach(b=>b.onclick=()=>{ if(buyUpgrade(n,b.dataset.upg)){ SFX.levelup(); G.upgLabel=(b.dataset.upg==='hp'?'HP':'DMG')+' +5%!'; showCharDetail(n,true); } });
-  if(anim){ const po=det.querySelector('.bportrait'); po.classList.add('upgrade-anim'); sparkle(po,()=>'#fde047',18); const l=document.createElement('div'); l.className='lvup'; l.textContent=G.upgLabel||('LEVEL '+lv+'!'); G.upgLabel=null; po.appendChild(l); setTimeout(()=>{ po.classList.remove('upgrade-anim'); l.remove(); },1200); }
+  const ub=$('bUpgradeNow'); if(ub) ub.onclick=()=>{ if(buyLevel(n)){ SFX.levelup(); showCharDetail(n,true); } };
+  if(anim){ const po=det.querySelector('.bportrait'); po.classList.add('upgrade-anim'); sparkle(po,()=>'#fde047',18); const l=document.createElement('div'); l.className='lvup'; l.textContent='POWER '+lv+'!'; po.appendChild(l); setTimeout(()=>{ po.classList.remove('upgrade-anim'); l.remove(); },1200); }
   $('goldChars').textContent=SAVE.gold+' gold · PLAYER LV '+playerLevel();
 }
 function sparkle(card,colorOf,n){ for(let i=0;i<n;i++){ const s=document.createElement('i'); s.className='spk'; const a=i/n*Math.PI*2, d=60+Math.random()*50; s.style.left='50%'; s.style.top='45%'; s.style.setProperty('--c',colorOf()); s.style.setProperty('--dx',Math.cos(a)*d+'px'); s.style.setProperty('--dy',Math.sin(a)*d+'px'); s.style.animationDelay=(Math.random()*.15)+'s'; card.appendChild(s); setTimeout(()=>s.remove(),1100); } }
@@ -3234,7 +3216,7 @@ document.querySelectorAll('[data-dbg]').forEach(b=>b.onclick=()=>{ const k=b.dat
   if(k==='god'){ DEBUG.god=!DEBUG.god; b.textContent='God mode '+(DEBUG.god?'ON':'OFF'); }
   else if(k==='coins'){ SAVE.gold+=1000; } else if(k==='quest'){ SAVE.kills+=250; SAVE.bosses.hippo++; SAVE.bosses.croc++; checkUnlocks(); }
   else if(k==='unlock') ORDER.forEach(n=>SAVE.unlocked[n]=true);
-  else if(k==='chi') SAVE.chi=(SAVE.chi||0)+10; else if(k==='keys') SAVE.keys=3; else if(k==='levelup'){ if(G.player){ const n=SAVE.selected, lv=SAVE.levels[n]; setState('PLAYING'); if(lv<MAX_LV) gainXP(CXP_TOTAL(lv+1)-cxpOf(n)); } } else if(k==='forcechi'){ DEBUG.forceChi=!DEBUG.forceChi; b.textContent='Force Chi drops '+(DEBUG.forceChi?'ON':'OFF'); }
+  else if(k==='chi') SAVE.chi=(SAVE.chi||0)+10; else if(k==='keys') SAVE.keys=3; else if(k==='levelup'){ if(G.player){ setState('PLAYING'); gainXP(XP_NEED(playerLevel())-SAVE.xpTotal); } } else if(k==='forcechi'){ DEBUG.forceChi=!DEBUG.forceChi; b.textContent='Force Chi drops '+(DEBUG.forceChi?'ON':'OFF'); }
   else if(k==='balance'){ console.table(balanceReport()); alert(balanceReport().map(r=>r.ninja+' lv'+r.lv+' vs '+r.enemy+': '+r.hits+' hits, '+r.ttk+'s').join('\n')); }
   else if(k==='hitbox'){ DEBUG.hitbox=!DEBUG.hitbox; b.textContent='Hitboxes + FPS '+(DEBUG.hitbox?'ON':'OFF'); }
   else if(k==='hippo'||k==='croc'){ if(!G.map){ alert('Enter a map first, then open Settings from the pause menu.'); return; } const p=G.player; const e=makeEnemy(k,p.x+220,p.y); e.spawnT=0; collide(e); SFX.roar(); setState('PLAYING'); }
