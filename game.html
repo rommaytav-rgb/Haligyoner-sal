@@ -1002,8 +1002,8 @@ const EN={
   priest:{hp:54, dmg:16,spd:197,r:13,range:44,atk:.8, coins:[6,8],gold:[15,22],xp:10,sprite:1,scale:1.5,biome:'swamp', name:'INSECT PRIEST'},
   pirate:{hp:127,dmg:15,spd:104,r:15,range:50,atk:1.3,coins:[6,8],gold:[12,18],xp:12,sprite:2,scale:1.5,biome:'beach', name:'PIRATE'},
   /* Frost & Ember regular enemies: the Magma Golem is built for a level-11 ninja, the Wolf Warrior for level 14; both stay inside their own half */
-  golem:{hp:420,dmg:34,spd:92, r:17,range:54,atk:1.4,coins:[8,12],gold:[22,32],xp:24,rig:true,scale:2,biome:'ember',name:'MAGMA GOLEM'},
-  wolf: {hp:520,dmg:44,spd:178,r:15,range:50,atk:1.0,coins:[9,13],gold:[30,44],xp:34,rig:true,scale:2,biome:'frost',name:'WOLF WARRIOR'},
+  golem:{hp:420,dmg:34,spd:92, r:16,range:52,atk:1.4,coins:[8,12],gold:[22,32],xp:24,rig:true,scale:1.7,biome:'ember',name:'MAGMA GOLEM'},
+  wolf: {hp:520,dmg:44,spd:178,r:14,range:48,atk:1.0,coins:[9,13],gold:[30,44],xp:34,rig:true,scale:1.7,biome:'frost',name:'WOLF WARRIOR'},
   hippo:{hp:2750,dmg:52,spd:76, r:46,range:100,coins:[40,40],gold:[200,200],boss:true,name:'HIPPO',sprite:3,scale:3,adds:'mush'},
   croc: {hp:3750,dmg:62,spd:125,r:46,range:110,coins:[40,40],gold:[250,250],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
   lord: {hp:5200,dmg:20,spd:116,r:40,range:96, coins:[40,40],gold:[400,400],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:400},   /* drawn by the LORD rig, not a sprite */
@@ -1995,7 +1995,7 @@ function balanceReport(){ const rows=[]; for(const n of ORDER) for(const lv of [
    Wolf Warrior (frost side, built for a level-14 ninja). Regular enemies, not bosses. Rigs drawn with rect/px in PIX space.
    ===================================================================== */
 const GP={ rock:'#3a3038', rockD:'#241d22', rockL:'#52464e', crack:'#ff5a10', crackL:'#ffb020', crackW:'#fff0a0', eye:'#ff7a1a', eyeW:'#fff0c0', metal:'#5e5058', wood:'#5a4030', ember:'#ff8c2b', ash:'#6a5e66' };
-const WP={ ice:'#bfeaff', iceD:'#7fb8d8', iceL:'#e8f8ff', core:'#ffffff', deep:'#4f8ab0', eye:'#e0f8ff', glow:'#9fe4ff', steel:'#a8bcc8', cloth:'#5a4a8a', clothD:'#3f3266', fur:'#dff2ff' };
+const WP={ ice:'#5f9fc8', iceD:'#3d7aa6', iceL:'#a8d8f2', core:'#eaf8ff', deep:'#234e74', eye:'#f0fbff', glow:'#8fd6ff', steel:'#8aa0b0', cloth:'#4a3a80', clothD:'#2f2458', fur:'#b8d0e4' };
 const RR=(x,y,w,h,col)=>rect(Math.round(x),Math.round(y),Math.max(1,Math.round(w)),Math.max(1,Math.round(h)),col), PP=(x,y,col)=>RR(x,y,1,1,col);
 /* ---------- Magma Golem rig (64×60 box, feet at y≈48) ---------- */
 function rigHammer(x,y,ang,t){ const c1=Math.cos(ang); for(let j=0;j<20;j++) RR(x+c1*j*0.35,y+j,2,1,j%5===0?'#3f2c1e':GP.wood); const hx=x, hy=y-3; RR(hx-4,hy-8,12,10,GP.rock); RR(hx-4,hy-8,12,2,GP.rockL); RR(hx-4,hy,12,2,GP.rockD); RR(hx-6,hy-6,2,6,GP.metal); RR(hx+8,hy-6,2,6,GP.metal); RR(hx-1,hy-6,2,7,GP.crack); RR(hx-3,hy-3,7,2,GP.crackL); if(Math.sin(t*6)>0) PP(hx,hy-4,GP.crackW); }
@@ -2035,10 +2035,10 @@ function rigPackWolf(x,y,t,dir){ RR(x,y,12,6,WP.ice); RR(x,y,12,1,WP.iceL); RR(x
 function drawRigEnemy(c,e,t){ const face=Math.cos(e.face)>=0?1:-1, a=e.ai; let anim='idle', k=0, sp=0; const mv=Math.hypot((e.vx||0)+(e.kvx||0),(e.vy||0)+(e.kvy||0))>25;
   if(e.type==='golem'){ if(a.state==='smash'){ anim='attack'; k=1-a.t/1.1; } else if(a.state==='windup'){ sp=1; k=1-a.t/.66; } else if(a.state==='whirl'){ sp=2; } else if(mv) anim='walk'; }
   else { if(a.state==='slash'){ anim='attack'; k=1-a.t/.7; } else if(a.state==='howl'){ sp=1; k=1-a.t/.8; } else if(mv) anim='walk'; }
-  c.save(); if(e.spawnT>0){ c.globalAlpha=Math.max(0,1-e.spawnT/.6); c.translate(0,e.spawnT*60); } c.translate(e.x,e.y+e.r*.9); if(e.flinch>0) c.translate(Math.sin(G.time*70)*2.5,0); c.scale(PIX*face,PIX); c.translate(-32,-48); g=c;
+  c.save(); if(e.spawnT>0){ c.globalAlpha=Math.max(0,1-e.spawnT/.6); c.translate(0,e.spawnT*60); } c.translate(e.x,e.y+e.r*.9); if(e.flinch>0) c.translate(Math.sin(G.time*70)*2.5,0); c.scale(e.d.scale*face,e.d.scale); c.translate(-32,-48); g=c;
   if(e.type==='golem') rigGolem(anim,t+e.animT*0,k,sp); else rigWolf(anim,t,k,sp);
   const tint=tintFor(e); if(tint){ c.globalCompositeOperation='source-atop'; c.fillStyle=tint; c.fillRect(0,0,64,60); } c.restore(); }
-function drawRigDead(c,e){ const k=clamp(1-e.deadT/1.4,0,1), face=Math.cos(e.face)>=0?1:-1; c.save(); c.translate(e.x,e.y+e.r*.9); c.scale(PIX*face,PIX); c.translate(-32,-48); g=c; if(e.type==='golem') rigGolemDeath(k); else rigWolfDeath(k); c.restore(); }
+function drawRigDead(c,e){ const k=clamp(1-e.deadT/1.4,0,1), face=Math.cos(e.face)>=0?1:-1; c.save(); c.translate(e.x,e.y+e.r*.9); c.scale(e.d.scale*face,e.d.scale); c.translate(-32,-48); g=c; if(e.type==='golem') rigGolemDeath(k); else rigWolfDeath(k); c.restore(); }
 /* ---------- AI ---------- */
 AI.golem=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.abCd-=dt; const sees=commonSees(e,p);
   if(a.state==='idle'){ wander(e,dt,100,.35); if(d<300&&sees&&(G.chasers<6||e.summoned)){ a.state='chase'; a.t=0; G.chasers++; floatText(e.x,e.y-40,'!','#ef4444',true); } return; }
