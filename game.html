@@ -279,6 +279,46 @@
   h2{margin:0 0 6px;font-size:clamp(20px,4vh,30px);letter-spacing:2px}
   .big{font-size:clamp(34px,9vh,70px);font-weight:900;letter-spacing:4px;margin:0}
   .red{color:#f87171;text-shadow:0 0 24px rgba(248,113,113,.6)}
+  /* ---- progression: character page XP + upgrade tracks ---- */
+  .xprow{margin-top:auto;background:#0b1020;border:2px solid #1f2a44;border-radius:10px;padding:clamp(3px,.8vh,6px) 8px}
+  .xlab{display:flex;justify-content:space-between;font-size:clamp(9px,1.9vh,12px);font-weight:900;color:#e9d5ff;letter-spacing:1px}
+  .xbar{height:clamp(6px,1.5vh,10px);background:#111827;border-radius:5px;margin:3px 0;overflow:hidden;border:1px solid #312e81} .xbar i{display:block;height:100%;background:linear-gradient(90deg,#a855f7,#c4b5fd);border-radius:5px}
+  .xnote{font-size:clamp(8px,1.6vh,10px);font-weight:800;color:#a5b4fc;letter-spacing:.5px}
+  .uprow{display:flex;gap:6px;margin-top:clamp(3px,.8vh,6px)} .uprow .bupg{flex:1;margin-top:0;padding:clamp(3px,.9vh,6px)}
+  .bupg.red{background:linear-gradient(180deg,#f87171,#b91c1c);border-color:#7f1d1d;box-shadow:0 5px 0 #450a0a} .bupg.red small{color:#fee2e2} .bupg.red:active{box-shadow:0 2px 0 #450a0a}
+  /* ---- name entry ---- */
+  .npanel{position:relative;z-index:1;width:min(92vw,420px);padding:clamp(10px,2vh,18px) clamp(12px,3vw,24px);border-radius:8px;background:#1a1236;border:4px solid #5b4a8a;box-shadow:0 0 0 3px #0b0820,0 0 0 6px #8b7ac0,0 12px 40px rgba(0,0,0,.6);display:flex;flex-direction:column;align-items:center;gap:clamp(6px,1.4vh,12px);image-rendering:pixelated}
+  .npanel h2{margin:0;font-size:clamp(16px,3.4vh,24px);letter-spacing:3px;color:#f3e8d8;text-shadow:0 2px 0 #000}
+  .nin{width:100%;box-sizing:border-box;font:900 clamp(16px,3.4vh,22px) Arial;text-align:center;letter-spacing:2px;padding:10px 12px;border-radius:6px;border:3px solid #8b7ac0;background:#0b0820;color:#fff;outline:none} .nin:focus{border-color:#c4b5fd;box-shadow:0 0 14px rgba(168,85,247,.5)}
+  .nerr{min-height:14px;font-size:11px;font-weight:800;color:#fca5a5;letter-spacing:.5px}
+  .nrow{display:flex;gap:8px;width:100%} .nrow .mbtn{flex:1;min-width:0;padding-left:8px;padding-right:8px;font-size:clamp(12px,2.4vh,16px);letter-spacing:2px}
+  .mbtn.dis{filter:grayscale(.8);opacity:.45;pointer-events:none}
+  /* ---- profile card (menu / map select / characters) ---- */
+  #profCard{position:fixed;left:8px;top:8px;z-index:12;display:none;align-items:center;gap:8px;padding:6px 10px 6px 6px;border-radius:12px;background:linear-gradient(180deg,rgba(40,26,80,.95),rgba(14,9,36,.97));border:2px solid #5b4a8a;box-shadow:0 0 0 2px #0b0820,0 6px 20px rgba(0,0,0,.5);cursor:pointer;max-width:min(46vw,250px);font-size:10px;color:#e9d5ff}
+  #profCard.on{display:flex} #profCard:active{transform:translateY(2px)}
+  #profCard.mini{padding:3px 8px 3px 3px;gap:6px;max-width:min(40vw,190px);border-radius:10px} #profCard.mini .pport{width:30px;height:30px;border-width:2px} #profCard.mini .pport canvas{width:30px;height:36px;margin-bottom:-4px} #profCard.mini .pxp,#profCard.mini .pxpt,#profCard.mini .pres,#profCard.mini .pstat{display:none} #profCard.mini .pname{font-size:11px} #profCard.mini .plv{font-size:8px}
+  .pport{width:44px;height:44px;border-radius:50%;flex:none;overflow:hidden;background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.25),rgba(0,0,0,.4));border:3px solid var(--c,#a855f7);box-shadow:0 0 10px var(--c,#a855f7);display:flex;align-items:flex-end;justify-content:center} .pport canvas{width:44px;height:52px;margin-bottom:-6px;image-rendering:pixelated}
+  .pport.big{width:72px;height:72px} .pport.big canvas{width:72px;height:85px;margin-bottom:-8px}
+  .pbody{display:flex;flex-direction:column;gap:2px;min-width:0}
+  .pname{font-weight:900;font-size:13px;color:#fff;letter-spacing:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .pname.big{font-size:20px}
+  .plv{font-weight:800;font-size:10px;color:#c4b5fd;letter-spacing:1px}
+  .pxp{height:5px;border-radius:3px;background:#0b0820;border:1px solid #312e81;overflow:hidden} .pxp i{display:block;height:100%;background:linear-gradient(90deg,#a855f7,#c4b5fd)}
+  .pxpt{font-size:8px;font-weight:800;color:#a5b4fc}
+  .pres{display:flex;gap:8px;font-weight:900;font-size:11px;color:#fde68a;align-items:center} .pres span{display:flex;align-items:center;gap:3px}
+  .coinic{width:13px;height:13px;image-rendering:pixelated} .chiorb{display:inline-block;width:11px;height:11px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#7fd8f8 40%,#0ea5e9 75%);box-shadow:0 0 6px #38bdf8}
+  .pstat{font-size:8px;font-weight:800;color:#9ca3af;letter-spacing:.5px;white-space:nowrap}
+  /* ---- full profile panel ---- */
+  .phead{display:flex;align-items:center;gap:14px;padding:6px 0 8px;border-bottom:1px solid #312e81;margin-bottom:6px}
+  .psec{font-family:Georgia,serif;font-weight:700;letter-spacing:3px;font-size:13px;color:#f3e8d8;margin:6px 0 4px}
+  .plist{display:flex;flex-direction:column;gap:4px}
+  .prow2{display:grid;grid-template-columns:70px 58px 1fr 110px 92px;align-items:center;gap:8px;background:#111827;border-radius:8px;padding:4px 8px;border-left:4px solid var(--c);font-size:11px;font-weight:800;color:#e5e7eb} .prow2.lk{opacity:.45}
+  .prow2 .pn{font-weight:900;letter-spacing:1px;color:var(--c)} .prow2 .pl{color:#fde68a} .prow2 .pxs,.prow2 .pu{font-size:10px;color:#a5b4fc;text-align:right;white-space:nowrap}
+  .pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:6px}
+  .pbox{background:#111827;border-radius:10px;padding:6px 10px;font-size:12px;color:#d1d5db;font-weight:700} .pbox b{color:#fde68a}
+  @media (max-width:640px){ .prow2{grid-template-columns:60px 50px 1fr 90px;font-size:10px} .prow2 .pu{grid-column:2/5;text-align:left} }
+  /* ---- key merchant prompt (in game) ---- */
+  #merch{position:fixed;left:50%;bottom:clamp(70px,16vh,130px);transform:translateX(-50%);z-index:6;display:none;flex-direction:column;align-items:center;gap:6px;width:min(64vw,300px);box-sizing:border-box;padding:8px 12px;border-radius:12px;background:rgba(14,9,36,.94);border:2px solid #f59e0b;box-shadow:0 0 18px rgba(245,158,11,.4);color:#fde68a;font-size:12px;font-weight:800;letter-spacing:.5px;text-align:center}
+  #merch.on{display:flex} #merch .btn.sm{padding:6px 12px;font-size:12px;background:linear-gradient(180deg,#f59e0b,#b45309);border-color:#fde68a;color:#fff} #merch .btn.sm.dis{filter:grayscale(.8);opacity:.5;pointer-events:none} #merch .xbtn{width:26px;height:26px;font-size:12px}
 </style>
 </head>
 <body>
@@ -296,6 +336,15 @@
   <div class="lbar"><i id="splashBar"></i></div>
   <div class="ltxt" id="splashTxt">LOADING…</div>
 </div>
+<div id="profCard"></div>
+<div id="merch"><div id="merchTxt"></div><div style="display:flex;gap:8px;align-items:center"><div class="btn sm" id="bMerchBuy">BUY KEY</div><div class="xbtn" id="bMerchClose">✕</div></div></div>
+<div id="ovName" class="ov menu">
+  <div class="stars"></div><div class="neb n1"></div><div class="neb n2"></div><div class="frame"></div>
+  <h1 class="title" style="font-size:clamp(22px,6vh,40px)">ELEMENTAL NINJAS</h1>
+  <div class="npanel"><h2>CHOOSE A PLAYER NAME</h2><input class="nin" id="nameIn" maxlength="12" autocomplete="off" spellcheck="false" placeholder="3–12 characters"><div class="nerr" id="nameErr"></div>
+    <div class="nrow"><div class="mbtn ice sm" id="bNameRnd">RANDOM NAME</div><div class="mbtn play sm dis" id="bNameGo">CONTINUE</div></div><div class="mbtn earth sm" id="bNameBack" style="min-width:0;padding:6px 20px;font-size:12px">BACK</div></div>
+</div>
+<div id="ovProfile" class="ov"><div class="panel" style="max-width:760px"><div class="topline" style="margin:0"><div class="ptitle">PLAYER PROFILE</div><div class="xbtn" id="bProfBack">✕</div></div><div id="profBody"></div></div></div>
 <div id="ovMenu" class="ov menu">
   <div class="stars"></div><div class="neb n1"></div><div class="neb n1b"></div><div class="neb n2"></div><div class="neb n2b"></div><div class="neb n3"></div><div class="neb n4"></div>
   <div class="frame"></div>
@@ -350,7 +399,7 @@
     <div class="btn sm" data-dbg="god">God mode</div><div class="btn sm" data-dbg="coins">+1000 gold</div><div class="btn sm" data-dbg="quest">+quest progress</div>
     <div class="btn sm" data-dbg="hippo">Spawn hippo</div><div class="btn sm" data-dbg="croc">Spawn crocodile</div><div class="btn sm" data-dbg="unlock">Unlock all</div><div class="btn sm" data-dbg="chi">+10 Chi</div><div class="btn sm" data-dbg="balance">Balance table</div><div class="btn sm" data-dbg="keys">3 Chi keys</div><div class="btn sm" data-dbg="levelup">Level up now</div><div class="btn sm" data-dbg="forcechi">Force Chi drops OFF</div><div class="btn sm" data-dbg="hitbox">Hitboxes + FPS</div>
   </div>
-  <div class="row" style="margin-top:10px"><div class="btn sm" id="bReset">RESET SAVE</div><div class="btn sm" id="bSetBack">BACK</div></div>
+  <div class="row" style="margin-top:10px"><div class="btn sm" id="bRename">CHANGE PLAYER NAME</div><div class="btn sm" id="bReset">RESET SAVE</div><div class="btn sm" id="bSetBack">BACK</div></div>
   <div class="ver" id="ver">version 1.0.0</div>
 </div>
 
@@ -976,11 +1025,10 @@ const ORDER=['SHADE','BOREAS','APOLLO','BECK','CLAY'];
 const COIN_IMG=new Image(); COIN_IMG.src=COIN_URI;
 const LV_MULT=lv=>1+0.08*(lv-1);           // +8% HP per level
 const LV_DMG=lv=>Math.pow(1.12,lv-1);       // damage: x1.12 per level, compounding (LV 5 x1.57, LV 7 x1.97, LV 9 x2.48) — every upgrade is felt
-const LEVEL_COST=n=>40*n*n;                 // gold to buy level n
+/* levels are earned with XP (see progress.js), never bought */
 const MAX_LV=30;
-const XP_COST=n=>30*n*n;                 // XP spent to buy character level n
-const XP_KILL=5, XP_BOSS=150;
-const XP_NEED=lv=>80*lv*lv;              // total XP needed to reach player level lv+1
+const XP_KILL=12, XP_BOSS=400;
+const XP_NEED=lv=>300*lv*(lv+1);         // account XP needed to reach player level lv+1 (600 x lv per level: LV 2 at 600, LV 5 at 6,000, LV 10 at 33,000; never caps)
 const PLV_MULT=lv=>1+0.01*(lv-1);        // every player level: +1% HP and damage for all ninjas (the level-up moment)
 function playerLevel(){ let lv=1; while(lv<99&&SAVE.xpTotal>=XP_NEED(lv)) lv++; return lv; }
 /* unlock quests */
@@ -1000,17 +1048,17 @@ const TIERS=[{hp:1,dmg:1},{hp:2.2,dmg:1.9},{hp:4.5,dmg:3.2},{hp:8,dmg:5}];
    Tuned to ninja levels (damage x1.12 / x1.57 / x1.97 / x2.48 of base for LV 2 / 5 / 7 / 9): Mushroom = LV 2, Insect Priest = LV 5, Pirate = LV 7;
    Hippo = LV 5 (hard at 5), Crocodile = LV 7 (hard at 7), Pirate Lord = LV 9 (still a fight at 9). Nothing scales with the ninja's level. */
 const EN={
-  mush:  {hp:50, dmg:9, spd:118,r:14,range:46,atk:1.2,coins:[5,8],gold:[5,8],  xp:6,sprite:0,scale:1.5,biome:'forest',name:'MUSHROOM'},
-  priest:{hp:54, dmg:16,spd:197,r:13,range:44,atk:.8, coins:[6,8],gold:[15,22],xp:10,sprite:1,scale:1.5,biome:'swamp', name:'INSECT PRIEST'},
-  pirate:{hp:127,dmg:15,spd:104,r:15,range:50,atk:1.3,coins:[6,8],gold:[12,18],xp:12,sprite:2,scale:1.5,biome:'beach', name:'PIRATE'},
+  mush:  {hp:50, dmg:9, spd:118,r:14,range:46,atk:1.2,coins:[5,8],gold:[10,16],xp:12,sprite:0,scale:1.5,biome:'forest',name:'MUSHROOM'},
+  priest:{hp:54, dmg:16,spd:197,r:13,range:44,atk:.8, coins:[6,8],gold:[30,44],xp:22,sprite:1,scale:1.5,biome:'swamp', name:'INSECT PRIEST'},
+  pirate:{hp:127,dmg:15,spd:104,r:15,range:50,atk:1.3,coins:[6,8],gold:[20,30],xp:20,sprite:2,scale:1.5,biome:'beach', name:'PIRATE'},
   /* Frost & Ember regular enemies: the Magma Golem is built for a level-11 ninja, the Wolf Warrior for level 14; both stay inside their own half */
-  titan:{hp:18000,dmg:68,spd:82, r:46,range:112,coins:[50,50],gold:[500,500],boss:true,name:'MAGMA TITAN',rig:true,big:true,scale:1.4,adds:'golem',xpBoss:600,biome:'ember'},
-  yeti: {hp:29500,dmg:82,spd:104,r:46,range:118,coins:[60,60],gold:[700,700],boss:true,name:'THE YETI',rig:true,big:true,scale:1.45,adds:'wolf',xpBoss:900,biome:'frost'},
-  golem:{hp:420,dmg:34,spd:92, r:15,range:50,atk:1.4,coins:[8,12],gold:[22,32],xp:24,rig:true,scale:1.5,biome:'ember',name:'MAGMA GOLEM'},
-  wolf: {hp:520,dmg:44,spd:178,r:13,range:46,atk:1.0,coins:[9,13],gold:[30,44],xp:34,rig:true,scale:1.5,biome:'frost',name:'WOLF WARRIOR'},
-  hippo:{hp:2750,dmg:52,spd:76, r:46,range:100,coins:[40,40],gold:[200,200],boss:true,name:'HIPPO',sprite:3,scale:3,adds:'mush'},
-  croc: {hp:3750,dmg:62,spd:125,r:46,range:110,coins:[40,40],gold:[250,250],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
-  lord: {hp:5200,dmg:20,spd:116,r:40,range:96, coins:[40,40],gold:[400,400],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:400},   /* drawn by the LORD rig, not a sprite */
+  titan:{hp:18000,dmg:68,spd:82, r:46,range:112,coins:[50,50],gold:[900,900],boss:true,name:'MAGMA TITAN',rig:true,big:true,scale:1.4,adds:'golem',xpBoss:800,biome:'ember'},
+  yeti: {hp:29500,dmg:82,spd:104,r:46,range:118,coins:[60,60],gold:[1000,1000],boss:true,name:'THE YETI',rig:true,big:true,scale:1.45,adds:'wolf',xpBoss:900,biome:'frost'},
+  golem:{hp:420,dmg:34,spd:92, r:15,range:50,atk:1.4,coins:[8,12],gold:[24,36],xp:26,rig:true,scale:1.5,biome:'ember',name:'MAGMA GOLEM'},
+  wolf: {hp:520,dmg:44,spd:178,r:13,range:46,atk:1.0,coins:[9,13],gold:[40,56],xp:34,rig:true,scale:1.5,biome:'frost',name:'WOLF WARRIOR'},
+  hippo:{hp:2750,dmg:52,spd:76, r:46,range:100,coins:[40,40],gold:[400,400],boss:true,name:'HIPPO',sprite:3,scale:3,adds:'mush'},
+  croc: {hp:3750,dmg:62,spd:125,r:46,range:110,coins:[40,40],gold:[500,500],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
+  lord: {hp:5200,dmg:20,spd:116,r:40,range:96, coins:[40,40],gold:[800,800],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:700},   /* drawn by the LORD rig, not a sprite */
 };
 const STATUS={
   slow:  {tint:'#60a5fa',mult:{spd:.6,rate:.6}},
@@ -1035,7 +1083,7 @@ function roundRect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x
    SAVE
    ===================================================================== */
 const SAVE_KEY='elemental_ninjas_world_v3';
-const DEFAULT_SAVE=()=>({gold:0,levels:{SHADE:1,BOREAS:1,APOLLO:1,BECK:1,CLAY:1},unlocked:{SHADE:true},selected:'SHADE',kills:0,xp:0,xpTotal:0,chi:0,keys:0,pity:0,playTime:0,chiChests:{},bossFightCleared:{},bossFightBestTime:{},bossFightAttempts:{},bossFightFirstClearClaimed:{},bossFightStars:{},chests:{},golden:{},secret:{},bosses:{hippo:0,croc:0,lord:0,titan:0,yeti:0},killsBy:{},ready:{},secrets:{},secretsBonus:{},maps:{bone_shore:true},hints:{},settings:{sound:true,vibrate:true,music:true,dmgNums:true,shake:true}});
+const DEFAULT_SAVE=()=>({gold:0,levels:{SHADE:1,BOREAS:1,APOLLO:1,BECK:1,CLAY:1},unlocked:{SHADE:true},selected:'SHADE',kills:0,xp:0,xpTotal:0,chi:0,keys:0,pity:0,playTime:0,chiChests:{},bossFightCleared:{},bossFightBestTime:{},bossFightAttempts:{},bossFightFirstClearClaimed:{},bossFightStars:{},chests:{},golden:{},secret:{},bosses:{hippo:0,croc:0,lord:0,titan:0,yeti:0},killsBy:{},ready:{},secrets:{},secretsBonus:{},maps:{bone_shore:true},hints:{},settings:{sound:true,vibrate:true,music:true,dmgNums:true,shake:true},player:{name:''},cxp:null,upg:{},merchant:{day:'',n:0}});
 let SAVE=DEFAULT_SAVE();
 /* a returning player: skips the tutorial hints and starts with the map already revealed */
 function isVeteran(){ return (SAVE.kills||0)>=15||(SAVE.playTime||0)>240||Object.values(SAVE.bosses||{}).some(v=>v>0); }
@@ -1121,6 +1169,81 @@ function pollInput(){
   IN.aim=false; if(sticks.R&&sticks.R.moved){ IN.aim=true; const a=Math.atan2(sticks.R.dy,sticks.R.dx); IN.ax=Math.cos(a); IN.ay=Math.sin(a); }
   else if(IN.mouse.aiming){ IN.aim=true; const a=mouseAngle(); IN.ax=Math.cos(a); IN.ay=Math.sin(a); }
 }
+/* ===== PROGRESSION: XP levels, coin upgrades, Chi key merchant, player profile =====
+   Levels are no longer bought. Every kill grants XP; a character levels up the moment its bar fills (cap 30, +8% HP/DMG per level).
+   Shared XP: 30% of every gain goes to every other unlocked ninja. Catch-up: a ninja below the highest ninja level earns double.
+   Coins buy HP / DMG upgrade tracks (10 steps of +5%, 120 x n coins) and Chi keys at the village merchant (600, two a day). */
+const CXP_NEXT=n=>Math.round(80*n*1.35);                                   // XP to go from character level n to n+1 (108 x n)
+const CXP_TOTAL=lv=>{ let t=0; for(let n=1;n<lv;n++) t+=CXP_NEXT(n); return t; };   // total XP a character needs to be level lv
+function lvFromXp(x){ let lv=1; while(lv<MAX_LV&&x>=CXP_TOTAL(lv+1)) lv++; return lv; }
+const UPG_MAX=10, UPG_STEP=.05, UPG_COST=n=>120*n;                         // upgrade n (1..10) costs 120 x n coins, each step +5%
+const ACC_LEVEL_COINS=200;                                                 // a new account level: banner + 200 coins, nothing else
+const XP_SHARE=.3;
+function upgOf(n){ SAVE.upg=SAVE.upg||{}; if(!SAVE.upg[n]) SAVE.upg[n]={hp:0,dmg:0}; return SAVE.upg[n]; }
+function upgHpMult(n){ return 1+UPG_STEP*(upgOf(n).hp||0); }
+function upgDmgMult(n){ return 1+UPG_STEP*(upgOf(n).dmg||0); }
+function cxpOf(n){ SAVE.cxp=SAVE.cxp||{}; if(SAVE.cxp[n]===undefined) SAVE.cxp[n]=CXP_TOTAL(SAVE.levels[n]||1); return SAVE.cxp[n]; }
+function highestLevel(){ let h=1; for(const n of ORDER) if(SAVE.unlocked[n]) h=Math.max(h,SAVE.levels[n]||1); return h; }
+function isCatchUp(n){ return (SAVE.levels[n]||1)<highestLevel(); }
+/* the one entry point for XP. amount = base XP of the source; x,y = where the number floats (optional) */
+function gainXP(amount,x,y,label){
+  if(!(amount>0)) return; const sel=SAVE.selected, hi=highestLevel(), got={};
+  for(const n of ORDER){ if(!SAVE.unlocked[n]) continue; let a=n===sel?amount:Math.round(amount*XP_SHARE); if((SAVE.levels[n]||1)<hi) a*=2; if(a<=0) continue;
+    const before=SAVE.levels[n]||1; SAVE.cxp[n]=cxpOf(n)+a; const after=lvFromXp(SAVE.cxp[n]); SAVE.levels[n]=after; got[n]=a; if(after>before&&n===sel) charLevelUp(before,after); }
+  SAVE.xpTotal=(SAVE.xpTotal||0)+amount;                                   // account XP: the base amount of everything ever earned
+  if(x!==undefined&&got[sel]) floatText(x,y,'+'+got[sel]+' XP'+(label||''),'#c4b5fd',!!label,!!label);
+  checkAccountLevel();
+}
+/* the selected ninja's stats after a level or upgrade change (keeps current HP unless heal) */
+function refreshPlayerStats(p,heal){ if(!p) return; const ch=p.ch, lv=SAVE.levels[p.name]||1, plv=playerLevel(); p.lv=lv; const frac=p.maxHp>0?p.hp/p.maxHp:1; p.maxHp=ch.hp*LV_MULT(lv)*PLV_MULT(plv)*upgHpMult(p.name); p.dmg=ch.dmg*LV_DMG(lv)*PLV_MULT(plv)*upgDmgMult(p.name); p.hp=heal?p.maxHp:Math.min(p.maxHp,p.maxHp*frac); }
+function charLevelUp(from,to){ const p=G.player; if(!p||!p.alive||p.name!==SAVE.selected) return; const oh=Math.round(p.maxHp), od=Math.round(p.dmg); refreshPlayerStats(p,!WORLD.arena); G.hudGold=3;
+  if(WORLD.arena){ floatText(p.x,p.y-64,'LEVEL '+to,'#fde047',true); return; }   /* Boss Fight: stats only, no heal, no freeze-frame */
+  const short=!!(G.boss&&G.boss.alive); G.levelFx={t:0,dur:short?1:2,short,from,to,hp:Math.round(p.maxHp)-oh,dmg:Math.round(p.dmg)-od,col:p.ch.color,glow:p.ch.glow,name:p.name}; SFX.levelup();
+  for(const e of liveEnemies()) if(inCircle(e,p.x,p.y,220)&&!e.boss){ const d=Math.max(1,dist(e,p)); e.kbx+=(e.x-p.x)/d*260; e.kby+=(e.y-p.y)/d*260; }
+  for(const q of G.projs) if(q.alive&&q.owner&&q.owner.kind!=='player'&&Math.hypot(q.x-p.x,q.y-p.y)<160) q.alive=false; SFX.boom(); shake(6); vibrate(80); save(); }
+function checkAccountLevel(){ const lv=playerLevel(); if(G.plv===undefined) G.plv=lv; if(lv<=G.plv) return; const gained=lv-G.plv; G.plv=lv; SAVE.gold+=ACC_LEVEL_COINS*gained; if(G.player){ refreshPlayerStats(G.player,false); if(!WORLD.arena) G.banner={text:'PLAYER LEVEL '+lv,sub:'+'+(ACC_LEVEL_COINS*gained)+' GOLD',t:2.8}; SFX.key(); } save(); }
+function checkLevelUp(){ checkAccountLevel(); }   /* old hook name, kept for the call sites */
+function buyUpgrade(n,k){ const u=upgOf(n), cur=u[k]||0; if(cur>=UPG_MAX) return false; const cost=UPG_COST(cur+1); if(SAVE.gold<cost) return false; SAVE.gold-=cost; u[k]=cur+1; save(); if(G.player&&G.player.name===n) refreshPlayerStats(G.player,false); return true; }
+/* ---- Chi key merchant (village) ---- */
+const MERCH_PRICE=600, MERCH_DAILY=2;
+function merchLeft(){ const day=new Date().toDateString(); SAVE.merchant=SAVE.merchant||{day:'',n:0}; if(SAVE.merchant.day!==day){ SAVE.merchant.day=day; SAVE.merchant.n=0; } return MERCH_DAILY-SAVE.merchant.n; }
+function merchantNpc(){ return WORLD.village&&WORLD.village.npcs?WORLD.village.npcs.find(n=>n.k==='merchant'):null; }
+function merchantUpdate(p,dt){ const m=merchantNpc(); if(!m||!p||!p.alive||WORLD.arena){ if(G.merchNear) merchantClose(); return; } const d=Math.hypot(p.x-m.x,p.y-m.y); if(d<50&&!G.merchNear){ G.merchNear=true; merchantOpen(); } else if(d>78&&G.merchNear) merchantClose(); }
+function merchantOpen(){ const el=$('merch'); if(!el) return; el.classList.add('on'); merchantRefresh(); }
+function merchantClose(){ G.merchNear=false; const el=$('merch'); if(el) el.classList.remove('on'); }
+function merchantRefresh(){ const left=merchLeft(), full=(SAVE.keys||0)>=3, b=$('bMerchBuy'); $('merchTxt').innerHTML='<b>KEY MERCHANT</b><br>Chi key · '+MERCH_PRICE+' gold · '+left+' / '+MERCH_DAILY+' left today'; b.classList.toggle('dis',left<=0||full||SAVE.gold<MERCH_PRICE); b.textContent=full?'KEYS FULL':left<=0?'SOLD OUT TODAY':SAVE.gold<MERCH_PRICE?'NOT ENOUGH GOLD':'BUY KEY'; }
+function merchantBuy(){ const left=merchLeft(); if(left<=0||(SAVE.keys||0)>=3||SAVE.gold<MERCH_PRICE) return; SAVE.gold-=MERCH_PRICE; SAVE.keys=(SAVE.keys||0)+1; SAVE.merchant.n++; save(); SFX.key(); G.hudGold=3; const p=G.player; if(p) floatText(p.x,p.y-60,'+1 CHI KEY','#7fd8f8',true,true); merchantRefresh(); }
+/* ---- player name ---- */
+const RANDOM_NAMES=['Frostwalker','Shadowfang','Emberblade','Stormtail','Nightleaf','Ashrunner','Icefang','Thunderfoot','Moonstrike','Lavaheart','צל 12','לוחם האש','רוח הקרח','נינג\'ה צל','שומר היער','ברק סגול'];
+function nameValid(s){ s=(s||'').trim(); if(s.length<3||s.length>12) return false; return /^[A-Za-z֐-׿0-9 '\-]+$/.test(s); }
+function randomName(){ const b=RANDOM_NAMES[Math.floor(Math.random()*RANDOM_NAMES.length)]; if(b.length<=9&&Math.random()<.5) return b+' '+(Math.floor(Math.random()*90)+10); return b; }
+function playerName(){ return (SAVE.player&&SAVE.player.name)||''; }
+/* ---- profile ---- */
+const SECRETS_TOTAL=8;                                                     // 7 hidden areas in Frost & Ember + the Bone Shore secret chest
+function secretsFound(){ let n=0; for(const k in (SAVE.secrets||{})) if(SAVE.secrets[k]) n++; for(const k in (SAVE.secret||{})) if(SAVE.secret[k]) n++; return n; }
+function bossesKilled(){ let n=0; for(const k in (SAVE.bosses||{})) n+=SAVE.bosses[k]||0; return n; }
+function fmtTime(s){ s=Math.floor(s||0); const h=Math.floor(s/3600), m=Math.floor(s%3600/60); return h>0?h+'h '+(m<10?'0':'')+m+'m':m+'m '+(s%60<10?'0':'')+(s%60)+'s'; }
+function profileCardRefresh(){ const el=$('profCard'); if(!el) return; const n=SAVE.selected, ch=CH[n], plv=playerLevel(), lo=plv>1?XP_NEED(plv-1):0, hi=XP_NEED(plv), cur=(SAVE.xpTotal||0)-lo, need=hi-lo;
+  el.style.setProperty('--c',ch.color);
+  el.innerHTML=`<div class="pport"></div><div class="pbody"><div class="pname">${escapeHtml(playerName()||'NINJA')}</div><div class="plv">PLAYER LEVEL ${plv}</div><div class="pxp"><i style="width:${Math.round(clamp(cur/need,0,1)*100)}%"></i></div><div class="pxpt">${cur} / ${need} XP</div>
+  <div class="pres"><span><img class="coinic" src="${COIN_URI}" alt="">${SAVE.gold}</span><span>🔑 ${SAVE.keys||0}</span><span><i class="chiorb"></i>${SAVE.chi||0}</span></div>
+  <div class="pstat">NINJAS ${ORDER.filter(x=>SAVE.unlocked[x]).length}/${ORDER.length} · SECRETS ${secretsFound()}/${SECRETS_TOTAL} · BOSSES ${bossesKilled()}</div></div>`;
+  el.querySelector('.pport').appendChild(charCanvas(ch,false,2.3,66,78,.97)); }
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function buildProfile(){ const el=$('profBody'); const plv=playerLevel(), lo=plv>1?XP_NEED(plv-1):0, hi=XP_NEED(plv);
+  let h=`<div class="phead"><div class="pport big"></div><div><div class="pname big">${escapeHtml(playerName()||'NINJA')}</div><div class="plv">PLAYER LEVEL ${plv} · ${(SAVE.xpTotal||0)-lo} / ${hi-lo} XP · ${SAVE.xpTotal||0} XP total</div><div class="pres"><span><img class="coinic" src="${COIN_URI}" alt="">${SAVE.gold}</span><span>🔑 ${SAVE.keys||0}</span><span><i class="chiorb"></i>${SAVE.chi||0}</span></div></div></div>`;
+  h+='<div class="psec">NINJAS</div><div class="plist">';
+  for(const n of ORDER){ const ch=CH[n], un=!!SAVE.unlocked[n], lv=SAVE.levels[n]||1, x=cxpOf(n), base=CXP_TOTAL(lv), need=lv>=MAX_LV?1:CXP_TOTAL(lv+1)-base, u=upgOf(n);
+    h+=`<div class="prow2 ${un?'':'lk'}" style="--c:${ch.color}"><div class="pn">${n}</div><div class="pl">${un?'LV '+lv:'LOCKED'}</div><div class="pxp"><i style="width:${un?(lv>=MAX_LV?100:Math.round((x-base)/need*100)):0}%"></i></div><div class="pxs">${un?(lv>=MAX_LV?'MAX':(x-base)+' / '+need+' XP'):''}${un&&isCatchUp(n)?' · ×2':''}</div><div class="pu">❤ ${u.hp||0}/${UPG_MAX} · 💥 ${u.dmg||0}/${UPG_MAX}</div></div>`; }
+  h+='</div>';
+  const B=SAVE.bosses||{}, names={hippo:'Hippo',croc:'Crocodile',lord:'Pirate Lord',titan:'Magma Titan',yeti:'The Yeti'};
+  h+=`<div class="pgrid"><div class="pbox"><div class="psec">RECORD</div><div>Total kills: <b>${SAVE.kills||0}</b></div><div>Playtime: <b>${fmtTime(SAVE.playTime)}</b></div><div>Secrets found: <b>${secretsFound()} / ${SECRETS_TOTAL}</b></div><div>Account XP: <b>${SAVE.xpTotal||0}</b></div></div>`;
+  h+=`<div class="pbox"><div class="psec">BOSSES DEFEATED</div>${Object.keys(names).map(k=>`<div>${names[k]}: <b>${B[k]||0}</b></div>`).join('')}</div>`;
+  const bt=SAVE.bossFightBestTime||{}; h+=`<div class="pbox"><div class="psec">BOSS FIGHT BEST TIMES</div>${BF_STAGES.map(s=>`<div>${s.name}: <b>${bt[s.id]?bt[s.id].toFixed(1)+'s':'—'}</b>${(SAVE.bossFightStars&&SAVE.bossFightStars[s.id])?' '+'★'.repeat(SAVE.bossFightStars[s.id]):''}</div>`).join('')}</div></div>`;
+  el.innerHTML=h; el.querySelector('.pport').appendChild(charCanvas(CH[SAVE.selected],false,3,88,104,.97)); }
+/* ---- save migration: purchased levels become the XP those levels require; coins stay; account level from summed XP ---- */
+function migrateSave(){ SAVE.player=SAVE.player||{name:''}; SAVE.upg=SAVE.upg||{}; SAVE.merchant=SAVE.merchant||{day:'',n:0}; if(!SAVE.cxp){ SAVE.cxp={}; for(const n of ORDER){ const lv=Math.min(MAX_LV,Math.max(1,SAVE.levels[n]||1)); SAVE.cxp[n]=CXP_TOTAL(lv); } if(SAVE.xp>0){ SAVE.cxp[SAVE.selected]+=SAVE.xp; SAVE.levels[SAVE.selected]=lvFromXp(SAVE.cxp[SAVE.selected]); } SAVE.xp=0; SAVE.migrated=1; } for(const n of ORDER){ cxpOf(n); upgOf(n); SAVE.levels[n]=lvFromXp(SAVE.cxp[n]); } }
+migrateSave();
 /* =====================================================================
    WORLD — "Bone Shore": one connected hand-shaped world.
    Irregular coastline, curving river with fords and a waterfall, darkening swamp,
@@ -1133,7 +1256,7 @@ let WORLD={w:3200,h:2000,land:{x0:100,y0:100,x1:2900,y1:1900},corner:220,
   pools:[{x:500,y:1720,r:70},{x:1000,y:1800,r:90},{x:1400,y:1680,r:60},{x:1900,y:1780,r:85},{x:2300,y:1650,r:65},{x:2650,y:1780,r:55},{x:2480,y:1730,r:45},{x:2565,y:1800,r:45},{x:2500,y:1885,r:30},{x:2400,y:1790,r:45}],   // the last four ring the swamp Chi ledge, open only from the south-west
   chiChests:[[240,1230],[2820,150],[2480,1815]],   // fixed Chi chests: deep forest, far end of the beach, swamp ledge
   village:{x:1600,y:1000,r:230,houses:[{x:1440,y:820,w:130,h:95},{x:1690,y:815,w:130,h:95},{x:1430,y:1090,w:130,h:95},{x:1700,y:1100,w:130,h:95}],
-    npcs:[{x:1555,y:990,k:'upgrade',label:''},{x:1650,y:990,k:'select',label:''}],
+    npcs:[{x:1555,y:990,k:'upgrade',label:''},{x:1650,y:990,k:'select',label:''},{x:1600,y:1080,k:'merchant',label:''}],
     signs:[{x:1600,y:790,t:'NORTH: RIVER'},{x:1600,y:1215,t:'SOUTH: SWAMP'},{x:1830,y:1000,t:'EAST: BEACH'},{x:1370,y:1000,t:'WEST: FOREST'}],
     lanterns:[[1525,915],[1690,915],[1525,1085],[1690,1085],[1585,800],[1615,800],[1585,1200],[1615,1200]],
     barrels:[[1590,845],[1608,842],[1740,1070]], crates:[[1442,945],[1448,968],[1770,935]],
@@ -1463,7 +1586,7 @@ function buildWorld2(){
     colliders:[], cgrid:new Map(), CG:200, pathGrid:null, PG:32, chunks:new Map(), CS:640, mini:null, explored:null, FOG:64, ex:0, ey:0,
     bridges:[{y:880,w:120,h:60},{y:1330,w:120,h:60}], props:[], secretsFound:0 };
   const vx=1800, vy=1100; W.village={x:vx,y:vy,r:230,houses:[{x:vx-160,y:vy-180,w:130,h:95},{x:vx+90,y:vy-185,w:130,h:95},{x:vx-170,y:vy+90,w:130,h:95},{x:vx+100,y:vy+100,w:130,h:95}],
-    npcs:[{x:vx-45,y:vy-10,k:'upgrade',label:''},{x:vx+50,y:vy-10,k:'select',label:''}],
+    npcs:[{x:vx-45,y:vy-10,k:'upgrade',label:''},{x:vx+50,y:vy-10,k:'select',label:''},{x:vx,y:vy+70,k:'merchant',label:''}],
     signs:[{x:vx,y:vy-210,t:'NORTH: RUINS'},{x:vx,y:vy+215,t:'SOUTH: HOT SPRINGS'},{x:vx+230,y:vy,t:'EAST: EMBER'},{x:vx-230,y:vy,t:'WEST: FROST'}],
     lanterns:[[vx-75,vy-85],[vx+90,vy-85],[vx-75,vy+85],[vx+90,vy+85],[vx-15,vy-200],[vx+15,vy-200],[vx-15,vy+200],[vx+15,vy+200]],
     barrels:[[vx-10,vy-155],[vx+8,vy-158],[vx+140,vy+70]], crates:[[vx-158,vy-55],[vx-152,vy-32],[vx+170,vy-65]], fences:[], safeR:330, dummies:[[vx+135,vy],[vx+160,vy+30]], flags:[[vx-205,vy-210],[vx+205,vy-210],[vx-205,vy+210],[vx+205,vy+210]], campfires:[[vx,vy+60]] };
@@ -1591,7 +1714,7 @@ function m2HazUpdate(dt){ const H=G.haz, p=G.player; if(!H||!p) return; const E=
   for(let i=H.burns.length-1;i>=0;i--){ const b=H.burns[i]; b.t-=dt; b.tick-=dt; if(b.tick<=0){ b.tick=.5; if(p.alive&&Math.hypot(p.x-b.x,p.y-b.y)<b.r+p.r*.5&&p.jumpT<=0) damage(p,(p.name==='APOLLO'?5:10)*.5,{kind:'hazard',x:b.x,y:b.y},{sure:true,ranged:true}); for(const e of G.enemies) if(e.alive&&!e.boss&&Math.hypot(e.x-b.x,e.y-b.y)<b.r+e.r*.5) damage(e,10,null,{silent:true,color:'#fb923c',noKb:true}); } if(b.t<=0) H.burns.splice(i,1); }
   if(H.erupt.active>0&&m2Biome(p.x,p.y)==='lava'&&Math.random()<.15) part(CAM.x+rnd(-400,400),CAM.y+250,rnd(-20,20),rnd(-120,-60),LP.ember,1.2,2,-30,true);
   // secrets: discovery
-  for(const s of M2.secrets){ const key=M2.id+'_'+s.n; if(!SAVE.secrets[key]&&Math.hypot(p.x-s.x,p.y-s.y)<s.r*.7){ SAVE.secrets[key]=true; save(); G.banner={text:'HIDDEN AREA',sub:s.name+' · '+m2SecretsFound()+' / 7',t:2.8}; SFX.key(); explore(s.x,s.y); burst(p.x,p.y-10,['#ffffff','#fde047','#7fd4ff'],20,160,.9,3,-40,true); if(m2SecretsFound()>=7&&!SAVE.secretsBonus[M2.id]){ SAVE.secretsBonus[M2.id]=true; SAVE.chi=(SAVE.chi||0)+2; SAVE.keys=(SAVE.keys||0)+1; floatText(p.x,p.y-60,'ALL SECRETS FOUND  +2 CHI  +1 KEY','#fde047',true,true); save(); } } }
+  for(const s of M2.secrets){ const key=M2.id+'_'+s.n; if(!SAVE.secrets[key]&&Math.hypot(p.x-s.x,p.y-s.y)<s.r*.7){ SAVE.secrets[key]=true; gainXP(150,p.x,p.y-70,'  HIDDEN AREA'); save(); G.banner={text:'HIDDEN AREA',sub:s.name+' · '+m2SecretsFound()+' / 7  ·  +150 XP',t:2.8}; SFX.key(); explore(s.x,s.y); burst(p.x,p.y-10,['#ffffff','#fde047','#7fd4ff'],20,160,.9,3,-40,true); if(m2SecretsFound()>=7&&!SAVE.secretsBonus[M2.id]){ SAVE.secretsBonus[M2.id]=true; SAVE.chi=(SAVE.chi||0)+2; SAVE.keys=(SAVE.keys||0)+1; floatText(p.x,p.y-60,'ALL SECRETS FOUND  +2 CHI  +1 KEY','#fde047',true,true); save(); } } }
 }
 function inSecretCave(x,y){ return M2.secrets.some(s=>(s.kind==='lavacave'||s.kind==='icecave')&&Math.hypot(x-s.x,y-s.y)<s.r); }
 function m2SecretsFound(){ let n=0; for(const s of M2.secrets) if(SAVE.secrets[M2.id+'_'+s.n]) n++; return n; }
@@ -1639,7 +1762,7 @@ function burst(x,y,cols,n,spd,life,size,grav,glow){ for(let i=0;i<n;i++){ const 
 function floatText(x,y,txt,col,big,crit){ G.floats.push({x,y,txt,col:col||'#fff',t:0,vy:-70,vx:rnd(-20,20),big:!!big,crit:!!crit}); }
 
 const JUMP_DUR=.6, JUMP_CD=0;   // no cooldown: you can jump again as soon as you land
-function makePlayer(name){ const ch=CH[name], lv=SAVE.levels[name], m=LV_MULT(lv)*PLV_MULT(playerLevel()), md=LV_DMG(lv)*PLV_MULT(playerLevel()); return {kind:'player',name,ch,lv,x:0,y:0,vx:0,vy:0,r:15,animT:0,face:0,hp:ch.hp*m,maxHp:ch.hp*m,dmg:ch.dmg*md,jumpT:0,jumpCd:0,spd:ch.spd,rate:ch.rate,attackT:0,atkCd:0,queued:null,combo:0,comboT:0,lunge:0,lungeA:0,dashT:0,dashCd:0,dAng:0,abCd:0,status:{},flash:0,stagger:0,inv:0,alive:true,hidden:false,hideT:0,kbx:0,kby:0,dashHit:[],deadT:0,bob:0}; }
+function makePlayer(name){ const ch=CH[name], lv=SAVE.levels[name], m=LV_MULT(lv)*PLV_MULT(playerLevel())*upgHpMult(name), md=LV_DMG(lv)*PLV_MULT(playerLevel())*upgDmgMult(name); return {kind:'player',name,ch,lv,x:0,y:0,vx:0,vy:0,r:15,animT:0,face:0,hp:ch.hp*m,maxHp:ch.hp*m,dmg:ch.dmg*md,jumpT:0,jumpCd:0,spd:ch.spd,rate:ch.rate,attackT:0,atkCd:0,queued:null,combo:0,comboT:0,lunge:0,lungeA:0,dashT:0,dashCd:0,dAng:0,abCd:0,status:{},flash:0,stagger:0,inv:0,alive:true,hidden:false,hideT:0,kbx:0,kby:0,dashHit:[],deadT:0,bob:0}; }
 function makeEnemy(type,x,y){ const d=EN[type], tier=TIERS[G.map?G.map.tier:0]; const e={kind:'enemy',type,d,x,y,vx:0,vy:0,r:d.r,face:0,hp:d.hp*tier.hp,maxHp:d.hp*tier.hp,dmg:d.dmg*tier.dmg,spd:d.spd,status:{},flash:0,stagger:0,flinch:0,hidden:false,sub:null,canSwim:false,crashT:0,alive:true,ai:{state:'idle',t:rnd(.3,2),angle:Math.random()*TAU,atkT:rnd(.5,1.2),tele:null,retreated:false,hit:[],home:{x,y},phase2:false},boss:!!d.boss,biome:d.biome||null,summoned:false,dodgeCd:0,holdAnim:false,kbx:0,kby:0,kvx:0,kvy:0,attackT:0,abCd:2,spawnT:.6,deadT:undefined,animT:Math.random()*3,spawner:null}; if(d.boss){ G.boss=e; e.ai.state='chase'; } G.enemies.push(e); return e; }
 function fromFront(e,src){ return Math.abs(angDiff(e.face,Math.atan2(src.y-e.y,src.x-e.x)))<1.1; }
 /* is this world point inside a prop collider (tree trunk, rock, crate…)? used by pellets so cover works */
@@ -1674,34 +1797,28 @@ function enemyDie(e){
   e.alive=false; G.kills++; let n=rndi(e.d.coins[0],e.d.coins[1]), gold=rndi(e.d.gold[0],e.d.gold[1]); if(e.summoned){ n=Math.ceil(n/2); gold=Math.ceil(gold/2); }   // boss adds drop half
   const per=Math.ceil(gold/n); for(let i=0;i<n;i++) G.coins.push({x:e.x,y:e.y,vx:rnd(-120,120),vy:rnd(-220,-80),v:per,t:0,fly:false,z:0});
   if(e.boss&&WORLD.arena){ if(G.boss===e) G.boss=null; arenaWin(e); return; }   // Boss Fight: separate rewards, nothing counts toward the open world
-  if(e.boss){ e.deadT=3.2; burst(e.x,e.y-10,['#c8a878','#8a6a4a','#fde047','#ffffff'],80,260,1.4,6,200,true); shake(16); vibrate(300); SFX.death(); const bxp=e.d.xpBoss||XP_BOSS; floatText(e.x,e.y-60,'BOSS DEFEATED  +'+bxp+' XP','#fde047',true,true); if(G.boss===e) G.boss=null; G.lastBossDeath=G.time; G.bossMark=null; SAVE.bosses[e.type]=(SAVE.bosses[e.type]||0)+1; SAVE.xp+=bxp; SAVE.xpTotal+=bxp; dropChi(e.x,e.y,2); keyDrop(e.x,e.y); checkUnlocks(); checkLevelUp(); }
-  else { deathFx(e); e.deadT=1.4; if(e.spawner) e.spawner.alive--; SAVE.kills++; SAVE.killsBy=SAVE.killsBy||{}; SAVE.killsBy[e.type]=(SAVE.killsBy[e.type]||0)+1; if(!e.summoned&&(Math.random()<.005||DEBUG.forceChi)) dropChi(e.x,e.y,1); { const p=G.player; if(p&&p.name==='SHADE'&&spinning(p)&&e.spinHitT===G.time&&Math.random()<.25) G.coins.push({x:e.x,y:e.y,vx:rnd(-80,80),vy:-120,v:5,t:0,fly:false,z:0}); } const xp=e.d.xp||XP_KILL; SAVE.xp+=xp; SAVE.xpTotal+=xp; floatText(e.x,e.y-44,'+'+xp+' XP','#c4b5fd'); if(!e.summoned){ SAVE.pity=(SAVE.pity||0)+1; if(Math.random()<.02||SAVE.pity>=80) keyDrop(e.x,e.y); } checkUnlocks(); checkLevelUp(); if(!SAVE.hints.kill){ SAVE.hints.kill=true; G.arrowTarget=null; showHint('Try your ability ✦'); } }
+  if(e.boss){ e.deadT=3.2; burst(e.x,e.y-10,['#c8a878','#8a6a4a','#fde047','#ffffff'],80,260,1.4,6,200,true); shake(16); vibrate(300); SFX.death(); const bxp=e.d.xpBoss||XP_BOSS; floatText(e.x,e.y-60,'BOSS DEFEATED  +'+bxp+' XP','#fde047',true,true); if(G.boss===e) G.boss=null; G.lastBossDeath=G.time; G.bossMark=null; SAVE.bosses[e.type]=(SAVE.bosses[e.type]||0)+1; gainXP(bxp); dropChi(e.x,e.y,2); keyDrop(e.x,e.y); checkUnlocks(); checkLevelUp(); }
+  else { deathFx(e); e.deadT=1.4; if(e.spawner) e.spawner.alive--; SAVE.kills++; SAVE.killsBy=SAVE.killsBy||{}; SAVE.killsBy[e.type]=(SAVE.killsBy[e.type]||0)+1; if(!e.summoned&&(Math.random()<.005||DEBUG.forceChi)) dropChi(e.x,e.y,1); { const p=G.player; if(p&&p.name==='SHADE'&&spinning(p)&&e.spinHitT===G.time&&Math.random()<.25) G.coins.push({x:e.x,y:e.y,vx:rnd(-80,80),vy:-120,v:5,t:0,fly:false,z:0}); } gainXP(e.d.xp||XP_KILL,e.x,e.y-44); if(!e.summoned){ SAVE.pity=(SAVE.pity||0)+1; if(Math.random()<.02||SAVE.pity>=80) keyDrop(e.x,e.y); } checkUnlocks(); checkLevelUp(); if(!SAVE.hints.kill){ SAVE.hints.kill=true; G.arrowTarget=null; showHint('Try your ability ✦'); } }
   save();
 }
 /* Chi key: 2% from any common enemy, always from a boss, pity after 80 kills; capped at 3 */
 function keyDrop(x,y){ SAVE.pity=0; if((SAVE.keys||0)>=3){ floatText(x,y-70,'KEY BAG FULL (3/3)','#fde68a',true); return; } SAVE.keys=(SAVE.keys||0)+1; burst(x,y-14,['#fde047','#ffffff','#f59e0b'],40,240,1,5,120,true); floatText(x,y-76,'🔑 CHI KEY!','#fde047',true,true); SFX.key(); vibrate(60); G.slowmo=.4; const p=G.player; if(p){ for(let i=0;i<10;i++) part(x,y-10,rnd(-40,40),rnd(-60,-20),'#fde047',.6,4,0,true); } }
-/* player level from total XP: full heal, +1% HP/damage for every ninja, and the level-up moment */
-function checkLevelUp(){ const lv=playerLevel(); if(lv<=G.plv) return; const from=G.plv; G.plv=lv; const p=G.player; if(!p||!p.alive) return; const ch=p.ch, m=LV_MULT(p.lv)*PLV_MULT(lv), md=LV_DMG(p.lv)*PLV_MULT(lv), oh=Math.round(p.maxHp), od=Math.round(p.dmg); const keep=p.hp; p.maxHp=ch.hp*m; p.dmg=ch.dmg*md; p.hp=p.maxHp;
-  if(WORLD.arena){ p.hp=Math.min(p.maxHp,keep); floatText(p.x,p.y-64,'LEVEL '+lv,'#fde047',true); G.hudGold=3; return; }   /* Boss Fight: no heal at all on a level-up, only Spinjitzu heals */   /* Boss Fight: stats and full heal only, no freeze-frame or level-up screen mid-fight */
-  const short=!!(G.boss&&G.boss.alive); G.levelFx={t:0,dur:short?1:2,short,from,to:lv,hp:Math.round(p.maxHp)-oh,dmg:Math.round(p.dmg)-od,col:ch.color,glow:ch.glow,name:p.name}; G.hudGold=3;
-  for(const e of liveEnemies()) if(inCircle(e,p.x,p.y,220)&&!e.boss){ const d=Math.max(1,dist(e,p)); e.kbx+=(e.x-p.x)/d*260; e.kby+=(e.y-p.y)/d*260; }   // burst pushes enemies back (no damage)
-  for(const q of G.projs) if(q.alive&&q.owner&&q.owner.kind!=='player'&&Math.hypot(q.x-p.x,q.y-p.y)<160) q.alive=false;   // and clears projectiles nearby
-  SFX.levelup(); SFX.boom(); shake(6); vibrate(80); save(); }
+/* character levels come from XP now (progress.js: gainXP / charLevelUp); the account level is a banner + coins */
 /* per-enemy death: cap pops / mask cracks and beetles scatter / hat spins off (+3% golden key) */
 function deathFx(e){
   if((e.d.base||e.type)==='mush'){ const cap=part(e.x,e.y-30,rnd(-60,60),-260,'#8a5a34',.9,7,700); if(cap) cap.cap=true; burst(e.x,e.y-8,['#7a4aaa','#b78cf0','#8ac06a'],18,120,1,4,-30,true); SFX.pop(); }
   else if((e.d.base||e.type)==='priest'){ burst(e.x,e.y-16,['#2f6b52','#8ab08a','#c8202a'],12,150,.6,4,300); for(let i=0;i<8;i++){ const a=Math.random()*TAU; const b=part(e.x,e.y+4,Math.cos(a)*rnd(60,140),Math.sin(a)*rnd(30,70),i%3?'#1c1c22':'#8a1a1a',rnd(.8,1.4),3,0); if(b) b.beetle=true; } SFX.crit(); }
   else if(e.type==='golem'){ burst(e.x,e.y-10,['#3a3038','#ff5a10','#ffb020'],16,160,.8,4,400); shake(4); noise(.2,.2); }
   else if(e.type==='wolf'){ burst(e.x,e.y-10,['#bfeaff','#ffffff','#7fb8d8'],18,170,.7,3,300); tone(900,.25,'sine',.12,-300); }
-  else if(e.type==='pirate'){ const hat=part(e.x,e.y-34,rnd(-40,40),-240,'#5e3d22',1.1,8,650); if(hat) hat.hat=true; burst(e.x,e.y-8,['#c9a24a','#8ab0a0','#f2ede0'],12,150,.8,4,300); if(Math.random()<.03){ SAVE.gold+=90; SAVE.xp+=40; SAVE.xpTotal+=40; floatText(e.x,e.y-76,'GOLDEN KEY! A golden chest opens: +90 GOLD  +40 XP','#fde047',true,true); burst(e.x,e.y-20,['#fde047','#ffffff'],24,180,.9,4,250,true); SFX.levelup(); } }
+  else if(e.type==='pirate'){ const hat=part(e.x,e.y-34,rnd(-40,40),-240,'#5e3d22',1.1,8,650); if(hat) hat.hat=true; burst(e.x,e.y-8,['#c9a24a','#8ab0a0','#f2ede0'],12,150,.8,4,300); if(Math.random()<.03){ SAVE.gold+=180; gainXP(40); floatText(e.x,e.y-76,'GOLDEN KEY! A golden chest opens: +180 GOLD  +40 XP','#fde047',true,true); burst(e.x,e.y-20,['#fde047','#ffffff'],24,180,.9,4,250,true); SFX.levelup(); } }
 }
 function playerDie(){ const p=G.player; p.alive=false; p.deadT=1; SFX.death(); shake(10); vibrate(400); burst(p.x,p.y-8,[p.ch.color,p.ch.glow,'#ffffff'],40,200,1.1,5,150,true); if(WORLD.arena){ arenaFail(); return; } const lost=Math.floor(SAVE.gold*.1); SAVE.gold-=lost; G.lostGold=lost; save(); }
 function openChest(c){
   c.open=true; SFX.levelup(); burst(c.x,c.y-6,['#fde047','#ffffff','#e0a020'],26,180,.9,4,250,true); const p=G.player;
-  if(c.kind==='normal'){ const n=rndi(15,35); SAVE.chests[c.id]=true; SAVE.gold+=n; floatText(c.x,c.y-30,'+'+n+' GOLD','#fde68a',true); }
-  else if(c.kind==='golden'){ SAVE.golden[c.id]=new Date().toDateString(); SAVE.gold+=90; SAVE.xp+=40; SAVE.xpTotal+=40; floatText(c.x,c.y-30,'+90 GOLD  +40 XP','#fde68a',true); }
+  if(c.kind==='normal'){ const n=rndi(20,60); SAVE.chests[c.id]=true; SAVE.gold+=n; gainXP(40); floatText(c.x,c.y-30,'+'+n+' GOLD  +40 XP','#fde68a',true); }
+  else if(c.kind==='golden'){ SAVE.golden[c.id]=new Date().toDateString(); const n=rndi(150,250); SAVE.gold+=n; gainXP(40); floatText(c.x,c.y-30,'+'+n+' GOLD  +40 XP','#fde68a',true); }
   else if(c.kind==='chi'){ SAVE.keys--; SAVE.chiChests[c.id]=SAVE.playTime; SFX.chestOpen(); burst(c.x,c.y-10,['#22d3ee','#3b82f6','#ffffff'],36,220,1,4,120,true); floatText(c.x,c.y-34,'CHI CHEST  +3 CHI','#7fd8f8',true,true); for(let i=0;i<3;i++){ const a=Math.atan2(p.y-c.y,p.x-c.x)+(i-1)*1.1, vh=250+i*25, air=2*vh/520, tx=p.x+Math.cos(a)*44, ty=p.y+Math.sin(a)*30; G.chis.push({x:c.x,y:c.y-6,vx:(tx-c.x)/air,vy:(ty-c.y)/air,h:12,vh,t:-i*.4,landed:false,fly:false,chest:true}); } }   // lid bursts, three orbs arc out and are collected one by one
-  else { SAVE.secret[c.id]=true; SAVE.gold+=300; SAVE.xp+=150; SAVE.xpTotal+=150; floatText(c.x,c.y-30,'SECRET CHEST! +300 GOLD  +150 XP','#ffffff',true,true); }
+  else { SAVE.secret[c.id]=true; SAVE.gold+=300; gainXP(150); floatText(c.x,c.y-30,'SECRET CHEST! +300 GOLD  +150 XP','#ffffff',true,true); }
   save();
 }
 
@@ -1988,6 +2105,7 @@ function announceBoss(type){ const p=G.player, all=type==='hippo'?WORLD.hippoLai
 function worldUpdate(dt){
   const p=G.player; G.mapT+=dt;
   if(G.haz&&!WORLD.arena) m2HazUpdate(dt);
+  if(!WORLD.arena) merchantUpdate(p,dt);
   if(WORLD.arena){ arenaUpdate(dt); G.enemies=G.enemies.filter(e=>e.alive||(e.deadT!==undefined&&e.deadT>0)); G.chasers=0; for(const e of G.enemies) enemyUpdate(e,dt,p); return; }
   if(G.announce){ G.announce.t-=dt; shake(2); const a=G.announce; if(a.type==='croc'&&Math.random()<.6) part(a.x+rnd(-60,60),a.y+rnd(-30,30),0,-40,'#7aa050',.9,5,0,true); if(a.type==='lord') lordAnnounceFx(a,dt); if(a.t<=0){ G.announce=null; if(G.haz) G.haz.lastBossSpawn=G.time; const e=makeEnemy(a.type,a.x,a.y); e.spawnT=0; e.lair={x:a.x,y:a.y}; collide(e); G.banner={text:BOSS_ANN[a.type].b,sub:BOSS_ANN[a.type].sub+' — SEE THE MAP',t:3.2}; SFX.roar(); shake(14); burst(e.x,e.y,BOSS_ANN[a.type].cols,60,340,1,8,300); } }
      /* under-levelled on the beach: a warning, not a wall */
@@ -2172,8 +2290,8 @@ function b2Summon(e){ const alive=G.enemies.filter(x=>x.alive&&x.summoned&&!x.bo
 function b2Phase2Banner(e){ const a=e.ai; if(a.phase2&&!a.p2Shown){ a.p2Shown=true; G.banner={text:'PHASE 2',sub:e.type==='titan'?'THE TITAN BURNS WHITE-HOT':'THE YETI\'S FROZEN RAGE',t:2.4}; if(G.haz) G.haz.flash=.4; shake(16); vibrate(200); SFX.roar(); } }
 AI.titan=function(e,p,dt){ const a=e.ai, d=dist(e,p), rt=statMult(e,'rate')*(a.phase2?1.3:1), P2=a.phase2?1.2:1; a.t-=dt; e.abCd-=dt*rt; a.atkT-=dt*rt; bossPhase(e,dt); b2Phase2Banner(e); a.cycle=a.cycle||0;
   /* a lava wave every 4 s (3 s when berserk), whatever the Titan is doing, as long as the ninja is near */
-  a.waveT=(a.waveT===undefined?4:a.waveT)-dt; if(a.waveT<=0&&p.alive&&d<760&&!inSafeZone(p.x,p.y)){ a.waveT=4; lavaWave(e,Math.round(TITAN_HIT.wave*P2),e.face); floatText(e.x,e.y-70,a.phase2?'DOUBLE LAVA WAVE':'LAVA WAVE','#ffb020'); shake(5); noise(.15,.2); if(a.phase2){ a.wave2=.45; } }
-  if(a.wave2!==undefined){ a.wave2-=dt; if(a.wave2<=0){ a.wave2=undefined; if(e.alive) lavaWave(e,Math.round(TITAN_HIT.wave*P2),e.face+1.1); } }   /* phase 2: a second wave 0.45 s behind the first, its gaps turned so you have to move */
+  a.waveT=(a.waveT===undefined?4:a.waveT)-dt; if(a.waveT<=0&&p.alive&&d<760&&!inSafeZone(p.x,p.y)){ a.waveT=4; lavaWave(e,Math.round(TITAN_HIT.wave*P2),e.face); floatText(e.x,e.y-70,a.phase2?'DOUBLE LAVA WAVE':'LAVA WAVE','#ffb020'); shake(5); noise(.15,.2); if(a.phase2){ a.wave2=1; } }
+  if(a.wave2!==undefined){ a.wave2-=dt; if(a.wave2<=0){ a.wave2=undefined; if(e.alive) lavaWave(e,Math.round(TITAN_HIT.wave*P2),e.face+1.1); } }   /* phase 2: a second wave 1 s behind the first, its gaps turned so you have to move */
   if(a.state==='chase'){ if(b2Home(e,p,dt)) return; const safe=inSafeZone(p.x,p.y); if(d<900&&!safe) moveToward(e,p.x,p.y,dt,a.phase2?1.25:1); else { e.vx*=.9; e.vy*=.9; } faceTo(e,p);
     if(e.abCd<=0&&p.alive&&d<720&&!safe){ const pick=['windup','meteors','windup','beamPrep','summon'][a.cycle%5]; a.cycle++; a.state=pick; e.vx=e.vy=0; a.aim=e.face; if(pick==='summon'){ a.t=.9; telegraph(e,{s:'circ',r:120},.9); }
       if(pick==='meteors'){ a.t=.9; a.n=a.phase2?9:6; a.mt=0; telegraph(e,{s:'circ',r:170,ox:p.x-e.x,oy:p.y-e.y},.9); SFX.roar(); }
@@ -2552,7 +2670,7 @@ function drawChiChest(c,ch,t){ const pulse=.5+.5*Math.sin(t*2.2), sh=ch.rattle>0
   const x=(ch.x+sh)/PIX-10|0, y=ch.y/PIX-7|0; c.save(); c.scale(PIX,PIX); g=c; rect(x+1,y+13,18,2,'rgba(0,0,0,.25)'); const bot=ch.open?'#172554':'#1e3a8a', top=ch.open?'#1e293b':'#2563eb'; rect(x,y+6,20,8,bot); rect(x+1,y+7,18,1,'#3b82f6');
   if(ch.open){ rect(x,y-2,20,5,top); rect(x+2,y+5,16,6,'#0b1020'); } else { rect(x,y+1,20,6,top); rect(x,y+1,20,1,'#93c5fd'); rect(x+1,y+3,18,1,'#1d4ed8'); rect(x+8,y+4,4,7,'#0e7490'); rect(x+9,y+5,2,5,pulse>.5?'#a5f3fc':'#22d3ee'); px(x+9,y+9,'#ecfeff'); if(pulse>.6){ px(x-2,y+2,'#a5f3fc'); px(x+21,y+7,'#a5f3fc'); px(x+10,y-2,'#a5f3fc'); } }
   c.restore(); }
-function drawNPC(c,n,t){ const b=Math.sin(t*3)*1.5; c.save(); c.translate(n.x,n.y); c.fillStyle='rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(0,12,14,6,0,0,TAU); c.fill(); c.fillStyle=n.k==='upgrade'?'#a16207':'#1d4ed8'; roundRect(c,-11,-8+b,22,20,7); c.fill(); c.fillStyle='#f5d0a9'; c.beginPath(); c.arc(0,-18+b,10,0,TAU); c.fill(); c.fillStyle=n.k==='upgrade'?'#fde047':'#e0e7ff'; c.beginPath(); c.arc(0,-21+b,10.5,Math.PI,TAU); c.fill(); c.fillStyle='#111'; c.beginPath(); c.arc(-3,-17+b,1.6,0,TAU); c.fill(); c.beginPath(); c.arc(3,-17+b,1.6,0,TAU); c.fill(); c.restore(); }
+function drawNPC(c,n,t){ const b=Math.sin(t*3)*1.5; c.save(); c.translate(n.x,n.y); c.fillStyle='rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(0,12,14,6,0,0,TAU); c.fill(); c.fillStyle=n.k==='upgrade'?'#a16207':n.k==='merchant'?'#7c2d12':'#1d4ed8'; roundRect(c,-11,-8+b,22,20,7); c.fill(); if(n.k==='merchant'){ c.font='900 11px Arial'; c.textAlign='center'; c.fillText('🔑',0,-32+b); } c.fillStyle='#f5d0a9'; c.beginPath(); c.arc(0,-18+b,10,0,TAU); c.fill(); c.fillStyle=n.k==='upgrade'?'#fde047':n.k==='merchant'?'#fb923c':'#e0e7ff'; c.beginPath(); c.arc(0,-21+b,10.5,Math.PI,TAU); c.fill(); c.fillStyle='#111'; c.beginPath(); c.arc(-3,-17+b,1.6,0,TAU); c.fill(); c.beginPath(); c.arc(3,-17+b,1.6,0,TAU); c.fill(); c.restore(); }
 function drawSign(c,s){ c.save(); c.scale(PIX,PIX); g=c; pxSign(s.x/PIX-7|0,s.y/PIX-14|0,s.t); c.restore(); }
 /* boss telegraphs: the Hippo cracks the earth (brown ground, spreading cracks, rising pebbles), the Crocodile spreads poison (green pool, bubbles, drips) */
 function drawTele(c,e){ const t=e.ai.tele, k=clamp(t.t/t.dur,0,1), earth=e.type==='hippo', poison=e.type==='croc', T=G.time, live=G.state==='PLAYING'; c.save(); c.translate(e.x+(t.ox||0),e.y+6+(t.oy||0));
@@ -2662,7 +2780,7 @@ function drawHUD(c,p){
   const hx=68, hy=33, hw=bw-80; c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,hx,hy,hw,16,8); c.fill(); const hg=c.createLinearGradient(hx,hy,hx,hy+16); hg.addColorStop(0,'#4ade80'); hg.addColorStop(1,'#16a34a'); p.hpShow=p.hpShow===undefined?p.hp:p.hpShow+(p.hp-p.hpShow)*(p.hp>p.hpShow?.06:1); c.fillStyle=p.hp<p.maxHp*.3?'#ef4444':hg; if(p.hpShow>0){ roundRect(c,hx+1,hy+1,(hw-2)*clamp(p.hpShow/p.maxHp,0,1),14,7); c.fill(); }
   c.fillStyle='rgba(255,255,255,.25)'; roundRect(c,hx+3,hy+3,Math.max(0,(hw-6)*clamp(p.hp/p.maxHp,0,1)),4,2); c.fill(); c.font='800 11px Arial'; c.textAlign='center'; c.fillStyle='#fff'; c.fillText(Math.ceil(p.hp)+' / '+Math.ceil(p.maxHp),hx+hw/2,hy+12);
   if(p.status.poison){ const s=p.status.poison, ix=hx+hw+2, iy=hy+8; c.fillStyle='#14532d'; c.beginPath(); c.arc(ix,iy,10,0,TAU); c.fill(); c.strokeStyle='#4ade80'; c.lineWidth=2; c.stroke(); c.font='900 11px Arial'; c.textAlign='center'; c.fillStyle='#86efac'; c.fillText('☠',ix,iy+4); c.font='800 9px Arial'; c.fillStyle='#4ade80'; c.fillText(Math.ceil(s.t)+'s',ix,iy+20); }   // poison icon + countdown
-  if(spinning(p)){ const C=p.spin.C; c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,hx,hy+20,hw,8,4); c.fill(); c.fillStyle='#6ce87a'; roundRect(c,hx+1,hy+21,(hw-2)*clamp(p.spin.t/C.dur,0,1),6,3); c.fill(); c.font='800 9px Arial'; c.textAlign='left'; c.fillStyle='#6ce87a'; c.fillText('SPINJITZU  INVULNERABLE  '+p.spin.t.toFixed(1)+'s',hx+4,hy+38); } else { const plv=playerLevel(), lo=plv>1?XP_NEED(plv-1):0, hi=XP_NEED(plv), k=clamp((SAVE.xpTotal-lo)/(hi-lo),0,1); c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,hx,hy+20,hw,8,4); c.fill(); c.fillStyle='#a855f7'; if(k>0){ roundRect(c,hx+1,hy+21,(hw-2)*k,6,3); c.fill(); } c.font='800 9px Arial'; c.textAlign='left'; c.fillStyle='#e9d5ff'; c.fillText('PLAYER LV '+plv+'   XP '+SAVE.xp,hx+4,hy+38); }
+  if(spinning(p)){ const C=p.spin.C; c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,hx,hy+20,hw,8,4); c.fill(); c.fillStyle='#6ce87a'; roundRect(c,hx+1,hy+21,(hw-2)*clamp(p.spin.t/C.dur,0,1),6,3); c.fill(); c.font='800 9px Arial'; c.textAlign='left'; c.fillStyle='#6ce87a'; c.fillText('SPINJITZU  INVULNERABLE  '+p.spin.t.toFixed(1)+'s',hx+4,hy+38); } else { const plv=playerLevel(), clv=SAVE.levels[p.name]||1, cb=CXP_TOTAL(clv), cn=clv>=MAX_LV?1:CXP_TOTAL(clv+1)-cb, k=clv>=MAX_LV?1:clamp((cxpOf(p.name)-cb)/cn,0,1); c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,hx,hy+20,hw,8,4); c.fill(); c.fillStyle='#a855f7'; if(k>0){ roundRect(c,hx+1,hy+21,(hw-2)*k,6,3); c.fill(); } c.font='800 9px Arial'; c.textAlign='left'; c.fillStyle='#e9d5ff'; c.fillText('LV '+clv+'  '+(clv>=MAX_LV?'MAX':(cxpOf(p.name)-cb)+' / '+cn+' XP')+'   ·   PLAYER LV '+plv,hx+4,hy+38); }
   const arena=!!WORLD.arena;
   if(!arena){ const qn=['CLAY','BECK'].find(k=>!SAVE.unlocked[k]); if(qn){ const q=QUESTS[qn], k=q.pct(); c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,10,82,bw,34,10); c.fill(); c.font='900 10px Arial'; c.textAlign='left'; c.fillStyle=CH[qn].color; c.fillText('UNLOCK '+qn,18,95); c.font='700 9px Arial'; c.fillStyle='#e5e7eb'; c.fillText(q.progress(),18+c.measureText('UNLOCK '+qn+'  ').width+8,95); c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,18,100,bw-16,9,4); c.fill(); if(k>0){ c.fillStyle='#4ade80'; roundRect(c,19,101,(bw-18)*k,7,3); c.fill(); }} } else drawArenaHUD(c,p,bw);
   // gold + wave
@@ -2727,11 +2845,11 @@ function drawFullMap(c,p){
    ===================================================================== */
 const AT=32;   // arena tile = one world tile
 const BF_STAGES=[
-  {id:'hippo',n:1,name:'THE RIVER PIT',boss:'hippo',lvl:5,coins:150,xp:250,stars:[31,40,52,68]},
-  {id:'croc', n:2,name:'THE SWAMP HEART',boss:'croc',lvl:7,coins:200,xp:300,stars:[38,49,64,83]},
+  {id:'hippo',n:1,name:'THE RIVER PIT',boss:'hippo',lvl:5,coins:150,xp:350,stars:[31,40,52,68]},
+  {id:'croc', n:2,name:'THE SWAMP HEART',boss:'croc',lvl:7,coins:200,xp:350,stars:[38,49,64,83]},
   {id:'lord', n:3,name:'THE BROKEN PIER',boss:'lord',lvl:9,coins:250,xp:350,stars:[37,48,62,81]},
-  {id:'titan',n:4,name:'THE CALDERA',boss:'titan',lvl:15,coins:300,xp:450,stars:[58,74,96,125]},
-  {id:'yeti', n:5,name:'THE FROZEN HOLLOW',boss:'yeti',lvl:19,coins:350,xp:550,stars:[66,84,110,143]}];
+  {id:'titan',n:4,name:'THE CALDERA',boss:'titan',lvl:15,coins:300,xp:350,stars:[58,74,96,125]},
+  {id:'yeti', n:5,name:'THE FROZEN HOLLOW',boss:'yeti',lvl:19,coins:350,xp:350,stars:[66,84,110,143]}];
 /* stars by clear time. Model: median of the five ninjas at the boss's level, 70% attack uptime, boss HP / DPS = T.
    5 stars = 0.78 T (out of reach at the recommended level even with perfect play, reachable two levels higher), 4 = T, 3 = 1.3 T, 2 = 1.7 T, 1 = any clear. */
 function bfStars(st,t){ const s=st.stars; return t<=s[0]?5:t<=s[1]?4:t<=s[2]?3:t<=s[3]?2:1; }
@@ -2863,7 +2981,7 @@ function arenaTick(raw){ const F=G.arena; if(!F||!F.over) return; F.overT+=raw;
 function arenaFail(quiet){ const F=G.arena; if(!F||F.over) return; F.over='fail'; F.overT=0; F.bossLeft=G.boss&&G.boss.alive?Math.round(G.boss.hp/G.boss.maxHp*100):0; F.chiSpent=F.startChi-(SAVE.chi||0); save(); if(quiet){ leaveArena(); setState('BOSSLIST'); } }
 function arenaWin(e){ const F=G.arena; if(!F||F.over) return; F.over='win'; F.overT=0; G.slowmo=1.1; e.deadT=3; for(const o of G.enemies) if(o!==e&&o.alive){ o.alive=false; o.deadT=1; deathFx(o); } for(const q of G.projs) if(q.alive&&q.owner&&q.owner.kind!=='player') q.alive=false; G.groundFx=G.groundFx.filter(f=>!(f.kind==='shell'||f.kind==='strip'||f.kind==='aimshell'||f.kind==='venom')); const p=G.player; if(p){ p.drag=null; p.status={}; }   /* the moment the boss dies the fight is won: adds, shots and shells vanish */ shake(14); vibrate(300); SFX.death(); burst(e.x,e.y-20,['#fde047','#ffffff','#c8a878'],90,300,1.6,6,150,true); }
 function bfGrantRewards(F){ const st=F.stage, id=st.id, first=!SAVE.bossFightFirstClearClaimed[id]; const r={chi:1,coins:st.coins,xp:st.xp,first};
-  SAVE.chi=(SAVE.chi||0)+1; SAVE.gold+=st.coins; SAVE.xp+=st.xp; SAVE.xpTotal+=st.xp; G.plv=playerLevel();
+  SAVE.chi=(SAVE.chi||0)+1; SAVE.gold+=st.coins; gainXP(st.xp);
   if(first){ SAVE.bossFightFirstClearClaimed[id]=true; SAVE.chi+=2; SAVE.keys=Math.min(3,(SAVE.keys||0)+1); r.bonusChi=2; r.bonusKey=(SAVE.keys<=3); }
   SAVE.bossFightCleared[id]=true; const t=Math.round(F.time*10)/10; r.stars=bfStars(st,t); SAVE.bossFightStars=SAVE.bossFightStars||{}; if((SAVE.bossFightStars[id]||0)<r.stars){ SAVE.bossFightStars[id]=r.stars; r.newStars=true; } if(!SAVE.bossFightBestTime[id]||t<SAVE.bossFightBestTime[id]){ SAVE.bossFightBestTime[id]=t; r.newBest=true; } save(); F.rewards=r; }
 const fmtT=t=>{ t=Math.max(0,t||0); const m=Math.floor(t/60), s=t-m*60; return m+':'+(s<10?'0':'')+s.toFixed(1); };
@@ -3034,8 +3152,8 @@ function lordArenaFx(c,ox,oy,vw,vh,t,vis,P){ const A=WORLD.arena, W=WORLD, live=
    MENUS, STATE MACHINE, CAMERA, MAIN LOOP
    ===================================================================== */
 const $=id=>document.getElementById(id);
-const OVS={MENU:'ovMenu',MAP_SELECT:'ovMaps',CHARACTERS:'ovChars',SETTINGS:'ovSettings',PAUSED:'ovPause',DEAD:'ovDead',ABOUT:'ovAbout',BOSSLIST:'ovBossList',BOSSPRE:'ovBossPre',BOSSWIN:'ovBossWin'};
-function setState(s){ if(s==='PLAYING'&&G.state!=='PLAYING') menuMusicStop(); if(s!==G.state&&s!=='PLAYING'&&AUDIO.ctx&&!SPLASH.on) SFX.swoosh(); if(s!==G.state&&OVS[s]){ const el=$(OVS[s]); el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); } G.state=s; for(const k in OVS) $(OVS[k]).classList.toggle('on',k===s); if(s==='MENU'){ if(WORLD.arena) leaveArena(); G.player=null; G.map=null; } if(s==='BOSSLIST'){ if(WORLD.arena) leaveArena(); buildBossList(); }  if(s==='MAP_SELECT') buildMapList(); if(s==='CHARACTERS'){ CVIEW='grid'; VIEW=null; buildCards(); } if(s==='SETTINGS') buildSettings(); if(s!=='PLAYING'){ sticks.L=sticks.R=null; touchMap.clear(); IN.mouse.aiming=false; IN.mouse.down=false; IN.fire=null; $('hint').style.display='none'; } else if(G.hintT>0) $('hint').style.display='block'; }
+const OVS={NAME:'ovName',PROFILE:'ovProfile',MENU:'ovMenu',MAP_SELECT:'ovMaps',CHARACTERS:'ovChars',SETTINGS:'ovSettings',PAUSED:'ovPause',DEAD:'ovDead',ABOUT:'ovAbout',BOSSLIST:'ovBossList',BOSSPRE:'ovBossPre',BOSSWIN:'ovBossWin'};
+function setState(s){ if(s==='PLAYING'&&G.state!=='PLAYING') menuMusicStop(); if(s!==G.state&&s!=='PLAYING'&&AUDIO.ctx&&!SPLASH.on) SFX.swoosh(); if(s!==G.state&&OVS[s]){ const el=$(OVS[s]); el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); } G.state=s; for(const k in OVS) $(OVS[k]).classList.toggle('on',k===s); if(s==='MENU'){ if(WORLD.arena) leaveArena(); G.player=null; G.map=null; } if(s==='BOSSLIST'){ if(WORLD.arena) leaveArena(); buildBossList(); }  if(s==='MAP_SELECT') buildMapList(); if(s==='CHARACTERS'){ CVIEW='grid'; VIEW=null; buildCards(); } if(s==='SETTINGS') buildSettings(); if(s==='PROFILE') buildProfile(); if(s==='NAME') nameOpen(); const pc=$('profCard'); if(pc){ const show=s==='MENU'||s==='MAP_SELECT'||s==='CHARACTERS'; pc.classList.toggle('on',show); pc.classList.toggle('mini',show&&s!=='MENU'); if(show) profileCardRefresh(); } if(s!=='PLAYING'){ merchantClose(); sticks.L=sticks.R=null; touchMap.clear(); IN.mouse.aiming=false; IN.mouse.down=false; IN.fire=null; $('hint').style.display='none'; } else if(G.hintT>0) $('hint').style.display='block'; }
 function togglePause(){ if(G.state==='PLAYING') setState('PAUSED'); else if(G.state==='PAUSED') setState('PLAYING'); }
 function toggleFullMap(){ if(G.state==='PLAYING') G.fullMap=!G.fullMap; }
 function showHint(t){ const h=$('hint'); if(!t){ h.style.display='none'; G.hintT=0; return; } if(WORLD.arena) return;   /* no hints at all during a Boss Fight */ h.textContent=t; h.style.display='block'; G.hintT=5; }
@@ -3052,15 +3170,15 @@ function portrait(ch,locked){ const cv2=document.createElement('canvas'); cv2.wi
 let VIEW=null, CVIEW='grid';
 function charCanvas(ch,locked,scale,w,h,fy){ const cv2=document.createElement('canvas'); cv2.width=w; cv2.height=h; const c=cv2.getContext('2d'); drawSprite(c,CHARS[ch.sprite],'idle',0.1,1,scale,w/2,h*fy,locked?'rgba(0,0,0,.85)':null); return cv2; }
 function buildCards(){
-  $('goldChars').textContent=SAVE.gold+' gold · '+SAVE.xp+' XP · LV '+playerLevel(); $('bSelectTop').style.display='none'; $('bCharsPlay').textContent=G.charsFrom==='GAME'?'BACK TO GAME':'CHOOSE MAP';
+  $('goldChars').textContent=SAVE.gold+' gold · PLAYER LV '+playerLevel(); $('bSelectTop').style.display='none'; $('bCharsPlay').textContent=G.charsFrom==='GAME'?'BACK TO GAME':'CHOOSE MAP';
   if(CVIEW==='detail'&&VIEW) return showCharDetail(VIEW);
   const el=$('cgrid'); el.innerHTML=''; el.style.display='grid'; $('cdetail').classList.remove('on'); $('charsTitle').textContent='NINJAS '+ORDER.filter(n=>SAVE.unlocked[n]).length+'/'+ORDER.length;
   for(const n of ORDER){ const ch=CH[n], lv=SAVE.levels[n], sel=SAVE.selected===n, un=!!SAVE.unlocked[n], q=QUESTS[n], ready=!un&&!!(SAVE.ready&&SAVE.ready[n]);
     const d=document.createElement('div'); d.className='bcard'+(sel?' sel':'')+(un?'':' locked')+(ready?' ready':''); d.style.setProperty('--c',ch.color); d.dataset.name=n;
-    const canUp=un&&lv<MAX_LV&&SAVE.gold>=LEVEL_COST(lv+1)&&SAVE.xp>=XP_COST(lv+1);
+    const u=upgOf(n), canUp=un&&((u.hp<UPG_MAX&&SAVE.gold>=UPG_COST(u.hp+1))||(u.dmg<UPG_MAX&&SAVE.gold>=UPG_COST(u.dmg+1))), cx=cxpOf(n), pct=lv>=MAX_LV?100:Math.round((cx-CXP_TOTAL(lv))/(CXP_TOTAL(lv+1)-CXP_TOTAL(lv))*100);
     d.innerHTML=`<div class="top"><span class="${un?'lvb':'lkb'}">${un?'LV '+lv:'LOCKED'}</span><span>${sel?'✔':''}</span></div>`; d.appendChild(charCanvas(ch,!un,4,120,150,.92));
     if(!un) d.insertAdjacentHTML('beforeend','<div class="lockic">🔒</div>');
-    d.insertAdjacentHTML('beforeend',`<div class="name">${n}</div>`+(un?`<div class="bar ${lv>=MAX_LV?'max':canUp?'up':'pow'}">${lv>=MAX_LV?'MAX POWER':canUp?'⬆ UPGRADE':'POWER '+lv}</div>`:`<div class="qmini"><i style="width:${Math.round(q.pct()*100)}%"></i></div><div class="bar lock">${ready?'100% · TAP TO UNLOCK':q.check?Math.round(q.pct()*100)+'% · QUEST':''}</div>`));
+    d.insertAdjacentHTML('beforeend',`<div class="name">${n}</div>`+(un?`<div class="bar ${lv>=MAX_LV?'max':canUp?'up':'pow'}">${canUp?'⬆ UPGRADE':lv>=MAX_LV?'MAX LEVEL':'LV '+lv+' · '+pct+'%'}</div>`:`<div class="qmini"><i style="width:${Math.round(q.pct()*100)}%"></i></div><div class="bar lock">${ready?'100% · TAP TO UNLOCK':q.check?Math.round(q.pct()*100)+'% · QUEST':''}</div>`));
     d.onclick=()=>{ if(ready){ unlockNinja(n,d); return; } VIEW=n; CVIEW='detail'; if(un){ SAVE.selected=n; save(); } showCharDetail(n); }; el.appendChild(d); }
 }
 const ABILITY_MULT={CLAY:1.4,BECK:3.3,BOREAS:0,APOLLO:2.6,SHADE:3};   /* BECK: three rings x 110% */   /* the special's hit as a multiple of DMG (Frost Nova only freezes) */
@@ -3070,7 +3188,7 @@ let UNLOCKING=false;
 function unlockNinja(n,card){ if(UNLOCKING) return; UNLOCKING=true; audioInit(); card.classList.add('unlocking'); SFX.key(); setTimeout(()=>{ sparkle(card,()=>CH[n].color,24); const l=document.createElement('div'); l.className='lvup'; l.textContent='UNLOCKED!'; card.appendChild(l); SFX.levelup(); },550);
   setTimeout(()=>{ SAVE.unlocked[n]=true; if(SAVE.ready) delete SAVE.ready[n]; SAVE.selected=n; save(); UNLOCKING=false; VIEW=n; CVIEW='detail'; showCharDetail(n,true); },1500); }
 function showCharDetail(n,anim){
-  const ch=CH[n], lv=SAVE.levels[n], m=LV_MULT(lv), m2=LV_MULT(lv+1), dm=LV_DMG(lv), dm2=LV_DMG(lv+1), un=!!SAVE.unlocked[n], sel=SAVE.selected===n, q=QUESTS[n], cost=LEVEL_COST(lv+1), xc=XP_COST(lv+1), can=un&&lv<MAX_LV&&SAVE.gold>=cost&&SAVE.xp>=xc;
+  const ch=CH[n], lv=SAVE.levels[n], u=upgOf(n), uh=upgHpMult(n), ud=upgDmgMult(n), m=LV_MULT(lv)*uh, m2=LV_MULT(lv+1)*uh, dm=LV_DMG(lv)*ud, dm2=LV_DMG(lv+1)*ud, un=!!SAVE.unlocked[n], sel=SAVE.selected===n, q=QUESTS[n], cx=cxpOf(n), xb=CXP_TOTAL(lv), xn=lv>=MAX_LV?1:CXP_TOTAL(lv+1)-xb, xpct=lv>=MAX_LV?100:Math.round((cx-xb)/xn*100), catchUp=un&&isCatchUp(n), hc=UPG_COST(u.hp+1), dc=UPG_COST(u.dmg+1), canH=un&&u.hp<UPG_MAX&&SAVE.gold>=hc, canD=un&&u.dmg<UPG_MAX&&SAVE.gold>=dc;
   $('cgrid').style.display='none'; const det=$('cdetail'); det.classList.add('on'); det.style.setProperty('--c',ch.color); $('charsTitle').textContent=n;
   const segs=Array.from({length:10},(_,i)=>`<i class="${i<Math.round(lv/MAX_LV*10)?'':'off'}"></i>`).join('');
   det.innerHTML=`<div class="bportrait"><div class="bname">${n}</div><div class="brole">${ch.role}</div><div class="backb" id="bAllNinjas">◀ ALL NINJAS</div>${un?`<div class="selb ${sel?'on':''}" id="bSelectChar">${sel?'✔ SELECTED':'SELECT'}</div>`:''}</div>
@@ -3080,15 +3198,16 @@ function showCharDetail(n,anim){
     <div class="srow"><div class="ic" style="background:#dc2626">💥</div><div><div class="lab" style="color:#fca5a5">ATTACK</div><div class="val">${Math.round(ch.dmg*dm)}${un&&lv<MAX_LV?`<span class="gain">+${Math.round(ch.dmg*dm2)-Math.round(ch.dmg*dm)}</span>`:''}</div></div>${un&&lv<MAX_LV?'<div class="arrow">⬆</div>':''}</div>
     <div class="srow"><div class="ic abslot" style="background:#111827;border:1px solid ${ch.color}"></div><div><div class="lab" style="color:#fde68a">SUPER</div><div class="val">${ch.skill.name} <span style="font-size:10px;color:#9ca3af;font-weight:700">(${ch.skill.cd}s)</span>${ABILITY_MULT[n]?` · ${Math.round(ch.dmg*dm*ABILITY_MULT[n])} dmg${un&&lv<MAX_LV?`<span class="gain">+${Math.round(ch.dmg*dm2*ABILITY_MULT[n])-Math.round(ch.dmg*dm*ABILITY_MULT[n])}</span>`:''}`:' · freeze 2s'}</div></div>${un&&lv<MAX_LV&&ABILITY_MULT[n]?'<div class="arrow">⬆</div>':''}</div>
     <div class="srow"><div class="ic" style="background:radial-gradient(circle at 50% 45%,${SPIN[n].core},${SPIN[n].ring[0]} 45%,${SPIN[n].ring[1]} 80%)"></div><div><div class="lab" style="color:${SPIN[n].ring[2]}">SPINJITZU</div><div class="val">${spinTotal(n,dm)} dmg over ${SPIN[n].dur}s${un&&lv<MAX_LV?`<span class="gain">+${spinTotal(n,dm2)-spinTotal(n,dm)}</span>`:''}</div></div>${un&&lv<MAX_LV?'<div class="arrow">⬆</div>':''}</div>
-    ${un?`<div class="bupg ${can?'':'dis'}" id="bUpgradeNow">${lv>=MAX_LV?'MAX POWER':'UPGRADE'}${lv<MAX_LV?`<small>🪙 ${cost} gold · ⚡ ${xc} XP</small>`:''}</div>`:`<div class="bquest"><b>QUEST:</b> ${q.text}<div class="questbar"><i style="width:${Math.round(q.pct()*100)}%"></i></div><div>${q.progress()}</div><div class="qr">${q.remaining()}</div></div>`}
+    ${un?`<div class="xprow"><div class="xlab"><span>LEVEL ${lv}${lv>=MAX_LV?' · MAX':''}</span><span>${lv>=MAX_LV?'MAX LEVEL':(cx-xb)+' / '+xn+' XP'}</span></div><div class="xbar"><i style="width:${xpct}%"></i></div><div class="xnote">${catchUp?'CATCH-UP: DOUBLE XP until LV '+highestLevel():'earns 30% of every other ninja\'s XP'}</div></div>
+    <div class="uprow"><div class="bupg ${canH?'':'dis'}" data-upg="hp">❤ HP +5%<small>${u.hp>=UPG_MAX?'MAX':u.hp+'/'+UPG_MAX+' · 🪙 '+hc+' gold'}</small></div><div class="bupg red ${canD?'':'dis'}" data-upg="dmg">💥 DMG +5%<small>${u.dmg>=UPG_MAX?'MAX':u.dmg+'/'+UPG_MAX+' · 🪙 '+dc+' gold'}</small></div></div>`:`<div class="bquest"><b>QUEST:</b> ${q.text}<div class="questbar"><i style="width:${Math.round(q.pct()*100)}%"></i></div><div>${q.progress()}</div><div class="qr">${q.remaining()}</div></div>`}
   </div>`;
   det.querySelector('.bportrait').appendChild(charCanvas(ch,!un,7,220,300,.96)); det.querySelector('.abslot').appendChild(abilityIconCanvas(n,'width:86%;height:86%'));
   $('bAllNinjas').onclick=()=>{ CVIEW='grid'; buildCards(); };
   const sb=$('bSelectChar'); if(sb) sb.onclick=()=>{ SAVE.selected=n; save(); showCharDetail(n); };
   const st=$('bSelectTop'); st.style.display=un?'':'none'; st.textContent=sel?'✔ SELECTED':'SELECT'; st.classList.toggle('grey',sel); st.classList.toggle('blue',!sel); st.onclick=sel?null:()=>{ SAVE.selected=n; save(); showCharDetail(n); };   /* SELECT next to the gold: switch to this ninja */
-  const ub=$('bUpgradeNow'); if(ub) ub.onclick=()=>{ if(!can) return; SAVE.gold-=cost; SAVE.xp-=xc; SAVE.levels[n]=lv+1; save(); SFX.levelup(); showCharDetail(n,true); };
-  if(anim){ const po=det.querySelector('.bportrait'); po.classList.add('upgrade-anim'); sparkle(po,()=>'#fde047',18); const l=document.createElement('div'); l.className='lvup'; l.textContent='POWER '+(lv)+'!'; po.appendChild(l); setTimeout(()=>{ po.classList.remove('upgrade-anim'); l.remove(); },1200); }
-  $('goldChars').textContent=SAVE.gold+' gold · '+SAVE.xp+' XP · LV '+playerLevel();
+  det.querySelectorAll('[data-upg]').forEach(b=>b.onclick=()=>{ if(buyUpgrade(n,b.dataset.upg)){ SFX.levelup(); G.upgLabel=(b.dataset.upg==='hp'?'HP':'DMG')+' +5%!'; showCharDetail(n,true); } });
+  if(anim){ const po=det.querySelector('.bportrait'); po.classList.add('upgrade-anim'); sparkle(po,()=>'#fde047',18); const l=document.createElement('div'); l.className='lvup'; l.textContent=G.upgLabel||('LEVEL '+lv+'!'); G.upgLabel=null; po.appendChild(l); setTimeout(()=>{ po.classList.remove('upgrade-anim'); l.remove(); },1200); }
+  $('goldChars').textContent=SAVE.gold+' gold · PLAYER LV '+playerLevel();
 }
 function sparkle(card,colorOf,n){ for(let i=0;i<n;i++){ const s=document.createElement('i'); s.className='spk'; const a=i/n*Math.PI*2, d=60+Math.random()*50; s.style.left='50%'; s.style.top='45%'; s.style.setProperty('--c',colorOf()); s.style.setProperty('--dx',Math.cos(a)*d+'px'); s.style.setProperty('--dy',Math.sin(a)*d+'px'); s.style.animationDelay=(Math.random()*.15)+'s'; card.appendChild(s); setTimeout(()=>s.remove(),1100); } }
 function buildSettings(){ document.querySelectorAll('.sw').forEach(s=>s.classList.toggle('on',!!SAVE.settings[s.dataset.k])); $('dbg').style.display=DEBUG.on?'flex':'none'; }
@@ -3096,15 +3215,26 @@ document.querySelectorAll('.sw').forEach(s=>s.onclick=()=>{ SAVE.settings[s.data
 function leaveChars(){ if(G.charsFrom==='GAME'&&G.map){ const o=G.player, frac=o.hp/o.maxHp; const p=makePlayer(SAVE.selected); p.x=o.x; p.y=o.y; p.hp=p.maxHp*(SAVE.selected===o.name?frac:1); p.face=o.face; G.player=p; G.npcCd=3; setState('PLAYING'); } else setState('MAP_SELECT'); }
 $('bPlay').onclick=()=>setState('MAP_SELECT'); $('bBoss').onclick=()=>setState('BOSSLIST'); $('bBossBack').onclick=()=>setState('MENU'); $('bBossPreBack').onclick=()=>setState('BOSSLIST'); $('bBossFight').onclick=()=>{ if(!BF_SEL) return; audioInit(); enterArena(BF_SEL); }; $('bfAgain').onclick=()=>{ const st=G.arena?G.arena.stage:BF_SEL; leaveArena(); enterArena(st); }; $('bfMenu').onclick=()=>setState('BOSSLIST'); $('bAbout').onclick=()=>setState('ABOUT'); $('bAboutBack').onclick=()=>setState('MENU'); $('bChars').onclick=()=>{ G.charsFrom='MENU'; setState('CHARACTERS'); }; $('bSettings').onclick=()=>{ G.settingsFrom='MENU'; setState('SETTINGS'); };
 $('bCharsPlay').onclick=leaveChars; $('bCharsBack').onclick=()=>{ if(G.charsFrom==='GAME'&&G.map) leaveChars(); else setState('MENU'); };
-$('bMapBack').onclick=()=>setState('MENU'); $('bSetBack').onclick=()=>{ if(G.settingsFrom==='PAUSED'&&G.map){ G.settingsFrom=null; setState('PAUSED'); } else setState('MENU'); }; $('bDeadMenu').onclick=()=>{ save(); setState('MENU'); }; $('bQuit').onclick=()=>{ if(WORLD.arena&&G.arena&&!G.arena.over){ if(!confirm('Leaving cancels the attempt — leave?')) return; arenaFail(true); return; } save(); setState('MENU'); }; $('bResume').onclick=()=>setState('PLAYING'); $('bSwitch').onclick=()=>{ if(!G.player||!G.player.alive) return; G.charsFrom='GAME'; setState('CHARACTERS'); }; $('bPauseSettings').onclick=()=>{ G.settingsFrom='PAUSED'; setState('SETTINGS'); };
+$('bMapBack').onclick=()=>setState('MENU');
+/* name entry: first launch (or an old save without a name) and Settings > Change player name */
+function nameOpen(){ const inp=$('nameIn'); inp.value=playerName()||(SAVE.migrated||SAVE.kills>0?'Ninja':''); nameCheck(); $('bNameBack').style.display=nameValid(playerName())?'':'none'; setTimeout(()=>{ try{ inp.focus(); }catch(e){} },80); }
+function nameCheck(){ const v=$('nameIn').value, ok=nameValid(v); $('bNameGo').classList.toggle('dis',!ok); $('nameErr').textContent=v.trim().length===0?'':ok?'':'3–12 characters · letters, digits and spaces'; }
+$('nameIn').oninput=nameCheck; $('nameIn').onkeydown=e=>{ e.stopPropagation(); if(e.key==='Enter') $('bNameGo').onclick(); }; $('nameIn').onkeyup=e=>e.stopPropagation();
+$('bNameRnd').onclick=()=>{ $('nameIn').value=randomName(); nameCheck(); if(SFX.ui) SFX.ui(); };
+$('bNameGo').onclick=()=>{ const v=$('nameIn').value.trim(); if(!nameValid(v)) return; SAVE.player=SAVE.player||{}; SAVE.player.name=v; save(); setState(G.nameFrom==='SETTINGS'?'SETTINGS':'MENU'); };
+$('bNameBack').onclick=()=>setState(G.nameFrom==='SETTINGS'?'SETTINGS':'MENU');
+$('bRename').onclick=()=>{ G.nameFrom='SETTINGS'; setState('NAME'); };
+$('profCard').onclick=()=>{ G.profFrom=G.state; setState('PROFILE'); };
+$('bProfBack').onclick=()=>setState(OVS[G.profFrom]&&G.profFrom!=='PROFILE'?G.profFrom:'MENU');
+$('bMerchBuy').onclick=merchantBuy; $('bMerchClose').onclick=()=>{ const el=$('merch'); if(el) el.classList.remove('on'); }; $('bSetBack').onclick=()=>{ if(G.settingsFrom==='PAUSED'&&G.map){ G.settingsFrom=null; setState('PAUSED'); } else setState('MENU'); }; $('bDeadMenu').onclick=()=>{ save(); setState('MENU'); }; $('bQuit').onclick=()=>{ if(WORLD.arena&&G.arena&&!G.arena.over){ if(!confirm('Leaving cancels the attempt — leave?')) return; arenaFail(true); return; } save(); setState('MENU'); }; $('bResume').onclick=()=>setState('PLAYING'); $('bSwitch').onclick=()=>{ if(!G.player||!G.player.alive) return; G.charsFrom='GAME'; setState('CHARACTERS'); }; $('bPauseSettings').onclick=()=>{ G.settingsFrom='PAUSED'; setState('SETTINGS'); };
 $('bRespawn').onclick=respawn;
 $('bReset').onclick=()=>{ if(confirm('Reset all progress?')){ localStorage.removeItem(SAVE_KEY); location.reload(); } };
 $('ver').onclick=()=>{ DEBUG.taps++; if(DEBUG.taps>=5&&!DEBUG.on){ DEBUG.on=true; buildSettings(); $('ver').textContent='version 1.0.0 · DEBUG (nothing is saved)'; } };
 document.querySelectorAll('[data-dbg]').forEach(b=>b.onclick=()=>{ const k=b.dataset.dbg;
   if(k==='god'){ DEBUG.god=!DEBUG.god; b.textContent='God mode '+(DEBUG.god?'ON':'OFF'); }
-  else if(k==='coins'){ SAVE.gold+=1000; SAVE.xp+=1000; SAVE.xpTotal+=1000; } else if(k==='quest'){ SAVE.kills+=250; SAVE.bosses.hippo++; SAVE.bosses.croc++; checkUnlocks(); }
+  else if(k==='coins'){ SAVE.gold+=1000; } else if(k==='quest'){ SAVE.kills+=250; SAVE.bosses.hippo++; SAVE.bosses.croc++; checkUnlocks(); }
   else if(k==='unlock') ORDER.forEach(n=>SAVE.unlocked[n]=true);
-  else if(k==='chi') SAVE.chi=(SAVE.chi||0)+10; else if(k==='keys') SAVE.keys=3; else if(k==='levelup'){ if(G.player){ SAVE.xpTotal=XP_NEED(playerLevel()); SAVE.xp+=50; checkLevelUp(); setState('PLAYING'); } } else if(k==='forcechi'){ DEBUG.forceChi=!DEBUG.forceChi; b.textContent='Force Chi drops '+(DEBUG.forceChi?'ON':'OFF'); }
+  else if(k==='chi') SAVE.chi=(SAVE.chi||0)+10; else if(k==='keys') SAVE.keys=3; else if(k==='levelup'){ if(G.player){ const n=SAVE.selected, lv=SAVE.levels[n]; setState('PLAYING'); if(lv<MAX_LV) gainXP(CXP_TOTAL(lv+1)-cxpOf(n)); } } else if(k==='forcechi'){ DEBUG.forceChi=!DEBUG.forceChi; b.textContent='Force Chi drops '+(DEBUG.forceChi?'ON':'OFF'); }
   else if(k==='balance'){ console.table(balanceReport()); alert(balanceReport().map(r=>r.ninja+' lv'+r.lv+' vs '+r.enemy+': '+r.hits+' hits, '+r.ttk+'s').join('\n')); }
   else if(k==='hitbox'){ DEBUG.hitbox=!DEBUG.hitbox; b.textContent='Hitboxes + FPS '+(DEBUG.hitbox?'ON':'OFF'); }
   else if(k==='hippo'||k==='croc'){ if(!G.map){ alert('Enter a map first, then open Settings from the pause menu.'); return; } const p=G.player; const e=makeEnemy(k,p.x+220,p.y); e.spawnT=0; collide(e); SFX.roar(); setState('PLAYING'); }
@@ -3158,7 +3288,7 @@ function splashSpin(c,t,cx,by){ t=Math.max(0,t); const n=Math.floor(t/SP_T), k=t
     requestAnimationFrame(step); };
   requestAnimationFrame(step);
   const start=()=>{ if(SPLASH.started||!SPLASH.on) return; audioUnlock(); SPLASH.started=true; SPLASH.startAt=performance.now(); txt.classList.remove('blink'); SFX.ui(); };
-  const go=()=>{ if(!SPLASH.on) return; SPLASH.on=false; el.classList.add('out'); SFX.levelup(); setTimeout(()=>{ el.classList.remove('on'); },650); };
+  const go=()=>{ if(!SPLASH.on) return; SPLASH.on=false; el.classList.add('out'); SFX.levelup(); setTimeout(()=>{ el.classList.remove('on'); if(!nameValid(playerName())){ G.nameFrom='MENU'; setState('NAME'); } },650); };
   for(const ev of ['touchend','click','pointerup']) el.addEventListener(ev,start); addEventListener('keydown',e=>{ if(SPLASH.on) start(); });
 })();
 audioInit(); setState('MENU'); requestAnimationFrame(frame);
