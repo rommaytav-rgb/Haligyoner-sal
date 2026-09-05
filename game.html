@@ -337,8 +337,12 @@
   .spanel .ver{margin-top:clamp(4px,1vh,10px)}
   @media (max-width:520px){ .togs{grid-template-columns:1fr} .togs .tog:last-child:nth-child(odd){grid-column:auto} }
   /* ---- equipment + ice shop ---- */
-  .eqrow{cursor:pointer} .eqrow:active{transform:translateY(1px)} .eqslot{background:#0b1020!important;border:2px solid #7fb8d8;display:flex;align-items:center;justify-content:center;overflow:hidden} .eqslot.empty{border-style:dashed;border-color:#4b5563} .eqslot canvas{width:88%;height:88%;image-rendering:pixelated}
-  .eqbtn{font-weight:900;font-size:10px;letter-spacing:1px;color:#0b1020;background:#7fd4ff;border-radius:8px;padding:4px 8px}
+  .slots{position:absolute;top:calc(8px + clamp(16px,4vh,24px) + 22px);left:12px;display:flex;gap:26px;z-index:2}
+  .slot{width:clamp(34px,7vh,44px);height:clamp(34px,7vh,44px);border-radius:9px;background:rgba(0,0,0,.45);border:2px solid rgba(255,255,255,.75);display:flex;align-items:center;justify-content:center;position:relative;cursor:pointer;box-shadow:0 2px 0 rgba(0,0,0,.4)} .slot.empty,.slot.pot{border-style:dashed;border-color:rgba(255,255,255,.5)}
+  .slot canvas{width:82%;height:82%;image-rendering:pixelated} .slot i{font-style:normal;font-weight:900;font-size:16px;color:rgba(255,255,255,.55)}
+  .slot span{position:absolute;bottom:-13px;left:50%;transform:translateX(-50%);font-size:6.5px;font-weight:900;letter-spacing:.5px;color:#fff;text-shadow:0 1px 0 #000;white-space:nowrap}
+  .slot:active{transform:translateY(2px)} .slot.shake{animation:slotshake .5s}
+  @keyframes slotshake{0%,100%{transform:translateX(0)}25%{transform:translateX(-3px)}75%{transform:translateX(3px)}}
   .eqlist{display:flex;flex-direction:column;gap:8px;width:100%}
   .eqitem,.shopitem{display:flex;align-items:center;gap:12px;background:#111827;border-radius:12px;padding:8px 12px;border:2px solid #1f2a44;cursor:pointer} .eqitem.on{border-color:#4ade80;background:#0f2a1a} .shopitem{cursor:default} .shopitem.dim .eqic{filter:grayscale(.6);opacity:.6}
   .eqic{width:56px;height:56px;flex:none;background:#0b1020;border-radius:10px;border:2px solid #7fb8d8;display:flex;align-items:center;justify-content:center} .eqic canvas{image-rendering:pixelated}
@@ -1344,8 +1348,8 @@ function equipTo(name,cid){ equipInit(); const w=equipWearer(cid); if(w) SAVE.eq
 function unequip(name){ equipInit(); SAVE.equipped[name]=null; save(); }
 function equipCountOwned(itemId){ equipInit(); return SAVE.equipment.owned.filter(o=>o.item===itemId).length; }
 /* the slot on the character page */
-function equipSlotHtml(n){ const it=equipOf(n); return `<div class="srow eqrow" id="eqRow"><div class="ic eqslot ${it?'':'empty'}"></div><div style="flex:1;min-width:0"><div class="lab" style="color:#bae6fd">EQUIPMENT</div><div class="val">${it?it.name:'<span style="color:#9ca3af">Empty slot</span>'}</div></div><div class="eqbtn">${it?'CHANGE':'EQUIP'}</div></div>`; }
-function equipSlotWire(n){ const row=$('eqRow'); if(!row) return; const it=equipOf(n); if(it) row.querySelector('.eqslot').appendChild(equipIcon(it,40)); row.onclick=()=>{ G.equipFor=n; setState('EQUIP'); }; }
+function equipSlotHtml(n){ const it=equipOf(n); return `<div class="slots"><div class="slot ${it?'':'empty'}" id="eqSlot" title="${it?it.name:'Empty'}"><span>EQUIPMENT</span></div><div class="slot pot" id="potSlot"><i>?</i><span>POTENTIAL</span></div></div>`; }
+function equipSlotWire(n){ const sl=$('eqSlot'); if(!sl) return; const it=equipOf(n); if(it) sl.insertBefore(equipIcon(it,36),sl.firstChild); sl.onclick=ev=>{ ev.stopPropagation(); G.equipFor=n; setState('EQUIP'); }; const ps=$('potSlot'); if(ps) ps.onclick=ev=>{ ev.stopPropagation(); ps.classList.add('shake'); setTimeout(()=>ps.classList.remove('shake'),500); }; }
 /* picker: owned copies (with who wears each), remove, and the BOREAS warning */
 function buildEquipPicker(){ equipInit(); const n=G.equipFor, cur=SAVE.equipped[n], el=$('equipList'); $('equipTitle').textContent=n+' · EQUIPMENT';
   const owned=SAVE.equipment.owned; let h='';
@@ -1719,7 +1723,7 @@ function buildWorld2(){
   const keep=[...W.spawners.map(s=>[s.x,s.y]),...W.chests,...W.golden,...W.titanLairs,...W.yetiLairs,[W.playerSpawn.x,W.playerSpawn.y],[SHOP_POS.x,SHOP_POS.y],[KEEPER_POS.x,KEEPER_POS.y]];
   W.props=[]; W.trees=[]; W.rocks=[]; W.logs=[];
   const add=(x,y,r,extra)=>W.colliders.push(Object.assign({x,y,r},extra||null));
-  W.props.push({k:'shop',x:SHOP_POS.x,y:SHOP_POS.y}); add(SHOP_POS.x,SHOP_POS.y-8,30); add(SHOP_POS.x+44,SHOP_POS.y+12,14);   /* the Ice Shop: a stone hut half-buried in snow, deep in Fox territory */
+  W.props.push({k:'shop',x:SHOP_POS.x,y:SHOP_POS.y}); add(SHOP_POS.x,SHOP_POS.y-6,22); add(SHOP_POS.x+30,SHOP_POS.y+10,10);   /* the Ice Shop: a stone hut half-buried in snow, deep in Fox territory */
   const ok=(x,y,pad)=>{ if(x<W.land.x0+40||y<W.land.y0+40||x>W.land.x1-40||y>W.land.y1-40) return false; if(Math.hypot(x-vx,y-vy)<W.village.r+60) return false; if(Math.abs(x-M2.seamX(y))<60) return false; if(Math.hypot(x-vo.x,(y-vo.y)*1.5)<260) return false; if(inSecret(x,y,40)) return false; if(near(x,y,keep,90)) return false; for(const l of W.lakes) if(Math.hypot(x-l.x,y-l.y)<l.r+30) return false; for(const b of W.bridges) if(Math.abs(y-b.y)<b.h&&Math.abs(x-M2.seamX(y))<b.w) return false; return true; };
   for(let gy=140;gy<W.h-100;gy+=112) for(let gx=140;gx<W.w-100;gx+=112){ const sd=gx*3.7+gy*9.1; if(HR(sd*11)<0.2) continue; const x=gx+(HR(sd)-.5)*70, y=gy+(HR(sd*2)-.5)*64; if(!ok(x,y)) continue; const r=HR(sd*5), ice=m2Biome(x,y)==='ice';
     if(ice){ if(r<.30){ W.trees.push({x,y,cr:26,r:10,s:R(),kind:'spine'}); } else if(r<.46) W.props.push({k:'crystal',x,y}); else if(r<.58){ W.props.push({k:'flog',x,y}); add(x,y+4,14); } else if(r<.68){ W.props.push({k:'spike',x,y,h:12+((sd|0)%6)}); add(x,y-4,8); } else if(r<.76) W.props.push({k:'cice',x,y,r:8+((sd|0)%5)}); else if(r<.83) W.props.push({k:'mush',x,y}); else if(r<.89){ W.props.push({k:'snowman',x,y}); add(x+8,y+14,9); } else if(r<.94) W.props.push({k:'skel',x,y}); else W.props.push({k:'hole',x,y}); }
@@ -2664,14 +2668,14 @@ AI.fox=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.abCd-
 /* ---------- the deep-frost dens and the Ice Shop (map 2 props) ---------- */
 function m2FoxDen(x,y){ m2CaveMouth(x,y-1,18,11); for(let i=0;i<5;i++) rect(x-9+i*4,y-13,2,3+((i*7)%4),IP.ice); rect(x-11,y-12,22,2,IP.snowS); for(let i=0;i<3;i++){ px(x-6+i*5,y+5,'#c8dceb'); px(x-5+i*5,y+7,'#c8dceb'); } }
 function m2IceShop(x,y){ const S='#6a7480', SD='#4a525c', SL='#8a96a4', W='#eef6fb', WD='#cddde8', T='#3a2a1c', TL='#5a4030', F='#c9b8a0', FD='#9c8a70';
-  rect(x-22,y-24,44,30,S); rect(x-22,y-24,44,2,SL); rect(x-22,y+4,44,2,SD); for(let i=0;i<6;i++) rect(x-20+i*7,y-16+(i%2)*6,5,3,SD);
-  rect(x-25,y-30,50,8,WD); rect(x-25,y-32,50,3,W); for(let i=0;i<7;i++) rect(x-23+i*7,y-22,4,2+(i%3),W);       /* snow on the roof and drifting down the walls */
-  rect(x-24,y-4,10,10,W); rect(x+14,y-6,10,12,W); rect(x-26,y+2,52,5,WD);
-  rect(x-6,y-14,12,20,T); rect(x-5,y-13,10,18,TL); rect(x-5,y-13,10,2,T); px(x+2,y-4,'#fde047');                 /* door */
-  rect(x-19,y-18,7,6,'#243244'); rect(x-18,y-17,5,4,'#7fd4ff'); rect(x+12,y-18,7,6,'#243244'); rect(x+13,y-17,5,4,'#7fd4ff');   /* windows */
-  rect(x+8,y+6,30,8,F); rect(x+8,y+6,30,2,'#e6d8c2'); rect(x+8,y+12,30,2,FD); for(let i=0;i<5;i++) rect(x+10+i*6,y+8,3,3,FD);   /* fur-covered counter */
-  pxLantern(x+30,y-2); rect(x-28,y-10,3,3,'#7fd4ff'); rect(x-30,y-6,2,2,'#7fd4ff'); }
-const SHOP_POS={x:260,y:1500}, KEEPER_POS={x:300,y:1546};
+  rect(x-14,y-16,28,20,S); rect(x-14,y-16,28,1,SL); rect(x-14,y+3,28,1,SD); for(let i=0;i<4;i++) rect(x-12+i*7,y-10+(i%2)*5,4,2,SD);
+  rect(x-16,y-20,32,5,WD); rect(x-16,y-21,32,2,W); for(let i=0;i<5;i++) rect(x-14+i*7,y-15,3,1+(i%2),W);       /* snow on the roof, drifts on the walls */
+  rect(x-16,y-2,7,7,W); rect(x+9,y-3,7,8,W); rect(x-17,y+2,34,3,WD);
+  rect(x-4,y-9,8,13,T); rect(x-3,y-8,6,11,TL); px(x+1,y-2,'#fde047');                                     /* door */
+  rect(x-12,y-12,4,4,'#243244'); rect(x-11,y-11,2,2,'#7fd4ff'); rect(x+8,y-12,4,4,'#243244'); rect(x+9,y-11,2,2,'#7fd4ff');   /* windows */
+  rect(x+6,y+4,18,5,F); rect(x+6,y+4,18,1,'#e6d8c2'); rect(x+6,y+8,18,1,FD); for(let i=0;i<3;i++) rect(x+8+i*6,y+5,2,2,FD);   /* fur-covered counter */
+  pxLantern(x+20,y-4); rect(x-19,y-6,2,2,'#7fd4ff'); }
+const SHOP_POS={x:260,y:1500}, KEEPER_POS={x:290,y:1536};
 function shopKeeper(){ return WORLD.frost&&WORLD.village&&WORLD.village.npcs?WORLD.village.npcs.find(n=>n.k==='keeper'):null; }
 function shopUpdate(p,dt){ const k=shopKeeper(); if(!k||!p||!p.alive||WORLD.arena) return; const d=Math.hypot(p.x-k.x,p.y-k.y); if(d<54&&!G.shopNear){ G.shopNear=true; setState('SHOP'); } else if(d>96) G.shopNear=false; }
 /* =====================================================================
@@ -2990,11 +2994,7 @@ function animOf(e){ if(e.jumpT>0) return 'jump'; if(e.attackT>0||(e.ai&&['tele',
 /* body motion on top of the model's own walk frames: step bounce, lean into the run, tiny squash — the pixel data itself is untouched */
 function gait(e,t,spd){ const v=Math.hypot((e.vx||0)+(e.kvx||0),(e.vy||0)+(e.kvy||0)), run=v>25, ph=(e.animT||0)*8*Math.PI; return {run, bounce:run?Math.abs(Math.sin(ph))*1.6:Math.sin(t*2.5)*.6, lean:run?clamp(((e.vx||0)+(e.kvx||0))/spd,-1,1)*.04:0, squash:run?Math.abs(Math.sin(ph))*.015:0}; }
 function drawNinja(c,ch,e,t){ if(e.dunk>0){ c.save(); c.translate(0,12); c.globalAlpha=.55; } const face=Math.cos(e.face)>=0?1:-1, anim=animOf(e), g=gait(e,t,e.spd||200); if(anim==='jump'){ g.bounce=0; g.squash=0; g.lean=0; } const at=anim==='jump'?(JUMP_DUR-e.jumpT)/JUMP_DUR:e.animT;   // jump: the 8 frames of the model's jump cycle over the jump's duration
-  c.save(); if(e.hidden) c.globalAlpha=.25; else if(e.inv>0&&e.dashT<=0&&e.jumpT<=0&&Math.floor(t*24)%2) c.globalAlpha=.55; const shr=anim==='jump'?.6:1; c.fillStyle=hexA(ch.color,.18); c.beginPath(); c.ellipse(e.x,e.y+13,(22+Math.sin(t*4)*2-g.bounce)*shr,(9-g.bounce*.5)*shr,0,0,TAU); c.fill(); c.translate(e.x,e.y+14); c.rotate(g.lean); c.scale(1+g.squash*.6,1-g.squash); const coat=e.kind==='player'&&hasEffect(e.name,'blizzardImmune'); if(coat) drawCloak(c,face,-g.bounce,t,false); drawSprite(c,CHARS[ch.sprite],anim,at,face,1.5,0,-g.bounce,tintFor(e)); if(coat) drawCloak(c,face,-g.bounce,t,true); c.restore(); if(e.dunk>0) c.restore(); }
-/* the Frost Coat: a pale fur-trimmed cloak behind the ninja, a fur collar over the shoulders, blue shimmer in a blizzard */
-function drawCloak(c,face,oy,t,front){ c.save(); c.translate(-face*2,oy); const sway=Math.sin(t*6)*1.5;
-  if(!front){ c.fillStyle='#6b9dbd'; c.fillRect(-19,-30,38,7); c.fillRect(-21+sway,-24,42,12); c.fillRect(-23+sway,-13,46,11); c.fillStyle='#dfedf6'; c.fillRect(-17,-29,34,6); c.fillRect(-19+sway,-23,38,11); c.fillRect(-21+sway,-12,42,8); c.fillStyle='#b7d0e0'; c.fillRect(-8+sway,-28,2,24); c.fillRect(7+sway,-26,2,22); c.fillStyle='#ffffff'; c.fillRect(-21+sway,-6,42,3); c.fillStyle='#8fc0dc'; for(let i=0;i<10;i++) c.fillRect(-20+sway+i*4,-4,2,2); }
-  else { c.fillStyle='#6b9dbd'; c.fillRect(-15,-33,30,6); c.fillStyle='#ffffff'; c.fillRect(-14,-32,28,4); c.fillStyle='#bfe0f0'; for(let i=0;i<7;i++) c.fillRect(-13+i*4,-33,2,2); c.fillStyle='#3f6f8f'; c.fillRect(-2,-29,4,3); c.fillStyle='#7fd4ff'; c.fillRect(-1,-28,2,1); if(WORLD.frost&&G.haz&&G.haz.bliz.active>0&&G.state==='PLAYING'&&Math.random()<.25) part(G.player.x+rnd(-14,14),G.player.y+rnd(-30,4),rnd(-10,10),rnd(-30,-10),'#bae6fd',.5,2,-10,true); } c.restore(); }
+  c.save(); if(e.hidden) c.globalAlpha=.25; else if(e.inv>0&&e.dashT<=0&&e.jumpT<=0&&Math.floor(t*24)%2) c.globalAlpha=.55; const shr=anim==='jump'?.6:1; c.fillStyle=hexA(ch.color,.18); c.beginPath(); c.ellipse(e.x,e.y+13,(22+Math.sin(t*4)*2-g.bounce)*shr,(9-g.bounce*.5)*shr,0,0,TAU); c.fill(); c.translate(e.x,e.y+14); c.rotate(g.lean); c.scale(1+g.squash*.6,1-g.squash); drawSprite(c,CHARS[ch.sprite],anim,at,face,1.5,0,-g.bounce,tintFor(e)); c.restore(); if(e.dunk>0) c.restore(); }
 function drawBerserk(c,e,t){ if(!(e.boss&&e.ai.phase2&&e.alive)) return; const k=.5+.5*Math.sin(t*9), R=e.r*1.6; c.save(); const gl=c.createRadialGradient(e.x,e.y+e.r*.8,R*.2,e.x,e.y+e.r*.8,R); gl.addColorStop(0,'rgba(239,68,68,'+(.22+.14*k)+')'); gl.addColorStop(1,'rgba(239,68,68,0)'); c.fillStyle=gl; c.beginPath(); c.ellipse(e.x,e.y+e.r*.8,R,R*.5,0,0,TAU); c.fill(); if(G.state==='PLAYING'&&Math.random()<.4) part(e.x+rnd(-e.r,e.r),e.y+rnd(-e.r,e.r*.6),rnd(-15,15),rnd(-70,-30),Math.random()<.5?'#ef4444':'#fca5a5',.6,3,0,true); c.restore(); }   /* the berserk aura: red pulse and rising embers */
 function drawEnemy(c,e,t){ drawBerserk(c,e,t); if(e.type==='lord') return drawLord(c,e,t); if(e.d.rig) return drawRigEnemy(c,e,t); const d=e.d, face=Math.cos(e.face)>=0?1:-1, g=gait(e,t,e.spd||130); c.save(); if(e.spawnT>0){ c.globalAlpha=Math.max(0,1-e.spawnT/.6); c.translate(0,e.spawnT*60); } c.translate(e.x,e.y+e.r*.9); if(e.flinch>0) c.translate(Math.sin(G.time*70)*2.5,0); c.rotate(g.lean*(e.boss?.4:1)); c.scale(1+g.squash*.5,1-g.squash*.8); drawSprite(c,ENEMIES[d.sprite],animOf(e),e.animT,face,d.scale,0,-g.bounce*(e.boss?.6:1),tintFor(e)); c.restore(); }
 /* spawners are painted into the terrain; here: ambient life + refill bar */
@@ -3013,7 +3013,16 @@ function drawChiChest(c,ch,t){ const pulse=.5+.5*Math.sin(t*2.2), sh=ch.rattle>0
   const x=(ch.x+sh)/PIX-10|0, y=ch.y/PIX-7|0; c.save(); c.scale(PIX,PIX); g=c; rect(x+1,y+13,18,2,'rgba(0,0,0,.25)'); const bot=ch.open?'#172554':'#1e3a8a', top=ch.open?'#1e293b':'#2563eb'; rect(x,y+6,20,8,bot); rect(x+1,y+7,18,1,'#3b82f6');
   if(ch.open){ rect(x,y-2,20,5,top); rect(x+2,y+5,16,6,'#0b1020'); } else { rect(x,y+1,20,6,top); rect(x,y+1,20,1,'#93c5fd'); rect(x+1,y+3,18,1,'#1d4ed8'); rect(x+8,y+4,4,7,'#0e7490'); rect(x+9,y+5,2,5,pulse>.5?'#a5f3fc':'#22d3ee'); px(x+9,y+9,'#ecfeff'); if(pulse>.6){ px(x-2,y+2,'#a5f3fc'); px(x+21,y+7,'#a5f3fc'); px(x+10,y-2,'#a5f3fc'); } }
   c.restore(); }
-function drawNPC(c,n,t){ const b=Math.sin(t*3)*1.5; c.save(); c.translate(n.x,n.y); c.fillStyle='rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(0,12,14,6,0,0,TAU); c.fill(); c.fillStyle=n.k==='upgrade'?'#a16207':n.k==='keeper'?'#8fb3c8':'#1d4ed8'; roundRect(c,-11,-8+b,22,20,7); c.fill(); if(n.k==='keeper'){ c.fillStyle='#eef6fb'; roundRect(c,-12,-10+b,24,5,3); c.fill(); } c.fillStyle='#f5d0a9'; c.beginPath(); c.arc(0,-18+b,10,0,TAU); c.fill(); c.fillStyle=n.k==='upgrade'?'#fde047':n.k==='keeper'?'#eef6fb':'#e0e7ff'; c.beginPath(); c.arc(0,-21+b,10.5,Math.PI,TAU); c.fill(); c.fillStyle='#111'; c.beginPath(); c.arc(-3,-17+b,1.6,0,TAU); c.fill(); c.beginPath(); c.arc(3,-17+b,1.6,0,TAU); c.fill(); c.restore(); }
+function drawNPC(c,n,t){ if(n.k==='keeper') return drawKeeper(c,n,t); const b=Math.sin(t*3)*1.5; c.save(); c.translate(n.x,n.y); c.fillStyle='rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(0,12,14,6,0,0,TAU); c.fill(); c.fillStyle=n.k==='upgrade'?'#a16207':n.k==='keeper'?'#8fb3c8':'#1d4ed8'; roundRect(c,-11,-8+b,22,20,7); c.fill(); if(n.k==='keeper'){ c.fillStyle='#eef6fb'; roundRect(c,-12,-10+b,24,5,3); c.fill(); } c.fillStyle='#f5d0a9'; c.beginPath(); c.arc(0,-18+b,10,0,TAU); c.fill(); c.fillStyle=n.k==='upgrade'?'#fde047':n.k==='keeper'?'#eef6fb':'#e0e7ff'; c.beginPath(); c.arc(0,-21+b,10.5,Math.PI,TAU); c.fill(); c.fillStyle='#111'; c.beginPath(); c.arc(-3,-17+b,1.6,0,TAU); c.fill(); c.beginPath(); c.arc(3,-17+b,1.6,0,TAU); c.fill(); c.restore(); }
+/* the Ice Shop keeper: a pixel person in a long pale coat with fur trim, fur hat, mittens, boots */
+function drawKeeper(c,n,t){ const b=Math.round(Math.sin(t*2.5))*1; c.save(); c.translate(n.x,n.y); c.fillStyle='rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(0,12,13,5,0,0,TAU); c.fill(); const R=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(x,y+b,w,h); };
+  R(-7,6,5,6,'#3b2a1e'); R(2,6,5,6,'#3b2a1e'); R(-8,10,6,3,'#241810'); R(2,10,6,3,'#241810');           /* boots */
+  R(-10,-12,20,20,'#cfe3ef'); R(-10,-12,20,2,'#eef6fb'); R(-10,6,20,2,'#eef6fb'); R(-1,-12,2,20,'#9ec2d8');   /* long coat, fur hem, buttons line */
+  R(-13,-10,4,12,'#cfe3ef'); R(9,-10,4,12,'#cfe3ef'); R(-13,1,4,3,'#eef6fb'); R(9,1,4,3,'#eef6fb'); R(-13,3,4,3,'#7fb8d8'); R(9,3,4,3,'#7fb8d8');   /* sleeves, fur cuffs, mittens */
+  R(-9,-14,18,4,'#f4f9fc');                                                                          /* fur collar */
+  R(-6,-24,12,11,'#f1d3b4'); R(-4,-20,2,2,'#1f1a1a'); R(2,-20,2,2,'#1f1a1a'); R(-2,-16,4,1,'#b56a55');   /* face */
+  R(-8,-30,16,7,'#eef6fb'); R(-8,-25,16,2,'#c9dce8'); R(-2,-32,4,3,'#7fd4ff');                          /* fur hat with an ice bead */
+  c.restore(); }
 function drawSign(c,s){ c.save(); c.scale(PIX,PIX); g=c; pxSign(s.x/PIX-7|0,s.y/PIX-14|0,s.t); c.restore(); }
 /* boss telegraphs: the Hippo cracks the earth (brown ground, spreading cracks, rising pebbles), the Crocodile spreads poison (green pool, bubbles, drips) */
 function drawTele(c,e){ const t=e.ai.tele, k=clamp(t.t/t.dur,0,1), earth=e.type==='hippo', poison=e.type==='croc', T=G.time, live=G.state==='PLAYING'; c.save(); c.translate(e.x+(t.ox||0),e.y+6+(t.oy||0));
@@ -3535,13 +3544,12 @@ function showCharDetail(n,anim){
   const ch=CH[n], lv=SAVE.levels[n], m=LV_MULT(lv), m2=LV_MULT(lv+1), dm=LV_DMG(lv), dm2=LV_DMG(lv+1), un=!!SAVE.unlocked[n], sel=SAVE.selected===n, q=QUESTS[n], cost=LEVEL_COST(lv+1), can=un&&lv<MAX_LV&&SAVE.gold>=cost;
   $('cgrid').style.display='none'; const det=$('cdetail'); det.classList.add('on'); det.style.setProperty('--c',ch.color); $('charsTitle').textContent=n;
   const segs=Array.from({length:10},(_,i)=>`<i class="${i<Math.round(lv/MAX_LV*10)?'':'off'}"></i>`).join('');
-  det.innerHTML=`<div class="bportrait"><div class="bname">${n}</div><div class="brole">${ch.role}</div><div class="backb" id="bAllNinjas">◀ ALL NINJAS</div>${un?`<div class="selb ${sel?'on':''}" id="bSelectChar">${sel?'✔ SELECTED':'SELECT'}</div>`:''}</div>
+  det.innerHTML=`<div class="bportrait"><div class="bname">${n}</div><div class="brole">${ch.role}</div><div class="backb" id="bAllNinjas">◀ ALL NINJAS</div>${un?equipSlotHtml(n):''}${un?`<div class="selb ${sel?'on':''}" id="bSelectChar">${sel?'✔ SELECTED':'SELECT'}</div>`:''}</div>
   <div class="bstats">
     <div class="prow"><div class="pbadge">${un?lv:'🔒'}</div><span class="pl">POWER</span><span class="pm">MAX ${MAX_LV}</span></div><div class="pbar">${segs}</div>
     <div class="srow"><div class="ic" style="background:#16a34a">❤</div><div><div class="lab" style="color:#86efac">HEALTH</div><div class="val">${Math.round(ch.hp*m)}${un&&lv<MAX_LV?`<span class="gain">+${Math.round(ch.hp*m2)-Math.round(ch.hp*m)}</span>`:''}</div></div>${un&&lv<MAX_LV?'<div class="arrow">⬆</div>':''}</div>
     <div class="srow"><div class="ic" style="background:#dc2626">💥</div><div><div class="lab" style="color:#fca5a5">ATTACK</div><div class="val">${Math.round(ch.dmg*dm)}${un&&lv<MAX_LV?`<span class="gain">+${Math.round(ch.dmg*dm2)-Math.round(ch.dmg*dm)}</span>`:''}</div></div>${un&&lv<MAX_LV?'<div class="arrow">⬆</div>':''}</div>
     <div class="srow"><div class="ic abslot" style="background:#111827;border:1px solid ${ch.color}"></div><div><div class="lab" style="color:#fde68a">SUPER</div><div class="val">${ch.skill.name} <span style="font-size:10px;color:#9ca3af;font-weight:700">(${ch.skill.cd}s)</span>${ABILITY_MULT[n]?` · ${Math.round(ch.dmg*dm*ABILITY_MULT[n])} dmg${un&&lv<MAX_LV?`<span class="gain">+${Math.round(ch.dmg*dm2*ABILITY_MULT[n])-Math.round(ch.dmg*dm*ABILITY_MULT[n])}</span>`:''}`:' · freeze 2s'}</div></div>${un&&lv<MAX_LV&&ABILITY_MULT[n]?'<div class="arrow">⬆</div>':''}</div>
-    ${un?equipSlotHtml(n):''}
     <div class="srow"><div class="ic" style="background:radial-gradient(circle at 50% 45%,${SPIN[n].core},${SPIN[n].ring[0]} 45%,${SPIN[n].ring[1]} 80%)"></div><div><div class="lab" style="color:${SPIN[n].ring[2]}">SPINJITZU</div><div class="val">${spinTotal(n,dm)} dmg over ${SPIN[n].dur}s${un&&lv<MAX_LV?`<span class="gain">+${spinTotal(n,dm2)-spinTotal(n,dm)}</span>`:''}</div></div>${un&&lv<MAX_LV?'<div class="arrow">⬆</div>':''}</div>
     ${un?`<div class="bupg ${can?'':'dis'}" id="bUpgradeNow">${lv>=MAX_LV?'MAX POWER':'UPGRADE TO LV '+(lv+1)}${lv<MAX_LV?`<small>🪙 ${cost} gold${SAVE.gold<cost?' · you have '+SAVE.gold:''}</small>`:''}</div>`:`<div class="bquest"><b>QUEST:</b> ${q.text}<div class="questbar"><i style="width:${Math.round(q.pct()*100)}%"></i></div><div>${q.progress()}</div><div class="qr">${q.remaining()}</div></div>`}
   </div>`;
