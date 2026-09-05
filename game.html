@@ -1025,8 +1025,8 @@ const SFX={
   bell:()=>{ for(let i=0;i<3;i++){ tone(880,.5,'sine',.16,-40,i*.7); tone(1320,.3,'sine',.06,0,i*.7); } },   /* the ship's bell */
   hit:()=>{tone(200,.08,'square',.12,-120);noise(.05,.1);}, crit:()=>{tone(320,.12,'square',.16,-200);noise(.08,.15);}, block:()=>{tone(900,.06,'triangle',.18,-300);},
   shoot:()=>tone(620,.1,'sine',.1,260), coin:()=>{tone(1300,.06,'square',.08);tone(1900,.09,'square',.08,0,.06);}, hurt:()=>tone(150,.15,'sawtooth',.18,-80),
-  ui:()=>{ tone(620,.08,'sine',.13,260); tone(1240,.1,'triangle',.045,0,.045); },   /* soft menu tap */
-  swoosh:()=>{ noise(.14,.05); tone(260,.2,'sine',.05,220); },   /* screen change */
+  ui:()=>{ tone(880,.05,'sine',.035,120); },   /* a very gentle menu tap */
+  swoosh:()=>{ noise(.12,.025); tone(300,.18,'sine',.03,200); },   /* screen change */
   dash:()=>noise(.12,.1), levelup:()=>[523,659,784,1046].forEach((f,i)=>tone(f,.18,'square',.12,0,i*.08)), death:()=>{tone(300,.5,'sawtooth',.2,-250);noise(.3,.15);},
   key:()=>[784,988,1175,1568,2093].forEach((f,i)=>tone(f,.22,'triangle',.14,0,i*.07)), boom:()=>{tone(55,.6,'sine',.5,-30);noise(.35,.3);}, rattle:()=>{tone(300,.05,'square',.1);tone(240,.05,'square',.1,0,.08);}, chestOpen:()=>{tone(660,.2,'triangle',.15,400);noise(.15,.12);},
   shot:()=>{noise(.2,.32);tone(110,.22,'sawtooth',.28,-70);}, dodge:()=>tone(880,.06,'sine',.12,320), spore:()=>noise(.14,.08), pop:()=>tone(520,.09,'square',.12,-320),
@@ -1038,7 +1038,7 @@ function musicTick(dt){ if(!AUDIO.ctx||!SAVE.settings.sound) return; MUSIC.timer
 /* MENU MUSIC — a calm, slow arpeggio over soft pads (A minor → F → C → G), 76 bpm; only in the menus */
 const MMUSIC={step:0,timer:0,pads:[]}, MM_ARP=[[220,329.6,440,523.3,659.3,523.3,440,329.6],[174.6,261.6,349.2,440,523.3,440,349.2,261.6],[261.6,392,523.3,659.3,784,659.3,523.3,392],[196,293.7,392,493.9,587.3,493.9,392,293.7]], MM_PAD=[[110,164.8],[87.3,130.8],[130.8,196],[98,146.8]];
 function pad(f,dur,vol){ if(!AUDIO.ctx) return null; const c=AUDIO.ctx,o=c.createOscillator(),o2=c.createOscillator(),g=c.createGain(),t=c.currentTime; o.type='sine'; o2.type='triangle'; o.frequency.value=f; o2.frequency.value=f*2.003; g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(vol,t+.7); g.gain.setValueAtTime(vol,t+dur-.9); g.gain.linearRampToValueAtTime(.0001,t+dur); o.connect(g); o2.connect(g); g.connect(AUDIO.master); o.start(t); o2.start(t); o.stop(t+dur+.05); o2.stop(t+dur+.05); return g; }
-function menuMusicTick(dt){ if(!AUDIO.ctx||!SAVE.settings.sound||SAVE.settings.music===false) return; MMUSIC.timer-=dt; if(MMUSIC.timer>0) return; const bpm=76; MMUSIC.timer=60/bpm/2; const bar=(MMUSIC.step>>3)%4, i=MMUSIC.step%8; if(i===0){ MMUSIC.pads=MMUSIC.pads.filter(Boolean); for(const f of MM_PAD[bar]) MMUSIC.pads.push(pad(f,3.4,.05)); if(bar%2===0){ tone(880,1.4,'sine',.028); tone(1318.5,1.2,'sine',.014,0,.4); } } tone(MM_ARP[bar][i],.55,'triangle',.05); if(i===4) tone(MM_ARP[bar][0]/2,.5,'sine',.035); MMUSIC.step++; }
+function menuMusicTick(dt){ if(!AUDIO.ctx||AUDIO.ctx.state!=='running'||!SAVE.settings.sound||SAVE.settings.music===false) return; MMUSIC.timer-=dt; if(MMUSIC.timer>0) return; const bpm=76; MMUSIC.timer=60/bpm/2; const bar=(MMUSIC.step>>3)%4, i=MMUSIC.step%8; if(i===0){ MMUSIC.pads=MMUSIC.pads.filter(Boolean); for(const f of MM_PAD[bar]) MMUSIC.pads.push(pad(f,3.4,.05)); if(bar%2===0){ tone(880,1.4,'sine',.028); tone(1318.5,1.2,'sine',.014,0,.4); } } tone(MM_ARP[bar][i],.55,'triangle',.05); if(i===4) tone(MM_ARP[bar][0]/2,.5,'sine',.035); MMUSIC.step++; }
 function menuMusicStop(){ if(!AUDIO.ctx) return; const t=AUDIO.ctx.currentTime; for(const g of MMUSIC.pads){ if(!g) continue; try{ g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value,t); g.gain.linearRampToValueAtTime(.0001,t+.4); }catch(e){} } MMUSIC.pads=[]; MMUSIC.timer=0; }
 document.addEventListener('pointerdown',e=>{ audioInit(); const b=e.target&&e.target.closest&&e.target.closest('.btn,.cbtn,.mbtn,.xbtn,.sw,.tog,.card,.ccard,.bcard,.mapcard,.bfcard,.selb,.backb,.bupg,#splash.ready'); if(b&&!b.classList.contains('dis')&&!b.classList.contains('locked')) SFX.ui(); },{passive:true,capture:true});   /* menu taps unlock audio and click softly */   /* menu taps also unlock audio, so the menu music can start */
 function vibrate(ms){ if(SAVE.settings.vibrate&&navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){} }
@@ -2514,7 +2514,7 @@ function frame(now){
   if(G.state==='PLAYING'){ pollInput(); let ts=1; if(G.hitstop>0){ G.hitstop-=raw; ts=.06; } if(G.slowmo>0){ G.slowmo-=raw; ts=Math.min(ts,.5); }   // key drop: brief slow motion
     if(G.levelFx){ const f=G.levelFx; f.t+=raw; $('hint').style.visibility='hidden'; if(f.t>=f.dur) $('hint').style.visibility=''; if(!f.short){ ts=f.t<.3?.15:f.t<f.dur-.4?0:Math.min(ts,(f.t-(f.dur-.4))/.4); } if(f.t>=f.dur) G.levelFx=null; }   // level-up: freeze frame, pause, fade back in (shortened during a boss fight)
     if(G.hudGold>0) G.hudGold-=raw; if(G.arena&&G.arena.over){ arenaTick(raw); if(G.state!=='PLAYING'||!G.player){ render(); return; } if(G.arena&&G.arena.over==='fail'&&G.arena.overT>.6) ts=0; } acc+=raw*ts; let n=0; while(acc>=STEP&&n<4){ update(STEP); acc-=STEP; n++; } if(n===4) acc=0; musicTick(raw); if(G.hintT>0){ G.hintT-=raw; if(G.hintT<=0) $('hint').style.display='none'; } }
-  if(G.state!=='PLAYING'&&!SPLASH.on) menuMusicTick(raw);
+  if(G.state!=='PLAYING') menuMusicTick(raw);   /* menu music also under the loading screen (as soon as the browser lets audio run) */
   render();
 }
 /* floating element sparks on the menu screens */
@@ -2542,7 +2542,7 @@ function splashSpin(c,t,cx,by){ t=Math.max(0,t); const n=Math.floor(t/SP_T), k=t
   const go=()=>{ if(!SPLASH.ready||!SPLASH.on) return; audioInit(); SPLASH.on=false; el.classList.add('out'); SFX.levelup(); setTimeout(()=>{ el.classList.remove('on'); },650); };
   el.addEventListener('pointerdown',go); addEventListener('keydown',e=>{ if(SPLASH.on&&SPLASH.ready) go(); });
 })();
-setState('MENU'); requestAnimationFrame(frame);
+audioInit(); setState('MENU'); requestAnimationFrame(frame);
 
 /* =====================================================================
    TODO / NEXT MAPS — hooks for future content
