@@ -2466,7 +2466,8 @@ function makeYetiArena(A,W,R){ const cols=A.cols, rows=A.rows, cx=cols/2, cy=row
    Drawing code imported as is (R→RR, P→PP, rnd→HR, emit→impEmit).
    ===================================================================== */
 const LIP={ shell:'#7a2a12', shellD:'#4a1608', shellL:'#a8481c', glass:'#e0561a', glassL:'#ff8c2b', hot:'#ffb020', white:'#fff0a0', face:'#2a1410', eye:'#ffd23f', crest1:'#ff6a10', crest2:'#ffb020', ember:'#ff8c2b' };
-const FXP={ fur:'#f2fbff', furD:'#c8e4f4', ice:'#8fd8f8', iceD:'#5fa8d0', iceL:'#d8f4ff', eye:'#7fe8ff', eyeW:'#ffffff', maw:'#3f6a86', tooth:'#ffffff', glow:'#bff0ff' };
+/* Ice Fox palette: sky-blue fur (white was invisible on snow), darker blue ice, red eyes */
+const FXP={ fur:'#7cc6ea', furD:'#4a97c4', ice:'#2f78ad', iceD:'#1f5a88', iceL:'#b6e6ff', eye:'#ff2020', eyeW:'#ffb3b3', maw:'#1d3f5c', tooth:'#ffffff', glow:'#9fdcff' };
 let IMP_EMIT=null;   /* world-space hook: the rig's ember sparks become particles at the enemy's position */
 function impEmit(x,y,n,pw){ if(IMP_EMIT) IMP_EMIT(x,y,n,pw); }
 /* ================= Lava Imp ================= */
