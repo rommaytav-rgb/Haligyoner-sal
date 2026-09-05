@@ -80,6 +80,7 @@
   #splash.ready .lbar i{background:repeating-linear-gradient(90deg,#fde047 0 6px,#f59e0b 6px 8px);box-shadow:0 0 14px #fde047}
   .ltxt{margin-top:10px;font-weight:900;letter-spacing:3px;font-size:clamp(11px,2.2vh,14px);color:#93c5fd;min-height:1.4em}.ltxt.blink{color:#fde047;animation:blink 1s steps(2) infinite}
   @keyframes blink{50%{opacity:.25}}
+  .ov.in{animation:ovIn .28s cubic-bezier(.2,.8,.3,1) both}@keyframes ovIn{0%{opacity:0;transform:scale(.97) translateY(8px)}100%{opacity:1;transform:none}}
   #splashNinja{image-rendering:pixelated;filter:drop-shadow(0 6px 0 rgba(0,0,0,.45))}
   .ov.menu{background:radial-gradient(ellipse at 50% 60%,#1b1540 0%,#0a0920 55%,#050510 100%);overflow:hidden}
   .neb{position:absolute;border-radius:50%;filter:blur(7px);opacity:.85;pointer-events:none;animation:spin 26s linear infinite;-webkit-mask:radial-gradient(circle,transparent 26%,#000 40%,#000 58%,transparent 72%);mask:radial-gradient(circle,transparent 26%,#000 40%,#000 58%,transparent 72%)}
@@ -282,7 +283,7 @@
   <div class="runes top">ᚠᚢᚦᚨᚱᚲᚷᚹ</div><div class="runes bottom">ᛏᛒᛖᛗᛚᛜᛞᛟ</div>
   <div class="orbs"><i class="orb" style="--c:#a855f7"></i><i class="orb" style="--c:#38bdf8"></i><i class="orb" style="--c:#7dd3fc"></i><i class="orb" style="--c:#4ade80"></i><i class="orb" style="--c:#f97316"></i></div>
   <h1 class="title ltitle">ELEMENTAL NINJAS</h1>
-  <canvas id="splashNinja" width="128" height="100"></canvas>
+  <canvas id="splashNinja" width="240" height="120"></canvas>
   <div class="lbar"><i id="splashBar"></i></div>
   <div class="ltxt" id="splashTxt">LOADING…</div>
 </div>
@@ -1024,6 +1025,8 @@ const SFX={
   bell:()=>{ for(let i=0;i<3;i++){ tone(880,.5,'sine',.16,-40,i*.7); tone(1320,.3,'sine',.06,0,i*.7); } },   /* the ship's bell */
   hit:()=>{tone(200,.08,'square',.12,-120);noise(.05,.1);}, crit:()=>{tone(320,.12,'square',.16,-200);noise(.08,.15);}, block:()=>{tone(900,.06,'triangle',.18,-300);},
   shoot:()=>tone(620,.1,'sine',.1,260), coin:()=>{tone(1300,.06,'square',.08);tone(1900,.09,'square',.08,0,.06);}, hurt:()=>tone(150,.15,'sawtooth',.18,-80),
+  ui:()=>{ tone(620,.08,'sine',.13,260); tone(1240,.1,'triangle',.045,0,.045); },   /* soft menu tap */
+  swoosh:()=>{ noise(.14,.05); tone(260,.2,'sine',.05,220); },   /* screen change */
   dash:()=>noise(.12,.1), levelup:()=>[523,659,784,1046].forEach((f,i)=>tone(f,.18,'square',.12,0,i*.08)), death:()=>{tone(300,.5,'sawtooth',.2,-250);noise(.3,.15);},
   key:()=>[784,988,1175,1568,2093].forEach((f,i)=>tone(f,.22,'triangle',.14,0,i*.07)), boom:()=>{tone(55,.6,'sine',.5,-30);noise(.35,.3);}, rattle:()=>{tone(300,.05,'square',.1);tone(240,.05,'square',.1,0,.08);}, chestOpen:()=>{tone(660,.2,'triangle',.15,400);noise(.15,.12);},
   shot:()=>{noise(.2,.32);tone(110,.22,'sawtooth',.28,-70);}, dodge:()=>tone(880,.06,'sine',.12,320), spore:()=>noise(.14,.08), pop:()=>tone(520,.09,'square',.12,-320),
@@ -1037,7 +1040,7 @@ const MMUSIC={step:0,timer:0,pads:[]}, MM_ARP=[[220,329.6,440,523.3,659.3,523.3,
 function pad(f,dur,vol){ if(!AUDIO.ctx) return null; const c=AUDIO.ctx,o=c.createOscillator(),o2=c.createOscillator(),g=c.createGain(),t=c.currentTime; o.type='sine'; o2.type='triangle'; o.frequency.value=f; o2.frequency.value=f*2.003; g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(vol,t+.7); g.gain.setValueAtTime(vol,t+dur-.9); g.gain.linearRampToValueAtTime(.0001,t+dur); o.connect(g); o2.connect(g); g.connect(AUDIO.master); o.start(t); o2.start(t); o.stop(t+dur+.05); o2.stop(t+dur+.05); return g; }
 function menuMusicTick(dt){ if(!AUDIO.ctx||!SAVE.settings.sound||SAVE.settings.music===false) return; MMUSIC.timer-=dt; if(MMUSIC.timer>0) return; const bpm=76; MMUSIC.timer=60/bpm/2; const bar=(MMUSIC.step>>3)%4, i=MMUSIC.step%8; if(i===0){ MMUSIC.pads=MMUSIC.pads.filter(Boolean); for(const f of MM_PAD[bar]) MMUSIC.pads.push(pad(f,3.4,.05)); if(bar%2===0){ tone(880,1.4,'sine',.028); tone(1318.5,1.2,'sine',.014,0,.4); } } tone(MM_ARP[bar][i],.55,'triangle',.05); if(i===4) tone(MM_ARP[bar][0]/2,.5,'sine',.035); MMUSIC.step++; }
 function menuMusicStop(){ if(!AUDIO.ctx) return; const t=AUDIO.ctx.currentTime; for(const g of MMUSIC.pads){ if(!g) continue; try{ g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value,t); g.gain.linearRampToValueAtTime(.0001,t+.4); }catch(e){} } MMUSIC.pads=[]; MMUSIC.timer=0; }
-document.addEventListener('pointerdown',()=>audioInit(),{passive:true});   /* menu taps also unlock audio, so the menu music can start */
+document.addEventListener('pointerdown',e=>{ audioInit(); const b=e.target&&e.target.closest&&e.target.closest('.btn,.cbtn,.mbtn,.xbtn,.sw,.tog,.card,.ccard,.bcard,.mapcard,.bfcard,.selb,.backb,.bupg,#splash.ready'); if(b&&!b.classList.contains('dis')&&!b.classList.contains('locked')) SFX.ui(); },{passive:true,capture:true});   /* menu taps unlock audio and click softly */   /* menu taps also unlock audio, so the menu music can start */
 function vibrate(ms){ if(SAVE.settings.vibrate&&navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){} }
 
 /* =====================================================================
@@ -2415,7 +2418,7 @@ function lordArenaFx(c,ox,oy,vw,vh,t,vis,P){ const A=WORLD.arena, W=WORLD, live=
    ===================================================================== */
 const $=id=>document.getElementById(id);
 const OVS={MENU:'ovMenu',MAP_SELECT:'ovMaps',CHARACTERS:'ovChars',SETTINGS:'ovSettings',PAUSED:'ovPause',DEAD:'ovDead',ABOUT:'ovAbout',BOSSLIST:'ovBossList',BOSSPRE:'ovBossPre',BOSSWIN:'ovBossWin'};
-function setState(s){ if(s==='PLAYING'&&G.state!=='PLAYING') menuMusicStop(); G.state=s; for(const k in OVS) $(OVS[k]).classList.toggle('on',k===s); if(s==='MENU'){ if(WORLD.arena) leaveArena(); G.player=null; G.map=null; } if(s==='BOSSLIST'){ if(WORLD.arena) leaveArena(); buildBossList(); } if(s==='PAUSED') $('bSwitch').style.display=WORLD.arena?'none':''; if(s==='MAP_SELECT') buildMapList(); if(s==='CHARACTERS'){ CVIEW='grid'; VIEW=null; buildCards(); } if(s==='SETTINGS') buildSettings(); if(s!=='PLAYING'){ sticks.L=sticks.R=null; touchMap.clear(); IN.mouse.aiming=false; IN.mouse.down=false; IN.fire=null; $('hint').style.display='none'; } else if(G.hintT>0) $('hint').style.display='block'; }
+function setState(s){ if(s==='PLAYING'&&G.state!=='PLAYING') menuMusicStop(); if(s!==G.state&&s!=='PLAYING'&&AUDIO.ctx&&!SPLASH.on) SFX.swoosh(); if(s!==G.state&&OVS[s]){ const el=$(OVS[s]); el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); } G.state=s; for(const k in OVS) $(OVS[k]).classList.toggle('on',k===s); if(s==='MENU'){ if(WORLD.arena) leaveArena(); G.player=null; G.map=null; } if(s==='BOSSLIST'){ if(WORLD.arena) leaveArena(); buildBossList(); } if(s==='PAUSED') $('bSwitch').style.display=WORLD.arena?'none':''; if(s==='MAP_SELECT') buildMapList(); if(s==='CHARACTERS'){ CVIEW='grid'; VIEW=null; buildCards(); } if(s==='SETTINGS') buildSettings(); if(s!=='PLAYING'){ sticks.L=sticks.R=null; touchMap.clear(); IN.mouse.aiming=false; IN.mouse.down=false; IN.fire=null; $('hint').style.display='none'; } else if(G.hintT>0) $('hint').style.display='block'; }
 function togglePause(){ if(G.state==='PLAYING') setState('PAUSED'); else if(G.state==='PAUSED') setState('PLAYING'); }
 function toggleFullMap(){ if(G.state==='PLAYING') G.fullMap=!G.fullMap; }
 function showHint(t){ const h=$('hint'); if(!t){ h.style.display='none'; G.hintT=0; return; } h.textContent=t; h.style.display='block'; G.hintT=5; }
@@ -2519,9 +2522,15 @@ function frame(now){
 /* LOADING SCREEN — the bar fills while the sprite caches warm up, then one tap enters the game (and unlocks audio for the menu music) */
 const SPLASH={on:true,t:0,ready:false,tip:0};
 /* a pixel Spinjitzu tornado that cycles through the five elements while the bar fills */
-const SPLASH_EL=['SHADE','BOREAS','BECK','CLAY','APOLLO'];
-function splashSpin(c,t,cx,by){ const k=Math.max(0,t)/1.1, i=Math.floor(k)%5, f=k%1, C=SPIN[SPLASH_EL[i]]; c.save(); c.scale(2,2); g=c; c.imageSmoothingEnabled=false;
-  if(f<.18) spinjitzu(cx/2|0,by/2|0,t,C,0,f/.18,1); else spinjitzu(cx/2|0,by/2|0,t,C,1,1,1);   /* the real in-game tornado: a quick wind-up flash, then the spin, one element after another */
+const SPLASH_EL=['SHADE','BOREAS','BECK','CLAY','APOLLO'], SP_T=3.9;
+/* the loading-screen parade: a ninja runs in, lifts a Chi orb, bursts into its Spinjitzu tornado, spins, fades — then the next ninja */
+function splashSpin(c,t,cx,by){ t=Math.max(0,t); const n=Math.floor(t/SP_T), k=t-n*SP_T, name=SPLASH_EL[n%5], ch=CH[name], C=SPIN[name]; c.imageSmoothingEnabled=false;
+  const px0=cx/2|0, py=by/2|0; c.save(); c.scale(2,2); g=c;
+  if(k<1.15){ const e=k/1.15, x=-14+(px0+14)*(1-Math.pow(1-e,2.2)); drawSprite(c,CHARS[ch.sprite],'run',t*1.1,1,1,x,py,null); }
+  else if(k<1.6){ drawSprite(c,CHARS[ch.sprite],'idle',t,1,1,px0,py,null); const u=(k-1.15)/.45; chiOrb(px0,py-36-u*10|0,t*2); if(u>.6){ c.globalAlpha=(u-.6)/.4*.8; c.fillStyle='#fff'; c.fillRect(px0-1-u*3|0,py-52|0,3+u*6|0,1); c.globalAlpha=1; } }
+  else if(k<1.95){ const u=(k-1.6)/.35; drawSprite(c,CHARS[ch.sprite],'idle',t,1,1,px0,py,null,1-u); spinjitzu(px0,py,t,C,0,1-u,1); }
+  else if(k<3.35) spinjitzu(px0,py,t,C,1,1,1);
+  else spinjitzu(px0,py,t,C,2,1,Math.max(0,1-(k-3.35)/.55));
   c.restore(); }
 (function splash(){ const el=$('splash'), bar=$('splashBar'), txt=$('splashTxt'), sc=$('splashNinja'), c=sc.getContext('2d'); const tips=['SHARPENING BLADES','WAKING THE ELEMENTS','STIRRING THE BONE SHORE','FEEDING THE HIPPO','POLISHING THE CHI ORBS'];
   let t0=performance.now(), warm=0; const names=Object.keys(CH);
