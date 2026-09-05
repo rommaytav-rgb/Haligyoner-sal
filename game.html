@@ -418,7 +418,7 @@
     <div class="btn sm" data-dbg="god">God mode</div><div class="btn sm" data-dbg="coins">+1000 gold</div><div class="btn sm" data-dbg="quest">+quest progress</div>
     <div class="btn sm" data-dbg="hippo">Spawn hippo</div><div class="btn sm" data-dbg="croc">Spawn crocodile</div><div class="btn sm" data-dbg="unlock">Unlock all</div><div class="btn sm" data-dbg="chi">+10 Chi</div><div class="btn sm" data-dbg="balance">Balance table</div><div class="btn sm" data-dbg="keys">3 Chi keys</div><div class="btn sm" data-dbg="levelup">Level up now</div><div class="btn sm" data-dbg="forcechi">Force Chi drops OFF</div><div class="btn sm" data-dbg="hitbox">Hitboxes + FPS</div>
   </div>
-  <div class="row" style="margin-top:clamp(4px,1.2vh,10px)"><div class="btn sm" id="bRename">CHANGE PLAYER NAME</div><div class="btn sm" id="bReset">RESET SAVE</div><div class="btn sm" id="bSetBack">BACK</div></div>
+  <div class="row" style="margin-top:clamp(4px,1.2vh,10px)"><div class="btn sm" id="bRename">CHANGE PLAYER NAME</div><div class="btn sm" id="bSetBack">BACK</div></div>
   <div class="ver" id="ver">version 1.0.0</div>
 </div></div>
 
@@ -1192,6 +1192,7 @@ function pollInput(){
    Character levels (cap 30, +8% HP / x1.12 DMG per level) are bought with gold; every level costs more (LEVEL_COST in p2).
    Every kill, chest and boss grants XP that only raises the PLAYER LEVEL: a banner, 200 gold and +1% to every ninja per level. */
 const ACC_LEVEL_COINS=200;
+function highestLevel(){ let h=1; for(const n of ORDER) if(SAVE.unlocked[n]) h=Math.max(h,SAVE.levels[n]||1); return h; }   // the strongest ninja's level: daily missions are matched to it
 /* the one entry point for XP. amount = XP of the source; x,y = where the number floats (optional) */
 function gainXP(amount,x,y,label){ if(!(amount>0)) return; SAVE.xpTotal=(SAVE.xpTotal||0)+amount; if(x!==undefined) floatText(x,y,'+'+amount+' XP'+(label||''),'#c4b5fd',!!label,!!label); checkAccountLevel(); }
 /* the selected ninja's stats after a level change (keeps the HP fraction unless heal) */
@@ -1240,17 +1241,63 @@ migrateSave();
 /* ===== DAILY MISSIONS: three missions a day (easy / medium / hard), gold + XP rewards that scale with the player level ===== */
 const DAILY_TIERS={easy:{gold:300,xp:150,col:'#4ade80',name:'EASY'},medium:{gold:800,xp:400,col:'#fbbf24',name:'MEDIUM'},hard:{gold:2000,xp:1000,col:'#f87171',name:'HARD'}};
 const DAILY_MULT=plv=>1+0.12*(plv-1);                                     // player level 8: x1.84, level 15: x2.68
+/* what the player can actually face today: enemies, open-world bosses and Boss Fight stages gated by the highest ninja level */
+function dailyContext(){ const H=highestLevel(), m2=!!(SAVE.maps&&SAVE.maps.frost_ember);
+  const enemies=[{t:'mush',lv:1},{t:'priest',lv:3},{t:'pirate',lv:5},{t:'golem',lv:9,m2:true},{t:'wolf',lv:12,m2:true}].filter(e=>H>=e.lv&&(!e.m2||m2)).map(e=>e.t);
+  const bosses=[{t:'hippo',lv:4},{t:'croc',lv:6},{t:'lord',lv:8},{t:'titan',lv:13,m2:true},{t:'yeti',lv:17,m2:true}].filter(b=>H>=b.lv&&(!b.m2||m2)).map(b=>b.t);
+  const C=SAVE.bossFightCleared||{}; const open=st=>!((st.n===2&&!C.hippo)||(st.n===3&&!C.croc)||(st.n===4&&!C.lord)||(st.n===5&&!C.titan));
+  const stages=BF_STAGES.filter(st=>st.lvl<=H+1&&open(st)).map(st=>st.id); return {H,enemies,bosses,stages}; }
+/* mission pool per tier; pick() gets the seeded rng and the context. Kill counts scale a little with the highest level so a strong ninja gets a real task */
 const DAILY_POOL={
-  easy:  [{k:'kill',t:'mush',n:100},{k:'kill',t:'priest',n:40},{k:'kill',t:'pirate',n:40},{k:'kills',n:80},{k:'chest',n:3},{k:'gold',n:800},{k:'kill',t:'golem',n:30,m2:true},{k:'kill',t:'wolf',n:25,m2:true}],
-  medium:[{k:'kill',t:'mush',n:200},{k:'kill',t:'priest',n:100},{k:'kill',t:'pirate',n:100},{k:'kills',n:200},{k:'gold',n:2500},{k:'chest',n:6},{k:'boss',n:1},{k:'kill',t:'golem',n:80,m2:true},{k:'kill',t:'wolf',n:60,m2:true}],
-  hard:  [{k:'boss',n:2},{k:'bf',n:1},{k:'kills',n:400},{k:'kill',t:'mush',n:400},{k:'gold',n:6000},{k:'kill',t:'golem',n:150,m2:true},{k:'kill',t:'wolf',n:120,m2:true}]};
+  easy:[
+    C=>({k:'kill',t:C.enemies[0],n:C.H>=9?120:100}),
+    C=>C.enemies.length>1&&{k:'kill',t:C.enemies[1],n:50},
+    C=>C.enemies.length>2&&{k:'kill',t:C.enemies[Math.floor(C.enemies.length/2)],n:45},
+    C=>({k:'kills',n:80+C.H*4}),
+    C=>({k:'chest',n:3}),
+    C=>({k:'gold',n:600+C.H*100}),
+    C=>({k:'spin',n:5}),
+    C=>({k:'ability',n:15})],
+  medium:[
+    C=>({k:'kill',t:C.enemies[C.enemies.length-1],n:C.H>=9?90:150}),
+    C=>C.enemies.length>1&&{k:'kill',t:C.enemies[C.enemies.length-2],n:C.H>=9?120:180},
+    C=>({k:'kills',n:200+C.H*8}),
+    C=>({k:'gold',n:1200+C.H*300}),
+    C=>({k:'chest',n:6}),
+    C=>({k:'spin',n:12}),
+    C=>({k:'ability',n:40}),
+    C=>C.bosses.length>0&&{k:'boss',t:C.bosses[Math.min(C.bosses.length-1,Math.floor(C.bosses.length/2))],n:1},
+    C=>C.stages.length>1&&{k:'bf',t:C.stages[C.stages.length-2],n:1},
+    C=>(SAVE.keys||0)>0&&{k:'chichest',n:1}],
+  hard:[
+    C=>C.bosses.length>0&&{k:'boss',t:C.bosses[C.bosses.length-1],n:C.H>=9?2:1},
+    C=>C.bosses.length>1&&{k:'boss',n:3},
+    C=>C.stages.length>0&&{k:'bf',t:C.stages[C.stages.length-1],n:1},
+    C=>({k:'kills',n:400+C.H*12}),
+    C=>({k:'kill',t:C.enemies[C.enemies.length-1],n:C.H>=9?200:350}),
+    C=>({k:'gold',n:2500+C.H*600}),
+    C=>({k:'spin',n:25}),
+    C=>C.stages.length>1&&{k:'bfall',n:2}]};
 function dailySeed(str){ let h=2166136261; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); } return ()=>{ h=Math.imul(h^(h>>>15),h|1); h^=h+Math.imul(h^(h>>>7),h|61); return ((h^(h>>>14))>>>0)/4294967296; }; }
-function dailyDesc(m){ const N=m.n; if(m.k==='kill') return 'Defeat '+N+' '+EN[m.t].name.toLowerCase()+'s'; if(m.k==='kills') return 'Defeat '+N+' enemies'; if(m.k==='chest') return 'Open '+N+' chests'; if(m.k==='gold') return 'Collect '+N+' gold'; if(m.k==='boss') return 'Defeat '+(N>1?N+' open-world bosses':'an open-world boss'); return 'Clear a Boss Fight stage'; }
-function dailyCheck(){ const day=new Date().toDateString(); if(SAVE.daily&&SAVE.daily.day===day&&SAVE.daily.list&&SAVE.daily.list.length===3) return; const R=dailySeed(day+'|ninjas'), plv=playerLevel(), mult=DAILY_MULT(plv), m2=!!(SAVE.maps&&SAVE.maps.frost_ember), list=[];
-  for(const tier of ['easy','medium','hard']){ const pool=DAILY_POOL[tier].filter(m=>!m.m2||m2); const m=pool[Math.floor(R()*pool.length)], T=DAILY_TIERS[tier]; list.push({tier,k:m.k,t:m.t,n:m.n,p:0,done:false,gold:Math.round(T.gold*mult/10)*10,xp:Math.round(T.xp*mult/10)*10}); }
-  SAVE.daily={day,list,plv}; save(); }
+function dailyDesc(m){ const N=m.n; switch(m.k){
+  case 'kill': return 'Defeat '+N+' '+EN[m.t].name.toLowerCase()+'s';
+  case 'kills': return 'Defeat '+N+' enemies';
+  case 'chest': return 'Open '+N+' chests';
+  case 'chichest': return 'Open a Chi chest with a key';
+  case 'gold': return 'Collect '+N+' gold';
+  case 'spin': return 'Use Spinjitzu '+N+' times';
+  case 'ability': return 'Use your special '+N+' times';
+  case 'boss': return m.t?'Defeat '+(N>1?N+' ':'the ')+EN[m.t].name.toLowerCase()+(N>1?'s':'')+' in the open world':'Defeat '+N+' open-world bosses';
+  case 'bf': { const st=BF_STAGES.find(s=>s.id===m.t); return 'Boss Fight: clear '+(st?st.name+' ('+EN[st.boss].name.toLowerCase()+')':'a stage'); }
+  case 'bfall': return 'Clear '+N+' Boss Fight stages';
+  } return '?'; }
+function dailyCheck(){ const day=new Date().toDateString(); if(SAVE.daily&&SAVE.daily.day===day&&SAVE.daily.list&&SAVE.daily.list.length===3) return; const C=dailyContext(), R=dailySeed(day+'|ninjas|'+C.H), plv=playerLevel(), mult=DAILY_MULT(plv), list=[];
+  for(const tier of ['easy','medium','hard']){ const pool=DAILY_POOL[tier].map(f=>f(C)).filter(m=>m&&m.n>0&&(m.k!=='kill'||m.t)); const m=pool[Math.floor(R()*pool.length)], T=DAILY_TIERS[tier]; list.push({tier,k:m.k,t:m.t,n:m.n,p:0,done:false,gold:Math.round(T.gold*mult/10)*10,xp:Math.round(T.xp*mult/10)*10}); }
+  SAVE.daily={day,list,plv,H:C.H}; save(); }
 function dailyEvent(kind,type,amt){ if(!SAVE.daily) dailyCheck(); if(WORLD.arena&&kind!=='bf') return; let hit=false;
-  for(const m of SAVE.daily.list){ if(m.done) continue; const ok=(m.k==='kill'&&kind==='kill'&&m.t===type)||(m.k==='kills'&&kind==='kill')||(m.k==='chest'&&kind==='chest')||(m.k==='gold'&&kind==='gold')||(m.k==='boss'&&kind==='boss')||(m.k==='bf'&&kind==='bf'); if(!ok) continue;
+  for(const m of SAVE.daily.list){ if(m.done) continue; let ok=false;
+    if(m.k==='kill') ok=kind==='kill'&&m.t===type; else if(m.k==='kills') ok=kind==='kill'; else if(m.k==='boss') ok=kind==='boss'&&(!m.t||m.t===type); else if(m.k==='bf') ok=kind==='bf'&&(!m.t||m.t===type); else if(m.k==='bfall') ok=kind==='bf'; else ok=m.k===kind;
+    if(!ok) continue;
     m.p=Math.min(m.n,m.p+(amt||1)); hit=true; if(m.p>=m.n){ m.done=true; SAVE.gold+=m.gold; gainXP(m.xp); const p=G.player; if(p&&p.alive) floatText(p.x,p.y-70,'MISSION COMPLETE  +'+m.gold+' GOLD  +'+m.xp+' XP','#fde047',true,true); G.banner={text:'MISSION COMPLETE',sub:dailyDesc(m)+'  ·  +'+m.gold+' GOLD  +'+m.xp+' XP',t:3.2}; SFX.key(); G.hudGold=3; } }
   if(hit&&kind!=='gold') save(); }
 function dailyDoneCount(){ dailyCheck(); return SAVE.daily.list.filter(m=>m.done).length; }
@@ -1259,7 +1306,7 @@ function dailyResetText(){ const now=new Date(), mid=new Date(now); mid.setHours
 function drawDailyHUD(c,y,bw){ dailyCheck(); const m=SAVE.daily.list.find(x=>!x.done); c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,10,y,bw,30,10); c.fill(); c.font='900 10px Arial'; c.textAlign='left';
   if(!m){ c.fillStyle='#fde047'; c.fillText('DAILY MISSIONS  ✔ ALL DONE',18,y+13); c.font='700 9px Arial'; c.fillStyle='#e5e7eb'; c.fillText('new missions in '+dailyResetText(),18,y+25); return; }
   const T=DAILY_TIERS[m.tier], k=m.p/m.n; c.fillStyle=T.col; c.fillText('DAILY · '+T.name,18,y+13); c.font='700 9px Arial'; c.fillStyle='#e5e7eb'; const lab='DAILY · '+T.name+'  '; c.fillText(dailyDesc(m)+'  '+m.p+'/'+m.n,18+c.measureText(lab).width+6,y+13); c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,18,y+18,bw-16,8,4); c.fill(); if(k>0){ c.fillStyle=T.col; roundRect(c,19,y+19,(bw-18)*k,6,3); c.fill(); } }
-function buildDaily(){ dailyCheck(); const el=$('dailyList'); $('dailyNote').textContent='Rewards scale with your player level (LV '+playerLevel()+' · x'+DAILY_MULT(playerLevel()).toFixed(2)+') · new missions in '+dailyResetText();
+function buildDaily(){ dailyCheck(); const el=$('dailyList'); $('dailyNote').textContent='Matched to player level '+playerLevel()+' (rewards x'+DAILY_MULT(playerLevel()).toFixed(2)+') and your strongest ninja, LV '+highestLevel()+' · new missions in '+dailyResetText();
   el.innerHTML=SAVE.daily.list.map(m=>{ const T=DAILY_TIERS[m.tier], k=Math.min(1,m.p/m.n); return `<div class="drow ${m.done?'done':''}" style="--c:${T.col}"><div class="dtier">${T.name}</div><div class="dbody"><div class="dtxt">${dailyDesc(m)}</div><div class="dbar"><i style="width:${Math.round(k*100)}%"></i></div><div class="dprog">${m.done?'COMPLETE':m.p+' / '+m.n}</div></div><div class="drew"><span><img class="coinic" src="${COIN_URI}" alt="">${m.gold}</span><span>⚡ ${m.xp} XP</span>${m.done?'<span class="dchk">✔</span>':''}</div></div>`; }).join('');
   $('dailyDone').textContent=dailyDoneCount()+' / 3 done'; }
 function dailyMenuBadge(){ const b=$('bDaily'); if(!b) return; const n=dailyDoneCount(); b.innerHTML='DAILY MISSIONS <span class="dbadge'+(n>=3?' all':'')+'">'+n+'/3</span>'; }
@@ -1816,7 +1863,7 @@ function enemyDie(e){
   e.alive=false; G.kills++; let n=rndi(e.d.coins[0],e.d.coins[1]), gold=rndi(e.d.gold[0],e.d.gold[1]); if(e.summoned){ n=Math.ceil(n/2); gold=Math.ceil(gold/2); }   // boss adds drop half
   const per=Math.ceil(gold/n); for(let i=0;i<n;i++) G.coins.push({x:e.x,y:e.y,vx:rnd(-120,120),vy:rnd(-220,-80),v:per,t:0,fly:false,z:0});
   if(e.boss&&WORLD.arena){ if(G.boss===e) G.boss=null; arenaWin(e); return; }   // Boss Fight: separate rewards, nothing counts toward the open world
-  if(e.boss){ e.deadT=3.2; burst(e.x,e.y-10,['#c8a878','#8a6a4a','#fde047','#ffffff'],80,260,1.4,6,200,true); shake(16); vibrate(300); SFX.death(); const bxp=e.d.xpBoss||XP_BOSS; floatText(e.x,e.y-60,'BOSS DEFEATED  +'+bxp+' XP','#fde047',true,true); if(G.boss===e) G.boss=null; G.lastBossDeath=G.time; G.bossMark=null; SAVE.bosses[e.type]=(SAVE.bosses[e.type]||0)+1; dailyEvent('boss'); gainXP(bxp); dropChi(e.x,e.y,2); keyDrop(e.x,e.y); checkUnlocks(); checkLevelUp(); }
+  if(e.boss){ e.deadT=3.2; burst(e.x,e.y-10,['#c8a878','#8a6a4a','#fde047','#ffffff'],80,260,1.4,6,200,true); shake(16); vibrate(300); SFX.death(); const bxp=e.d.xpBoss||XP_BOSS; floatText(e.x,e.y-60,'BOSS DEFEATED  +'+bxp+' XP','#fde047',true,true); if(G.boss===e) G.boss=null; G.lastBossDeath=G.time; G.bossMark=null; SAVE.bosses[e.type]=(SAVE.bosses[e.type]||0)+1; dailyEvent('boss',e.type); gainXP(bxp); dropChi(e.x,e.y,2); keyDrop(e.x,e.y); checkUnlocks(); checkLevelUp(); }
   else { deathFx(e); e.deadT=1.4; if(e.spawner) e.spawner.alive--; SAVE.kills++; SAVE.killsBy=SAVE.killsBy||{}; SAVE.killsBy[e.type]=(SAVE.killsBy[e.type]||0)+1; dailyEvent('kill',e.type); if(!e.summoned&&(Math.random()<.005||DEBUG.forceChi)) dropChi(e.x,e.y,1); { const p=G.player; if(p&&p.name==='SHADE'&&spinning(p)&&e.spinHitT===G.time&&Math.random()<.25) G.coins.push({x:e.x,y:e.y,vx:rnd(-80,80),vy:-120,v:5,t:0,fly:false,z:0}); } gainXP(e.d.xp||XP_KILL,e.x,e.y-44); if(!e.summoned){ SAVE.pity=(SAVE.pity||0)+1; if(Math.random()<.02||SAVE.pity>=80) keyDrop(e.x,e.y); } checkUnlocks(); checkLevelUp(); if(!SAVE.hints.kill){ SAVE.hints.kill=true; G.arrowTarget=null; showHint('Try your ability ✦'); } }
   save();
 }
@@ -1836,7 +1883,7 @@ function openChest(c){
   c.open=true; dailyEvent('chest'); SFX.levelup(); burst(c.x,c.y-6,['#fde047','#ffffff','#e0a020'],26,180,.9,4,250,true); const p=G.player;
   if(c.kind==='normal'){ const n=rndi(20,60); SAVE.chests[c.id]=true; SAVE.gold+=n; gainXP(40); floatText(c.x,c.y-30,'+'+n+' GOLD  +40 XP','#fde68a',true); }
   else if(c.kind==='golden'){ SAVE.golden[c.id]=new Date().toDateString(); const n=rndi(150,250); SAVE.gold+=n; gainXP(40); floatText(c.x,c.y-30,'+'+n+' GOLD  +40 XP','#fde68a',true); }
-  else if(c.kind==='chi'){ SAVE.keys--; SAVE.chiChests[c.id]=SAVE.playTime; SFX.chestOpen(); burst(c.x,c.y-10,['#22d3ee','#3b82f6','#ffffff'],36,220,1,4,120,true); floatText(c.x,c.y-34,'CHI CHEST  +3 CHI','#7fd8f8',true,true); for(let i=0;i<3;i++){ const a=Math.atan2(p.y-c.y,p.x-c.x)+(i-1)*1.1, vh=250+i*25, air=2*vh/520, tx=p.x+Math.cos(a)*44, ty=p.y+Math.sin(a)*30; G.chis.push({x:c.x,y:c.y-6,vx:(tx-c.x)/air,vy:(ty-c.y)/air,h:12,vh,t:-i*.4,landed:false,fly:false,chest:true}); } }   // lid bursts, three orbs arc out and are collected one by one
+  else if(c.kind==='chi'){ SAVE.keys--; dailyEvent('chichest'); SAVE.chiChests[c.id]=SAVE.playTime; SFX.chestOpen(); burst(c.x,c.y-10,['#22d3ee','#3b82f6','#ffffff'],36,220,1,4,120,true); floatText(c.x,c.y-34,'CHI CHEST  +3 CHI','#7fd8f8',true,true); for(let i=0;i<3;i++){ const a=Math.atan2(p.y-c.y,p.x-c.x)+(i-1)*1.1, vh=250+i*25, air=2*vh/520, tx=p.x+Math.cos(a)*44, ty=p.y+Math.sin(a)*30; G.chis.push({x:c.x,y:c.y-6,vx:(tx-c.x)/air,vy:(ty-c.y)/air,h:12,vh,t:-i*.4,landed:false,fly:false,chest:true}); } }   // lid bursts, three orbs arc out and are collected one by one
   else { SAVE.secret[c.id]=true; SAVE.gold+=300; gainXP(150); floatText(c.x,c.y-30,'SECRET CHEST! +300 GOLD  +150 XP','#ffffff',true,true); }
   save();
 }
@@ -1871,7 +1918,7 @@ function playerUpdate(p,dt){
   if(IN.fire){ const f=IN.fire; IN.fire=null; if(!p.hidden&&p.dashT<=0&&p.jumpT<=0){ let ang=f.ang; if(f.auto||ang===null){ const t=nearestEnemy(p,p.ch.range+120); ang=t?Math.atan2(t.y-p.y,t.x-p.x):p.face; } p.queued={ang,t:.4}; } }
   if(p.queued){ p.queued.t-=dt; if(p.atkCd<=0&&p.stagger<=0&&p.jumpT<=0){ fireAttack(p,p.queued.ang); p.queued=null; } else if(p.queued.t<=0) p.queued=null; }
   // ability
-  if(IN.ability){ IN.ability=false; if(p.abCd<=0&&!p.hidden&&p.dashT<=0&&p.jumpT<=0){ p.abCd=p.ch.skill.cd; p.abPress=3; ABILITY[p.name](p); p.abGrace=Math.max(p.abGrace||0,1.5); p.inv=Math.max(p.inv,p.abGrace);   /* no ninja can be hurt while casting a special and for 1.5 s after */ SFX.ab[p.name](); vibrate(40); G.zoomPulse=1.06; if(!SAVE.hints.ability){ SAVE.hints.ability=true; showHint(null); } } }
+  if(IN.ability){ IN.ability=false; if(p.abCd<=0&&!p.hidden&&p.dashT<=0&&p.jumpT<=0){ p.abCd=p.ch.skill.cd; dailyEvent('ability'); p.abPress=3; ABILITY[p.name](p); p.abGrace=Math.max(p.abGrace||0,1.5); p.inv=Math.max(p.inv,p.abGrace);   /* no ninja can be hurt while casting a special and for 1.5 s after */ SFX.ab[p.name](); vibrate(40); G.zoomPulse=1.06; if(!SAVE.hints.ability){ SAVE.hints.ability=true; showHint(null); } } }
   if(p.hidden){ p.hideT-=dt; part(p.x+rnd(-14,14),p.y+rnd(-16,6),0,-30,'#a855f7',.5,5,0,true); if(p.hideT<=0) shadeReappear(p); }
   // coins pickup
   for(let i=G.coins.length-1;i>=0;i--){ const c=G.coins[i]; c.t+=dt; if(!c.fly){ c.x+=c.vx*dt; c.y+=c.vy*dt; c.vy+=600*dt; c.vx*=Math.pow(.05,dt); if(c.t>.14) c.fly=true; } else { const dx=p.x-c.x, dy=p.y-8-c.y, d=Math.hypot(dx,dy)||1; { const s=Math.min(d,(420+c.t*1100)*dt); c.x+=dx/d*s; c.y+=dy/d*s; } if(d<10){ G.coins.splice(i,1); SAVE.gold+=c.v; dailyEvent('gold',null,c.v); SFX.coin(); part(p.x,p.y-20,0,-40,'#fde047',.4,4,0,true); } } }
@@ -2499,6 +2546,7 @@ function startSpinjitzu(p){
   if((SAVE.chi||0)<1){ showHint('No Chi — enemies drop it'); G.chiShake=.4; SFX.block(); return; }
   if(p.spinCd>0){ showHint('Spinjitzu recharging — '+Math.ceil(p.spinCd)+' s'); G.chiShake=.4; SFX.block(); return; }
   if(inSafeZone(p.x,p.y)){ showHint('Leave the blue circle to fight'); return; }
+  dailyEvent('spin');
   SAVE.chi--; save(); p.spinCd=SPIN_CD; const C=SPIN[p.name]; p.spin={state:'FLASH',t:.5,C,tickT:0,ticks:0,loopT:0,tot:.5}; p.vx=p.vy=0; p.queued=null; p.hidden=false; p.hideT=0;
   SFX.spinCharge(); G.zoomPulse=1.08; CAM.flashDim=1;
 }
@@ -2999,7 +3047,7 @@ function arenaTick(raw){ const F=G.arena; if(!F||!F.over) return; F.overT+=raw;
 function arenaFail(quiet){ const F=G.arena; if(!F||F.over) return; F.over='fail'; F.overT=0; F.bossLeft=G.boss&&G.boss.alive?Math.round(G.boss.hp/G.boss.maxHp*100):0; F.chiSpent=F.startChi-(SAVE.chi||0); save(); if(quiet){ leaveArena(); setState('BOSSLIST'); } }
 function arenaWin(e){ const F=G.arena; if(!F||F.over) return; F.over='win'; F.overT=0; G.slowmo=1.1; e.deadT=3; for(const o of G.enemies) if(o!==e&&o.alive){ o.alive=false; o.deadT=1; deathFx(o); } for(const q of G.projs) if(q.alive&&q.owner&&q.owner.kind!=='player') q.alive=false; G.groundFx=G.groundFx.filter(f=>!(f.kind==='shell'||f.kind==='strip'||f.kind==='aimshell'||f.kind==='venom')); const p=G.player; if(p){ p.drag=null; p.status={}; }   /* the moment the boss dies the fight is won: adds, shots and shells vanish */ shake(14); vibrate(300); SFX.death(); burst(e.x,e.y-20,['#fde047','#ffffff','#c8a878'],90,300,1.6,6,150,true); }
 function bfGrantRewards(F){ const st=F.stage, id=st.id, first=!SAVE.bossFightFirstClearClaimed[id]; const r={chi:1,coins:st.coins,xp:st.xp,first};
-  SAVE.chi=(SAVE.chi||0)+1; SAVE.gold+=st.coins; gainXP(st.xp); dailyEvent('bf');
+  SAVE.chi=(SAVE.chi||0)+1; SAVE.gold+=st.coins; gainXP(st.xp); dailyEvent('bf',st.id);
   if(first){ SAVE.bossFightFirstClearClaimed[id]=true; SAVE.chi+=2; SAVE.keys=Math.min(3,(SAVE.keys||0)+1); r.bonusChi=2; r.bonusKey=(SAVE.keys<=3); }
   SAVE.bossFightCleared[id]=true; const t=Math.round(F.time*10)/10; r.stars=bfStars(st,t); SAVE.bossFightStars=SAVE.bossFightStars||{}; if((SAVE.bossFightStars[id]||0)<r.stars){ SAVE.bossFightStars[id]=r.stars; r.newStars=true; } if(!SAVE.bossFightBestTime[id]||t<SAVE.bossFightBestTime[id]){ SAVE.bossFightBestTime[id]=t; r.newBest=true; } save(); F.rewards=r; }
 const fmtT=t=>{ t=Math.max(0,t||0); const m=Math.floor(t/60), s=t-m*60; return m+':'+(s<10?'0':'')+s.toFixed(1); };
@@ -3246,7 +3294,7 @@ $('profCard').onclick=()=>{ G.profFrom=G.state; setState('PROFILE'); };
 $('bProfBack').onclick=()=>setState(OVS[G.profFrom]&&G.profFrom!=='PROFILE'?G.profFrom:'MENU');
 $('bSetBack').onclick=()=>{ if(G.settingsFrom==='PAUSED'&&G.map){ G.settingsFrom=null; setState('PAUSED'); } else setState('MENU'); }; $('bDeadMenu').onclick=()=>{ save(); setState('MENU'); }; $('bQuit').onclick=()=>{ if(WORLD.arena&&G.arena&&!G.arena.over){ if(!confirm('Leaving cancels the attempt — leave?')) return; arenaFail(true); return; } save(); setState('MENU'); }; $('bResume').onclick=()=>setState('PLAYING'); $('bSwitch').onclick=()=>{ if(!G.player||!G.player.alive) return; G.charsFrom='GAME'; setState('CHARACTERS'); }; $('bPauseSettings').onclick=()=>{ G.settingsFrom='PAUSED'; setState('SETTINGS'); };
 $('bRespawn').onclick=respawn;
-$('bReset').onclick=()=>{ if(confirm('Reset all progress?')){ localStorage.removeItem(SAVE_KEY); location.reload(); } };
+
 $('ver').onclick=()=>{ DEBUG.taps++; if(DEBUG.taps>=5&&!DEBUG.on){ DEBUG.on=true; buildSettings(); $('ver').textContent='version 1.0.0 · DEBUG (nothing is saved)'; } };
 document.querySelectorAll('[data-dbg]').forEach(b=>b.onclick=()=>{ const k=b.dataset.dbg;
   if(k==='god'){ DEBUG.god=!DEBUG.god; b.textContent='God mode '+(DEBUG.god?'ON':'OFF'); }
