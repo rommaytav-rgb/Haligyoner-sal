@@ -1025,7 +1025,7 @@ const ORDER=['SHADE','BOREAS','APOLLO','BECK','CLAY'];
 const COIN_IMG=new Image(); COIN_IMG.src=COIN_URI;
 const LV_MULT=lv=>1+0.08*(lv-1);           // +8% HP per level
 const LV_DMG=lv=>Math.pow(1.12,lv-1);       // damage: x1.12 per level, compounding (LV 5 x1.57, LV 7 x1.97, LV 9 x2.48) — every upgrade is felt
-const LEVEL_COST=n=>30*n*n;                 // gold to buy character level n: 120, 270, 480 ... 3,000 for LV 10, 27,000 for LV 30 (every level costs more)
+const LEVEL_COST=n=>100*n*n;                // gold to buy character level n: 400, 900 ... 10,000 for LV 10, 14,400 for LV 12 (LV 1 to 12 ≈ 65,000 gold ≈ 10 hours of play), 90,000 for LV 30
 const MAX_LV=30;
 const XP_KILL=12, XP_BOSS=400;
 const XP_NEED=lv=>300*lv*(lv+1);         // account XP needed to reach player level lv+1 (600 x lv per level: LV 2 at 600, LV 5 at 6,000, LV 10 at 33,000; never caps)
