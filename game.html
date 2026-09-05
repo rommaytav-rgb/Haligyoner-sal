@@ -316,9 +316,17 @@
   .pgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:6px}
   .pbox{background:#111827;border-radius:10px;padding:6px 10px;font-size:12px;color:#d1d5db;font-weight:700} .pbox b{color:#fde68a}
   @media (max-width:640px){ .prow2{grid-template-columns:60px 70px 1fr 120px;font-size:10px} }
-  /* ---- key merchant prompt (in game) ---- */
-  #merch{position:fixed;left:50%;bottom:clamp(70px,16vh,130px);transform:translateX(-50%);z-index:6;display:none;flex-direction:column;align-items:center;gap:6px;width:min(64vw,300px);box-sizing:border-box;padding:8px 12px;border-radius:12px;background:rgba(14,9,36,.94);border:2px solid #f59e0b;box-shadow:0 0 18px rgba(245,158,11,.4);color:#fde68a;font-size:12px;font-weight:800;letter-spacing:.5px;text-align:center}
-  #merch.on{display:flex} #merch .btn.sm{padding:6px 12px;font-size:12px;background:linear-gradient(180deg,#f59e0b,#b45309);border-color:#fde68a;color:#fff} #merch .btn.sm.dis{filter:grayscale(.8);opacity:.5;pointer-events:none} #merch .xbtn{width:26px;height:26px;font-size:12px}
+  /* ---- daily missions ---- */
+  .mbtn.daily{background:linear-gradient(180deg,#f59e0b,#b45309 55%,#451a03);border-color:#fde68a;box-shadow:0 0 18px rgba(245,158,11,.45),0 10px 20px rgba(0,0,0,.5)}
+  .dbadge{display:inline-block;margin-left:6px;padding:1px 7px;border-radius:9px;background:#0b0820;color:#fde68a;font-size:11px;letter-spacing:1px;vertical-align:middle} .dbadge.all{background:#16a34a;color:#fff}
+  .dlist{display:flex;flex-direction:column;gap:8px;width:100%}
+  .drow{display:flex;align-items:center;gap:10px;background:#111827;border-radius:12px;padding:8px 10px;border-left:5px solid var(--c)} .drow.done{opacity:.75;background:#0f2a1a}
+  .dtier{width:64px;flex:none;text-align:center;font-weight:900;font-size:11px;letter-spacing:1px;color:#0b0820;background:var(--c);border-radius:8px;padding:5px 0}
+  .dbody{flex:1;min-width:0} .dtxt{font-weight:900;font-size:clamp(12px,2.6vh,15px);color:#fff;letter-spacing:.5px}
+  .dbar{height:8px;border-radius:4px;background:#0b0820;border:1px solid #312e81;margin:4px 0 2px;overflow:hidden} .dbar i{display:block;height:100%;background:var(--c)}
+  .dprog{font-size:10px;font-weight:800;color:#a5b4fc} .drow.done .dprog{color:#86efac}
+  .drew{display:flex;flex-direction:column;align-items:flex-end;gap:2px;font-weight:900;font-size:12px;color:#fde68a;white-space:nowrap} .drew span{display:flex;align-items:center;gap:3px} .dchk{color:#4ade80;font-size:16px}
+  .dnote{font-size:11px;font-weight:700;color:#c4b5fd;text-align:center;margin:2px 0 6px}
 </style>
 </head>
 <body>
@@ -337,7 +345,6 @@
   <div class="ltxt" id="splashTxt">LOADING…</div>
 </div>
 <div id="profCard"></div>
-<div id="merch"><div id="merchTxt"></div><div style="display:flex;gap:8px;align-items:center"><div class="btn sm" id="bMerchBuy">BUY KEY</div><div class="xbtn" id="bMerchClose">✕</div></div></div>
 <div id="ovName" class="ov menu">
   <div class="stars"></div><div class="neb n1"></div><div class="neb n2"></div><div class="frame"></div>
   <h1 class="title" style="font-size:clamp(22px,6vh,40px)">ELEMENTAL NINJAS</h1>
@@ -345,6 +352,7 @@
     <div class="nrow"><div class="mbtn ice sm" id="bNameRnd">RANDOM NAME</div><div class="mbtn play sm dis" id="bNameGo">CONTINUE</div></div><div class="mbtn earth sm" id="bNameBack" style="min-width:0;padding:6px 20px;font-size:12px">BACK</div></div>
 </div>
 <div id="ovProfile" class="ov"><div class="panel" style="max-width:760px"><div class="topline" style="margin:0"><div class="ptitle">PLAYER PROFILE</div><div class="xbtn" id="bProfBack">✕</div></div><div id="profBody"></div></div></div>
+<div id="ovDaily" class="ov"><div class="panel" style="max-width:640px"><div class="topline" style="margin:0"><div class="ptitle" style="color:#fde68a">DAILY MISSIONS</div><div class="ptitle" style="font-size:14px;color:#c4b5fd" id="dailyDone"></div><div class="xbtn" id="bDailyBack">✕</div></div><div class="dnote" id="dailyNote"></div><div class="dlist" id="dailyList"></div></div></div>
 <div id="ovMenu" class="ov menu">
   <div class="stars"></div><div class="neb n1"></div><div class="neb n1b"></div><div class="neb n2"></div><div class="neb n2b"></div><div class="neb n3"></div><div class="neb n4"></div>
   <div class="frame"></div>
@@ -357,7 +365,7 @@
   <div class="mbtns">
     <div class="mbtn play" id="bPlay">PLAY</div>
     <div class="mbtn boss" id="bBoss">☠ BOSS FIGHT</div>
-    <div class="mbtn earth" id="bChars">CHARACTERS &amp; SHOP</div>
+    <div class="mrow"><div class="mbtn earth" id="bChars">CHARACTERS &amp; SHOP</div><div class="mbtn daily" id="bDaily">DAILY MISSIONS</div></div>
     <div class="mrow"><div class="mbtn ice" id="bSettings">SETTINGS</div><div class="mbtn fire" id="bAbout">ABOUT &amp; CREDITS</div></div>
   </div>
   <div class="foot">Keyboard: WASD move · hold &amp; release mouse to aim / fire · E ability · Shift dash · M map</div>
@@ -1025,7 +1033,7 @@ const ORDER=['SHADE','BOREAS','APOLLO','BECK','CLAY'];
 const COIN_IMG=new Image(); COIN_IMG.src=COIN_URI;
 const LV_MULT=lv=>1+0.08*(lv-1);           // +8% HP per level
 const LV_DMG=lv=>Math.pow(1.12,lv-1);       // damage: x1.12 per level, compounding (LV 5 x1.57, LV 7 x1.97, LV 9 x2.48) — every upgrade is felt
-const LEVEL_COST=n=>100*n*n;                // gold to buy character level n: 400, 900 ... 10,000 for LV 10, 14,400 for LV 12 (LV 1 to 12 ≈ 65,000 gold ≈ 10 hours of play), 90,000 for LV 30
+const LEVEL_COST=n=>Math.round(280*Math.pow(n,1.4)/100)*100;   // gold to buy character level n: 700, 1,300 ... 8,800 for LV 12, 31,000 for LV 30. Income grows with level too, so each level takes a little longer than the last (25 min for LV 2, ~2 h for LV 30): LV 1 to 12 ≈ 8 h, LV 30 ≈ 30 h of play
 const MAX_LV=30;
 const XP_KILL=12, XP_BOSS=400;
 const XP_NEED=lv=>300*lv*(lv+1);         // account XP needed to reach player level lv+1 (600 x lv per level: LV 2 at 600, LV 5 at 6,000, LV 10 at 33,000; never caps)
@@ -1083,7 +1091,7 @@ function roundRect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x
    SAVE
    ===================================================================== */
 const SAVE_KEY='elemental_ninjas_world_v3';
-const DEFAULT_SAVE=()=>({gold:0,levels:{SHADE:1,BOREAS:1,APOLLO:1,BECK:1,CLAY:1},unlocked:{SHADE:true},selected:'SHADE',kills:0,xp:0,xpTotal:0,chi:0,keys:0,pity:0,playTime:0,chiChests:{},bossFightCleared:{},bossFightBestTime:{},bossFightAttempts:{},bossFightFirstClearClaimed:{},bossFightStars:{},chests:{},golden:{},secret:{},bosses:{hippo:0,croc:0,lord:0,titan:0,yeti:0},killsBy:{},ready:{},secrets:{},secretsBonus:{},maps:{bone_shore:true},hints:{},settings:{sound:true,vibrate:true,music:true,dmgNums:true,shake:true},player:{name:''},merchant:{day:'',n:0}});
+const DEFAULT_SAVE=()=>({gold:0,levels:{SHADE:1,BOREAS:1,APOLLO:1,BECK:1,CLAY:1},unlocked:{SHADE:true},selected:'SHADE',kills:0,xp:0,xpTotal:0,chi:0,keys:0,pity:0,playTime:0,chiChests:{},bossFightCleared:{},bossFightBestTime:{},bossFightAttempts:{},bossFightFirstClearClaimed:{},bossFightStars:{},chests:{},golden:{},secret:{},bosses:{hippo:0,croc:0,lord:0,titan:0,yeti:0},killsBy:{},ready:{},secrets:{},secretsBonus:{},maps:{bone_shore:true},hints:{},settings:{sound:true,vibrate:true,music:true,dmgNums:true,shake:true},player:{name:''},daily:null});
 let SAVE=DEFAULT_SAVE();
 /* a returning player: skips the tutorial hints and starts with the map already revealed */
 function isVeteran(){ return (SAVE.kills||0)>=15||(SAVE.playTime||0)>240||Object.values(SAVE.bosses||{}).some(v=>v>0); }
@@ -1169,7 +1177,7 @@ function pollInput(){
   IN.aim=false; if(sticks.R&&sticks.R.moved){ IN.aim=true; const a=Math.atan2(sticks.R.dy,sticks.R.dx); IN.ax=Math.cos(a); IN.ay=Math.sin(a); }
   else if(IN.mouse.aiming){ IN.aim=true; const a=mouseAngle(); IN.ax=Math.cos(a); IN.ay=Math.sin(a); }
 }
-/* ===== PROGRESSION: gold buys character levels, XP feeds the player (account) level, Chi key merchant, player profile =====
+/* ===== PROGRESSION: gold buys character levels, XP feeds the player (account) level, daily missions (daily.js), player profile =====
    Character levels (cap 30, +8% HP / x1.12 DMG per level) are bought with gold; every level costs more (LEVEL_COST in p2).
    Every kill, chest and boss grants XP that only raises the PLAYER LEVEL: a banner, 200 gold and +1% to every ninja per level. */
 const ACC_LEVEL_COINS=200;
@@ -1187,15 +1195,6 @@ function checkAccountLevel(){ const lv=playerLevel(); if(G.plv===undefined) G.pl
 function checkLevelUp(){ checkAccountLevel(); }   /* old hook name, kept for the call sites */
 /* buying a character level with gold (characters screen) */
 function buyLevel(n){ const lv=SAVE.levels[n]||1; if(lv>=MAX_LV) return false; const cost=LEVEL_COST(lv+1); if(SAVE.gold<cost) return false; SAVE.gold-=cost; SAVE.levels[n]=lv+1; save(); if(G.player&&G.player.name===n) refreshPlayerStats(G.player,false); return true; }
-/* ---- Chi key merchant (village) ---- */
-const MERCH_PRICE=600, MERCH_DAILY=2;
-function merchLeft(){ const day=new Date().toDateString(); SAVE.merchant=SAVE.merchant||{day:'',n:0}; if(SAVE.merchant.day!==day){ SAVE.merchant.day=day; SAVE.merchant.n=0; } return MERCH_DAILY-SAVE.merchant.n; }
-function merchantNpc(){ return WORLD.village&&WORLD.village.npcs?WORLD.village.npcs.find(n=>n.k==='merchant'):null; }
-function merchantUpdate(p,dt){ const m=merchantNpc(); if(!m||!p||!p.alive||WORLD.arena){ if(G.merchNear) merchantClose(); return; } const d=Math.hypot(p.x-m.x,p.y-m.y); if(d<50&&!G.merchNear){ G.merchNear=true; merchantOpen(); } else if(d>78&&G.merchNear) merchantClose(); }
-function merchantOpen(){ const el=$('merch'); if(!el) return; el.classList.add('on'); merchantRefresh(); }
-function merchantClose(){ G.merchNear=false; const el=$('merch'); if(el) el.classList.remove('on'); }
-function merchantRefresh(){ const left=merchLeft(), full=(SAVE.keys||0)>=3, b=$('bMerchBuy'); $('merchTxt').innerHTML='<b>KEY MERCHANT</b><br>Chi key · '+MERCH_PRICE+' gold · '+left+' / '+MERCH_DAILY+' left today'; b.classList.toggle('dis',left<=0||full||SAVE.gold<MERCH_PRICE); b.textContent=full?'KEYS FULL':left<=0?'SOLD OUT TODAY':SAVE.gold<MERCH_PRICE?'NOT ENOUGH GOLD':'BUY KEY'; }
-function merchantBuy(){ const left=merchLeft(); if(left<=0||(SAVE.keys||0)>=3||SAVE.gold<MERCH_PRICE) return; SAVE.gold-=MERCH_PRICE; SAVE.keys=(SAVE.keys||0)+1; SAVE.merchant.n++; save(); SFX.key(); G.hudGold=3; const p=G.player; if(p) floatText(p.x,p.y-60,'+1 CHI KEY','#7fd8f8',true,true); merchantRefresh(); }
 /* ---- player name ---- */
 const RANDOM_NAMES=['Frostwalker','Shadowfang','Emberblade','Stormtail','Nightleaf','Ashrunner','Icefang','Thunderfoot','Moonstrike','Lavaheart','צל 12','לוחם האש','רוח הקרח','נינג\'ה צל','שומר היער','ברק סגול'];
 function nameValid(s){ s=(s||'').trim(); if(s.length<3||s.length>12) return false; return /^[A-Za-z֐-׿0-9 '\-]+$/.test(s); }
@@ -1225,8 +1224,34 @@ function buildProfile(){ const el=$('profBody'); const plv=playerLevel(), lo=plv
   const bt=SAVE.bossFightBestTime||{}; h+=`<div class="pbox"><div class="psec">BOSS FIGHT BEST TIMES</div>${BF_STAGES.map(s=>`<div>${s.name}: <b>${bt[s.id]?bt[s.id].toFixed(1)+'s':'—'}</b>${(SAVE.bossFightStars&&SAVE.bossFightStars[s.id])?' '+'★'.repeat(SAVE.bossFightStars[s.id]):''}</div>`).join('')}</div></div>`;
   el.innerHTML=h; el.querySelector('.pport').appendChild(charCanvas(CH[SAVE.selected],false,3,88,104,.97)); }
 /* ---- save defaults for older saves ---- */
-function migrateSave(){ SAVE.player=SAVE.player||{name:''}; SAVE.merchant=SAVE.merchant||{day:'',n:0}; for(const n of ORDER) SAVE.levels[n]=Math.min(MAX_LV,Math.max(1,SAVE.levels[n]||1)); }
+function migrateSave(){ SAVE.player=SAVE.player||{name:''}; for(const n of ORDER) SAVE.levels[n]=Math.min(MAX_LV,Math.max(1,SAVE.levels[n]||1)); }
 migrateSave();
+/* ===== DAILY MISSIONS: three missions a day (easy / medium / hard), gold + XP rewards that scale with the player level ===== */
+const DAILY_TIERS={easy:{gold:300,xp:150,col:'#4ade80',name:'EASY'},medium:{gold:800,xp:400,col:'#fbbf24',name:'MEDIUM'},hard:{gold:2000,xp:1000,col:'#f87171',name:'HARD'}};
+const DAILY_MULT=plv=>1+0.12*(plv-1);                                     // player level 8: x1.84, level 15: x2.68
+const DAILY_POOL={
+  easy:  [{k:'kill',t:'mush',n:100},{k:'kill',t:'priest',n:40},{k:'kill',t:'pirate',n:40},{k:'kills',n:80},{k:'chest',n:3},{k:'gold',n:800},{k:'kill',t:'golem',n:30,m2:true},{k:'kill',t:'wolf',n:25,m2:true}],
+  medium:[{k:'kill',t:'mush',n:200},{k:'kill',t:'priest',n:100},{k:'kill',t:'pirate',n:100},{k:'kills',n:200},{k:'gold',n:2500},{k:'chest',n:6},{k:'boss',n:1},{k:'kill',t:'golem',n:80,m2:true},{k:'kill',t:'wolf',n:60,m2:true}],
+  hard:  [{k:'boss',n:2},{k:'bf',n:1},{k:'kills',n:400},{k:'kill',t:'mush',n:400},{k:'gold',n:6000},{k:'kill',t:'golem',n:150,m2:true},{k:'kill',t:'wolf',n:120,m2:true}]};
+function dailySeed(str){ let h=2166136261; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); } return ()=>{ h=Math.imul(h^(h>>>15),h|1); h^=h+Math.imul(h^(h>>>7),h|61); return ((h^(h>>>14))>>>0)/4294967296; }; }
+function dailyDesc(m){ const N=m.n; if(m.k==='kill') return 'Defeat '+N+' '+EN[m.t].name.toLowerCase()+'s'; if(m.k==='kills') return 'Defeat '+N+' enemies'; if(m.k==='chest') return 'Open '+N+' chests'; if(m.k==='gold') return 'Collect '+N+' gold'; if(m.k==='boss') return 'Defeat '+(N>1?N+' open-world bosses':'an open-world boss'); return 'Clear a Boss Fight stage'; }
+function dailyCheck(){ const day=new Date().toDateString(); if(SAVE.daily&&SAVE.daily.day===day&&SAVE.daily.list&&SAVE.daily.list.length===3) return; const R=dailySeed(day+'|ninjas'), plv=playerLevel(), mult=DAILY_MULT(plv), m2=!!(SAVE.maps&&SAVE.maps.frost_ember), list=[];
+  for(const tier of ['easy','medium','hard']){ const pool=DAILY_POOL[tier].filter(m=>!m.m2||m2); const m=pool[Math.floor(R()*pool.length)], T=DAILY_TIERS[tier]; list.push({tier,k:m.k,t:m.t,n:m.n,p:0,done:false,gold:Math.round(T.gold*mult/10)*10,xp:Math.round(T.xp*mult/10)*10}); }
+  SAVE.daily={day,list,plv}; save(); }
+function dailyEvent(kind,type,amt){ if(!SAVE.daily) dailyCheck(); if(WORLD.arena&&kind!=='bf') return; let hit=false;
+  for(const m of SAVE.daily.list){ if(m.done) continue; const ok=(m.k==='kill'&&kind==='kill'&&m.t===type)||(m.k==='kills'&&kind==='kill')||(m.k==='chest'&&kind==='chest')||(m.k==='gold'&&kind==='gold')||(m.k==='boss'&&kind==='boss')||(m.k==='bf'&&kind==='bf'); if(!ok) continue;
+    m.p=Math.min(m.n,m.p+(amt||1)); hit=true; if(m.p>=m.n){ m.done=true; SAVE.gold+=m.gold; gainXP(m.xp); const p=G.player; if(p&&p.alive) floatText(p.x,p.y-70,'MISSION COMPLETE  +'+m.gold+' GOLD  +'+m.xp+' XP','#fde047',true,true); G.banner={text:'MISSION COMPLETE',sub:dailyDesc(m)+'  ·  +'+m.gold+' GOLD  +'+m.xp+' XP',t:3.2}; SFX.key(); G.hudGold=3; } }
+  if(hit&&kind!=='gold') save(); }
+function dailyDoneCount(){ dailyCheck(); return SAVE.daily.list.filter(m=>m.done).length; }
+function dailyResetText(){ const now=new Date(), mid=new Date(now); mid.setHours(24,0,0,0); const s=Math.max(0,(mid-now)/1000|0), h=Math.floor(s/3600), mi=Math.floor(s%3600/60); return (h>0?h+'h ':'')+mi+'m'; }
+/* the tracker under the quest line in the HUD: the first mission still open */
+function drawDailyHUD(c,y,bw){ dailyCheck(); const m=SAVE.daily.list.find(x=>!x.done); c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,10,y,bw,30,10); c.fill(); c.font='900 10px Arial'; c.textAlign='left';
+  if(!m){ c.fillStyle='#fde047'; c.fillText('DAILY MISSIONS  ✔ ALL DONE',18,y+13); c.font='700 9px Arial'; c.fillStyle='#e5e7eb'; c.fillText('new missions in '+dailyResetText(),18,y+25); return; }
+  const T=DAILY_TIERS[m.tier], k=m.p/m.n; c.fillStyle=T.col; c.fillText('DAILY · '+T.name,18,y+13); c.font='700 9px Arial'; c.fillStyle='#e5e7eb'; const lab='DAILY · '+T.name+'  '; c.fillText(dailyDesc(m)+'  '+m.p+'/'+m.n,18+c.measureText(lab).width+6,y+13); c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,18,y+18,bw-16,8,4); c.fill(); if(k>0){ c.fillStyle=T.col; roundRect(c,19,y+19,(bw-18)*k,6,3); c.fill(); } }
+function buildDaily(){ dailyCheck(); const el=$('dailyList'); $('dailyNote').textContent='Rewards scale with your player level (LV '+playerLevel()+' · x'+DAILY_MULT(playerLevel()).toFixed(2)+') · new missions in '+dailyResetText();
+  el.innerHTML=SAVE.daily.list.map(m=>{ const T=DAILY_TIERS[m.tier], k=Math.min(1,m.p/m.n); return `<div class="drow ${m.done?'done':''}" style="--c:${T.col}"><div class="dtier">${T.name}</div><div class="dbody"><div class="dtxt">${dailyDesc(m)}</div><div class="dbar"><i style="width:${Math.round(k*100)}%"></i></div><div class="dprog">${m.done?'COMPLETE':m.p+' / '+m.n}</div></div><div class="drew"><span><img class="coinic" src="${COIN_URI}" alt="">${m.gold}</span><span>⚡ ${m.xp} XP</span>${m.done?'<span class="dchk">✔</span>':''}</div></div>`; }).join('');
+  $('dailyDone').textContent=dailyDoneCount()+' / 3 done'; }
+function dailyMenuBadge(){ const b=$('bDaily'); if(!b) return; const n=dailyDoneCount(); b.innerHTML='DAILY MISSIONS <span class="dbadge'+(n>=3?' all':'')+'">'+n+'/3</span>'; }
 /* =====================================================================
    WORLD — "Bone Shore": one connected hand-shaped world.
    Irregular coastline, curving river with fords and a waterfall, darkening swamp,
@@ -1239,7 +1264,7 @@ let WORLD={w:3200,h:2000,land:{x0:100,y0:100,x1:2900,y1:1900},corner:220,
   pools:[{x:500,y:1720,r:70},{x:1000,y:1800,r:90},{x:1400,y:1680,r:60},{x:1900,y:1780,r:85},{x:2300,y:1650,r:65},{x:2650,y:1780,r:55},{x:2480,y:1730,r:45},{x:2565,y:1800,r:45},{x:2500,y:1885,r:30},{x:2400,y:1790,r:45}],   // the last four ring the swamp Chi ledge, open only from the south-west
   chiChests:[[240,1230],[2820,150],[2480,1815]],   // fixed Chi chests: deep forest, far end of the beach, swamp ledge
   village:{x:1600,y:1000,r:230,houses:[{x:1440,y:820,w:130,h:95},{x:1690,y:815,w:130,h:95},{x:1430,y:1090,w:130,h:95},{x:1700,y:1100,w:130,h:95}],
-    npcs:[{x:1555,y:990,k:'upgrade',label:''},{x:1650,y:990,k:'select',label:''},{x:1600,y:1080,k:'merchant',label:''}],
+    npcs:[{x:1555,y:990,k:'upgrade',label:''},{x:1650,y:990,k:'select',label:''}],
     signs:[{x:1600,y:790,t:'NORTH: RIVER'},{x:1600,y:1215,t:'SOUTH: SWAMP'},{x:1830,y:1000,t:'EAST: BEACH'},{x:1370,y:1000,t:'WEST: FOREST'}],
     lanterns:[[1525,915],[1690,915],[1525,1085],[1690,1085],[1585,800],[1615,800],[1585,1200],[1615,1200]],
     barrels:[[1590,845],[1608,842],[1740,1070]], crates:[[1442,945],[1448,968],[1770,935]],
@@ -1569,7 +1594,7 @@ function buildWorld2(){
     colliders:[], cgrid:new Map(), CG:200, pathGrid:null, PG:32, chunks:new Map(), CS:640, mini:null, explored:null, FOG:64, ex:0, ey:0,
     bridges:[{y:880,w:120,h:60},{y:1330,w:120,h:60}], props:[], secretsFound:0 };
   const vx=1800, vy=1100; W.village={x:vx,y:vy,r:230,houses:[{x:vx-160,y:vy-180,w:130,h:95},{x:vx+90,y:vy-185,w:130,h:95},{x:vx-170,y:vy+90,w:130,h:95},{x:vx+100,y:vy+100,w:130,h:95}],
-    npcs:[{x:vx-45,y:vy-10,k:'upgrade',label:''},{x:vx+50,y:vy-10,k:'select',label:''},{x:vx,y:vy+70,k:'merchant',label:''}],
+    npcs:[{x:vx-45,y:vy-10,k:'upgrade',label:''},{x:vx+50,y:vy-10,k:'select',label:''}],
     signs:[{x:vx,y:vy-210,t:'NORTH: RUINS'},{x:vx,y:vy+215,t:'SOUTH: HOT SPRINGS'},{x:vx+230,y:vy,t:'EAST: EMBER'},{x:vx-230,y:vy,t:'WEST: FROST'}],
     lanterns:[[vx-75,vy-85],[vx+90,vy-85],[vx-75,vy+85],[vx+90,vy+85],[vx-15,vy-200],[vx+15,vy-200],[vx-15,vy+200],[vx+15,vy+200]],
     barrels:[[vx-10,vy-155],[vx+8,vy-158],[vx+140,vy+70]], crates:[[vx-158,vy-55],[vx-152,vy-32],[vx+170,vy-65]], fences:[], safeR:330, dummies:[[vx+135,vy],[vx+160,vy+30]], flags:[[vx-205,vy-210],[vx+205,vy-210],[vx-205,vy+210],[vx+205,vy+210]], campfires:[[vx,vy+60]] };
@@ -1780,8 +1805,8 @@ function enemyDie(e){
   e.alive=false; G.kills++; let n=rndi(e.d.coins[0],e.d.coins[1]), gold=rndi(e.d.gold[0],e.d.gold[1]); if(e.summoned){ n=Math.ceil(n/2); gold=Math.ceil(gold/2); }   // boss adds drop half
   const per=Math.ceil(gold/n); for(let i=0;i<n;i++) G.coins.push({x:e.x,y:e.y,vx:rnd(-120,120),vy:rnd(-220,-80),v:per,t:0,fly:false,z:0});
   if(e.boss&&WORLD.arena){ if(G.boss===e) G.boss=null; arenaWin(e); return; }   // Boss Fight: separate rewards, nothing counts toward the open world
-  if(e.boss){ e.deadT=3.2; burst(e.x,e.y-10,['#c8a878','#8a6a4a','#fde047','#ffffff'],80,260,1.4,6,200,true); shake(16); vibrate(300); SFX.death(); const bxp=e.d.xpBoss||XP_BOSS; floatText(e.x,e.y-60,'BOSS DEFEATED  +'+bxp+' XP','#fde047',true,true); if(G.boss===e) G.boss=null; G.lastBossDeath=G.time; G.bossMark=null; SAVE.bosses[e.type]=(SAVE.bosses[e.type]||0)+1; gainXP(bxp); dropChi(e.x,e.y,2); keyDrop(e.x,e.y); checkUnlocks(); checkLevelUp(); }
-  else { deathFx(e); e.deadT=1.4; if(e.spawner) e.spawner.alive--; SAVE.kills++; SAVE.killsBy=SAVE.killsBy||{}; SAVE.killsBy[e.type]=(SAVE.killsBy[e.type]||0)+1; if(!e.summoned&&(Math.random()<.005||DEBUG.forceChi)) dropChi(e.x,e.y,1); { const p=G.player; if(p&&p.name==='SHADE'&&spinning(p)&&e.spinHitT===G.time&&Math.random()<.25) G.coins.push({x:e.x,y:e.y,vx:rnd(-80,80),vy:-120,v:5,t:0,fly:false,z:0}); } gainXP(e.d.xp||XP_KILL,e.x,e.y-44); if(!e.summoned){ SAVE.pity=(SAVE.pity||0)+1; if(Math.random()<.02||SAVE.pity>=80) keyDrop(e.x,e.y); } checkUnlocks(); checkLevelUp(); if(!SAVE.hints.kill){ SAVE.hints.kill=true; G.arrowTarget=null; showHint('Try your ability ✦'); } }
+  if(e.boss){ e.deadT=3.2; burst(e.x,e.y-10,['#c8a878','#8a6a4a','#fde047','#ffffff'],80,260,1.4,6,200,true); shake(16); vibrate(300); SFX.death(); const bxp=e.d.xpBoss||XP_BOSS; floatText(e.x,e.y-60,'BOSS DEFEATED  +'+bxp+' XP','#fde047',true,true); if(G.boss===e) G.boss=null; G.lastBossDeath=G.time; G.bossMark=null; SAVE.bosses[e.type]=(SAVE.bosses[e.type]||0)+1; dailyEvent('boss'); gainXP(bxp); dropChi(e.x,e.y,2); keyDrop(e.x,e.y); checkUnlocks(); checkLevelUp(); }
+  else { deathFx(e); e.deadT=1.4; if(e.spawner) e.spawner.alive--; SAVE.kills++; SAVE.killsBy=SAVE.killsBy||{}; SAVE.killsBy[e.type]=(SAVE.killsBy[e.type]||0)+1; dailyEvent('kill',e.type); if(!e.summoned&&(Math.random()<.005||DEBUG.forceChi)) dropChi(e.x,e.y,1); { const p=G.player; if(p&&p.name==='SHADE'&&spinning(p)&&e.spinHitT===G.time&&Math.random()<.25) G.coins.push({x:e.x,y:e.y,vx:rnd(-80,80),vy:-120,v:5,t:0,fly:false,z:0}); } gainXP(e.d.xp||XP_KILL,e.x,e.y-44); if(!e.summoned){ SAVE.pity=(SAVE.pity||0)+1; if(Math.random()<.02||SAVE.pity>=80) keyDrop(e.x,e.y); } checkUnlocks(); checkLevelUp(); if(!SAVE.hints.kill){ SAVE.hints.kill=true; G.arrowTarget=null; showHint('Try your ability ✦'); } }
   save();
 }
 /* Chi key: 2% from any common enemy, always from a boss, pity after 80 kills; capped at 3 */
@@ -1797,7 +1822,7 @@ function deathFx(e){
 }
 function playerDie(){ const p=G.player; p.alive=false; p.deadT=1; SFX.death(); shake(10); vibrate(400); burst(p.x,p.y-8,[p.ch.color,p.ch.glow,'#ffffff'],40,200,1.1,5,150,true); if(WORLD.arena){ arenaFail(); return; } const lost=Math.floor(SAVE.gold*.1); SAVE.gold-=lost; G.lostGold=lost; save(); }
 function openChest(c){
-  c.open=true; SFX.levelup(); burst(c.x,c.y-6,['#fde047','#ffffff','#e0a020'],26,180,.9,4,250,true); const p=G.player;
+  c.open=true; dailyEvent('chest'); SFX.levelup(); burst(c.x,c.y-6,['#fde047','#ffffff','#e0a020'],26,180,.9,4,250,true); const p=G.player;
   if(c.kind==='normal'){ const n=rndi(20,60); SAVE.chests[c.id]=true; SAVE.gold+=n; gainXP(40); floatText(c.x,c.y-30,'+'+n+' GOLD  +40 XP','#fde68a',true); }
   else if(c.kind==='golden'){ SAVE.golden[c.id]=new Date().toDateString(); const n=rndi(150,250); SAVE.gold+=n; gainXP(40); floatText(c.x,c.y-30,'+'+n+' GOLD  +40 XP','#fde68a',true); }
   else if(c.kind==='chi'){ SAVE.keys--; SAVE.chiChests[c.id]=SAVE.playTime; SFX.chestOpen(); burst(c.x,c.y-10,['#22d3ee','#3b82f6','#ffffff'],36,220,1,4,120,true); floatText(c.x,c.y-34,'CHI CHEST  +3 CHI','#7fd8f8',true,true); for(let i=0;i<3;i++){ const a=Math.atan2(p.y-c.y,p.x-c.x)+(i-1)*1.1, vh=250+i*25, air=2*vh/520, tx=p.x+Math.cos(a)*44, ty=p.y+Math.sin(a)*30; G.chis.push({x:c.x,y:c.y-6,vx:(tx-c.x)/air,vy:(ty-c.y)/air,h:12,vh,t:-i*.4,landed:false,fly:false,chest:true}); } }   // lid bursts, three orbs arc out and are collected one by one
@@ -1838,7 +1863,7 @@ function playerUpdate(p,dt){
   if(IN.ability){ IN.ability=false; if(p.abCd<=0&&!p.hidden&&p.dashT<=0&&p.jumpT<=0){ p.abCd=p.ch.skill.cd; p.abPress=3; ABILITY[p.name](p); p.abGrace=Math.max(p.abGrace||0,1.5); p.inv=Math.max(p.inv,p.abGrace);   /* no ninja can be hurt while casting a special and for 1.5 s after */ SFX.ab[p.name](); vibrate(40); G.zoomPulse=1.06; if(!SAVE.hints.ability){ SAVE.hints.ability=true; showHint(null); } } }
   if(p.hidden){ p.hideT-=dt; part(p.x+rnd(-14,14),p.y+rnd(-16,6),0,-30,'#a855f7',.5,5,0,true); if(p.hideT<=0) shadeReappear(p); }
   // coins pickup
-  for(let i=G.coins.length-1;i>=0;i--){ const c=G.coins[i]; c.t+=dt; if(!c.fly){ c.x+=c.vx*dt; c.y+=c.vy*dt; c.vy+=600*dt; c.vx*=Math.pow(.05,dt); if(c.t>.14) c.fly=true; } else { const dx=p.x-c.x, dy=p.y-8-c.y, d=Math.hypot(dx,dy)||1; { const s=Math.min(d,(420+c.t*1100)*dt); c.x+=dx/d*s; c.y+=dy/d*s; } if(d<10){ G.coins.splice(i,1); SAVE.gold+=c.v; SFX.coin(); part(p.x,p.y-20,0,-40,'#fde047',.4,4,0,true); } } }
+  for(let i=G.coins.length-1;i>=0;i--){ const c=G.coins[i]; c.t+=dt; if(!c.fly){ c.x+=c.vx*dt; c.y+=c.vy*dt; c.vy+=600*dt; c.vx*=Math.pow(.05,dt); if(c.t>.14) c.fly=true; } else { const dx=p.x-c.x, dy=p.y-8-c.y, d=Math.hypot(dx,dy)||1; { const s=Math.min(d,(420+c.t*1100)*dt); c.x+=dx/d*s; c.y+=dy/d*s; } if(d<10){ G.coins.splice(i,1); SAVE.gold+=c.v; dailyEvent('gold',null,c.v); SFX.coin(); part(p.x,p.y-20,0,-40,'#fde047',.4,4,0,true); } } }
   for(const c of G.chests){ const d=Math.hypot(c.x-p.x,c.y-p.y); if(c.kind==='chi'){ c.rattle=Math.max(0,(c.rattle||0)-dt); if(c.open){ const left=1800-(SAVE.playTime-(SAVE.chiChests[c.id]||0)); if(left<=0){ c.open=false; burst(c.x,c.y-6,['#22d3ee','#ffffff'],14,120,.7,3,0,true); } else if(d<70&&(c.msgT||0)<=0){ c.msgT=1; showHint('Chi chest refills in '+Math.floor(left/60)+':'+String(Math.floor(left%60)).padStart(2,'0')); } c.msgT=(c.msgT||0)-dt; continue; }
       if(d<40){ if((SAVE.keys||0)>0) openChest(c); else if((c.msgT||0)<=0){ c.msgT=2.5; c.rattle=.5; showHint('You need a Chi key — enemies drop them'); SFX.rattle(); } c.msgT=(c.msgT||0)-dt; } }
     else if(!c.open&&d<40) openChest(c); }
@@ -2088,7 +2113,6 @@ function announceBoss(type){ const p=G.player, all=type==='hippo'?WORLD.hippoLai
 function worldUpdate(dt){
   const p=G.player; G.mapT+=dt;
   if(G.haz&&!WORLD.arena) m2HazUpdate(dt);
-  if(!WORLD.arena) merchantUpdate(p,dt);
   if(WORLD.arena){ arenaUpdate(dt); G.enemies=G.enemies.filter(e=>e.alive||(e.deadT!==undefined&&e.deadT>0)); G.chasers=0; for(const e of G.enemies) enemyUpdate(e,dt,p); return; }
   if(G.announce){ G.announce.t-=dt; shake(2); const a=G.announce; if(a.type==='croc'&&Math.random()<.6) part(a.x+rnd(-60,60),a.y+rnd(-30,30),0,-40,'#7aa050',.9,5,0,true); if(a.type==='lord') lordAnnounceFx(a,dt); if(a.t<=0){ G.announce=null; if(G.haz) G.haz.lastBossSpawn=G.time; const e=makeEnemy(a.type,a.x,a.y); e.spawnT=0; e.lair={x:a.x,y:a.y}; collide(e); G.banner={text:BOSS_ANN[a.type].b,sub:BOSS_ANN[a.type].sub+' — SEE THE MAP',t:3.2}; SFX.roar(); shake(14); burst(e.x,e.y,BOSS_ANN[a.type].cols,60,340,1,8,300); } }
      /* under-levelled on the beach: a warning, not a wall */
@@ -2653,7 +2677,7 @@ function drawChiChest(c,ch,t){ const pulse=.5+.5*Math.sin(t*2.2), sh=ch.rattle>0
   const x=(ch.x+sh)/PIX-10|0, y=ch.y/PIX-7|0; c.save(); c.scale(PIX,PIX); g=c; rect(x+1,y+13,18,2,'rgba(0,0,0,.25)'); const bot=ch.open?'#172554':'#1e3a8a', top=ch.open?'#1e293b':'#2563eb'; rect(x,y+6,20,8,bot); rect(x+1,y+7,18,1,'#3b82f6');
   if(ch.open){ rect(x,y-2,20,5,top); rect(x+2,y+5,16,6,'#0b1020'); } else { rect(x,y+1,20,6,top); rect(x,y+1,20,1,'#93c5fd'); rect(x+1,y+3,18,1,'#1d4ed8'); rect(x+8,y+4,4,7,'#0e7490'); rect(x+9,y+5,2,5,pulse>.5?'#a5f3fc':'#22d3ee'); px(x+9,y+9,'#ecfeff'); if(pulse>.6){ px(x-2,y+2,'#a5f3fc'); px(x+21,y+7,'#a5f3fc'); px(x+10,y-2,'#a5f3fc'); } }
   c.restore(); }
-function drawNPC(c,n,t){ const b=Math.sin(t*3)*1.5; c.save(); c.translate(n.x,n.y); c.fillStyle='rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(0,12,14,6,0,0,TAU); c.fill(); c.fillStyle=n.k==='upgrade'?'#a16207':n.k==='merchant'?'#7c2d12':'#1d4ed8'; roundRect(c,-11,-8+b,22,20,7); c.fill(); if(n.k==='merchant'){ c.font='900 11px Arial'; c.textAlign='center'; c.fillText('🔑',0,-32+b); } c.fillStyle='#f5d0a9'; c.beginPath(); c.arc(0,-18+b,10,0,TAU); c.fill(); c.fillStyle=n.k==='upgrade'?'#fde047':n.k==='merchant'?'#fb923c':'#e0e7ff'; c.beginPath(); c.arc(0,-21+b,10.5,Math.PI,TAU); c.fill(); c.fillStyle='#111'; c.beginPath(); c.arc(-3,-17+b,1.6,0,TAU); c.fill(); c.beginPath(); c.arc(3,-17+b,1.6,0,TAU); c.fill(); c.restore(); }
+function drawNPC(c,n,t){ const b=Math.sin(t*3)*1.5; c.save(); c.translate(n.x,n.y); c.fillStyle='rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(0,12,14,6,0,0,TAU); c.fill(); c.fillStyle=n.k==='upgrade'?'#a16207':'#1d4ed8'; roundRect(c,-11,-8+b,22,20,7); c.fill(); c.fillStyle='#f5d0a9'; c.beginPath(); c.arc(0,-18+b,10,0,TAU); c.fill(); c.fillStyle=n.k==='upgrade'?'#fde047':'#e0e7ff'; c.beginPath(); c.arc(0,-21+b,10.5,Math.PI,TAU); c.fill(); c.fillStyle='#111'; c.beginPath(); c.arc(-3,-17+b,1.6,0,TAU); c.fill(); c.beginPath(); c.arc(3,-17+b,1.6,0,TAU); c.fill(); c.restore(); }
 function drawSign(c,s){ c.save(); c.scale(PIX,PIX); g=c; pxSign(s.x/PIX-7|0,s.y/PIX-14|0,s.t); c.restore(); }
 /* boss telegraphs: the Hippo cracks the earth (brown ground, spreading cracks, rising pebbles), the Crocodile spreads poison (green pool, bubbles, drips) */
 function drawTele(c,e){ const t=e.ai.tele, k=clamp(t.t/t.dur,0,1), earth=e.type==='hippo', poison=e.type==='croc', T=G.time, live=G.state==='PLAYING'; c.save(); c.translate(e.x+(t.ox||0),e.y+6+(t.oy||0));
@@ -2765,7 +2789,7 @@ function drawHUD(c,p){
   if(p.status.poison){ const s=p.status.poison, ix=hx+hw+2, iy=hy+8; c.fillStyle='#14532d'; c.beginPath(); c.arc(ix,iy,10,0,TAU); c.fill(); c.strokeStyle='#4ade80'; c.lineWidth=2; c.stroke(); c.font='900 11px Arial'; c.textAlign='center'; c.fillStyle='#86efac'; c.fillText('☠',ix,iy+4); c.font='800 9px Arial'; c.fillStyle='#4ade80'; c.fillText(Math.ceil(s.t)+'s',ix,iy+20); }   // poison icon + countdown
   if(spinning(p)){ const C=p.spin.C; c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,hx,hy+20,hw,8,4); c.fill(); c.fillStyle='#6ce87a'; roundRect(c,hx+1,hy+21,(hw-2)*clamp(p.spin.t/C.dur,0,1),6,3); c.fill(); c.font='800 9px Arial'; c.textAlign='left'; c.fillStyle='#6ce87a'; c.fillText('SPINJITZU  INVULNERABLE  '+p.spin.t.toFixed(1)+'s',hx+4,hy+38); } else { const plv=playerLevel(), lo=plv>1?XP_NEED(plv-1):0, hi=XP_NEED(plv), k=clamp((SAVE.xpTotal-lo)/(hi-lo),0,1); c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,hx,hy+20,hw,8,4); c.fill(); c.fillStyle='#a855f7'; if(k>0){ roundRect(c,hx+1,hy+21,(hw-2)*k,6,3); c.fill(); } c.font='800 9px Arial'; c.textAlign='left'; c.fillStyle='#e9d5ff'; c.fillText('PLAYER LV '+plv+'   '+(SAVE.xpTotal-lo)+' / '+(hi-lo)+' XP',hx+4,hy+38); }
   const arena=!!WORLD.arena;
-  if(!arena){ const qn=['CLAY','BECK'].find(k=>!SAVE.unlocked[k]); if(qn){ const q=QUESTS[qn], k=q.pct(); c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,10,82,bw,34,10); c.fill(); c.font='900 10px Arial'; c.textAlign='left'; c.fillStyle=CH[qn].color; c.fillText('UNLOCK '+qn,18,95); c.font='700 9px Arial'; c.fillStyle='#e5e7eb'; c.fillText(q.progress(),18+c.measureText('UNLOCK '+qn+'  ').width+8,95); c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,18,100,bw-16,9,4); c.fill(); if(k>0){ c.fillStyle='#4ade80'; roundRect(c,19,101,(bw-18)*k,7,3); c.fill(); }} } else drawArenaHUD(c,p,bw);
+  if(!arena){ const qn=['CLAY','BECK'].find(k=>!SAVE.unlocked[k]); if(qn){ const q=QUESTS[qn], k=q.pct(); c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,10,82,bw,34,10); c.fill(); c.font='900 10px Arial'; c.textAlign='left'; c.fillStyle=CH[qn].color; c.fillText('UNLOCK '+qn,18,95); c.font='700 9px Arial'; c.fillStyle='#e5e7eb'; c.fillText(q.progress(),18+c.measureText('UNLOCK '+qn+'  ').width+8,95); c.fillStyle='rgba(0,0,0,.55)'; roundRect(c,18,100,bw-16,9,4); c.fill(); if(k>0){ c.fillStyle='#4ade80'; roundRect(c,19,101,(bw-18)*k,7,3); c.fill(); }} drawDailyHUD(c,qn?122:82,bw); } else drawArenaHUD(c,p,bw);
   // gold + wave
   c.font='900 13px Arial'; const gw=c.measureText(String(SAVE.gold)).width, kx=bw+50+gw+10, pw=Math.min(kx+34-(bw+20),UI.pause().x-24-(bw+20)); c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,bw+20,10,pw,26,13); c.fill(); c.drawImage(COIN_IMG,bw+26,13,20,20); c.textAlign='left'; c.fillStyle='#fde68a'; c.fillText(String(SAVE.gold),bw+50,28); c.font='12px Arial'; c.fillText('🔑',kx,29); c.font='900 12px Arial'; c.fillStyle=(SAVE.keys||0)>0?'#fde047':'rgba(255,255,255,.45)'; c.fillText(String(SAVE.keys||0),kx+17,28);   // Chi keys right after the gold, clear of the pause button
   if(!arena){ c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,bw+20,40,120,22,11); c.fill(); c.font='800 11px Arial'; c.fillStyle='#e2e8f0'; c.fillText(G.map.name.toUpperCase()+'   ☠ '+G.kills,bw+32,55); }
@@ -2964,7 +2988,7 @@ function arenaTick(raw){ const F=G.arena; if(!F||!F.over) return; F.overT+=raw;
 function arenaFail(quiet){ const F=G.arena; if(!F||F.over) return; F.over='fail'; F.overT=0; F.bossLeft=G.boss&&G.boss.alive?Math.round(G.boss.hp/G.boss.maxHp*100):0; F.chiSpent=F.startChi-(SAVE.chi||0); save(); if(quiet){ leaveArena(); setState('BOSSLIST'); } }
 function arenaWin(e){ const F=G.arena; if(!F||F.over) return; F.over='win'; F.overT=0; G.slowmo=1.1; e.deadT=3; for(const o of G.enemies) if(o!==e&&o.alive){ o.alive=false; o.deadT=1; deathFx(o); } for(const q of G.projs) if(q.alive&&q.owner&&q.owner.kind!=='player') q.alive=false; G.groundFx=G.groundFx.filter(f=>!(f.kind==='shell'||f.kind==='strip'||f.kind==='aimshell'||f.kind==='venom')); const p=G.player; if(p){ p.drag=null; p.status={}; }   /* the moment the boss dies the fight is won: adds, shots and shells vanish */ shake(14); vibrate(300); SFX.death(); burst(e.x,e.y-20,['#fde047','#ffffff','#c8a878'],90,300,1.6,6,150,true); }
 function bfGrantRewards(F){ const st=F.stage, id=st.id, first=!SAVE.bossFightFirstClearClaimed[id]; const r={chi:1,coins:st.coins,xp:st.xp,first};
-  SAVE.chi=(SAVE.chi||0)+1; SAVE.gold+=st.coins; gainXP(st.xp);
+  SAVE.chi=(SAVE.chi||0)+1; SAVE.gold+=st.coins; gainXP(st.xp); dailyEvent('bf');
   if(first){ SAVE.bossFightFirstClearClaimed[id]=true; SAVE.chi+=2; SAVE.keys=Math.min(3,(SAVE.keys||0)+1); r.bonusChi=2; r.bonusKey=(SAVE.keys<=3); }
   SAVE.bossFightCleared[id]=true; const t=Math.round(F.time*10)/10; r.stars=bfStars(st,t); SAVE.bossFightStars=SAVE.bossFightStars||{}; if((SAVE.bossFightStars[id]||0)<r.stars){ SAVE.bossFightStars[id]=r.stars; r.newStars=true; } if(!SAVE.bossFightBestTime[id]||t<SAVE.bossFightBestTime[id]){ SAVE.bossFightBestTime[id]=t; r.newBest=true; } save(); F.rewards=r; }
 const fmtT=t=>{ t=Math.max(0,t||0); const m=Math.floor(t/60), s=t-m*60; return m+':'+(s<10?'0':'')+s.toFixed(1); };
@@ -3135,8 +3159,8 @@ function lordArenaFx(c,ox,oy,vw,vh,t,vis,P){ const A=WORLD.arena, W=WORLD, live=
    MENUS, STATE MACHINE, CAMERA, MAIN LOOP
    ===================================================================== */
 const $=id=>document.getElementById(id);
-const OVS={NAME:'ovName',PROFILE:'ovProfile',MENU:'ovMenu',MAP_SELECT:'ovMaps',CHARACTERS:'ovChars',SETTINGS:'ovSettings',PAUSED:'ovPause',DEAD:'ovDead',ABOUT:'ovAbout',BOSSLIST:'ovBossList',BOSSPRE:'ovBossPre',BOSSWIN:'ovBossWin'};
-function setState(s){ if(s==='PLAYING'&&G.state!=='PLAYING') menuMusicStop(); if(s!==G.state&&s!=='PLAYING'&&AUDIO.ctx&&!SPLASH.on) SFX.swoosh(); if(s!==G.state&&OVS[s]){ const el=$(OVS[s]); el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); } G.state=s; for(const k in OVS) $(OVS[k]).classList.toggle('on',k===s); if(s==='MENU'){ if(WORLD.arena) leaveArena(); G.player=null; G.map=null; } if(s==='BOSSLIST'){ if(WORLD.arena) leaveArena(); buildBossList(); }  if(s==='MAP_SELECT') buildMapList(); if(s==='CHARACTERS'){ CVIEW='grid'; VIEW=null; buildCards(); } if(s==='SETTINGS') buildSettings(); if(s==='PROFILE') buildProfile(); if(s==='NAME') nameOpen(); const pc=$('profCard'); if(pc){ const show=s==='MENU'||s==='MAP_SELECT'||s==='CHARACTERS'; pc.classList.toggle('on',show); pc.classList.toggle('mini',show&&s!=='MENU'); if(show) profileCardRefresh(); } if(s!=='PLAYING'){ merchantClose(); sticks.L=sticks.R=null; touchMap.clear(); IN.mouse.aiming=false; IN.mouse.down=false; IN.fire=null; $('hint').style.display='none'; } else if(G.hintT>0) $('hint').style.display='block'; }
+const OVS={NAME:'ovName',PROFILE:'ovProfile',DAILY:'ovDaily',MENU:'ovMenu',MAP_SELECT:'ovMaps',CHARACTERS:'ovChars',SETTINGS:'ovSettings',PAUSED:'ovPause',DEAD:'ovDead',ABOUT:'ovAbout',BOSSLIST:'ovBossList',BOSSPRE:'ovBossPre',BOSSWIN:'ovBossWin'};
+function setState(s){ if(s==='PLAYING'&&G.state!=='PLAYING') menuMusicStop(); if(s!==G.state&&s!=='PLAYING'&&AUDIO.ctx&&!SPLASH.on) SFX.swoosh(); if(s!==G.state&&OVS[s]){ const el=$(OVS[s]); el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); } G.state=s; for(const k in OVS) $(OVS[k]).classList.toggle('on',k===s); if(s==='MENU'){ if(WORLD.arena) leaveArena(); G.player=null; G.map=null; } if(s==='BOSSLIST'){ if(WORLD.arena) leaveArena(); buildBossList(); }  if(s==='MAP_SELECT') buildMapList(); if(s==='CHARACTERS'){ CVIEW='grid'; VIEW=null; buildCards(); } if(s==='SETTINGS') buildSettings(); if(s==='PROFILE') buildProfile(); if(s==='DAILY') buildDaily(); if(s==='MENU') dailyMenuBadge(); if(s==='NAME') nameOpen(); const pc=$('profCard'); if(pc){ const show=s==='MENU'||s==='MAP_SELECT'||s==='CHARACTERS'; pc.classList.toggle('on',show); pc.classList.toggle('mini',show&&s!=='MENU'); if(show) profileCardRefresh(); } if(s!=='PLAYING'){ sticks.L=sticks.R=null; touchMap.clear(); IN.mouse.aiming=false; IN.mouse.down=false; IN.fire=null; $('hint').style.display='none'; } else if(G.hintT>0) $('hint').style.display='block'; }
 function togglePause(){ if(G.state==='PLAYING') setState('PAUSED'); else if(G.state==='PAUSED') setState('PLAYING'); }
 function toggleFullMap(){ if(G.state==='PLAYING') G.fullMap=!G.fullMap; }
 function showHint(t){ const h=$('hint'); if(!t){ h.style.display='none'; G.hintT=0; return; } if(WORLD.arena) return;   /* no hints at all during a Boss Fight */ h.textContent=t; h.style.display='block'; G.hintT=5; }
@@ -3206,9 +3230,10 @@ $('bNameRnd').onclick=()=>{ $('nameIn').value=randomName(); nameCheck(); if(SFX.
 $('bNameGo').onclick=()=>{ const v=$('nameIn').value.trim(); if(!nameValid(v)) return; SAVE.player=SAVE.player||{}; SAVE.player.name=v; save(); setState(G.nameFrom==='SETTINGS'?'SETTINGS':'MENU'); };
 $('bNameBack').onclick=()=>setState(G.nameFrom==='SETTINGS'?'SETTINGS':'MENU');
 $('bRename').onclick=()=>{ G.nameFrom='SETTINGS'; setState('NAME'); };
+$('bDaily').onclick=()=>setState('DAILY'); $('bDailyBack').onclick=()=>setState('MENU');
 $('profCard').onclick=()=>{ G.profFrom=G.state; setState('PROFILE'); };
 $('bProfBack').onclick=()=>setState(OVS[G.profFrom]&&G.profFrom!=='PROFILE'?G.profFrom:'MENU');
-$('bMerchBuy').onclick=merchantBuy; $('bMerchClose').onclick=()=>{ const el=$('merch'); if(el) el.classList.remove('on'); }; $('bSetBack').onclick=()=>{ if(G.settingsFrom==='PAUSED'&&G.map){ G.settingsFrom=null; setState('PAUSED'); } else setState('MENU'); }; $('bDeadMenu').onclick=()=>{ save(); setState('MENU'); }; $('bQuit').onclick=()=>{ if(WORLD.arena&&G.arena&&!G.arena.over){ if(!confirm('Leaving cancels the attempt — leave?')) return; arenaFail(true); return; } save(); setState('MENU'); }; $('bResume').onclick=()=>setState('PLAYING'); $('bSwitch').onclick=()=>{ if(!G.player||!G.player.alive) return; G.charsFrom='GAME'; setState('CHARACTERS'); }; $('bPauseSettings').onclick=()=>{ G.settingsFrom='PAUSED'; setState('SETTINGS'); };
+$('bSetBack').onclick=()=>{ if(G.settingsFrom==='PAUSED'&&G.map){ G.settingsFrom=null; setState('PAUSED'); } else setState('MENU'); }; $('bDeadMenu').onclick=()=>{ save(); setState('MENU'); }; $('bQuit').onclick=()=>{ if(WORLD.arena&&G.arena&&!G.arena.over){ if(!confirm('Leaving cancels the attempt — leave?')) return; arenaFail(true); return; } save(); setState('MENU'); }; $('bResume').onclick=()=>setState('PLAYING'); $('bSwitch').onclick=()=>{ if(!G.player||!G.player.alive) return; G.charsFrom='GAME'; setState('CHARACTERS'); }; $('bPauseSettings').onclick=()=>{ G.settingsFrom='PAUSED'; setState('SETTINGS'); };
 $('bRespawn').onclick=respawn;
 $('bReset').onclick=()=>{ if(confirm('Reset all progress?')){ localStorage.removeItem(SAVE_KEY); location.reload(); } };
 $('ver').onclick=()=>{ DEBUG.taps++; if(DEBUG.taps>=5&&!DEBUG.on){ DEBUG.on=true; buildSettings(); $('ver').textContent='version 1.0.0 · DEBUG (nothing is saved)'; } };
