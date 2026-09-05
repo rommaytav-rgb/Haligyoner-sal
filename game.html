@@ -980,7 +980,7 @@ const EN={
   mush:  {hp:50, dmg:9, spd:118,r:14,range:46,atk:1.2,coins:[5,8],gold:[5,8],  xp:6,sprite:0,scale:1.5,biome:'forest',name:'MUSHROOM'},
   priest:{hp:54, dmg:16,spd:197,r:13,range:44,atk:.8, coins:[6,8],gold:[15,22],xp:10,sprite:1,scale:1.5,biome:'swamp', name:'INSECT PRIEST'},
   pirate:{hp:127,dmg:15,spd:104,r:15,range:50,atk:1.3,coins:[6,8],gold:[12,18],xp:12,sprite:2,scale:1.5,biome:'beach', name:'PIRATE'},
-  hippo:{hp:2550,dmg:48,spd:70, r:46,range:100,coins:[40,40],gold:[200,200],boss:true,name:'HIPPO',sprite:3,scale:3,adds:'mush'},
+  hippo:{hp:2750,dmg:52,spd:76, r:46,range:100,coins:[40,40],gold:[200,200],boss:true,name:'HIPPO',sprite:3,scale:3,adds:'mush'},
   croc: {hp:3750,dmg:62,spd:125,r:46,range:110,coins:[40,40],gold:[250,250],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
   lord: {hp:5200,dmg:20,spd:116,r:40,range:96, coins:[40,40],gold:[400,400],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:400},   /* drawn by the LORD rig, not a sprite */
 };
@@ -1009,6 +1009,8 @@ function roundRect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x
 const SAVE_KEY='elemental_ninjas_world_v3';
 const DEFAULT_SAVE=()=>({gold:0,levels:{SHADE:1,BOREAS:1,APOLLO:1,BECK:1,CLAY:1},unlocked:{SHADE:true},selected:'SHADE',kills:0,xp:0,xpTotal:0,chi:0,keys:0,pity:0,playTime:0,chiChests:{},bossFightCleared:{},bossFightBestTime:{},bossFightAttempts:{},bossFightFirstClearClaimed:{},bossFightStars:{},chests:{},golden:{},secret:{},bosses:{hippo:0,croc:0,lord:0},ready:{},maps:{bone_shore:true},hints:{},settings:{sound:true,vibrate:true,music:true,dmgNums:true,shake:true}});
 let SAVE=DEFAULT_SAVE();
+/* a returning player: skips the tutorial hints and starts with the map already revealed */
+function isVeteran(){ return (SAVE.kills||0)>=15||(SAVE.playTime||0)>240||Object.values(SAVE.bosses||{}).some(v=>v>0); }
 try{ const s=JSON.parse(localStorage.getItem(SAVE_KEY)); if(s){ const d=DEFAULT_SAVE(); for(const k in d){ if(s[k]===undefined) continue; if(typeof d[k]==='object'&&d[k]!==null) Object.assign(d[k],s[k]); else d[k]=s[k]; } if(!CH[d.selected]||!d.unlocked[d.selected]) d.selected='SHADE'; SAVE=d; } }catch(e){}
 const DEBUG={on:false,god:false,hitbox:false,taps:0};
 function save(){ if(DEBUG.on) return; try{ localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE)); }catch(e){} }
@@ -1176,7 +1178,7 @@ function buildWorld(seed){
   for(const l of [...W.pools,...W.lakes]) for(let i=0;i<10;i++){ const a=R()*TAU, x=l.x+Math.cos(a)*(l.r+12), y=l.y+Math.sin(a)*(l.r+12); if(!isWater(x,y)) W.reeds.push({x,y,s:R()}); }
   add(W.village.x,W.village.y,14);
   W.cgrid.clear(); for(const o of W.colliders){ const k=Math.floor(o.x/W.CG)+','+Math.floor(o.y/W.CG); let a=W.cgrid.get(k); if(!a){ a=[]; W.cgrid.set(k,a); } a.push(o); }
-  W.chunks.clear(); W.ex=Math.ceil(W.w/W.FOG); W.ey=Math.ceil(W.h/W.FOG); W.explored=new Uint8Array(W.ex*W.ey); paintMini();
+  W.chunks.clear(); W.ex=Math.ceil(W.w/W.FOG); W.ey=Math.ceil(W.h/W.FOG); W.explored=new Uint8Array(W.ex*W.ey); if(isVeteran()) W.explored.fill(1); paintMini();
 }
 function collide(e){
   if(WORLD.arena) return arenaCollide(e);
@@ -1591,18 +1593,18 @@ const AI={
     const a=e.ai, d=dist(e,p), rt=statMult(e,'rate')*(a.phase2?1.35:1), P2=a.phase2?1.25:1; a.t-=dt; e.abCd-=dt*rt; a.atkT-=dt*rt; bossPhase(e,dt);
     if(a.state==='chase'){ if(bossLeash(e,p,dt)) return; const safe=inSafeZone(p.x,p.y); if(d<900&&!safe) moveToward(e,p.x,p.y,dt,a.phase2?1.3:1); else { e.vx*=.9; e.vy*=.9; } faceTo(e,p);
       if(e.abCd<=0&&p.alive&&d<700&&!safe){ const pick=d<230?(Math.random()<.65?'slam':a.phase2?'stomp':'charge'):(a.phase2&&Math.random()<.4?'stomp':'charge'); a.state=pick; a.t=1; a.aim=e.face; e.vx=e.vy=0; e.animT=0;
-        if(pick==='slam'){ a.t=1.2; a.ix=e.x+Math.cos(a.aim)*120; a.iy=e.y+Math.sin(a.aim)*120; telegraph(e,{s:'circ',r:95,ox:a.ix-e.x,oy:a.iy-e.y},1.2); e.holdAnim=true; e.animT=.05; }   // flail held high, cracking ground at the impact point
+        if(pick==='slam'){ a.t=1.1; a.ix=e.x+Math.cos(a.aim)*120; a.iy=e.y+Math.sin(a.aim)*120; telegraph(e,{s:'circ',r:95,ox:a.ix-e.x,oy:a.iy-e.y},1.1); e.holdAnim=true; e.animT=.05; }   // flail held high, cracking ground at the impact point
         else if(pick==='charge') telegraph(e,{s:'line',a:a.aim,l:600,w:56},1); else telegraph(e,{s:'circ',r:90},1); }
-      else if(d<e.d.range&&a.atkT<=0){ a.state='swing'; a.t=.5; a.aim=e.face; e.vx=e.vy=0; a.ix=e.x+Math.cos(a.aim)*(e.d.range*.6); a.iy=e.y+Math.sin(a.aim)*(e.d.range*.6); telegraph(e,{s:'circ',r:e.d.range*.85,ox:a.ix-e.x,oy:a.iy-e.y},.5); } }
-    else if(a.state==='swing'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='chase'; a.atkT=2; a.tele=null; e.attackT=.3; e.animT=.25; shake(4); SFX.hit(); if(inCircle(p,a.ix,a.iy,e.d.range*.85)) damage(p,Math.round(32*P2),e,{kb:220}); } }
-    else if(a.state==='slam'){ if(a.t<=0){ a.state='chase'; e.abCd=3; a.recover=.7; a.tele=null; e.holdAnim=false; e.attackT=.3; e.animT=.26; shake(12); vibrate(120); const ix=a.ix, iy=a.iy;
+      else if(d<e.d.range&&a.atkT<=0){ a.state='swing'; a.t=.45; a.aim=e.face; e.vx=e.vy=0; a.ix=e.x+Math.cos(a.aim)*(e.d.range*.6); a.iy=e.y+Math.sin(a.aim)*(e.d.range*.6); telegraph(e,{s:'circ',r:e.d.range*.85,ox:a.ix-e.x,oy:a.iy-e.y},.45); } }
+    else if(a.state==='swing'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='chase'; a.atkT=2; a.tele=null; e.attackT=.3; e.animT=.25; shake(4); SFX.hit(); if(inCircle(p,a.ix,a.iy,e.d.range*.85)) damage(p,Math.round(35*P2),e,{kb:220}); } }
+    else if(a.state==='slam'){ if(a.t<=0){ a.state='chase'; e.abCd=2.7; a.recover=.65; a.tele=null; e.holdAnim=false; e.attackT=.3; e.animT=.26; shake(12); vibrate(120); const ix=a.ix, iy=a.iy;
         if(inCircle(p,ix,iy,95)) damage(p,Math.round(e.dmg*P2),e,{kb:420}); else if(inCircle(p,ix,iy,170)&&p.alive){ const dd=Math.max(1,Math.hypot(p.x-ix,p.y-iy)); p.kbx+=(p.x-ix)/dd*380; p.kby+=(p.y-iy)/dd*380; }   // shockwave: knockback just outside the circle
         for(const o of G.enemies) if(o!==e&&o.alive&&!o.boss&&inCircle(o,ix,iy,170)){ const dd=Math.max(1,Math.hypot(o.x-ix,o.y-iy)); o.kbx+=(o.x-ix)/dd*300; o.kby+=(o.y-iy)/dd*300; }
         burst(ix,iy,['#9ca3af','#4b5563','#d9a34a','#c9a86a'],44,320,.7,6,0,true); for(let i=0;i<14;i++) part(ix+rnd(-40,40),iy+rnd(-20,20),rnd(-90,90),rnd(-260,-120),i%2?'#8a6a4a':'#5a3a20',rnd(.5,.9),rnd(4,7),600); G.ring={x:ix,y:iy,r:0,max:170,t:0,col:'#d9a34a',earth:true}; noise(.25,.35); tone(60,.3,'sine',.4,-30); proj({type:'ring',mud:true,x:ix,y:iy,r:30,life:9,spd:230,max:640,delay:.1,owner:e,dmg:WAVE_DMG,hit:[]}); floatText(ix,iy-30,'MUD WAVE','#c9a86a');
         if(a.phase2) proj({type:'ring',x:ix,y:iy,r:20,life:9,spd:240,max:220,delay:.4,owner:e,dmg:WAVE_DMG,hit:[]}); } }   // phase 2: the slam gains a second shockwave
     else if(a.state==='charge'){ if(a.t<=0){ a.state='charging'; a.t=.9; a.tele=null; a.hit=[]; SFX.roar(); } }
-    else if(a.state==='charging'){ const sp=e.spd*5; e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; if(!a.hit.includes(p)&&inCircle(p,e.x,e.y,e.r+6)){ a.hit.push(p); damage(p,Math.round(32*P2),e,{kb:520}); } for(const o of G.enemies) if(o!==e&&o.alive&&!a.hit.includes(o)&&inCircle(o,e.x,e.y,e.r+6)){ a.hit.push(o); damage(o,20,e,{kb:400,noBlock:true}); } part(e.x+rnd(-24,24),e.y+22,rnd(-40,40),-60,'#c9a86a',.5,6); if(a.t<=0||wallAhead(e,a.aim)){ a.state='chase'; e.abCd=3; a.recover=.7; e.vx=e.vy=0; shake(6); crashBoulder(e); } }
-    else if(a.state==='stomp'){ if(a.t<=0){ a.state='chase'; e.abCd=3; a.recover=.7; a.tele=null; shake(12); vibrate(120); for(let i=0;i<2;i++) proj({type:'ring',x:e.x,y:e.y+10,r:20,life:9,spd:200,max:300,delay:i*.9,owner:e,dmg:WAVE_DMG,hit:[]}); burst(e.x,e.y+10,['#8a6a4a','#d9a34a'],30,220,.6,6,300); } }
+    else if(a.state==='charging'){ const sp=e.spd*5; e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; if(!a.hit.includes(p)&&inCircle(p,e.x,e.y,e.r+6)){ a.hit.push(p); damage(p,Math.round(35*P2),e,{kb:520}); } for(const o of G.enemies) if(o!==e&&o.alive&&!a.hit.includes(o)&&inCircle(o,e.x,e.y,e.r+6)){ a.hit.push(o); damage(o,20,e,{kb:400,noBlock:true}); } part(e.x+rnd(-24,24),e.y+22,rnd(-40,40),-60,'#c9a86a',.5,6); if(a.t<=0||wallAhead(e,a.aim)){ a.state='chase'; e.abCd=2.7; a.recover=.65; e.vx=e.vy=0; shake(6); crashBoulder(e); } }
+    else if(a.state==='stomp'){ if(a.t<=0){ a.state='chase'; e.abCd=2.7; a.recover=.65; a.tele=null; shake(12); vibrate(120); for(let i=0;i<2;i++) proj({type:'ring',x:e.x,y:e.y+10,r:20,life:9,spd:200,max:300,delay:i*.9,owner:e,dmg:WAVE_DMG,hit:[]}); burst(e.x,e.y+10,['#8a6a4a','#d9a34a'],30,220,.6,6,300); } }
   },
   /* ---- CROCODILE boss: cleaver, tail spin, lunge + bite combo; phase 2 at 50% ---- */
   croc(e,p,dt){
@@ -1675,7 +1677,7 @@ function enterMap(def){
   G.bossRollT=0; G.lastBossDeath=-999; G.bossMark=null; G.plv=playerLevel();
   G.arrowTarget=null;   // no guide arrow
   explore(p.x,p.y); G.banner={text:def.name.toUpperCase(),sub:'LEVELS '+def.lvl[0]+'–'+def.lvl[1],t:2.6};
-  showHint(SAVE.hints.attack?null:'Drag the right stick to aim, release to fire');
+  if(isVeteran()) SAVE.hints.attack=true; showHint(SAVE.hints.attack?null:'Drag the right stick to aim, release to fire');
 }
 function announceBoss(type){ const p=G.player, all=type==='hippo'?WORLD.hippoLairs:type==='croc'?WORLD.crocLairs:WORLD.pirateLairs, far=all.filter(([x,y])=>Math.hypot(x-p.x,y-p.y)>15*TILE_PX), arr=far.length?far:all, [x,y]=arr[rndi(0,arr.length-1)]; G.bossMark={x,y,type}; G.announce={x,y,t:type==='hippo'?2.6:type==='croc'?3.2:3.4,type,text:type==='hippo'?'Something heavy is coming…':type==='croc'?'The swamp darkens… bubbles rise…':'A black sail on the horizon…'}; if(type==='lord'){ SFX.bell(); G.lordWarned=false; } else { SFX.drum(0); SFX.drum(.5); SFX.drum(1); } shake(6); vibrate(200); }
 function worldUpdate(dt){
@@ -2421,7 +2423,7 @@ const OVS={MENU:'ovMenu',MAP_SELECT:'ovMaps',CHARACTERS:'ovChars',SETTINGS:'ovSe
 function setState(s){ if(s==='PLAYING'&&G.state!=='PLAYING') menuMusicStop(); if(s!==G.state&&s!=='PLAYING'&&AUDIO.ctx&&!SPLASH.on) SFX.swoosh(); if(s!==G.state&&OVS[s]){ const el=$(OVS[s]); el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); } G.state=s; for(const k in OVS) $(OVS[k]).classList.toggle('on',k===s); if(s==='MENU'){ if(WORLD.arena) leaveArena(); G.player=null; G.map=null; } if(s==='BOSSLIST'){ if(WORLD.arena) leaveArena(); buildBossList(); } if(s==='PAUSED') $('bSwitch').style.display=WORLD.arena?'none':''; if(s==='MAP_SELECT') buildMapList(); if(s==='CHARACTERS'){ CVIEW='grid'; VIEW=null; buildCards(); } if(s==='SETTINGS') buildSettings(); if(s!=='PLAYING'){ sticks.L=sticks.R=null; touchMap.clear(); IN.mouse.aiming=false; IN.mouse.down=false; IN.fire=null; $('hint').style.display='none'; } else if(G.hintT>0) $('hint').style.display='block'; }
 function togglePause(){ if(G.state==='PLAYING') setState('PAUSED'); else if(G.state==='PAUSED') setState('PLAYING'); }
 function toggleFullMap(){ if(G.state==='PLAYING') G.fullMap=!G.fullMap; }
-function showHint(t){ const h=$('hint'); if(!t){ h.style.display='none'; G.hintT=0; return; } h.textContent=t; h.style.display='block'; G.hintT=5; }
+function showHint(t){ const h=$('hint'); if(!t){ h.style.display='none'; G.hintT=0; return; } if(WORLD.arena) return;   /* no hints at all during a Boss Fight */ h.textContent=t; h.style.display='block'; G.hintT=5; }
 function buildMapList(){
   const el=$('mapList'); el.innerHTML=''; $('mapMsg').style.display='none'; const n=SAVE.selected, lv=SAVE.levels[n]; if(!WORLD.mini) buildWorld(7);
   for(const m of MAPS){ const locked=m.locked||!SAVE.maps[m.id]; const d=document.createElement('div'); d.className='mapcard'+(locked?' locked':' open');
