@@ -2522,8 +2522,7 @@ function frame(now){
 /* floating element sparks on the menu screens */
 (function sparks(){ const cols=['#a855f7','#38bdf8','#4ade80','#f97316','#fde047','#e0f2fe']; for(const id of ['ovMenu','ovChars','ovMaps','splash']){ const ov=$(id); for(let i=0;i<16;i++){ const s=document.createElement('i'); s.className='spark'; s.style.left=(Math.random()*100)+'%'; s.style.top=(30+Math.random()*70)+'%'; s.style.color=cols[i%cols.length]; s.style.animationDuration=(4+Math.random()*5)+'s'; s.style.animationDelay=(-Math.random()*8)+'s'; s.style.width=s.style.height=(3+Math.random()*5)+'px'; ov.appendChild(s); } } })();
 /* LOADING SCREEN — the bar fills while the sprite caches warm up, then one tap enters the game (and unlocks audio for the menu music) */
-const SPLASH={on:true,t:0,ready:false,tip:0};
-/* a pixel Spinjitzu tornado that cycles through the five elements while the bar fills */
+const SPLASH={on:true,t:0,started:false,ready:false,tip:0};
 const SPLASH_EL=['SHADE','BOREAS','BECK','CLAY','APOLLO'], SP_T=3.9;
 /* the loading-screen parade: a ninja runs in, lifts a Chi orb, bursts into its Spinjitzu tornado, spins, fades — then the next ninja */
 function splashSpin(c,t,cx,by){ t=Math.max(0,t); const n=Math.floor(t/SP_T), k=t-n*SP_T, name=SPLASH_EL[n%5], ch=CH[name], C=SPIN[name]; c.imageSmoothingEnabled=false;
@@ -2534,15 +2533,17 @@ function splashSpin(c,t,cx,by){ t=Math.max(0,t); const n=Math.floor(t/SP_T), k=t
   else if(k<3.35) spinjitzu(px0,py,t,C,1,1,1);
   else spinjitzu(px0,py,t,C,2,1,Math.max(0,1-(k-3.35)/.55));
   c.restore(); }
+/* LOADING SCREEN — first tap starts it (the browser only allows sound after a touch): music begins at once, the bar fills over ~4.5 s with the ninja parade, then it fades into the menu by itself */
 (function splash(){ const el=$('splash'), bar=$('splashBar'), txt=$('splashTxt'), sc=$('splashNinja'), c=sc.getContext('2d'); const tips=['SHARPENING BLADES','WAKING THE ELEMENTS','STIRRING THE BONE SHORE','FEEDING THE HIPPO','POLISHING THE CHI ORBS'];
-  let t0=performance.now(), warm=0; const names=Object.keys(CH);
+  let t0=performance.now(), warm=0; const names=Object.keys(CH); const LOAD=4.5; txt.textContent='TAP TO START'; txt.classList.add('blink');
   const step=(now)=>{ if(!SPLASH.on) return; const s=Math.max(0,(now-t0)/1000); SPLASH.t=s; c.clearRect(0,0,sc.width,sc.height); splashSpin(c,s,sc.width/2,sc.height-6);
     if(warm<names.length&&s>.15){ const cv2=document.createElement('canvas'); cv2.width=cv2.height=8; const cc=cv2.getContext('2d'); for(const a of ['idle','run','strike']) drawSprite(cc,CHARS[CH[names[warm]].sprite],a,.3,1,.1,4,6,null); warm++; }
-    const k=Math.min(1,s/2.2); bar.style.width=(k*100).toFixed(1)+'%'; if(k<1){ const ti=Math.floor(s/.55)%tips.length; if(ti!==SPLASH.tip){ SPLASH.tip=ti; } txt.textContent=tips[SPLASH.tip]+'…'; } else if(!SPLASH.ready){ SPLASH.ready=true; txt.textContent='TAP TO ENTER'; txt.classList.add('blink'); el.classList.add('ready'); }
+    if(SPLASH.started){ const u=(now-SPLASH.startAt)/1000, k=Math.min(1,u/LOAD); bar.style.width=(k*100).toFixed(1)+'%'; if(k<1){ const ti=Math.floor(u/.9)%tips.length; SPLASH.tip=ti; txt.textContent=tips[ti]+'…'; } else if(!SPLASH.ready){ SPLASH.ready=true; el.classList.add('ready'); txt.textContent='READY'; go(); } }
     requestAnimationFrame(step); };
   requestAnimationFrame(step);
-  const go=()=>{ if(!SPLASH.ready||!SPLASH.on) return; audioInit(); SPLASH.on=false; el.classList.add('out'); SFX.levelup(); setTimeout(()=>{ el.classList.remove('on'); },650); };
-  el.addEventListener('pointerdown',go); addEventListener('keydown',e=>{ if(SPLASH.on&&SPLASH.ready) go(); });
+  const start=()=>{ if(SPLASH.started||!SPLASH.on) return; audioInit(); if(AUDIO.ctx&&AUDIO.ctx.state==='suspended') AUDIO.ctx.resume(); SPLASH.started=true; SPLASH.startAt=performance.now(); txt.classList.remove('blink'); SFX.ui(); };
+  const go=()=>{ if(!SPLASH.on) return; SPLASH.on=false; el.classList.add('out'); SFX.levelup(); setTimeout(()=>{ el.classList.remove('on'); },650); };
+  el.addEventListener('pointerdown',start); addEventListener('keydown',e=>{ if(SPLASH.on) start(); });
 })();
 audioInit(); setState('MENU'); requestAnimationFrame(frame);
 
