@@ -1026,7 +1026,7 @@ const SFX={
   hit:()=>{tone(200,.08,'square',.12,-120);noise(.05,.1);}, crit:()=>{tone(320,.12,'square',.16,-200);noise(.08,.15);}, block:()=>{tone(900,.06,'triangle',.18,-300);},
   shoot:()=>tone(620,.1,'sine',.1,260), coin:()=>{tone(1300,.06,'square',.08);tone(1900,.09,'square',.08,0,.06);}, hurt:()=>tone(150,.15,'sawtooth',.18,-80),
   ui:()=>{ tone(880,.05,'sine',.035,120); },   /* a very gentle menu tap */
-  swoosh:()=>{ noise(.12,.025); tone(300,.18,'sine',.03,200); },   /* screen change */
+  swoosh:()=>{ tone(440,.16,'sine',.025,180); tone(660,.14,'sine',.012,120,.06); },   /* screen change: a soft tonal sweep, no noise burst */   /* screen change */
   dash:()=>noise(.12,.1), levelup:()=>[523,659,784,1046].forEach((f,i)=>tone(f,.18,'square',.12,0,i*.08)), death:()=>{tone(300,.5,'sawtooth',.2,-250);noise(.3,.15);},
   key:()=>[784,988,1175,1568,2093].forEach((f,i)=>tone(f,.22,'triangle',.14,0,i*.07)), boom:()=>{tone(55,.6,'sine',.5,-30);noise(.35,.3);}, rattle:()=>{tone(300,.05,'square',.1);tone(240,.05,'square',.1,0,.08);}, chestOpen:()=>{tone(660,.2,'triangle',.15,400);noise(.15,.12);},
   shot:()=>{noise(.2,.32);tone(110,.22,'sawtooth',.28,-70);}, dodge:()=>tone(880,.06,'sine',.12,320), spore:()=>noise(.14,.08), pop:()=>tone(520,.09,'square',.12,-320),
