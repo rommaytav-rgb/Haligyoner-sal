@@ -1004,8 +1004,8 @@ const EN={
   priest:{hp:54, dmg:16,spd:197,r:13,range:44,atk:.8, coins:[6,8],gold:[15,22],xp:10,sprite:1,scale:1.5,biome:'swamp', name:'INSECT PRIEST'},
   pirate:{hp:127,dmg:15,spd:104,r:15,range:50,atk:1.3,coins:[6,8],gold:[12,18],xp:12,sprite:2,scale:1.5,biome:'beach', name:'PIRATE'},
   /* Frost & Ember regular enemies: the Magma Golem is built for a level-11 ninja, the Wolf Warrior for level 14; both stay inside their own half */
-  titan:{hp:10000,dmg:52,spd:82, r:46,range:112,coins:[50,50],gold:[500,500],boss:true,name:'MAGMA TITAN',rig:true,big:true,scale:1.4,adds:'golem',xpBoss:600,biome:'ember'},
-  yeti: {hp:16500,dmg:62,spd:104,r:46,range:118,coins:[60,60],gold:[700,700],boss:true,name:'THE YETI',rig:true,big:true,scale:1.45,adds:'wolf',xpBoss:900,biome:'frost'},
+  titan:{hp:12500,dmg:68,spd:82, r:46,range:112,coins:[50,50],gold:[500,500],boss:true,name:'MAGMA TITAN',rig:true,big:true,scale:1.4,adds:'golem',xpBoss:600,biome:'ember'},
+  yeti: {hp:20500,dmg:82,spd:104,r:46,range:118,coins:[60,60],gold:[700,700],boss:true,name:'THE YETI',rig:true,big:true,scale:1.45,adds:'wolf',xpBoss:900,biome:'frost'},
   golem:{hp:420,dmg:34,spd:92, r:15,range:50,atk:1.4,coins:[8,12],gold:[22,32],xp:24,rig:true,scale:1.5,biome:'ember',name:'MAGMA GOLEM'},
   wolf: {hp:520,dmg:44,spd:178,r:13,range:46,atk:1.0,coins:[9,13],gold:[30,44],xp:34,rig:true,scale:1.5,biome:'frost',name:'WOLF WARRIOR'},
   hippo:{hp:2750,dmg:52,spd:76, r:46,range:100,coins:[40,40],gold:[200,200],boss:true,name:'HIPPO',sprite:3,scale:3,adds:'mush'},
@@ -2076,7 +2076,7 @@ function drawWolfProjs(c,t){ for(const q of G.projs) if(q.alive&&q.wolf){ const 
 const TP={ rock:'#4a3f42', rockD:'#2e2529', rockL:'#63545a', mortar:'#7a6a62', lava:'#ff5a10', lavaL:'#ffb020', lavaW:'#fff0a0', lavaD:'#c02800', flame1:'#ff7a1a', flame2:'#ffd23f', flame3:'#e8420f', eye:'#ff9a20', ash:'#5a5058' };
 const YP={ ice:'#dff2ff', iceD:'#a8d4ec', iceM:'#c4e6f8', iceB:'#7fb8d8', deep:'#5f92b4', fur:'#eefaff', eye:'#7fe8ff', eyeW:'#ffffff', maw:'#3f6a86', tooth:'#ffffff', shard:'#9fdcf8', glow:'#bff0ff' };
 /* damage table per boss: built for the recommended level (ninja HP ≈ 290 at 15, ≈ 330 at 19) */
-const TITAN_HIT={slam:52,wave:42,meteor:40,whirl:45,beam:60}, YETI_HIT={claw:62,breath:9,ring:55,wall:50,leap:70};
+const TITAN_HIT={slam:68,wave:55,meteor:52,whirl:60,beam:80}, YETI_HIT={claw:82,breath:12,ring:72,wall:66,leap:92};   /* ≈23% of the median ninja's HP per basic hit at the recommended level, heavy hits ≈27% */
 /* ---------- Magma Titan rig ---------- */
 function titanFlame(x,y,t,big){ const n=big?7:5; for(let i=0;i<n;i++){ const h=(big?9:6)+Math.round(Math.abs(Math.sin(t*7+i*1.3))*(big?9:6)), w=Math.max(1,(big?4:3)-Math.abs(i-(n-1)/2)), col=i%3===0?TP.flame2:(i%2?TP.flame1:TP.flame3); RR(x+i*(big?3:2.6),y-h,w,h,col); if(h>8) PP(x+i*(big?3:2.6),y-h-1,TP.lavaW); } }
 function lavaFallDown(x,y,h,t,seed){ for(let j=0;j<h;j++){ const w=3-Math.floor(j/(h*0.6)); RR(x+Math.sin(j*.42+t*4+seed)*1.3,y+j,Math.max(1,w),1,j%4===0?TP.lavaW:(j%2?TP.lava:TP.lavaL)); } for(let i=0;i<3;i++){ const q=(t*.9+i*.33+seed)%1; PP(x+Math.sin(t*3+i)*2,y+h-q*7,TP.lavaL); } }
