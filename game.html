@@ -2638,32 +2638,36 @@ function drawMob2Dead(c,e){ const k=clamp(1-e.deadT/1.4,0,1), face=Math.cos(e.fa
 function mob2Portrait(type,size){ const cv2=document.createElement('canvas'); cv2.width=size; cv2.height=size; const c=cv2.getContext('2d'); c.imageSmoothingEnabled=false; const s=size/64; c.save(); c.translate(size/2,size*.92); c.scale(s,s); c.translate(-40,-46); g=c; if(type==='imp') rigImp('idle',.4,0); else rigFox('idle',.4,0); c.restore(); return cv2; }
 /* ---------- Lava Imp: birth, charge, burn, despawn ---------- */
 function impCount(){ let n=0; for(const e of G.enemies) if(e.alive&&e.type==='imp') n++; return n; }
-function impBirth(x,y){ if(WORLD.arena||impCount()>=10) return null; const e=makeEnemy('imp',x,y); e.ai.state='chase'; e.spawnT=.6; e.impBorn=G.time; e.biome=null; burst(x,y-4,[LIP.glassL,LIP.hot,LIP.white],10,120,.5,3,-60,true); return e; }
+function impBirth(x,y){ if(WORLD.arena||impCount()>=10||m2Biome(x,y)!=='lava') return null; const e=makeEnemy('imp',x,y); e.ai.state='chase'; e.spawnT=.6; e.impBorn=G.time; e.biome='ember'; burst(x,y-4,[LIP.glassL,LIP.hot,LIP.white],10,120,.5,3,-60,true); return e; }
 function impSinkAll(){ for(const e of G.enemies) if(e.alive&&e.type==='imp'&&e.sinkT===undefined){ e.sinkT=1; e.ai.tele=null; } }
 AI.imp=function(e,p,dt){ const a=e.ai; a.t-=dt; a.atkT-=dt;
   if(e.sinkT!==undefined){ e.sinkT-=dt; e.vx=e.vy=0; if(Math.random()<.5) part(e.x+rnd(-10,10),e.y+8,rnd(-10,10),rnd(-30,-10),LIP.ember,.5,2,-20,true); if(e.sinkT<=0){ e.alive=false; e.deadT=undefined; if(G.boss===e) G.boss=null; } return; }
   const d=dist(e,p);
   if(a.state==='claw'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='chase'; a.atkT=e.d.atk; a.tele=null; if(p.alive&&inArc(p,e.x,e.y,e.face,e.d.range+16,1.2)&&p.jumpT<=0){ damage(p,e.dmg,e,{kb:140}); addStatus(p,'burn',3,{dps:p.name==='APOLLO'?3.5:7}); burst(p.x,p.y-10,[LIP.hot,LIP.glassL,LIP.white],10,120,.5,3,-40,true); } } return; }
-  if(!p.alive||inSafeZone(p.x,p.y)||p.hidden){ wander(e,dt,90,.7); return; }
+  /* lava creatures: they never leave the lava side. If the ninja steps off it (or the imp drifts off), the imp turns back to its birthplace and prowls there */
+  if(m2Biome(e.x,e.y)!=='lava'){ moveToward(e,a.home.x,a.home.y,dt,1); e.face=Math.atan2(a.home.y-e.y,a.home.x-e.x); return; }
+  if(!p.alive||inSafeZone(p.x,p.y)||p.hidden||m2Biome(p.x,p.y)!=='lava'){ wander(e,dt,90,.7); return; }
   moveToward(e,p.x,p.y,dt,1); faceTo(e,p); if(Math.random()<.35) part(e.x+rnd(-6,6),e.y+10,rnd(-10,10),rnd(-40,-15),Math.random()<.5?LIP.hot:LIP.ember,.4,2,-30,true);
   if(d<e.d.range+8&&a.atkT<=0){ a.state='claw'; a.t=.2; telegraph(e,{s:'line',a:e.face,l:44,w:16},.2); } };
 /* ---------- Ice Fox: dens, pairs, circling, bite, pounce ---------- */
 function foxAlert(e,depth){ const a=e.ai; if(a.state!=='idle') return; a.state='circle'; a.dir=Math.random()<.5?1:-1; a.t=0; G.chasers++; floatText(e.x,e.y-40,'!','#7fe8ff',true); e.kvy-=100;
   if((depth||0)<1) for(const o of G.enemies) if(o!==e&&o.alive&&o.type==='fox'&&o.ai.state==='idle'&&dist(o,e)<8*TS*PIX) foxAlert(o,1); }   /* the pair: a fox within 8 tiles joins at once */
+const FOX_EDGE_X=760;   /* the Ice Fox lives only at the far edge of the frost side: past this line it turns back to its den */
+function foxOut(x,y){ return x>FOX_EDGE_X||m2Biome(x,y)!=='ice'; }
 AI.fox=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.abCd-=dt; e.dodgeCd-=dt; if(e.vulnT>0) e.vulnT-=dt; const sees=commonSees(e,p);
-  if(a.state==='idle'){ wander(e,dt,110,.5); if(d<340&&sees&&(G.chasers<8||e.summoned)) foxAlert(e); return; }
-  if(a.state==='circle'){ if(!e.summoned&&(d>660||!sees||dist(e,a.home)>820||outOfBiome(e))){ goHome(e); return; }
+  if(a.state==='idle'){ wander(e,dt,110,.5); if(foxOut(e.x,e.y)&&!a.moving){ a.moving=true; a.tx=a.home.x; a.ty=a.home.y; a.t=3; } if(d<340&&sees&&!foxOut(p.x,p.y)&&(G.chasers<8||e.summoned)) foxAlert(e); return; }
+  if(a.state==='circle'){ if(!e.summoned&&(d>660||!sees||dist(e,a.home)>820||foxOut(e.x,e.y)||foxOut(p.x,p.y))){ goHome(e); return; }
     a.angle=Math.atan2(e.y-p.y,e.x-p.x)+a.dir*dt*1.6; const ring=120, tx=p.x+Math.cos(a.angle)*ring, ty=p.y+Math.sin(a.angle)*ring; moveToward(e,tx,ty,dt,d>ring+160?1.1:.85); faceTo(e,p);
     if(e.abCd<=0&&d>110&&d<300&&!inSafeZone(p.x,p.y)){ a.state='crouch'; a.t=.7; e.vx=e.vy=0; a.aim=Math.atan2(p.y-e.y,p.x-e.x); e.face=a.aim; telegraph(e,{s:'line',a:a.aim,l:6*TS*PIX,w:22},.7); return; }
     if(a.atkT<=0&&d<210){ a.state='bite'; a.t=.6; a.hitDone=false; } }
-  else if(a.state==='bite'){ moveToward(e,p.x,p.y,dt,1.25); faceTo(e,p);
+  else if(a.state==='bite'){ if(foxOut(p.x,p.y)){ a.state='back'; a.t=.4; } moveToward(e,p.x,p.y,dt,1.25); faceTo(e,p);
     if(!a.hitDone&&d<e.d.range+p.r&&a.t<.5){ a.hitDone=true; SFX.hit(); slashFx(e,e.face,36,.8,['#bfeaff','#ffffff']); if(p.jumpT<=0){ damage(p,e.dmg,e,{kb:160}); if(p.status.foxslow) addStatus(p,'foxslow2',1); addStatus(p,'foxslow',1); } a.state='back'; a.t=.5; a.atkT=e.d.atk; }
     else if(a.t<=0){ a.state='back'; a.t=.4; a.atkT=e.d.atk*.6; } }
   else if(a.state==='back'){ const an=Math.atan2(e.y-p.y,e.x-p.x), bx=p.x+Math.cos(an)*150, by=p.y+Math.sin(an)*150; moveToward(e,bx,by,dt,1.1); e.face=Math.atan2(p.y-e.y,p.x-e.x); if(a.t<=0){ a.state='circle'; a.dir=Math.random()<.5?1:-1; } }
   else if(a.state==='crouch'){ e.vx=e.vy=0; if(Math.random()<.3) part(e.x+rnd(-8,8),e.y+8,rnd(-10,10),rnd(-30,-10),FXP.glow,.4,2,-10,true); if(a.t<=0){ a.state='pounce'; a.t=.34; a.dist=0; a.hitDone=false; a.tele=null; SFX.swoosh&&SFX.swoosh(); } }
   else if(a.state==='pounce'){ const sp=760; e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; e.face=a.aim; a.dist+=sp*dt; if(Math.random()<.8) part(e.x-Math.cos(a.aim)*10+rnd(-6,6),e.y+rnd(-4,8),rnd(-20,20),rnd(-30,0),Math.random()<.5?FXP.glow:FXP.eyeW,.5,2,-10,true);
     if(!a.hitDone&&inCircle(p,e.x,e.y,e.r+p.r+8)&&p.jumpT<=0){ a.hitDone=true; damage(p,e.dmg,e,{kb:300}); shake(4); }
-    if(a.t<=0||a.dist>=6*TS*PIX||wallAhead(e,a.aim)){ a.state='land'; a.t=.8; e.vulnT=.8; e.vx=e.vy=0; e.abCd=5; a.atkT=.5; burst(e.x,e.y+6,[FXP.eyeW,FXP.glow],8,90,.4,2,0,true); } }
+    if(a.t<=0||a.dist>=6*TS*PIX||wallAhead(e,a.aim)||foxOut(e.x,e.y)){ a.state='land'; a.t=.8; e.vulnT=.8; e.vx=e.vy=0; e.abCd=5; a.atkT=.5; burst(e.x,e.y+6,[FXP.eyeW,FXP.glow],8,90,.4,2,0,true); } }
   else if(a.state==='land'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='circle'; a.dir=Math.random()<.5?1:-1; } } };
 /* ---------- the deep-frost dens and the Ice Shop (map 2 props) ---------- */
 function m2FoxDen(x,y){ m2CaveMouth(x,y-1,18,11); for(let i=0;i<5;i++) rect(x-9+i*4,y-13,2,3+((i*7)%4),IP.ice); rect(x-11,y-12,22,2,IP.snowS); for(let i=0;i<3;i++){ px(x-6+i*5,y+5,'#c8dceb'); px(x-5+i*5,y+7,'#c8dceb'); } }
