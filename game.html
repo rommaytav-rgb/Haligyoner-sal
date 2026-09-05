@@ -1042,7 +1042,10 @@ const MMUSIC={step:0,timer:0,pads:[]}, MM_ARP=[[220,329.6,440,523.3,659.3,523.3,
 function pad(f,dur,vol){ if(!AUDIO.ctx) return null; const c=AUDIO.ctx,o=c.createOscillator(),o2=c.createOscillator(),g=c.createGain(),t=c.currentTime; o.type='sine'; o2.type='triangle'; o.frequency.value=f; o2.frequency.value=f*2.003; g.gain.setValueAtTime(.0001,t); g.gain.linearRampToValueAtTime(vol,t+.7); g.gain.setValueAtTime(vol,t+dur-.9); g.gain.linearRampToValueAtTime(.0001,t+dur); o.connect(g); o2.connect(g); g.connect(AUDIO.master); o.start(t); o2.start(t); o.stop(t+dur+.05); o2.stop(t+dur+.05); return g; }
 function menuMusicTick(dt){ if(!AUDIO.ctx||AUDIO.ctx.state!=='running'||!SAVE.settings.sound||SAVE.settings.music===false) return; MMUSIC.timer-=dt; if(MMUSIC.timer>0) return; const bpm=76; MMUSIC.timer=60/bpm/2; const bar=(MMUSIC.step>>3)%4, i=MMUSIC.step%8; if(i===0){ MMUSIC.pads=MMUSIC.pads.filter(Boolean); for(const f of MM_PAD[bar]) MMUSIC.pads.push(pad(f,3.4,.05)); if(bar%2===0){ tone(880,1.4,'sine',.028); tone(1318.5,1.2,'sine',.014,0,.4); } } tone(MM_ARP[bar][i],.55,'triangle',.05); if(i===4) tone(MM_ARP[bar][0]/2,.5,'sine',.035); MMUSIC.step++; }
 function menuMusicStop(){ if(!AUDIO.ctx) return; const t=AUDIO.ctx.currentTime; for(const g of MMUSIC.pads){ if(!g) continue; try{ g.gain.cancelScheduledValues(t); g.gain.setValueAtTime(g.gain.value,t); g.gain.linearRampToValueAtTime(.0001,t+.4); }catch(e){} } MMUSIC.pads=[]; MMUSIC.timer=0; }
-document.addEventListener('pointerdown',e=>{ audioInit(); const b=e.target&&e.target.closest&&e.target.closest('.btn,.cbtn,.mbtn,.xbtn,.sw,.tog,.card,.ccard,.bcard,.mapcard,.bfcard,.selb,.backb,.bupg,#splash.ready'); if(b&&!b.classList.contains('dis')&&!b.classList.contains('locked')) SFX.ui(); },{passive:true,capture:true});   /* menu taps unlock audio and click softly */   /* menu taps also unlock audio, so the menu music can start */
+document.addEventListener('pointerdown',e=>{ audioInit(); const b=e.target&&e.target.closest&&e.target.closest('.btn,.cbtn,.mbtn,.xbtn,.sw,.tog,.card,.ccard,.bcard,.mapcard,.bfcard,.selb,.backb,.bupg,#splash'); if(b&&!b.classList.contains('dis')&&!b.classList.contains('locked')) SFX.ui(); },{passive:true,capture:true});
+/* phones only count touchend / click / keydown as a real gesture for audio, so unlock (resume) the context on those too */
+function audioUnlock(){ audioInit(); const c=AUDIO.ctx; if(c&&c.state!=='running'){ try{ c.resume(); }catch(e){} } if(c&&!AUDIO.warmed){ AUDIO.warmed=true; try{ const b=c.createBuffer(1,1,22050), s=c.createBufferSource(); s.buffer=b; s.connect(c.destination); s.start(0); }catch(e){} } }
+for(const ev of ['touchend','click','keydown','pointerup']) document.addEventListener(ev,audioUnlock,{passive:true,capture:true});   /* menu taps unlock audio and click softly */   /* menu taps also unlock audio, so the menu music can start */
 function vibrate(ms){ if(SAVE.settings.vibrate&&navigator.vibrate) try{ navigator.vibrate(ms); }catch(e){} }
 
 /* =====================================================================
@@ -1630,6 +1633,14 @@ const AI={
   }
 };
 /* a boss waits at its lair: it fights inside ~650 px of it and walks back if dragged farther; after an attack it stands still for a short recovery window */
+/* open-world bosses can never wedge on a rock or a corner: if one keeps pushing but does not move for 1.2 s it is lifted to the nearest free spot toward the player */
+function bossUnstick(e,dt,p){ const a=e.ai; if(a){ if(a.state!==e._st){ e._st=a.state; e._stT=0; } else e._stT=(e._stT||0)+dt; if(a.state!=='chase'&&a.state!=='idle'&&e._stT>8){ a.state='chase'; a.t=0; a.tele=null; e.holdAnim=false; e.abCd=Math.max(e.abCd,1); a.recover=.3; e._stT=0; } }   /* a move that never ends (8 s) is cut back to the chase */
+  const want=Math.hypot(e.vx,e.vy); const lx=e._ux===undefined?e.x:e._ux, ly=e._uy===undefined?e.y:e._uy; const moved=Math.hypot(e.x-lx,e.y-ly); e._ux=e.x; e._uy=e.y;
+  if(want>25&&moved<want*dt*.2) e.stuckT=(e.stuckT||0)+dt; else e.stuckT=0; if(e.stuckT<1.2) return; e.stuckT=0;
+  const ox=e.x, oy=e.y, base=Math.atan2(p.y-e.y,p.x-e.x); let done=false;
+  for(let R=48;R<=320&&!done;R+=48) for(let k=0;k<12&&!done;k++){ const ang=base+(k%2?1:-1)*Math.ceil(k/2)*(Math.PI/6), tx=ox+Math.cos(ang)*R, ty=oy+Math.sin(ang)*R; e.x=tx; e.y=ty; collide(e); if(Math.abs(e.x-tx)<.5&&Math.abs(e.y-ty)<.5&&!wallAhead(e,base)) done=true; }
+  if(!done){ const L=e.lair||e.ai.home; if(L){ e.x=L.x; e.y=L.y; done=true; } else { e.x=ox; e.y=oy; } }
+  if(done){ burst(ox,oy+10,['#9ca3af','#6b7280','#d6d3d1'],14,160,.5,5,0,false); burst(e.x,e.y+10,['#9ca3af','#6b7280','#d6d3d1'],14,160,.5,5,0,false); e.vx=e.vy=0; e._ux=e.x; e._uy=e.y; if(e.ai){ e.ai.tele=null; if(e.ai.state!=='chase'){ e.ai.state='chase'; e.holdAnim=false; } } } }
 function bossLeash(e,p,dt){ const a=e.ai; if(a.recover>0){ a.recover-=dt; e.vx*=.8; e.vy*=.8; faceTo(e,p); return true; } const L=e.lair||a.home; if(dist(e,L)>(e.leash||650)){ moveToward(e,L.x,L.y,dt,.9); e.face=Math.atan2(e.vy,e.vx); e.abCd=Math.max(e.abCd,.6); return true; } return false; }
 /* second phase at 50% HP: faster, one attack gains a hit, summons adds (they respawn once, 20 s later) */
 /* CROCODILE — built from the level-7 ninjas (x1.48 of base): HP  SHADE 207 · BECK 185 · BOREAS 170 · APOLLO 163 · CLAY 266;  hit  SHADE 22 · BECK 19 · BOREAS 24 · APOLLO 30 · CLAY 22
@@ -1659,6 +1670,7 @@ function enemyUpdate(e,dt,p){
   e.kvx+=e.kbx; e.kvy+=e.kby; e.kbx=e.kby=0; const kf=Math.pow(.003,dt); e.kvx*=kf; e.kvy*=kf;
   let sx=0,sy=0; for(const o of G.enemies) if(o!==e&&o.alive&&o.spawnT<=0&&Math.abs(o.x-e.x)<100&&Math.abs(o.y-e.y)<100){ const dx=e.x-o.x,dy=e.y-o.y,d2=Math.hypot(dx,dy),md=e.r+o.r+4; if(d2<md&&d2>0){ sx+=dx/d2*(md-d2)*10; sy+=dy/d2*(md-d2)*10; } }
   e.x+=(e.vx+e.kvx+sx)*dt; e.y+=(e.vy+e.kvy+sy)*dt; collide(e);
+  if(e.boss&&!WORLD.arena) bossUnstick(e,dt,p);
   { const v=WORLD.village, dx=e.x-v.x, dy=e.y-v.y, dd=Math.hypot(dx,dy), m=v.safeR+e.r; if(dd<m){ e.x=v.x+dx/(dd||1)*m; e.y=v.y+dy/(dd||1)*m; e.vx*=.2; e.vy*=.2; if(e.ai.state==='charging'||e.ai.state==='lunging') e.ai.t=0; } }   // the village circle is off-limits to enemies
 }
 /* ---------- biome spawners ---------- */
@@ -2541,9 +2553,9 @@ function splashSpin(c,t,cx,by){ t=Math.max(0,t); const n=Math.floor(t/SP_T), k=t
     if(SPLASH.started){ const u=(now-SPLASH.startAt)/1000, k=Math.min(1,u/LOAD); bar.style.width=(k*100).toFixed(1)+'%'; if(k<1){ const ti=Math.floor(u/.9)%tips.length; SPLASH.tip=ti; txt.textContent=tips[ti]+'…'; } else if(!SPLASH.ready){ SPLASH.ready=true; el.classList.add('ready'); txt.textContent='READY'; go(); } }
     requestAnimationFrame(step); };
   requestAnimationFrame(step);
-  const start=()=>{ if(SPLASH.started||!SPLASH.on) return; audioInit(); if(AUDIO.ctx&&AUDIO.ctx.state==='suspended') AUDIO.ctx.resume(); SPLASH.started=true; SPLASH.startAt=performance.now(); txt.classList.remove('blink'); SFX.ui(); };
+  const start=()=>{ if(SPLASH.started||!SPLASH.on) return; audioUnlock(); SPLASH.started=true; SPLASH.startAt=performance.now(); txt.classList.remove('blink'); SFX.ui(); };
   const go=()=>{ if(!SPLASH.on) return; SPLASH.on=false; el.classList.add('out'); SFX.levelup(); setTimeout(()=>{ el.classList.remove('on'); },650); };
-  el.addEventListener('pointerdown',start); addEventListener('keydown',e=>{ if(SPLASH.on) start(); });
+  for(const ev of ['touchend','click','pointerup']) el.addEventListener(ev,start); addEventListener('keydown',e=>{ if(SPLASH.on) start(); });
 })();
 audioInit(); setState('MENU'); requestAnimationFrame(frame);
 
