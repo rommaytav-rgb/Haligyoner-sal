@@ -923,7 +923,7 @@ const CH={
   BOREAS:{color:'#7dd3fc',glow:'#f0f9ff',dark:'#0369a1',role:'Control',     hp:115,dmg:16,spd:170,rate:2.4,range:420,kind:'proj',aim:.18,weapon:'staff',   basic:'Ice Ball – long range, slows the target 40% for 2s', skill:{name:'Frost Nova',cd:9,desc:'Freeze every enemy in a radius for 2s. Frozen enemies take double damage'}},
   APOLLO:{color:'#fb923c',glow:'#fff7ed',dark:'#9a3412',role:'Glass Cannon',hp:110,dmg:20,spd:180,rate:2.2,range:200,kind:'cone',aim:.2,weapon:'torch',   basic:'Flame Cone – close-range burst, more damage up close, burns', skill:{name:'Inferno',cd:7,desc:'Fire explosion around you: 200% damage plus burn 5/s for 3s'}},
   BECK:  {color:'#22d3ee',glow:'#ecfeff',dark:'#155e75',role:'Fast Striker',hp:125,dmg:13,spd:235,rate:3.2,range:160,kind:'wide',aim:.27,weapon:'trident', basic:'Water Strike – a fast surge of water that hits everything in front', skill:{name:'Waves',cd:9,desc:'Slam the ground: three rings of water burst outward to 6 tiles. Each ring hits everything it passes for 110% damage and soaks it (25% slower for 1.5s)'}},
-  CLAY:  {color:'#d9a34a',glow:'#fef3c7',dark:'#78350f',role:'Tank',        hp:180,dmg:15,spd:165,rate:2.0,range:100,kind:'quake',aim:0,weapon:'dagger',  basic:'Earthquake – slams the ground and hits everything around him, every hit knocks back', skill:{name:'Stone Wall',cd:8,desc:'Ground slam: knockback and 1s stun around you. You take 50% less damage for 3s'}},
+  CLAY:  {color:'#d9a34a',glow:'#fef3c7',dark:'#78350f',role:'Tank',        hp:180,dmg:15,spd:165,rate:2.0,range:100,kind:'quake',aim:0,weapon:'dagger',  basic:'Earthquake – slams the ground and hits everything around him, every hit knocks back', skill:{name:'Stone Wall',cd:11,desc:'Ground slam: knockback and 1s stun around you, and a stone shield for 4s that cuts every hit you take by 30%'}},
 };
 for(const k in CH){ CH[k].name=k; CH[k].sprite=CHARS.findIndex(m=>m.name===k); }
 const ORDER=['SHADE','BOREAS','APOLLO','BECK','CLAY'];
@@ -1334,7 +1334,7 @@ const WAVE_DMG=30;   /* every wave, anywhere, costs exactly 30 */
 function damage(e,amt,src,o){
   o=o||{}; if(!e.alive||e.spawnT>0) return 0;
   if(e.kind==='enemy'&&e.hidden) return 0;   // a submerged boss cannot be hit
-  if(e.kind==='player'){ if(G.arena&&G.arena.over) return 0; if((e.inv>0&&!o.sure)||e.hidden||DEBUG.god||inSafeZone(e.x,e.y)) return 0; if(spinBusy(e)||e.spinGrace>0||e.abGrace>0) return 0; if(e.status.shield&&!o.flat) amt*=.5; }   // during Spinjitzu (flash + spin) the ninja cannot lose HP else if(e.status.freeze) amt*=2;
+  if(e.kind==='player'){ if(G.arena&&G.arena.over) return 0; if((e.inv>0&&!o.sure)||e.hidden||DEBUG.god||inSafeZone(e.x,e.y)) return 0; if(spinBusy(e)||e.spinGrace>0||e.abGrace>0) return 0; if(e.status.shield&&!o.flat) amt*=.7; }   // during Spinjitzu (flash + spin) the ninja cannot lose HP else if(e.status.freeze) amt*=2;
   if(e.kind==='enemy'&&src&&!o.noBlock){
     if(e.type==='priest'&&o.basic&&e.dodgeCd<=0&&Math.random()<.3){ e.dodgeCd=.4; const a=Math.atan2(src.y-e.y,src.x-e.x)+(Math.random()<.5?1:-1)*Math.PI/2; e.kvx+=Math.cos(a)*460; e.kvy+=Math.sin(a)*460; floatText(e.x,e.y-34,'DODGE','#a3e635'); SFX.dodge(); burst(e.x,e.y+6,['#8ab08a'],4,60,.3,3); return 0; }   // Insect Priest sidesteps a basic attack (short hop, 0.4 s cooldown)
     if(e.type==='pirate'&&!o.spin&&fromFront(e,src)) amt*=.7;   // heavy coat: 30% less damage from the front (behind / Spinjitzu bypass it)
@@ -1412,7 +1412,7 @@ function playerUpdate(p,dt){
   if(IN.fire){ const f=IN.fire; IN.fire=null; if(!p.hidden&&p.dashT<=0&&p.jumpT<=0){ let ang=f.ang; if(f.auto||ang===null){ const t=nearestEnemy(p,p.ch.range+120); ang=t?Math.atan2(t.y-p.y,t.x-p.x):p.face; } p.queued={ang,t:.4}; } }
   if(p.queued){ p.queued.t-=dt; if(p.atkCd<=0&&p.stagger<=0&&p.jumpT<=0){ fireAttack(p,p.queued.ang); p.queued=null; } else if(p.queued.t<=0) p.queued=null; }
   // ability
-  if(IN.ability){ IN.ability=false; if(p.abCd<=0&&!p.hidden&&p.dashT<=0&&p.jumpT<=0){ p.abCd=p.ch.skill.cd; p.abPress=3; ABILITY[p.name](p); SFX.ab[p.name](); vibrate(40); G.zoomPulse=1.06; if(!SAVE.hints.ability){ SAVE.hints.ability=true; showHint(null); } } }
+  if(IN.ability){ IN.ability=false; if(p.abCd<=0&&!p.hidden&&p.dashT<=0&&p.jumpT<=0){ p.abCd=p.ch.skill.cd; p.abPress=3; ABILITY[p.name](p); p.abGrace=Math.max(p.abGrace||0,1.5); p.inv=Math.max(p.inv,p.abGrace);   /* no ninja can be hurt while casting a special and for 1.5 s after */ SFX.ab[p.name](); vibrate(40); G.zoomPulse=1.06; if(!SAVE.hints.ability){ SAVE.hints.ability=true; showHint(null); } } }
   if(p.hidden){ p.hideT-=dt; part(p.x+rnd(-14,14),p.y+rnd(-16,6),0,-30,'#a855f7',.5,5,0,true); if(p.hideT<=0) shadeReappear(p); }
   // coins pickup
   for(let i=G.coins.length-1;i>=0;i--){ const c=G.coins[i]; c.t+=dt; if(!c.fly){ c.x+=c.vx*dt; c.y+=c.vy*dt; c.vy+=600*dt; c.vx*=Math.pow(.05,dt); if(c.t>.14) c.fly=true; } else { const dx=p.x-c.x, dy=p.y-8-c.y, d=Math.hypot(dx,dy)||1; { const s=Math.min(d,(420+c.t*1100)*dt); c.x+=dx/d*s; c.y+=dy/d*s; } if(d<10){ G.coins.splice(i,1); SAVE.gold+=c.v; SFX.coin(); part(p.x,p.y-20,0,-40,'#fde047',.4,4,0,true); } } }
@@ -1444,8 +1444,8 @@ function fireAttack(p,ang){
 }
 function slashFx(p,ang,r,half,cols){ for(let i=0;i<14;i++){ const a=ang+rnd(-half,half), d=rnd(r*.4,r); part(p.x+Math.cos(a)*d,p.y-6+Math.sin(a)*d,Math.cos(a)*60,Math.sin(a)*60,cols[i%2],.22,5,0,true); } G.slash={x:p.x,y:p.y-4,a:ang,r,h:half,t:.16,col:cols[0]}; }
 const ABILITY={
-  CLAY(p){ shake(9); addStatus(p,'shield',3); for(const e of liveEnemies()) if(inCircle(e,p.x,p.y,150)){ damage(e,p.dmg*1.2,p,{kb:420,big:true}); addStatus(e,'stun',1); } burst(p.x,p.y+6,['#d9a34a','#a16207','#78350f'],46,320,.9,7,400); G.ring={x:p.x,y:p.y,r:0,max:150,t:0,col:'#d9a34a'}; floatText(p.x,p.y-50,'STONE WALL','#fde68a',true); },
-  BECK(p){ p.stagger=Math.max(p.stagger,.25); p.vx=p.vy=0; p.attackT=.3; G.waveCast={x:p.x,y:p.y,t:0,dmg:p.dmg*1.1};   /* each ring 110% of basic damage (about 20 per ring at LV 4) */ SFX.swell(); vibrate(30); },   /* WAVES: 0.25 s wind-up, then three rings from the cast point (see ringsUpdate) */
+  CLAY(p){ shake(9); addStatus(p,'shield',4); for(const e of liveEnemies()) if(inCircle(e,p.x,p.y,150)){ damage(e,p.dmg*1.2,p,{kb:420,big:true}); addStatus(e,'stun',1); } burst(p.x,p.y+6,['#d9a34a','#a16207','#78350f'],46,320,.9,7,400); G.ring={x:p.x,y:p.y,r:0,max:150,t:0,col:'#d9a34a'}; floatText(p.x,p.y-50,'STONE WALL','#fde68a',true); },
+  BECK(p){ p.stagger=Math.max(p.stagger,.25); p.vx=p.vy=0; p.attackT=.3; p.abGrace=1.75; G.waveCast={x:p.x,y:p.y,t:0,dmg:p.dmg*1.1};   /* each ring 110% of basic damage (about 20 per ring at LV 4) */ SFX.swell(); vibrate(30); },   /* WAVES: 0.25 s wind-up, then three rings from the cast point (see ringsUpdate) */
   BOREAS(p){ for(const e of liveEnemies()) if(inCircle(e,p.x,p.y,220)){ addStatus(e,'freeze',2); e.vx=e.vy=0; burst(e.x,e.y-10,['#e0f2fe','#ffffff'],10,90,.7,4,0,true); } for(let i=0;i<60;i++){ const a=i/60*TAU; part(p.x,p.y,Math.cos(a)*420,Math.sin(a)*420,['#bae6fd','#ffffff','#7dd3fc'][i%3],.5,6,0,true); } G.ring={x:p.x,y:p.y,r:0,max:220,t:0,col:'#bae6fd'}; shake(4); floatText(p.x,p.y-50,'FROST NOVA','#e0f2fe',true); },
   APOLLO(p){ for(const e of liveEnemies()) if(inCircle(e,p.x,p.y,140)){ damage(e,p.dmg*2,p,{kb:260,big:true}); addStatus(e,'burn',3,{dps:5}); } burst(p.x,p.y-6,['#fb923c','#fde047','#ef4444','#ffffff'],70,380,.8,8,-120,true); G.ring={x:p.x,y:p.y,r:0,max:140,t:0,col:'#fb923c'}; shake(7); floatText(p.x,p.y-50,'INFERNO','#fff7ed',true); },
   SHADE(p){ p.hidden=true; p.hideT=1.5; p.inv=1.6; burst(p.x,p.y-10,['#a855f7','#5b21b6','#e9d5ff'],30,160,.8,6,0,true); floatText(p.x,p.y-50,'SHADOW STEP','#e9d5ff',true); },
@@ -1474,7 +1474,7 @@ function ringsUpdate(dt,p){ const C=G.waveCast; if(C){ C.t+=dt; if(C.t<.25){ if(
     else { G.rings=G.rings||[]; for(let i=0;i<3;i++) G.rings.push({x:C.x,y:C.y,i,t:-i*.35,life:.9,max:6*TILE_PX,dmg:C.dmg,hit:[],launched:false}); G.groundFx.push({kind:'puddle',vec:true,x:C.x,y:C.y,t:2,t0:2}); shake(5); G.waveCast=null; } }
   const R=G.rings; if(!R||!R.length) return; for(let i=R.length-1;i>=0;i--){ const w=R[i]; w.t+=dt; if(w.t<0) continue; if(!w.launched){ w.launched=true; SFX.whoosh(w.i); splashPx(w.x/PIX,w.y/PIX,6,5); } if(w.t>=w.life){ R.splice(i,1); continue; } const r=6+(w.max-6)*(w.t/w.life); w.r=r;
     if(p) for(const e of liveEnemies()){ if(w.hit.includes(e)) continue; const d=Math.hypot(e.x-w.x,(e.y-w.y)*2); if(Math.abs(d-r)>12+e.r) continue; if(!inLand(e.x,e.y)||!inLand((e.x+w.x)/2,(e.y+w.y)/2)) continue; w.hit.push(e);
-      damage(e,e.boss?w.dmg*.5:w.dmg,p,{kb:130,big:true}); addStatus(e,'soak',1.5); splashPx(e.x/PIX,e.y/PIX-4,3,4); }
+      damage(e,e.boss?w.dmg*.5:w.dmg,p,{kb:190,big:true}); addStatus(e,'soak',1.5); splashPx(e.x/PIX,e.y/PIX-4,3,4); }
     if(Math.random()<.75){ const a=Math.random()*TAU; splashPx((w.x+Math.cos(a)*r)/PIX,(w.y+Math.sin(a)*r*.5)/PIX,2,4); } } }
 /* droplets (reference splash()/drawDrops(), in pixel space) */
 function splashPx(x,y,n,pw){ G.drops=G.drops||[]; for(let i=0;i<n;i++) G.drops.push({x,y,vx:(Math.random()-.5)*pw,vy:-Math.random()*pw-1,l:1}); }
