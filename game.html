@@ -1113,7 +1113,7 @@ const EN={
   wolf: {hp:520,dmg:44,spd:178,r:13,range:46,atk:1.0,coins:[9,13],gold:[40,56],xp:34,rig:true,scale:1.5,biome:'frost',name:'WOLF WARRIOR'},
   /* World 2 mobs (mobs2.js): the Lava Imp is born from lava bombs during eruptions (level 11); the Ice Fox lives in dens deep in the frost (level 15). Both too light to be staggered by normal hits */
   imp:  {hp:45, dmg:26,spd:235,r:12,range:34,atk:.9, coins:[6,9],gold:[30,45],xp:34,rig:true,scale:1.5,biome:'ember',name:'LAVA IMP',light:true},
-  fox:  {hp:60, dmg:34,spd:260,r:13,range:40,atk:1.0,coins:[7,10],gold:[45,65],xp:55,rig:true,scale:1.5,biome:'frost',name:'ICE FOX',light:true},
+  fox:  {hp:50, dmg:34,spd:235,r:12,range:38,atk:1.0,coins:[7,10],gold:[45,65],xp:55,rig:true,scale:1.3,biome:'frost',name:'ICE FOX',light:true},
   hippo:{hp:2750,dmg:52,spd:76, r:46,range:100,coins:[40,40],gold:[400,400],boss:true,name:'HIPPO',sprite:3,scale:3,adds:'mush'},
   croc: {hp:3750,dmg:62,spd:125,r:46,range:110,coins:[40,40],gold:[500,500],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
   lord: {hp:5200,dmg:20,spd:116,r:40,range:96, coins:[40,40],gold:[800,800],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:700},   /* drawn by the LORD rig, not a sprite */
@@ -1482,9 +1482,9 @@ function gemsUpdate(dt){ const p=G.player; if(!G.gems.length) return; for(let i=
     if(!p||!p.alive) continue; const d=Math.hypot(p.x-g.x,p.y-8-g.y);
     if(g.drift>0||d<4*TS*PIX||WORLD.arena){ if(g.drift===0){ g.sx=g.x; g.sy=g.y; } g.drift=Math.min(1,g.drift+dt/1.2); const k=g.drift*g.drift*(3-2*g.drift); g.x=g.sx+(p.x-g.sx)*k; g.y=g.sy+(p.y-8-g.sy)*k; g.h=6+Math.sin(g.drift*Math.PI)*20; if(g.drift>=1||Math.hypot(p.x-g.x,p.y-8-g.y)<6){ G.gems.splice(i,1); gemCollect(g); } }
     else if(Math.random()<.15){ const R=GEM_RAR[GEM_RI[g.rar]]; part(g.x+rnd(-6,6),g.y-rnd(4,40),rnd(-6,6),rnd(-40,-15),R.pal.h,.7,2,-20,true); } } }
-function drawGems(c){ if(!G.gems.length) return; const t=G.time; for(const g of G.gems){ const R=GEM_RAR[GEM_RI[g.rar]], sc=1.1, bob=g.landed?Math.sin(t*3+g.spin)*2:0; c.save();
+function drawGems(c){ if(!G.gems.length) return; const t=G.time; for(const g of G.gems){ const R=GEM_RAR[GEM_RI[g.rar]], sc=2.2, bob=g.landed?Math.sin(t*3+g.spin)*2:0; c.save();
     if(g.landed&&g.drift===0){ for(let k=0;k<7;k++){ c.globalAlpha=.32*(1-k/7); c.fillStyle=R.pal.l; c.fillRect(g.x-2,g.y-30-k*18,4,18); c.globalAlpha=.16*(1-k/7); c.fillStyle=R.pal.h; c.fillRect(g.x-5,g.y-30-k*18,10,18); } c.globalAlpha=1; }   /* the beam: a column of its colour rising into the air */
-    c.fillStyle='rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(g.x,g.y+2,9,4,0,0,TAU); c.fill();
+    c.fillStyle='rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(g.x,g.y+2,16,7,0,0,TAU); c.fill();
     c.translate(g.x-12*sc,g.y-g.h-bob-24*sc); drawGem(c,sc,R,t+g.spin,0,0,g.type,true); c.restore(); } }
 function gemCollect(g){ const R=GEM_RAR[GEM_RI[g.rar]], ri=GEM_RI[g.rar]; gemAdd(g.type,g.rar); const p=G.player;
   burst(p.x,p.y-14,[R.pal.h,R.pal.l,R.pal.s],10+ri*10,120+ri*40,.7+ri*.15,3,-40,true); if(ri>=4) shake(4+ri); G.slowmo=Math.max(G.slowmo||0,.3);
@@ -2854,7 +2854,7 @@ AI.fox=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.abCd-
   if(a.state==='idle'){ wander(e,dt,110,.5); if(foxOut(e.x,e.y)&&!a.moving){ a.moving=true; a.tx=a.home.x; a.ty=a.home.y; a.t=3; } if(d<340&&sees&&!foxOut(p.x,p.y)&&(G.chasers<8||e.summoned)) foxAlert(e); return; }
   if(a.state==='circle'){ if(!e.summoned&&(d>660||!sees||dist(e,a.home)>820||foxOut(e.x,e.y)||foxOut(p.x,p.y))){ goHome(e); return; }
     a.angle=Math.atan2(e.y-p.y,e.x-p.x)+a.dir*dt*1.6; const ring=120, tx=p.x+Math.cos(a.angle)*ring, ty=p.y+Math.sin(a.angle)*ring; moveToward(e,tx,ty,dt,d>ring+160?1.1:.85); faceTo(e,p);
-    if(e.abCd<=0&&d>110&&d<300&&!inSafeZone(p.x,p.y)){ a.state='crouch'; a.t=.7; e.vx=e.vy=0; a.aim=Math.atan2(p.y-e.y,p.x-e.x); e.face=a.aim; telegraph(e,{s:'line',a:a.aim,l:6*TS*PIX,w:22},.7); return; }
+    if(e.abCd<=0&&e.hp<e.maxHp&&d>110&&d<300&&!inSafeZone(p.x,p.y)&&Math.random()<dt*.5){ a.state='crouch';   /* the pounce: only once the ninja has hurt it, at a random moment */ a.t=.7; e.vx=e.vy=0; a.aim=Math.atan2(p.y-e.y,p.x-e.x); e.face=a.aim; telegraph(e,{s:'line',a:a.aim,l:6*TS*PIX,w:22},.7); return; }
     if(a.atkT<=0&&d<210){ a.state='bite'; a.t=.6; a.hitDone=false; } }
   else if(a.state==='bite'){ if(foxOut(p.x,p.y)){ a.state='back'; a.t=.4; } moveToward(e,p.x,p.y,dt,1.25); faceTo(e,p);
     if(!a.hitDone&&d<e.d.range+p.r&&a.t<.5){ a.hitDone=true; SFX.hit(); slashFx(e,e.face,36,.8,['#bfeaff','#ffffff']); if(p.jumpT<=0){ damage(p,e.dmg,e,{kb:160}); if(p.status.foxslow) addStatus(p,'foxslow2',1); addStatus(p,'foxslow',1); } a.state='back'; a.t=.5; a.atkT=e.d.atk; }
@@ -2934,15 +2934,23 @@ function isCoatItem(ctx,scale,ox,oy,t){ const C=ISC; const B=(dx,dy,w,h,col,al)=
   [[1,4],[11,4],[6,2]].forEach(([dx,dy],i)=>{ const h=3+((i*2)%2); for(let j=0;j<h;j++) B(dx,dy-j,Math.max(1,2-Math.floor(j/2)),1,j<2?C.iceL:C.ice); });
   B(7,7,1,5,C.iceL); B(5,9,5,1,C.iceL); B(6,8,1,1,C.iceL); B(9,8,1,1,C.iceL); B(6,10,1,1,C.iceL); B(9,10,1,1,C.iceL);
   if(t!==undefined) for(let i=0;i<4;i++){ const q=(t*.9+i*.25)%1, a=i*1.57+t; B(7+Math.cos(a)*11,9+Math.sin(a)*11,1,1,C.snowS,1-q); } }
-/* the coat worn by a ninja (drawn over the sprite; 1 unit = 2 px, feet at y = 0, the body 13 units wide) */
-function drawCoatWorn(c,face,oy,t,bliz){ const C=ISC; c.save(); c.translate(0,oy+4); c.scale(face,1); const B=(dx,dy,w,h,col,al)=>{ c.globalAlpha=al===undefined?1:al; c.fillStyle=col; c.fillRect(-13+dx*2,-46+dy*2,w*2,h*2); c.globalAlpha=1; };   /* sits 4 px lower than the reference so the collar stays under the chin */
-  B(0,9,13,11,C.cloth); B(0,9,13,2,C.clothL); B(0,18,13,2,C.clothD);
-  for(let i=0;i<6;i++) B(i*2,19,2,3,C.fur);
-  B(6,10,2,9,C.clothD); B(-1,10,2,8,C.cloth); B(12,10,2,8,C.cloth);
-  B(0,8,13,2,C.fur);   /* a low collar: the face stays clear */
-  B(5,12,1,4,C.iceL); B(4,13,3,1,C.iceL);
-  if(bliz) for(let i=0;i<12;i++){ const a=i/12*6.28+t*.9, r=11+Math.sin(t*3+i)*1.5; B(6+Math.cos(a)*r,12+Math.sin(a)*r*.8,1,1,C.ice,.5); }
-  c.restore(); }
+/* the coat worn by a ninja: painted through the sprite's own silhouette (destination-in), so it moves with the body in every frame.
+   Band from the neck to the knees: cloth, light top, dark hem, fur collar and fur hem, lapel line, belt with a gold buckle, snowflake on the chest */
+const COAT_C=document.createElement('canvas'), COAT_X=COAT_C.getContext('2d');
+function drawCoatWorn(c,ch,anim,at,face,s,x,y,t,bliz){ const C=ISC; const img=sprite(ch,anim,at,face,s), L=LAYOUT(ch), dx=Math.round(x-(OX+L.shadow[0]+L.shadow[2]/2)*s), dy=Math.round(y-(OY+L.shadow[1]+1+SPR_PAD)*s);
+  if(COAT_C.width!==img.width||COAT_C.height!==img.height){ COAT_C.width=img.width; COAT_C.height=img.height; } const X=COAT_X; X.globalCompositeOperation='source-over'; X.clearRect(0,0,img.width,img.height);
+  if(img.__top===undefined){ const d=X.getImageData?null:null; const tc=document.createElement('canvas'); tc.width=img.width; tc.height=img.height; const tx=tc.getContext('2d'); tx.drawImage(img,0,0); const px=tx.getImageData(0,0,img.width,img.height).data; let top=img.height; for(let yy=0;yy<img.height&&top===img.height;yy++) for(let xx=0;xx<img.width;xx++) if(px[(yy*img.width+xx)*4+3]>40){ top=yy; break; } img.__top=top; }   /* the first opaque row of this frame, cached on the sprite: the coat hangs from the head, so it rises with a jump */
+  const u=s*1.35, fy=img.__top+21*u, cx=-dx;   /* the band is measured from the top of the head: 21 units down is the knee line */
+  const R=(x0,y0,w,h,col,al)=>{ X.globalAlpha=al===undefined?1:al; X.fillStyle=col; X.fillRect(Math.round(cx+x0*u),Math.round(fy+y0*u),Math.max(1,Math.round(w*u)),Math.max(1,Math.round(h*u))); X.globalAlpha=1; };
+  R(-9,-12,18,11,C.cloth); R(-9,-12,18,2,C.clothL); R(-9,-3,18,2,C.clothD);   /* the band: from under the chin (-12 units) to the knees (-1) */
+  for(let i=0;i<9;i++) R(-9+i*2,-2,2,2,C.fur);
+  R(-1,-11,2,9,C.clothD); R(-3,-11,1,9,C.clothL,.6);
+  R(-9,-7,18,2,C.woodD); R(-1,-7,3,2,C.gold);
+  R(-9,-14,18,2,C.fur); for(let i=0;i<9;i++) R(-9+i*2,-15-((i*3)%2),2,1,C.furD);
+  R(2,-10,1,4,C.iceL); R(1,-9,3,1,C.iceL); R(1,-10,1,1,C.iceL); R(3,-10,1,1,C.iceL);
+  X.globalCompositeOperation='destination-in'; X.drawImage(img,0,0); X.globalCompositeOperation='source-over';
+  const sm=c.imageSmoothingEnabled; c.imageSmoothingEnabled=false; c.drawImage(COAT_C,dx,dy); c.imageSmoothingEnabled=sm;
+  if(bliz){ c.save(); c.translate(x,y); for(let i=0;i<12;i++){ const a=i/12*6.28+t*.9, r=22+Math.sin(t*3+i)*3; c.globalAlpha=.5; c.fillStyle=C.ice; c.fillRect(Math.cos(a)*r-1,-22+Math.sin(a)*r*.8-1,2,2); } c.restore(); } }
 /* =====================================================================
    CHI + SPINJITZU — drawing functions copied from chi-spinjitzu.html (adapted to the
    game's art-pixel camera: art pixel = PIX world units, helpers rect/px draw into `g`)
@@ -3259,7 +3267,7 @@ function animOf(e){ if(e.jumpT>0) return 'jump'; if(e.attackT>0||(e.ai&&['tele',
 /* body motion on top of the model's own walk frames: step bounce, lean into the run, tiny squash — the pixel data itself is untouched */
 function gait(e,t,spd){ const v=Math.hypot((e.vx||0)+(e.kvx||0),(e.vy||0)+(e.kvy||0)), run=v>25, ph=(e.animT||0)*8*Math.PI; return {run, bounce:run?Math.abs(Math.sin(ph))*1.6:Math.sin(t*2.5)*.6, lean:run?clamp(((e.vx||0)+(e.kvx||0))/spd,-1,1)*.04:0, squash:run?Math.abs(Math.sin(ph))*.015:0}; }
 function drawNinja(c,ch,e,t){ if(e.dunk>0){ c.save(); c.translate(0,12); c.globalAlpha=.55; } const face=Math.cos(e.face)>=0?1:-1, anim=animOf(e), g=gait(e,t,e.spd||200); if(anim==='jump'){ g.bounce=0; g.squash=0; g.lean=0; } const at=anim==='jump'?(JUMP_DUR-e.jumpT)/JUMP_DUR:e.animT;   // jump: the 8 frames of the model's jump cycle over the jump's duration
-  c.save(); if(e.hidden) c.globalAlpha=.25; else if(e.inv>0&&e.dashT<=0&&e.jumpT<=0&&Math.floor(t*24)%2) c.globalAlpha=.55; const shr=anim==='jump'?.6:1; c.fillStyle=hexA(ch.color,.18); c.beginPath(); c.ellipse(e.x,e.y+13,(22+Math.sin(t*4)*2-g.bounce)*shr,(9-g.bounce*.5)*shr,0,0,TAU); c.fill(); c.translate(e.x,e.y+14); c.rotate(g.lean); c.scale(1+g.squash*.6,1-g.squash); drawSprite(c,CHARS[ch.sprite],anim,at,face,1.5,0,-g.bounce,tintFor(e)); if(e.kind==='player'&&hasEffect(e.name,'blizzardImmune')) drawCoatWorn(c,face,-g.bounce,t,!!(WORLD.frost&&G.haz&&G.haz.bliz.active>0&&m2InIce(e.x,e.y))); c.restore(); if(e.dunk>0) c.restore(); }
+  c.save(); if(e.hidden) c.globalAlpha=.25; else if(e.inv>0&&e.dashT<=0&&e.jumpT<=0&&Math.floor(t*24)%2) c.globalAlpha=.55; const shr=anim==='jump'?.6:1; c.fillStyle=hexA(ch.color,.18); c.beginPath(); c.ellipse(e.x,e.y+13,(22+Math.sin(t*4)*2-g.bounce)*shr,(9-g.bounce*.5)*shr,0,0,TAU); c.fill(); c.translate(e.x,e.y+14); c.rotate(g.lean); c.scale(1+g.squash*.6,1-g.squash); drawSprite(c,CHARS[ch.sprite],anim,at,face,1.5,0,-g.bounce,tintFor(e)); if(e.kind==='player'&&hasEffect(e.name,'blizzardImmune')) drawCoatWorn(c,CHARS[ch.sprite],anim,at,face,1.5,0,-g.bounce,t,!!(WORLD.frost&&G.haz&&G.haz.bliz.active>0&&m2InIce(e.x,e.y))); c.restore(); if(e.dunk>0) c.restore(); }
 function drawBerserk(c,e,t){ if(!(e.boss&&e.ai.phase2&&e.alive)) return; const k=.5+.5*Math.sin(t*9), R=e.r*1.6; c.save(); const gl=c.createRadialGradient(e.x,e.y+e.r*.8,R*.2,e.x,e.y+e.r*.8,R); gl.addColorStop(0,'rgba(239,68,68,'+(.22+.14*k)+')'); gl.addColorStop(1,'rgba(239,68,68,0)'); c.fillStyle=gl; c.beginPath(); c.ellipse(e.x,e.y+e.r*.8,R,R*.5,0,0,TAU); c.fill(); if(G.state==='PLAYING'&&Math.random()<.4) part(e.x+rnd(-e.r,e.r),e.y+rnd(-e.r,e.r*.6),rnd(-15,15),rnd(-70,-30),Math.random()<.5?'#ef4444':'#fca5a5',.6,3,0,true); c.restore(); }   /* the berserk aura: red pulse and rising embers */
 function drawEnemy(c,e,t){ drawBerserk(c,e,t); if(e.type==='lord') return drawLord(c,e,t); if(e.d.rig) return drawRigEnemy(c,e,t); const d=e.d, face=Math.cos(e.face)>=0?1:-1, g=gait(e,t,e.spd||130); c.save(); if(e.spawnT>0){ c.globalAlpha=Math.max(0,1-e.spawnT/.6); c.translate(0,e.spawnT*60); } c.translate(e.x,e.y+e.r*.9); if(e.flinch>0) c.translate(Math.sin(G.time*70)*2.5,0); c.rotate(g.lean*(e.boss?.4:1)); c.scale(1+g.squash*.5,1-g.squash*.8); drawSprite(c,ENEMIES[d.sprite],animOf(e),e.animT,face,d.scale,0,-g.bounce*(e.boss?.6:1),tintFor(e)); c.restore(); }
 /* spawners are painted into the terrain; here: ambient life + refill bar */
