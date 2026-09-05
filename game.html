@@ -294,18 +294,18 @@
   .nrow{display:flex;gap:8px;width:100%} .nrow .mbtn{flex:1;min-width:0;padding-left:8px;padding-right:8px;font-size:clamp(12px,2.4vh,16px);letter-spacing:2px}
   .mbtn.dis{filter:grayscale(.8);opacity:.45;pointer-events:none}
   /* ---- profile card (menu / map select / characters) ---- */
-  #profCard{position:fixed;left:6px;top:6px;z-index:12;display:none;align-items:center;gap:6px;padding:4px 9px 4px 4px;border-radius:12px;background:linear-gradient(180deg,rgba(40,26,80,.82),rgba(14,9,36,.9));border:1.5px solid rgba(139,122,192,.7);box-shadow:0 0 0 1px #0b0820,0 4px 14px rgba(0,0,0,.45);cursor:pointer;max-width:180px;font-size:9px;color:#e9d5ff;backdrop-filter:blur(4px)}
+  #profCard{position:fixed;left:6px;top:6px;z-index:12;display:none;align-items:center;gap:6px;padding:5px 11px 5px 5px;border-radius:13px;background:linear-gradient(180deg,rgba(40,26,80,.82),rgba(14,9,36,.9));border:1.5px solid rgba(139,122,192,.7);box-shadow:0 0 0 1px #0b0820,0 4px 14px rgba(0,0,0,.45);cursor:pointer;max-width:200px;font-size:10px;color:#e9d5ff;backdrop-filter:blur(4px)}
   #profCard.on{display:flex} #profCard:active{transform:translateY(2px)}
   #profCard.mini .pxp,#profCard.mini .pres{display:none} #profCard.mini{padding:3px 8px 3px 3px}
-  .pport{width:34px;height:34px;border-radius:50%;flex:none;overflow:hidden;background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.25),rgba(0,0,0,.4));border:2px solid var(--c,#a855f7);box-shadow:0 0 8px var(--c,#a855f7);display:flex;align-items:flex-end;justify-content:center} .pport canvas{width:34px;height:40px;margin-bottom:-5px;image-rendering:pixelated}
+  .pport{width:42px;height:42px;border-radius:50%;flex:none;overflow:hidden;background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.25),rgba(0,0,0,.4));border:2px solid var(--c,#a855f7);box-shadow:0 0 8px var(--c,#a855f7);display:flex;align-items:flex-end;justify-content:center} .pport canvas{width:42px;height:50px;margin-bottom:-6px;image-rendering:pixelated}
   .pport.big{width:72px;height:72px;border-width:3px} .pport.big canvas{width:72px;height:85px;margin-bottom:-8px}
   .pbody{display:flex;flex-direction:column;gap:1px;min-width:0}
-  .pname{font-weight:900;font-size:11px;color:#fff;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1} .pname.big{font-size:20px;letter-spacing:1px}
-  .plv{font-weight:800;font-size:8px;color:#c4b5fd;letter-spacing:.8px;line-height:1.1;white-space:nowrap} #ovProfile .plv{font-size:11px}
+  .pname{font-weight:900;font-size:13px;color:#fff;letter-spacing:.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.1} .pname.big{font-size:20px;letter-spacing:1px}
+  .plv{font-weight:800;font-size:9.5px;color:#c4b5fd;letter-spacing:.8px;line-height:1.1;white-space:nowrap} #ovProfile .plv{font-size:11px}
   .pxp{height:4px;margin:1px 0;border-radius:3px;background:#0b0820;border:1px solid #312e81;overflow:hidden} .pxp i{display:block;height:100%;background:linear-gradient(90deg,#a855f7,#c4b5fd)}
   .pxpt{display:none}
-  .pres{display:flex;gap:6px;font-weight:900;font-size:9px;color:#fde68a;align-items:center} .pres span{display:flex;align-items:center;gap:2px} #ovProfile .pres{font-size:12px;gap:10px}
-  .coinic{width:11px;height:11px;image-rendering:pixelated} .chiorb{display:inline-block;width:9px;height:9px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#7fd8f8 40%,#0ea5e9 75%);box-shadow:0 0 6px #38bdf8}
+  .pres{display:flex;gap:7px;font-weight:900;font-size:11px;color:#fde68a;align-items:center} .pres span{display:flex;align-items:center;gap:2px} #ovProfile .pres{font-size:12px;gap:10px}
+  .coinic{width:12px;height:12px;image-rendering:pixelated} .chiorb{display:inline-block;width:10px;height:10px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#7fd8f8 40%,#0ea5e9 75%);box-shadow:0 0 6px #38bdf8}
   .pstat{display:none}
   /* ---- full profile panel ---- */
   .phead{display:flex;align-items:center;gap:14px;padding:6px 0 8px;border-bottom:1px solid #312e81;margin-bottom:6px}
