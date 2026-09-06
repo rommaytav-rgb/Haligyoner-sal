@@ -1107,15 +1107,15 @@ const EN={
   priest:{hp:54, dmg:16,spd:197,r:13,range:44,atk:.8, coins:[6,8],gold:[30,44],xp:22,sprite:1,scale:1.5,biome:'swamp', name:'INSECT PRIEST'},
   pirate:{hp:127,dmg:15,spd:104,r:15,range:50,atk:1.3,coins:[6,8],gold:[20,30],xp:20,sprite:2,scale:1.5,biome:'beach', name:'PIRATE'},
   /* Frost & Ember regular enemies: the Magma Golem is built for a level-11 ninja, the Wolf Warrior for level 14; both stay inside their own half */
-  titan:{hp:18000,dmg:68,spd:82, r:46,range:112,coins:[50,50],gold:[900,900],boss:true,name:'MAGMA TITAN',rig:true,big:true,scale:1.4,adds:'golem',xpBoss:800,biome:'ember'},
-  yeti: {hp:29500,dmg:82,spd:104,r:46,range:118,coins:[60,60],gold:[1000,1000],boss:true,name:'THE YETI',rig:true,big:true,scale:1.45,adds:'wolf',xpBoss:900,biome:'frost'},
+  titan:{hp:18000,dmg:68,spd:82, r:46,range:112,coins:[50,50],gold:[1100,1100],boss:true,name:'MAGMA TITAN',rig:true,big:true,scale:1.4,adds:'golem',xpBoss:800,biome:'ember'},
+  yeti: {hp:29500,dmg:82,spd:104,r:46,range:118,coins:[60,60],gold:[1400,1400],boss:true,name:'THE YETI',rig:true,big:true,scale:1.45,adds:'wolf',xpBoss:900,biome:'frost'},
   golem:{hp:420,dmg:34,spd:92, r:15,range:50,atk:1.4,coins:[8,12],gold:[24,36],xp:26,rig:true,scale:1.5,biome:'ember',name:'MAGMA GOLEM'},
   wolf: {hp:520,dmg:44,spd:178,r:13,range:46,atk:1.0,coins:[9,13],gold:[40,56],xp:34,rig:true,scale:1.5,biome:'frost',name:'WOLF WARRIOR'},
   /* World 2 mobs (mobs2.js): the Lava Imp is born from lava bombs during eruptions (level 11); the Ice Fox lives in dens deep in the frost (level 15). Both too light to be staggered by normal hits */
   imp:  {hp:45, dmg:26,spd:235,r:12,range:34,atk:.9, coins:[6,9],gold:[30,45],xp:34,rig:true,scale:1.5,biome:'ember',name:'LAVA IMP',light:true},
   fox:  {hp:50, dmg:34,spd:235,r:12,range:38,atk:1.0,coins:[7,10],gold:[45,65],xp:55,rig:true,scale:1.3,biome:'frost',name:'ICE FOX',light:true},
   hippo:{hp:2750,dmg:52,spd:76, r:46,range:100,coins:[40,40],gold:[400,400],boss:true,name:'HIPPO',sprite:3,scale:3,adds:'mush'},
-  croc: {hp:3750,dmg:62,spd:125,r:46,range:110,coins:[40,40],gold:[500,500],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
+  croc: {hp:3750,dmg:62,spd:125,r:46,range:110,coins:[40,40],gold:[550,550],boss:true,name:'CROCODILE',sprite:4,scale:3,adds:'priest'},
   lord: {hp:5200,dmg:20,spd:116,r:40,range:96, coins:[40,40],gold:[800,800],boss:true,name:'PIRATE LORD',sprite:2,scale:2.8,adds:'pirate',xpBoss:700},   /* drawn by the LORD rig, not a sprite */
 };
 const STATUS={
@@ -1473,6 +1473,8 @@ const GEM_CAP=25;
 function gemTableCommon(tier){ const k=Math.pow(1.35,tier-1); const t={green:.8*k,orange:.15*k,purple:.05*k,red:tier>=3?.01*k:0,gold:tier>=5?.002*k:0}; for(const r in t) t[r]=Math.min(GEM_CAP,t[r]); const total=Math.min(100,3.5+.5*(tier-1)); let rest=total; for(const r in t) rest-=t[r]; t.grey=Math.max(0,Math.min(GEM_CAP,rest)); return t; }
 function gemTableBoss(tier){ const t={orange:12.95*Math.pow(1.25,tier-1),purple:3*Math.pow(1.4,tier-1),red:1*Math.pow(1.5,tier-1),gold:.05*Math.pow(1.6,tier-1)}; for(const r in t) t[r]=Math.min(GEM_CAP,t[r]); let rest=100; for(const r in t) rest-=t[r]; t.grey=rest*55/83; t.green=rest*28/83; return t; }
 function gemRoll(table){ const x=Math.random()*100; let acc=0; for(const r of ['gold','red','purple','orange','green','grey']){ acc+=table[r]||0; if(x<acc) return r; } return null; }
+const BOSS_RANK={hippo:1,croc:2,lord:3,titan:4,yeti:5};   /* the rarer the boss, the better its gem table (and its gold) */
+function bossGemTier(type){ return BOSS_RANK[type]||gemTier(); }
 function gemTier(){ if(WORLD.arena&&G.arena&&G.arena.stage) return (G.arena.stage.id==='titan'||G.arena.stage.id==='yeti')?2:1; const i=G.map?MAPS.findIndex(m=>m.id===G.map.id):0; return Math.max(1,i+1); }
 function gemTablesText(){ const out=[]; for(let t=1;t<=5;t++){ const c=gemTableCommon(t), b=gemTableBoss(t); const f=v=>(Math.round(v*1000)/1000)+'%'; out.push('tier '+t+' common: '+['grey','green','orange','purple','red','gold'].map(r=>r+' '+f(c[r])).join(' · ')); out.push('tier '+t+' boss:   '+['grey','green','orange','purple','red','gold'].map(r=>r+' '+f(b[r])).join(' · ')); } return out.join('\n'); }
 /* ---------- the drop moment ---------- */
@@ -1481,9 +1483,10 @@ function gemsUpdate(dt){ const p=G.player; if(!G.gems.length) return; for(let i=
     if(!g.landed){ g.x+=g.vx*dt; g.y+=g.vy*dt; g.h+=g.vh*dt; g.vh-=520*dt; if(g.h<=0){ g.h=0; g.landed=true; g.vx=g.vy=0; burst(g.x,g.y-4,[GEM_RAR[GEM_RI[g.rar]].pal.h,GEM_RAR[GEM_RI[g.rar]].pal.l],8,90,.5,2,-40,true); } continue; }
     if(!p||!p.alive) continue; const d=Math.hypot(p.x-g.x,p.y-8-g.y);
     if(g.drift>0||d<4*TS*PIX||WORLD.arena){ if(g.drift===0){ g.sx=g.x; g.sy=g.y; } g.drift=Math.min(1,g.drift+dt/1.2); const k=g.drift*g.drift*(3-2*g.drift); g.x=g.sx+(p.x-g.sx)*k; g.y=g.sy+(p.y-8-g.sy)*k; g.h=6+Math.sin(g.drift*Math.PI)*20; if(g.drift>=1||Math.hypot(p.x-g.x,p.y-8-g.y)<6){ G.gems.splice(i,1); gemCollect(g); } }
-    else if(Math.random()<.15){ const R=GEM_RAR[GEM_RI[g.rar]]; part(g.x+rnd(-6,6),g.y-rnd(4,40),rnd(-6,6),rnd(-40,-15),R.pal.h,.7,2,-20,true); } } }
-function drawGems(c){ if(!G.gems.length) return; const t=G.time; for(const g of G.gems){ const R=GEM_RAR[GEM_RI[g.rar]], sc=2.2, bob=g.landed?Math.sin(t*3+g.spin)*2:0; c.save();
-    if(g.landed&&g.drift===0){ for(let k=0;k<7;k++){ c.globalAlpha=.32*(1-k/7); c.fillStyle=R.pal.l; c.fillRect(g.x-2,g.y-30-k*18,4,18); c.globalAlpha=.16*(1-k/7); c.fillStyle=R.pal.h; c.fillRect(g.x-5,g.y-30-k*18,10,18); } c.globalAlpha=1; }   /* the beam: a column of its colour rising into the air */
+    else if(Math.random()<.4){ const R=GEM_RAR[GEM_RI[g.rar]]; part(g.x+rnd(-14,14),g.y-rnd(4,60),rnd(-8,8),rnd(-50,-15),Math.random()<.5?R.pal.h:R.pal.s,.8,2,-20,true); } } }
+function drawGems(c){ if(!G.gems.length) return; const t=G.time; for(const g of G.gems){ const R=GEM_RAR[GEM_RI[g.rar]], sc=2.6, bob=g.landed?Math.sin(t*3+g.spin)*2:0; c.save();
+    if(g.landed&&g.drift===0){ for(let k=0;k<8;k++){ c.globalAlpha=.5*(1-k/8); c.fillStyle=R.pal.l; c.fillRect(g.x-3,g.y-36-k*18,6,18); c.globalAlpha=.25*(1-k/8); c.fillStyle=R.pal.h; c.fillRect(g.x-8,g.y-36-k*18,16,18); } c.globalAlpha=1; }   /* the beam: a column of its colour rising into the air */
+    { const pulse=.5+.5*Math.sin(t*3+g.spin); for(let ring=0;ring<3;ring++){ const rr=30+ring*10+pulse*6, n=16+ring*6; c.fillStyle=ring?R.pal.l:R.pal.h; c.globalAlpha=(.6-ring*.15)*(.6+.4*pulse); for(let i=0;i<n;i++){ const a=i/n*TAU+t*(ring%2?.6:-.4); c.fillRect(g.x+Math.cos(a)*rr-3,g.y-g.h-bob-26+Math.sin(a)*rr*.75-3,6,6); } } c.globalAlpha=1; }   /* the glow: three pulsing pixel rings turning around the gem */
     c.fillStyle='rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(g.x,g.y+2,16,7,0,0,TAU); c.fill();
     c.translate(g.x-12*sc,g.y-g.h-bob-24*sc); drawGem(c,sc,R,t+g.spin,0,0,g.type,true); c.restore(); } }
 function gemCollect(g){ const R=GEM_RAR[GEM_RI[g.rar]], ri=GEM_RI[g.rar]; gemAdd(g.type,g.rar); const p=G.player;
@@ -2116,7 +2119,7 @@ function enemyDie(e){
   e.alive=false; G.kills++; let n=rndi(e.d.coins[0],e.d.coins[1]), gold=rndi(e.d.gold[0],e.d.gold[1]); if(e.summoned){ n=Math.ceil(n/2); gold=Math.ceil(gold/2); }   // boss adds drop half
   const per=Math.ceil(gold/n); for(let i=0;i<n;i++) G.coins.push({x:e.x,y:e.y,vx:rnd(-120,120),vy:rnd(-220,-80),v:per,t:0,fly:false,z:0});
   if(e.boss&&WORLD.arena){ if(G.boss===e) G.boss=null; arenaWin(e); return; }   // Boss Fight: separate rewards, nothing counts toward the open world
-  if(e.boss){ e.deadT=3.2; burst(e.x,e.y-10,['#c8a878','#8a6a4a','#fde047','#ffffff'],80,260,1.4,6,200,true); shake(16); vibrate(300); SFX.death(); const bxp=e.d.xpBoss||XP_BOSS; floatText(e.x,e.y-60,'BOSS DEFEATED  +'+bxp+' XP','#fde047',true,true); if(G.boss===e) G.boss=null; G.lastBossDeath=G.time; G.bossMark=null; SAVE.bosses[e.type]=(SAVE.bosses[e.type]||0)+1; dailyEvent('boss',e.type); gemDrop(e.x,e.y,gemRoll(gemTableBoss(gemTier()))); gainXP(bxp); dropChi(e.x,e.y,2); keyDrop(e.x,e.y); checkUnlocks(); checkLevelUp(); }
+  if(e.boss){ e.deadT=3.2; burst(e.x,e.y-10,['#c8a878','#8a6a4a','#fde047','#ffffff'],80,260,1.4,6,200,true); shake(16); vibrate(300); SFX.death(); const bxp=e.d.xpBoss||XP_BOSS; floatText(e.x,e.y-60,'BOSS DEFEATED  +'+bxp+' XP','#fde047',true,true); if(G.boss===e) G.boss=null; G.lastBossDeath=G.time; G.bossMark=null; SAVE.bosses[e.type]=(SAVE.bosses[e.type]||0)+1; dailyEvent('boss',e.type); gemDrop(e.x,e.y,gemRoll(gemTableBoss(bossGemTier(e.type)))); gainXP(bxp); dropChi(e.x,e.y,2); keyDrop(e.x,e.y); checkUnlocks(); checkLevelUp(); }
   else { deathFx(e); e.deadT=1.4; if(e.spawner) e.spawner.alive--; if(e.type==='imp'&&G.haz) G.haz.burns.push({x:e.x,y:e.y+4,r:24,t:2,tick:.5}); SAVE.kills++; SAVE.killsBy=SAVE.killsBy||{}; SAVE.killsBy[e.type]=(SAVE.killsBy[e.type]||0)+1; dailyEvent('kill',e.type); if(!e.summoned&&!WORLD.arena) gemDrop(e.x,e.y,gemRoll(gemTableCommon(gemTier()))); if(!e.summoned&&(Math.random()<.005||DEBUG.forceChi)) dropChi(e.x,e.y,1); { const p=G.player; if(p&&p.name==='SHADE'&&spinning(p)&&e.spinHitT===G.time&&Math.random()<.25) G.coins.push({x:e.x,y:e.y,vx:rnd(-80,80),vy:-120,v:5,t:0,fly:false,z:0}); } gainXP(e.d.xp||XP_KILL,e.x,e.y-44); if(!e.summoned){ SAVE.pity=(SAVE.pity||0)+1; if(Math.random()<.02||SAVE.pity>=80) keyDrop(e.x,e.y); } checkUnlocks(); checkLevelUp(); if(!SAVE.hints.kill){ SAVE.hints.kill=true; G.arrowTarget=null; showHint('Try your ability ✦'); } }
   save();
 }
@@ -2957,11 +2960,11 @@ function drawCoatWorn(c,ch,anim,at,face,s,x,y,t,bliz){ const C=ISC; const img=sp
    ===================================================================== */
 const SPIN_CD=25;   /* seconds between Spinjitzus */
 const SPIN={
- CLAY:  {ring:['#e0b96a','#c89a4e','#8a6a34'], core:'#fff0c0', suit:'#5b3a1c', head:'#f1c39c', eye:'#ffcc33', extra:'rocks',  dur:9.0, rad:1.9, pct:22, tick:4, spd:20, dr:75, regen:2.5},
- BECK:  {ring:['#4fd0ff','#1f9a8a','#bffaff'], core:'#ffffff', suit:'#1c3f7a', head:'#9fc8e8', eye:'#33e0ff', extra:'drops',  dur:5.0, rad:1.1, pct:30, tick:7, spd:80, dr:50, regen:1.5},
- BOREAS:{ring:['#9ff0ff','#7fd4ff','#ffffff'], core:'#eaffff', suit:'#c9d3dd', head:'#c8dcec', eye:'#66e0ff', extra:'shards', dur:8.0, rad:1.7, pct:24, tick:5, spd:30, dr:60, regen:2},
- APOLLO:{ring:['#ff7a1a','#ffd23f','#e03a10'], core:'#fff0a0', suit:'#a8101c', head:'#f1c39c', eye:'#ff2020', extra:'sparks', dur:4.5, rad:1.2, pct:55, tick:5, spd:40, dr:35, regen:1},
- SHADE: {ring:['#a040ff','#6a2fbf','#e0b0ff'], core:'#f0d0ff', suit:'#2a1a3a', head:'#2a1a3a', eye:'#c060ff', extra:'wisps',  dur:7.0, rad:1.4, pct:35, tick:5, spd:45, dr:60, regen:2},
+ CLAY:  {ring:['#e0b96a','#c89a4e','#8a6a34'], core:'#fff0c0', suit:'#5b3a1c', head:'#f1c39c', eye:'#ffcc33', extra:'rocks',  dur:9.0, rad:1.9, pct:110, tick:4, spd:20, dr:75, regen:2.5},
+ BECK:  {ring:['#4fd0ff','#1f9a8a','#bffaff'], core:'#ffffff', suit:'#1c3f7a', head:'#9fc8e8', eye:'#33e0ff', extra:'drops',  dur:5.0, rad:1.1, pct:100, tick:7, spd:80, dr:50, regen:1.5},
+ BOREAS:{ring:['#9ff0ff','#7fd4ff','#ffffff'], core:'#eaffff', suit:'#c9d3dd', head:'#c8dcec', eye:'#66e0ff', extra:'shards', dur:8.0, rad:1.7, pct:120, tick:5, spd:30, dr:60, regen:2},
+ APOLLO:{ring:['#ff7a1a','#ffd23f','#e03a10'], core:'#fff0a0', suit:'#a8101c', head:'#f1c39c', eye:'#ff2020', extra:'sparks', dur:4.5, rad:1.2, pct:130, tick:5, spd:40, dr:35, regen:1},
+ SHADE: {ring:['#a040ff','#6a2fbf','#e0b0ff'], core:'#f0d0ff', suit:'#2a1a3a', head:'#2a1a3a', eye:'#c060ff', extra:'wisps',  dur:7.0, rad:1.4, pct:140, tick:5, spd:45, dr:60, regen:2},
 };
 const TILE_PX=32;   // one "tile" in world units
 const SPIN_VIS_RS=1.2/1.4;   // fixed tornado size for all ninjas
@@ -3120,7 +3123,7 @@ function spinUpdate(p,dt){
 function spinTick(p,C,n){
   const R=C.rad*TILE_PX; let base=p.dmg*C.pct/100;
   for(const e of liveEnemies()){ if(!inCircle(e,p.x,p.y,R)) continue; let dmg=base, o={noKb:true,kb:0,noHitstop:true,noBlock:true,spin:true,color:C.ring[2]};   // Spinjitzu never pushes enemies: they stay in place
-    if(e.boss) dmg*=.5;
+    if(e.boss) dmg*=.7;   /* bosses take 70% of the spin (it used to be half): about twice the basic attack's damage per second, plus the invulnerability */
     if(p.name==='SHADE'&&n%5===0){ dmg*=2; o.crit=true; }
     if(p.name==='BECK'&&Math.random()<.2){ damage(e,dmg,p,o); }
     if(p.name==='BOREAS'){ addStatus(e,'freeze',.7); addStatus(e,'slow',2); }
@@ -3471,11 +3474,11 @@ function drawFullMap(c,p){
    ===================================================================== */
 const AT=32;   // arena tile = one world tile
 const BF_STAGES=[
-  {id:'hippo',n:1,name:'THE RIVER PIT',boss:'hippo',lvl:5,coins:150,xp:350,stars:[31,40,52,68]},
-  {id:'croc', n:2,name:'THE SWAMP HEART',boss:'croc',lvl:7,coins:200,xp:350,stars:[38,49,64,83]},
-  {id:'lord', n:3,name:'THE BROKEN PIER',boss:'lord',lvl:9,coins:250,xp:350,stars:[37,48,62,81]},
-  {id:'titan',n:4,name:'THE CALDERA',boss:'titan',lvl:15,coins:300,xp:350,stars:[58,74,96,125]},
-  {id:'yeti', n:5,name:'THE FROZEN HOLLOW',boss:'yeti',lvl:19,coins:350,xp:350,stars:[66,84,110,143]}];
+  {id:'hippo',n:1,name:'THE RIVER PIT',boss:'hippo',lvl:5,coins:200,xp:350,stars:[31,40,52,68]},
+  {id:'croc', n:2,name:'THE SWAMP HEART',boss:'croc',lvl:7,coins:350,xp:350,stars:[38,49,64,83]},
+  {id:'lord', n:3,name:'THE BROKEN PIER',boss:'lord',lvl:9,coins:550,xp:350,stars:[37,48,62,81]},
+  {id:'titan',n:4,name:'THE CALDERA',boss:'titan',lvl:15,coins:800,xp:350,stars:[58,74,96,125]},
+  {id:'yeti', n:5,name:'THE FROZEN HOLLOW',boss:'yeti',lvl:19,coins:1100,xp:350,stars:[66,84,110,143]}];
 /* stars by clear time. Model: median of the five ninjas at the boss's level, 70% attack uptime, boss HP / DPS = T.
    5 stars = 0.78 T (out of reach at the recommended level even with perfect play, reachable two levels higher), 4 = T, 3 = 1.3 T, 2 = 1.7 T, 1 = any clear. */
 function bfStars(st,t){ const s=st.stars; return t<=s[0]?5:t<=s[1]?4:t<=s[2]?3:t<=s[3]?2:1; }
@@ -3605,7 +3608,7 @@ function arenaTick(raw){ const F=G.arena; if(!F||!F.over) return; F.overT+=raw;
   if(F.over==='fail'&&F.overT>3){ const id=F.stage.id; leaveArena(); setState('BOSSLIST'); }
   if(F.over==='win'&&F.overT>3.2&&!F.claimed){ F.claimed=true; bfGrantRewards(F); showBossWin(F); } }
 function arenaFail(quiet){ const F=G.arena; if(!F||F.over) return; F.over='fail'; F.overT=0; F.bossLeft=G.boss&&G.boss.alive?Math.round(G.boss.hp/G.boss.maxHp*100):0; F.chiSpent=F.startChi-(SAVE.chi||0); save(); if(quiet){ leaveArena(); setState('BOSSLIST'); } }
-function arenaWin(e){ const F=G.arena; if(!F||F.over) return; F.over='win'; F.overT=0; G.slowmo=1.1; e.deadT=3; gemDrop(e.x,e.y,gemRoll(gemTableBoss(gemTier()))); for(const o of G.enemies) if(o!==e&&o.alive){ o.alive=false; o.deadT=1; deathFx(o); } for(const q of G.projs) if(q.alive&&q.owner&&q.owner.kind!=='player') q.alive=false; G.groundFx=G.groundFx.filter(f=>!(f.kind==='shell'||f.kind==='strip'||f.kind==='aimshell'||f.kind==='venom')); const p=G.player; if(p){ p.drag=null; p.status={}; }   /* the moment the boss dies the fight is won: adds, shots and shells vanish */ shake(14); vibrate(300); SFX.death(); burst(e.x,e.y-20,['#fde047','#ffffff','#c8a878'],90,300,1.6,6,150,true); }
+function arenaWin(e){ const F=G.arena; if(!F||F.over) return; F.over='win'; F.overT=0; G.slowmo=1.1; e.deadT=3; gemDrop(e.x,e.y,gemRoll(gemTableBoss(F.stage.n))); for(const o of G.enemies) if(o!==e&&o.alive){ o.alive=false; o.deadT=1; deathFx(o); } for(const q of G.projs) if(q.alive&&q.owner&&q.owner.kind!=='player') q.alive=false; G.groundFx=G.groundFx.filter(f=>!(f.kind==='shell'||f.kind==='strip'||f.kind==='aimshell'||f.kind==='venom')); const p=G.player; if(p){ p.drag=null; p.status={}; }   /* the moment the boss dies the fight is won: adds, shots and shells vanish */ shake(14); vibrate(300); SFX.death(); burst(e.x,e.y-20,['#fde047','#ffffff','#c8a878'],90,300,1.6,6,150,true); }
 function bfGrantRewards(F){ const st=F.stage, id=st.id, first=!SAVE.bossFightFirstClearClaimed[id]; const r={chi:1,coins:st.coins,xp:st.xp,first};
   SAVE.chi=(SAVE.chi||0)+1; SAVE.gold+=st.coins; gainXP(st.xp); dailyEvent('bf',st.id);
   if(first){ SAVE.bossFightFirstClearClaimed[id]=true; SAVE.chi+=2; SAVE.keys=Math.min(3,(SAVE.keys||0)+1); r.bonusChi=2; r.bonusKey=(SAVE.keys<=3); }
