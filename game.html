@@ -2286,9 +2286,8 @@ function damage(e,amt,src,o){
   if(e.kind==='enemy'&&e.hidden) return 0;   // a submerged boss cannot be hit
   if(e.kind==='player'){ if(G.arena&&G.arena.over) return 0; if((e.inv>0&&!o.sure)||e.hidden||DEBUG.god||inSafeZone(e.x,e.y)) return 0; if(spinBusy(e)||e.spinGrace>0||e.abGrace>0) return 0; if(e.status.shield&&!o.flat) amt*=.7; }   /* during Spinjitzu (flash + spin) the ninja cannot lose HP */
   else if(e.status.freeze) amt*=2;   /* frozen enemies take double damage (Frost Nova) */
-  if(e.kind==='enemy'&&e.vulnT>0) amt*=1.4;   /* the Ice Fox just landed its pounce: +40% damage for 0.8 s */
   if(e.kind==='enemy'&&src&&!o.noBlock){
-    if(((e.d.base||e.type)==='priest'||(e.type==='fox'&&!(e.vulnT>0)&&e.ai.state!=='crouch'&&e.ai.state!=='pounce'))&&o.basic&&e.dodgeCd<=0&&Math.random()<.3){ e.dodgeCd=e.type==='fox'?.5:.4; const a=Math.atan2(src.y-e.y,src.x-e.x)+(Math.random()<.5?1:-1)*Math.PI/2; e.kvx+=Math.cos(a)*460; e.kvy+=Math.sin(a)*460; floatText(e.x,e.y-34,'DODGE','#a3e635'); SFX.dodge(); burst(e.x,e.y+6,['#8ab08a'],4,60,.3,3); return 0; }   // Insect Priest sidesteps a basic attack (short hop, 0.4 s cooldown)
+    if(((e.d.base||e.type)==='priest'||(e.type==='fox'&&e.ai.state!=='crouch'&&e.ai.state!=='pounce'))&&o.basic&&e.dodgeCd<=0&&Math.random()<.3){ e.dodgeCd=e.type==='fox'?.5:.4; const a=Math.atan2(src.y-e.y,src.x-e.x)+(Math.random()<.5?1:-1)*Math.PI/2; e.kvx+=Math.cos(a)*460; e.kvy+=Math.sin(a)*460; floatText(e.x,e.y-34,'DODGE','#a3e635'); SFX.dodge(); burst(e.x,e.y+6,['#8ab08a'],4,60,.3,3); return 0; }   // Insect Priest sidesteps a basic attack (short hop, 0.4 s cooldown)
     if((e.d.base||e.type)==='mush'&&fromFront(e,src)&&Math.random()<.25){ G.groundFx.push({kind:'spore',x:e.x,y:e.y+4,r:44,t:1}); burst(e.x,e.y-6,['#7a4aaa','#b78cf0'],10,70,.6,4,-20,true); SFX.spore(); }   // spore puff: a purple cloud that slows the player 20%
   }
   if(e.boss&&e.crashT>0) amt*=1.3;   // crashed into a boulder: takes extra damage while stunned
@@ -3019,7 +3018,7 @@ function drawMob2(c,e,t){ const face=Math.cos(e.face)>=0?1:-1, a=e.ai, s=e.d.sca
   if(e.type==='imp'&&e.spawnT>0){ rigBlit(c,80,64,()=>rigImpBirth(clamp(1-e.spawnT/.6,0,1),tt),null,e.x,e.y+e.r*.9,s*face,s,-40,-44); }
   else rigBlit(c,80,64,()=>{ if(e.type==='imp') rigImp(anim,tt,k); else rigFox(anim,tt,k); },tintFor(e),e.x+fl,e.y+e.r*.9+sink,s*face,s,-40,-44);
   IMP_EMIT=null; c.restore();
-  if(e.type==='fox'&&e.vulnT>0&&e.alive){ c.save(); c.font='900 9px Arial'; c.textAlign='center'; c.fillStyle='#fde047'; c.fillText('VULNERABLE',e.x,e.y-e.r*2.2-6); c.restore(); } }
+  }
 function drawMob2Dead(c,e){ const k=clamp(1-e.deadT/1.4,0,1), face=Math.cos(e.face)>=0?1:-1, s=e.d.scale; c.save(); c.translate(e.x,e.y+e.r*.9); c.scale(s*face,s); c.translate(-40,-44); g=c; if(e.type==='imp') rigImpDeath(k); else rigFoxDeath(k); c.restore(); }
 function mob2Portrait(type,size){ const cv2=document.createElement('canvas'); cv2.width=size; cv2.height=size; const c=cv2.getContext('2d'); c.imageSmoothingEnabled=false; const s=size/64; c.save(); c.translate(size/2,size*.92); c.scale(s,s); c.translate(-40,-46); g=c; if(type==='imp') rigImp('idle',.4,0); else rigFox('idle',.4,0); c.restore(); return cv2; }
 /* ---------- Lava Imp: birth, charge, burn, despawn ---------- */
@@ -3040,7 +3039,7 @@ function foxAlert(e,depth){ const a=e.ai; if(a.state!=='idle') return; a.state='
   if((depth||0)<1) for(const o of G.enemies) if(o!==e&&o.alive&&o.type==='fox'&&o.ai.state==='idle'&&dist(o,e)<8*TS*PIX) foxAlert(o,1); }   /* the pair: a fox within 8 tiles joins at once */
 const FOX_EDGE_X=760;   /* the Ice Fox lives only at the far edge of the frost side: past this line it turns back to its den */
 function foxOut(x,y){ return x>FOX_EDGE_X||m2Biome(x,y)!=='ice'; }
-AI.fox=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.abCd-=dt; e.dodgeCd-=dt; if(e.vulnT>0) e.vulnT-=dt; const sees=commonSees(e,p);
+AI.fox=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.abCd-=dt; e.dodgeCd-=dt; const sees=commonSees(e,p);
   if(a.state==='idle'){ wander(e,dt,110,.5); if(foxOut(e.x,e.y)&&!a.moving){ a.moving=true; a.tx=a.home.x; a.ty=a.home.y; a.t=3; } if(d<340&&sees&&!foxOut(p.x,p.y)&&(G.chasers<8||e.summoned)) foxAlert(e); return; }
   if(a.state==='circle'){ if(!e.summoned&&(d>660||!sees||dist(e,a.home)>820||foxOut(e.x,e.y)||foxOut(p.x,p.y))){ goHome(e); return; }
     a.angle=Math.atan2(e.y-p.y,e.x-p.x)+a.dir*dt*1.6; const ring=120, tx=p.x+Math.cos(a.angle)*ring, ty=p.y+Math.sin(a.angle)*ring; moveToward(e,tx,ty,dt,d>ring+160?1.1:.85); faceTo(e,p);
@@ -3053,7 +3052,7 @@ AI.fox=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.abCd-
   else if(a.state==='crouch'){ e.vx=e.vy=0; if(Math.random()<.3) part(e.x+rnd(-8,8),e.y+8,rnd(-10,10),rnd(-30,-10),FXP.glow,.4,2,-10,true); if(a.t<=0){ a.state='pounce'; a.t=.34; a.dist=0; a.hitDone=false; a.tele=null; SFX.swoosh&&SFX.swoosh(); } }
   else if(a.state==='pounce'){ const sp=760; e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; e.face=a.aim; a.dist+=sp*dt; if(Math.random()<.8) part(e.x-Math.cos(a.aim)*10+rnd(-6,6),e.y+rnd(-4,8),rnd(-20,20),rnd(-30,0),Math.random()<.5?FXP.glow:FXP.eyeW,.5,2,-10,true);
     if(!a.hitDone&&inCircle(p,e.x,e.y,e.r+p.r+8)&&p.jumpT<=0){ a.hitDone=true; damage(p,tierDmg(e,'heavy'),e,{kb:300}); shake(4); }
-    if(a.t<=0||a.dist>=6*TS*PIX||wallAhead(e,a.aim)||foxOut(e.x,e.y)){ a.state='land'; a.t=.8; e.vulnT=.8; e.vx=e.vy=0; e.abCd=5; a.atkT=.5; burst(e.x,e.y+6,[FXP.eyeW,FXP.glow],8,90,.4,2,0,true); } }
+    if(a.t<=0||a.dist>=6*TS*PIX||wallAhead(e,a.aim)||foxOut(e.x,e.y)){ a.state='land'; a.t=.8; e.vx=e.vy=0; e.abCd=5; a.atkT=.5; burst(e.x,e.y+6,[FXP.eyeW,FXP.glow],8,90,.4,2,0,true); } }
   else if(a.state==='land'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='circle'; a.dir=Math.random()<.5?1:-1; } } };
 /* ---------- the deep-frost dens and the Ice Shop (map 2 props) ---------- */
 function m2FoxDen(x,y){ m2CaveMouth(x,y-1,18,11); for(let i=0;i<5;i++) rect(x-9+i*4,y-13,2,3+((i*7)%4),IP.ice); rect(x-11,y-12,22,2,IP.snowS); for(let i=0;i<3;i++){ px(x-6+i*5,y+5,'#c8dceb'); px(x-5+i*5,y+7,'#c8dceb'); } }
