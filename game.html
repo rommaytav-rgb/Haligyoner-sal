@@ -2465,9 +2465,12 @@ function keepOutOfSafe(o,pad){ const v=WORLD.village, dx=o.x-v.x, dy=o.y-v.y, dd
 function telegraph(e,shape,dur){ e.ai.tele=Object.assign({t:0,dur},shape); }
 function faceTo(e,p){ e.face=Math.atan2(p.y-e.y,p.x-e.x); }
 /* a common enemy only hunts a player who is alive, visible, outside the village circle and inside its own biome (summoned adds ignore the biome) */
-function commonSees(e,p){ return p.alive&&!p.hidden&&!inSafeZone(p.x,p.y)&&(!e.biome||biomeOf(p.x,p.y)===e.biome); }
-function outOfBiome(e){ return !!e.biome&&biomeOf(e.x,e.y)!==e.biome; }
-function goHome(e){ const a=e.ai; a.state='idle'; a.t=3; a.moving=true; a.tx=a.home.x; a.ty=a.home.y; a.tele=null; e.holdAnim=false; }
+/* is (x,y) in biome b, or within m px of it? (so a fight on a biome border does not flicker) */
+function biomeNear(x,y,b,m){ if(biomeOf(x,y)===b) return true; if(!m) return false; for(const [dx,dy] of [[m,0],[-m,0],[0,m],[0,-m],[m*.7,m*.7],[-m*.7,m*.7],[m*.7,-m*.7],[-m*.7,-m*.7]]) if(biomeOf(x+dx,y+dy)===b) return true; return false; }
+/* while chasing, the ninja may stand up to 110 px outside the enemy's biome; a fresh chase needs the ninja inside it. After walking home an enemy stays calm for 1.5 s */
+function commonSees(e,p){ const a=e.ai; if(a.calm>0){ a.calm-=1/60; return false; } return p.alive&&!p.hidden&&!inSafeZone(p.x,p.y)&&(!e.biome||biomeNear(p.x,p.y,e.biome,a.state==='chase'?110:40)); }
+function outOfBiome(e){ return !!e.biome&&!biomeNear(e.x,e.y,e.biome,e.ai.state==='chase'?90:0); }
+function goHome(e){ const a=e.ai; a.state='idle'; a.t=3; a.calm=1.5; a.moving=true; a.tx=a.home.x; a.ty=a.home.y; a.tele=null; e.holdAnim=false; }
 function wander(e,dt,radius,mul){ const a=e.ai; if(a.t<=0){ a.t=rnd(1,3); const r=rnd(0,radius), an=rnd(0,TAU); const tg=keepOutOfSafe({x:a.home.x+Math.cos(an)*r,y:a.home.y+Math.sin(an)*r},e.r+20); a.tx=tg.x; a.ty=tg.y; a.moving=Math.random()<.6; }
   if(a.moving){ moveToward(e,a.tx,a.ty,dt,mul||.4); if(Math.hypot(e.vx,e.vy)>5) e.face=Math.atan2(e.vy,e.vx); } else { e.vx*=.85; e.vy*=.85; } }
 /* pick a free angle around the player so a pack surrounds instead of stacking */
@@ -2565,7 +2568,9 @@ function bossUnstick(e,dt,p){ const a=e.ai; if(a){ if(a.state!==e._st){ e._st=a.
   for(let R=48;R<=320&&!done;R+=48) for(let k=0;k<12&&!done;k++){ const ang=base+(k%2?1:-1)*Math.ceil(k/2)*(Math.PI/6), tx=ox+Math.cos(ang)*R, ty=oy+Math.sin(ang)*R; e.x=tx; e.y=ty; collide(e); if(Math.abs(e.x-tx)<.5&&Math.abs(e.y-ty)<.5&&!wallAhead(e,base)) done=true; }
   if(!done){ const L=e.lair||e.ai.home; if(L){ e.x=L.x; e.y=L.y; done=true; } else { e.x=ox; e.y=oy; } }
   if(done){ burst(ox,oy+10,['#9ca3af','#6b7280','#d6d3d1'],14,160,.5,5,0,false); burst(e.x,e.y+10,['#9ca3af','#6b7280','#d6d3d1'],14,160,.5,5,0,false); e.vx=e.vy=0; e._ux=e.x; e._uy=e.y; if(e.ai){ e.ai.tele=null; if(e.ai.state!=='chase'){ e.ai.state='chase'; e.holdAnim=false; } } } }
-function bossLeash(e,p,dt){ const a=e.ai; if(a.recover>0){ a.recover-=dt; e.vx*=.8; e.vy*=.8; faceTo(e,p); return true; } const L=e.lair||a.home; e.homeTo=null; if(dist(e,L)>(e.leash||650)){ e.homeTo=L; moveToward(e,L.x,L.y,dt,.9); e.face=Math.atan2(e.vy,e.vx); e.abCd=Math.max(e.abCd,.6); return true; } return false; }
+function bossLeash(e,p,dt){ const a=e.ai; if(a.recover>0){ a.recover-=dt; e.vx*=.8; e.vy*=.8; faceTo(e,p); return true; } const L=e.lair||a.home, R=e.leash||650, dl=dist(e,L); e.homeTo=null;
+  if(a.leashing){ if(dl<R*.55) a.leashing=false; } else if(dl>R) a.leashing=true;   /* hysteresis: once it turns home it walks well inside before fighting again, instead of swaying on the leash line */
+  if(a.leashing){ e.homeTo=L; moveToward(e,L.x,L.y,dt,.9); e.face=Math.atan2(e.vy,e.vx); e.abCd=Math.max(e.abCd,.6); return true; } return false; }
 /* second phase at 50% HP: faster, one attack gains a hit, summons adds (they respawn once, 20 s later) */
 /* CROCODILE — built from the level-7 ninjas (x1.48 of base): HP  SHADE 207 · BECK 185 · BOREAS 170 · APOLLO 163 · CLAY 266;  hit  SHADE 22 · BECK 19 · BOREAS 24 · APOLLO 30 · CLAY 22
    Croc HP 2600 = about 120 level-7 SHADE hits (~70 s of fighting with dodging).  Each croc hit below is a fixed number, the same at every level:
