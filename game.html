@@ -1100,11 +1100,11 @@ const COIN_URI='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEgAAABICAYAAABV7b
    ===================================================================== */
 const TAU=Math.PI*2;
 const CH={
-  SHADE: {color:'#a855f7',glow:'#e9d5ff',dark:'#5b21b6',role:'Balanced',    hp:140,dmg:15,spd:190,rate:2.8,range:300,kind:'proj',aim:.18,weapon:'shuriken',basic:'Shadow Bolt – piercing purple bolt, medium range', skill:{name:'Shadow Step',cd:8,desc:'Vanish for 1.5s, reappear behind the nearest enemy and land a ×3 critical strike'}},
-  BOREAS:{color:'#7dd3fc',glow:'#f0f9ff',dark:'#0369a1',role:'Control',     hp:125,dmg:16,spd:170,rate:2.4,range:420,kind:'proj',aim:.18,weapon:'staff',   basic:'Ice Ball – long range, slows the target 40% for 2s', skill:{name:'Frost Nova',cd:9,desc:'Freeze every enemy in a radius for 2.5s. Frozen enemies take double damage'}},
-  APOLLO:{color:'#fb923c',glow:'#fff7ed',dark:'#9a3412',role:'Glass Cannon',hp:110,dmg:20,spd:180,rate:2.2,range:200,kind:'cone',aim:.2,weapon:'torch',   basic:'Flame Cone – close-range burst, more damage up close, burns', skill:{name:'Fireball',cd:8,desc:'Hurl one huge fireball: 260% damage in a blast, and everything it touches burns for 3 s'}},
-  BECK:  {color:'#22d3ee',glow:'#ecfeff',dark:'#155e75',role:'Fast Striker',hp:125,dmg:13,spd:235,rate:2.8,range:160,kind:'wide',aim:.27,weapon:'trident', basic:'Water Strike – a fast surge of water that hits everything in front', skill:{name:'Waves',cd:9,desc:'Slam the ground: three rings of water burst outward to 6 tiles. Each ring hits everything it passes for 110% damage and soaks it (25% slower for 1.5s)'}},
-  CLAY:  {color:'#d9a34a',glow:'#fef3c7',dark:'#78350f',role:'Tank',        hp:180,dmg:16,spd:165,rate:2.0,range:100,kind:'quake',aim:0,weapon:'dagger',  basic:'Earthquake – slams the ground and hits everything around him, every hit knocks back', skill:{name:'Stone Wall',cd:11,desc:'Ground slam: knockback and 1s stun around you, and a stone shield for 4s that cuts every hit you take by 30%'}},
+  SHADE: {color:'#a855f7',glow:'#e9d5ff',dark:'#5b21b6',role:'Balanced',    hp:1400,dmg:150,spd:190,rate:2.8,range:300,kind:'proj',aim:.18,weapon:'shuriken',basic:'Shadow Bolt – piercing purple bolt, medium range', skill:{name:'Shadow Step',cd:8,desc:'Vanish for 1.5s, reappear behind the nearest enemy and land a ×3 critical strike'}},
+  BOREAS:{color:'#7dd3fc',glow:'#f0f9ff',dark:'#0369a1',role:'Control',     hp:1250,dmg:160,spd:170,rate:2.4,range:420,kind:'proj',aim:.18,weapon:'staff',   basic:'Ice Ball – long range, slows the target 40% for 2s', skill:{name:'Frost Nova',cd:9,desc:'Freeze every enemy in a radius for 2.5s. Frozen enemies take double damage'}},
+  APOLLO:{color:'#fb923c',glow:'#fff7ed',dark:'#9a3412',role:'Glass Cannon',hp:1100,dmg:200,spd:180,rate:2.2,range:200,kind:'cone',aim:.2,weapon:'torch',   basic:'Flame Cone – close-range burst, more damage up close, burns', skill:{name:'Fireball',cd:8,desc:'Hurl one huge fireball: 260% damage in a blast, and everything it touches burns for 3 s'}},
+  BECK:  {color:'#22d3ee',glow:'#ecfeff',dark:'#155e75',role:'Fast Striker',hp:1250,dmg:130,spd:235,rate:2.8,range:160,kind:'wide',aim:.27,weapon:'trident', basic:'Water Strike – a fast surge of water that hits everything in front', skill:{name:'Waves',cd:9,desc:'Slam the ground: three rings of water burst outward to 6 tiles. Each ring hits everything it passes for 110% damage and soaks it (25% slower for 1.5s)'}},
+  CLAY:  {color:'#d9a34a',glow:'#fef3c7',dark:'#78350f',role:'Tank',        hp:1800,dmg:160,spd:165,rate:2.0,range:100,kind:'quake',aim:0,weapon:'dagger',  basic:'Earthquake – slams the ground and hits everything around him, every hit knocks back', skill:{name:'Stone Wall',cd:11,desc:'Ground slam: knockback and 1s stun around you, and a stone shield for 4s that cuts every hit you take by 30%'}},
 };
 for(const k in CH){ CH[k].name=k; CH[k].sprite=CHARS.findIndex(m=>m.name===k); }
 const ORDER=['SHADE','BOREAS','APOLLO','BECK','CLAY'];
@@ -1158,7 +1158,7 @@ const STATUS={
   stun:  {tint:'#fde047',mult:{spd:0,rate:0}},
   shield:{tint:'#fcd34d'},
   haste: {tint:'#67e8f9',mult:{spd:1.3}},
-  poison:{tint:'#4ade80',tick:1,dps:3},   // Insect Priest: 3/s for 3 s, refreshed (not stacked) by new hits
+  poison:{tint:'#4ade80',tick:1,dps:30},   // Insect Priest: 3/s for 3 s, refreshed (not stacked) by new hits
   spore: {tint:null,mult:{spd:.8}},        // standing in a Mushroom's spore cloud
 };
 
@@ -1335,7 +1335,7 @@ function statsFor(id){ const d=EN[id]; if(!d) return null; let hp=d.hp||0, dmg=d
   return {hp,dmg,speedMult,atk:tier=>Math.round(dmg*ATTACK_TIERS[tier])}; }
 const tierDmg=(e,tier)=>Math.round(e.dmg*ATTACK_TIERS[tier]);   /* a live creature's attack of a tier; phase multipliers are applied by the caller on top */
 /* hazards: not creatures, so plain numbers, once. APOLLO takes half from lava. */
-const HAZARD={lavaPool:{dmg:10,apollo:5,tick:.5},lavaBomb:{player:60,apollo:30,enemy:120,boss:60},arenaDunk:15};
+const HAZARD={lavaPool:{dmg:100,apollo:50,enemy:100,tick:.5},lavaBomb:{player:600,apollo:300,enemy:1200,boss:600},arenaDunk:150};   /* all numbers are on the ×10 scale of the ninja stats (a level-1 ninja has 1,100–1,800 HP) */
 const hazardDmg=(name,p)=>{ const h=HAZARD[name]; return typeof h==='number'?h:(p&&p.name==='APOLLO'&&h.apollo!==undefined?h.apollo:(h.player!==undefined?h.player:h.dmg)); };
 /* --- debug: the whole creature balance (console.table + text) --- */
 function statTable(){ const out=[];
@@ -2218,7 +2218,7 @@ function m2HazUpdate(dt){ const H=G.haz, p=G.player; if(!H||!p) return; const E=
   if(H.erupt.active>0){ if(Math.random()<.3) shake(1.5); H.bombT-=dt; if(H.bombT<=0){ H.bombT=1.2; for(let tries=0;tries<12;tries++){ const x=CAM.x+rnd(-SW/ZOOM*.6,SW/ZOOM*.6), y=CAM.y+rnd(-SH/ZOOM*.6,SH/ZOOM*.6); if(m2Biome(x,y)!=='lava'||!inLand(x,y)||Math.hypot(x-p.x,y-p.y)<70||inSecretCave(x,y)) continue; H.bombs.push({x,y,t:0}); break; } } }
   for(let i=H.bombs.length-1;i>=0;i--){ const b=H.bombs[i]; b.t+=dt; if(b.t>=.8&&!b.hit){ b.hit=true; m2BombImpact(b); } if(b.t>1.1) H.bombs.splice(i,1); }
   if(H.erupt.active<=0&&H.eruptEnd!==undefined&&G.time-H.eruptEnd>30) impSinkAll();   /* 30 s after the eruption the imps sink back into the ground */
-  for(let i=H.burns.length-1;i>=0;i--){ const b=H.burns[i]; b.t-=dt; b.tick-=dt; if(b.tick<=0){ b.tick=.5; if(p.alive&&Math.hypot(p.x-b.x,p.y-b.y)<b.r+p.r*.5&&p.jumpT<=0) damage(p,hazardDmg('lavaPool',p)*HAZARD.lavaPool.tick,{kind:'hazard',x:b.x,y:b.y},{sure:true,ranged:true}); for(const e of G.enemies) if(e.alive&&!e.boss&&Math.hypot(e.x-b.x,e.y-b.y)<b.r+e.r*.5) damage(e,10,null,{silent:true,color:'#fb923c',noKb:true}); } if(b.t<=0) H.burns.splice(i,1); }
+  for(let i=H.burns.length-1;i>=0;i--){ const b=H.burns[i]; b.t-=dt; b.tick-=dt; if(b.tick<=0){ b.tick=.5; if(p.alive&&Math.hypot(p.x-b.x,p.y-b.y)<b.r+p.r*.5&&p.jumpT<=0) damage(p,hazardDmg('lavaPool',p)*HAZARD.lavaPool.tick,{kind:'hazard',x:b.x,y:b.y},{sure:true,ranged:true}); for(const e of G.enemies) if(e.alive&&!e.boss&&Math.hypot(e.x-b.x,e.y-b.y)<b.r+e.r*.5) damage(e,HAZARD.lavaPool.enemy*HAZARD.lavaPool.tick,null,{silent:true,color:'#fb923c',noKb:true}); } if(b.t<=0) H.burns.splice(i,1); }
   if(H.erupt.active>0&&m2Biome(p.x,p.y)==='lava'&&Math.random()<.15) part(CAM.x+rnd(-400,400),CAM.y+250,rnd(-20,20),rnd(-120,-60),LP.ember,1.2,2,-30,true);
   // secrets: discovery
   for(const s of M2.secrets){ const key=M2.id+'_'+s.n; if(!SAVE.secrets[key]&&Math.hypot(p.x-s.x,p.y-s.y)<s.r*.7){ SAVE.secrets[key]=true; gainXP(150,p.x,p.y-70,'  HIDDEN AREA'); save(); G.banner={text:'HIDDEN AREA',sub:s.name+' · '+m2SecretsFound()+' / 7  ·  +150 XP',t:2.8}; SFX.key(); explore(s.x,s.y); burst(p.x,p.y-10,['#ffffff','#fde047','#7fd4ff'],20,160,.9,3,-40,true); if(m2SecretsFound()>=7&&!SAVE.secretsBonus[M2.id]){ SAVE.secretsBonus[M2.id]=true; SAVE.chi=(SAVE.chi||0)+2; SAVE.keys=(SAVE.keys||0)+1; floatText(p.x,p.y-60,'ALL SECRETS FOUND  +2 CHI  +1 KEY','#fde047',true,true); save(); } } }
@@ -2280,7 +2280,7 @@ function inArc(e,x,y,ang,range,half){ const d=Math.hypot(e.x-x,e.y-y); if(d>rang
 function inLine(e,x,y,ang,len,wid){ const dx=e.x-x,dy=e.y-y,cx=Math.cos(ang),cy=Math.sin(ang),al=dx*cx+dy*cy,ac=Math.abs(-dx*cy+dy*cx); return al>-e.r&&al<len+e.r&&ac<wid+e.r; }
 function inCircle(e,x,y,r){ return Math.hypot(e.x-x,e.y-y)<=r+e.r; }
 
-const WAVE_DMG=30;   /* fallback for a ring wave that carries no damage of its own (boss waves set theirs from a tier) */
+const WAVE_DMG=300;   /* fallback for a ring wave that carries no damage of its own (boss waves set theirs from a tier) */
 function damage(e,amt,src,o){
   o=o||{}; if(!e.alive||e.spawnT>0) return 0;
   if(e.kind==='enemy'&&e.hidden) return 0;   // a submerged boss cannot be hit
@@ -2385,7 +2385,7 @@ function fireAttack(p,ang){
   p.lunge=ch.kind==='quake'?0:third?170:90; p.lungeA=ang; if(third) shake(2); const X=p.x+Math.cos(ang)*8, Y=p.y-4+Math.sin(ang)*8;
   if(p.name==='CLAY'){ const R=ch.range*(third?1.25:1); for(const e of liveEnemies()) if(inCircle(e,p.x,p.y,R)) damage(e,dmg,p,{kb:third?380:260,big:third,basic:true}); fx2Quake(p.x,p.y,R,third); shake(third?6:3); vibrate(20); SFX.hit(); noise(.12,.15); }
   else if(p.name==='BECK'){ for(const e of liveEnemies()) if(inArc(e,p.x,p.y,ang,ch.range,ch.aim)) damage(e,dmg,p,{kb:third?240:100,big:third,basic:true}); waveFx(p.x,p.y,ang,1.05,ch.range*.85+(third?24:0),third?.34:.28);   /* a narrow, quick surge */ for(let i=0;i<10;i++){ const a=ang+rnd(-ch.aim,ch.aim), v=rnd(120,300); part(X,Y,Math.cos(a)*v,Math.sin(a)*v,i%3?'#7dd3fc':'#ffffff',rnd(.3,.5),4,160,true); } SFX.shoot(); }   /* Water Strike: a surge of water with crests and foam */
-  else if(p.name==='APOLLO'){ for(const e of liveEnemies()) if(inArc(e,p.x,p.y,ang,ch.range,.5)){ const d=Math.hypot(e.x-p.x,e.y-p.y), f=lerp(1,.55,clamp(d/ch.range,0,1)); damage(e,dmg*f,p,{kb:80,big:third,basic:true}); addStatus(e,'burn',2,{dps:3}); } fx2Cone(X,Y,ang,ch.range); for(let i=0;i<5;i++){ const a=ang+rnd(-.4,.4), v=rnd(250,480); part(X,Y,Math.cos(a)*v,Math.sin(a)*v,['#fb923c','#fde047','#ffffff'][i%3],rnd(.25,.4),rnd(2,4),-80,true); } noise(.08,.12); }
+  else if(p.name==='APOLLO'){ for(const e of liveEnemies()) if(inArc(e,p.x,p.y,ang,ch.range,.5)){ const d=Math.hypot(e.x-p.x,e.y-p.y), f=lerp(1,.55,clamp(d/ch.range,0,1)); damage(e,dmg*f,p,{kb:80,big:third,basic:true}); addStatus(e,'burn',2,{dps:Math.round(p.dmg*.2)}); } fx2Cone(X,Y,ang,ch.range); for(let i=0;i<5;i++){ const a=ang+rnd(-.4,.4), v=rnd(250,480); part(X,Y,Math.cos(a)*v,Math.sin(a)*v,['#fb923c','#fde047','#ffffff'][i%3],rnd(.25,.4),rnd(2,4),-80,true); } noise(.08,.12); }
   else if(p.name==='BOREAS'){ SFX.shoot(); proj({x:X,y:Y,vx:Math.cos(ang)*460,vy:Math.sin(ang)*460,life:ch.range/460,r:16,vr:9,ice:true,col:'#7dd3fc',glow:'#e0f2fe',owner:p,dmg,big:third,basic:true,onHit:e=>{ addStatus(e,'slow',2); delete p.status.burn; fx2Frost(e.x,e.y+e.r*.8); burst(e.x,e.y-8,['#bae6fd','#ffffff'],5,120,.5,3,0,true); }}); }
   else if(p.name==='SHADE'){ SFX.shoot(); proj({x:X,y:Y,vx:Math.cos(ang)*560,vy:Math.sin(ang)*560,life:ch.range/560,r:15,vr:8,pierce:1,dark:true,col:'#a855f7',glow:'#e9d5ff',owner:p,dmg,big:third,basic:true}); }
 }
@@ -2521,7 +2521,7 @@ const AI={
         burst(ix,iy,['#9ca3af','#4b5563','#d9a34a','#c9a86a'],44,320,.7,6,0,true); for(let i=0;i<14;i++) part(ix+rnd(-40,40),iy+rnd(-20,20),rnd(-90,90),rnd(-260,-120),i%2?'#8a6a4a':'#5a3a20',rnd(.5,.9),rnd(4,7),600); G.ring={x:ix,y:iy,r:0,max:170,t:0,col:'#d9a34a',earth:true}; noise(.25,.35); tone(60,.3,'sine',.4,-30); proj({type:'ring',mud:true,x:ix,y:iy,r:30,life:9,spd:230,max:640,delay:.1,owner:e,dmg:Math.round(tierDmg(e,'heavy')*P2),hit:[]}); floatText(ix,iy-30,'MUD WAVE','#c9a86a');
         if(a.phase2) proj({type:'ring',x:ix,y:iy,r:20,life:9,spd:240,max:220,delay:.4,owner:e,dmg:Math.round(tierDmg(e,'heavy')*P2),hit:[]}); } }   // phase 2: the slam gains a second shockwave
     else if(a.state==='charge'){ if(a.t<=0){ a.state='charging'; a.t=.9; a.tele=null; a.hit=[]; SFX.roar(); } }
-    else if(a.state==='charging'){ const sp=e.spd*5; e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; if(!a.hit.includes(p)&&inCircle(p,e.x,e.y,e.r+6)){ a.hit.push(p); damage(p,Math.round(tierDmg(e,'basic')*P2),e,{kb:520}); } for(const o of G.enemies) if(o!==e&&o.alive&&!a.hit.includes(o)&&inCircle(o,e.x,e.y,e.r+6)){ a.hit.push(o); damage(o,20,e,{kb:400,noBlock:true}); } part(e.x+rnd(-24,24),e.y+22,rnd(-40,40),-60,'#c9a86a',.5,6); if(a.t<=0||wallAhead(e,a.aim)){ a.state='chase'; e.abCd=2.7; a.recover=.65; e.vx=e.vy=0; shake(6); crashBoulder(e); } }
+    else if(a.state==='charging'){ const sp=e.spd*5; e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; if(!a.hit.includes(p)&&inCircle(p,e.x,e.y,e.r+6)){ a.hit.push(p); damage(p,Math.round(tierDmg(e,'basic')*P2),e,{kb:520}); } for(const o of G.enemies) if(o!==e&&o.alive&&!a.hit.includes(o)&&inCircle(o,e.x,e.y,e.r+6)){ a.hit.push(o); damage(o,tierDmg(e,'light'),e,{kb:400,noBlock:true}); } part(e.x+rnd(-24,24),e.y+22,rnd(-40,40),-60,'#c9a86a',.5,6); if(a.t<=0||wallAhead(e,a.aim)){ a.state='chase'; e.abCd=2.7; a.recover=.65; e.vx=e.vy=0; shake(6); crashBoulder(e); } }
     else if(a.state==='stomp'){ if(a.t<=0){ a.state='chase'; e.abCd=2.7; a.recover=.65; a.tele=null; shake(12); vibrate(120); for(let i=0;i<2;i++) proj({type:'ring',x:e.x,y:e.y+10,r:20,life:9,spd:200,max:300,delay:i*.9,owner:e,dmg:Math.round(tierDmg(e,'heavy')*P2),hit:[]}); burst(e.x,e.y+10,['#8a6a4a','#d9a34a'],30,220,.6,6,300); } }
   },
   /* ---- CROCODILE boss: cleaver, tail spin, lunge + bite combo; phase 2 at 50% ---- */
@@ -2769,9 +2769,9 @@ function lavaWave(e,dmg,gapA){ const gaps=[gapA+1.35,gapA-2.2]; proj({type:'ring
 function iceRing(e,dmg){ proj({type:'ring',icy:true,x:e.x,y:e.y+10,r:36,life:9,spd:270,max:400,delay:.1,owner:e,dmg,hit:[],flat:true}); }
 function meteorAt(x,y,dmg){ B2.meteors.push({x,y,t:0,dmg}); }
 function b2Update(dt){ const p=G.player; if(!p) return;
-  for(let i=B2.meteors.length-1;i>=0;i--){ const m=B2.meteors[i]; m.t+=dt; if(m.t>=.85&&!m.hit){ m.hit=true; shake(6); noise(.18,.25); tone(70,.3,'sine',.3,-40); burst(m.x,m.y-6,[TP.lavaW,TP.lava,TP.flame1],22,260,.6,4,-100,true); if(Math.hypot(p.x-m.x,p.y-m.y)<46+p.r*.5) hazHit(p,m.dmg,m.x,m.y,220); for(const e of G.enemies) if(e.alive&&!e.boss&&Math.hypot(e.x-m.x,e.y-m.y)<50) damage(e,80,null,{color:'#fb923c'}); } if(m.t>1.15) B2.meteors.splice(i,1); }
+  for(let i=B2.meteors.length-1;i>=0;i--){ const m=B2.meteors[i]; m.t+=dt; if(m.t>=.85&&!m.hit){ m.hit=true; shake(6); noise(.18,.25); tone(70,.3,'sine',.3,-40); burst(m.x,m.y-6,[TP.lavaW,TP.lava,TP.flame1],22,260,.6,4,-100,true); if(Math.hypot(p.x-m.x,p.y-m.y)<46+p.r*.5) hazHit(p,m.dmg,m.x,m.y,220); for(const e of G.enemies) if(e.alive&&!e.boss&&Math.hypot(e.x-m.x,e.y-m.y)<50) damage(e,m.dmg,null,{color:'#fb923c'}); } if(m.t>1.15) B2.meteors.splice(i,1); }
   const bm=B2.beam; if(bm){ bm.t+=dt; const e=bm.e; if(!e.alive||e.ai.state!=='beam'){ B2.beam=null; } else { bm.ang=bm.a0+bm.t/bm.dur*TAU*bm.dir; bm.reh-=dt; const d=Math.hypot(p.x-e.x,(p.y-e.y)/.72), pa=Math.atan2((p.y-e.y)/.72,p.x-e.x); if(bm.reh<=0&&d>30&&d<bm.len&&Math.abs(angDiff(pa,bm.ang))<.13&&hazHit(p,bm.dmg,e.x,e.y,260)) bm.reh=.5; if(Math.random()<.5) part(e.x+Math.cos(bm.ang)*rnd(40,bm.len),e.y+Math.sin(bm.ang)*rnd(40,bm.len)*.72,rnd(-20,20),rnd(-60,-20),TP.lavaL,.5,3,-40,true); } }
-  for(let i=B2.walls.length-1;i>=0;i--){ const w=B2.walls[i]; w.y+=w.spd*dt; if(!w.hitDone&&Math.abs(p.y-w.y)<18){ w.hitDone=true; if(Math.abs(p.x-w.gapX)>w.gapW/2&&Math.abs(p.x-w.x)<w.w/2&&p.alive){ damage(p,w.dmg,{kind:'hazard',x:p.x,y:w.y-30},{sure:true,ranged:true,haz:true,kb:260}); burst(p.x,p.y-10,[YP.eyeW,YP.iceB],14,160,.5,3,200,true); } else if(p.alive){ floatText(p.x,p.y-40,'THROUGH!','#86efac'); } } for(const e of G.enemies) if(e.alive&&!e.boss&&!(w.hitE||(w.hitE=new Set())).has(e)&&Math.abs(e.y-w.y)<18&&Math.abs(e.x-w.gapX)>w.gapW/2){ w.hitE.add(e); damage(e,60,null,{color:'#bae6fd'}); } if(w.y>w.y1) B2.walls.splice(i,1); }
+  for(let i=B2.walls.length-1;i>=0;i--){ const w=B2.walls[i]; w.y+=w.spd*dt; if(!w.hitDone&&Math.abs(p.y-w.y)<18){ w.hitDone=true; if(Math.abs(p.x-w.gapX)>w.gapW/2&&Math.abs(p.x-w.x)<w.w/2&&p.alive){ damage(p,w.dmg,{kind:'hazard',x:p.x,y:w.y-30},{sure:true,ranged:true,haz:true,kb:260}); burst(p.x,p.y-10,[YP.eyeW,YP.iceB],14,160,.5,3,200,true); } else if(p.alive){ floatText(p.x,p.y-40,'THROUGH!','#86efac'); } } for(const e of G.enemies) if(e.alive&&!e.boss&&!(w.hitE||(w.hitE=new Set())).has(e)&&Math.abs(e.y-w.y)<18&&Math.abs(e.x-w.gapX)>w.gapW/2){ w.hitE.add(e); damage(e,w.dmg,null,{color:'#bae6fd'}); } if(w.y>w.y1) B2.walls.splice(i,1); }
   for(let i=B2.leaps.length-1;i>=0;i--){ const l=B2.leaps[i]; l.t+=dt; if(l.t>l.dur) B2.leaps.splice(i,1); }
   if(B2.roar){ B2.roar.t+=dt; if(B2.roar.t>1) B2.roar=null; }
   if(p.iced){ p.icedT-=dt; if(p.icedT<=0) icedFree(p); } }
@@ -3301,7 +3301,7 @@ function spinUpdate(p,dt){
     s.loopT-=dt; if(s.loopT<=0){ s.loopT=.14; SFX.spinLoop(p.name,G.time*(6+C.tick*1.5)); }
     s.tickT-=dt; if(s.tickT<=0){ s.tickT=1/C.tick; s.ticks++; spinTick(p,C,s.ticks); }
     if(p.name==='BOREAS'){ const f=G.groundFx.find(f=>f.kind==='frost'&&Math.hypot(f.x-p.x,f.y-p.y)<20); if(!f) G.groundFx.push({kind:'frost',x:p.x,y:p.y,r:C.rad*TILE_PX,t:3}); }
-    if(p.name==='APOLLO'&&Math.random()<dt*3) G.groundFx.push({kind:'scorch',x:p.x+rnd(-10,10),y:p.y+rnd(-6,6),r:C.rad*TILE_PX*.8,t:2});
+    if(p.name==='APOLLO'&&Math.random()<dt*3) G.groundFx.push({kind:'scorch',x:p.x+rnd(-10,10),y:p.y+rnd(-6,6),r:C.rad*TILE_PX*.8,t:2,dps:Math.round(p.dmg*.25)});
     if(s.t<=0){ s.state='FADE'; s.t=.8; s.tot=.8; p.spinGrace=1.5; SFX.spinFade(); }
     return;
   }
@@ -3315,7 +3315,7 @@ function spinTick(p,C,n){
     if(p.name==='SHADE'&&n%5===0){ dmg*=2; o.crit=true; }
     if(p.name==='BECK'&&Math.random()<.2){ damage(e,dmg,p,o); }
     if(p.name==='BOREAS'){ addStatus(e,'freeze',.7); addStatus(e,'slow',2); }
-    if(p.name==='APOLLO'){ const st=e.status.burn; const stacks=Math.min(3,(st?st.stacks||1:0)+1); addStatus(e,'burn',3,{dps:4*stacks,stacks}); }
+    if(p.name==='APOLLO'){ const st=e.status.burn; const stacks=Math.min(3,(st?st.stacks||1:0)+1); addStatus(e,'burn',3,{dps:Math.round(p.dmg*.25)*stacks,stacks}); }
     damage(e,dmg,p,o); if(!e.boss) e.stagger=Math.max(e.stagger,C.extra==='rocks'?1:.35); e.spinHitT=G.time;   // bosses never stagger
     if(!e.boss&&e.ai.state==='tele'){ e.ai.state='chase'; e.ai.atkT=1; }
   }
@@ -3355,7 +3355,7 @@ function drawGroundFx(c){ if(!G.groundFx.length&&!G.waves&&!G.rings&&!G.waveCast
   c.save(); c.scale(PIX,PIX); g=c; drawWaterPx(); drawGemTrail(); drawFx2Ground(); for(const f of G.groundFx){ if(f.kind==='summon'||f.vec) continue; const x=f.x/PIX|0, y=f.y/PIX|0, r=f.r/PIX|0, a=f.t/(f.kind==='frost'?3:f.kind==='spore'?1:f.kind==='venom'?(f.t0||(f.big?5:4)):2); for(let yy=-r*.6|0;yy<=r*.6;yy+=1) for(let xx=-r;xx<=r;xx+=1){ if((xx*xx)/(r*r)+(yy*yy)/(r*r*.36)>1) continue; if(((xx+yy)&1)!==0) continue; if(Math.random()>Math.min(1,a*1.4)) continue; px(x+xx,y+yy-(f.kind==='spore'?((xx*7+yy*3)&3):0),f.kind==='frost'?(((xx*3+yy)&3)?'#bfe8ff':'#ffffff'):f.kind==='spore'?(((xx*3+yy)&3)?'#7a4aaa':'#c9a0f0'):f.kind==='venom'?(((xx*3+yy+((G.time*6)|0))&5)?'#16a34a':'#bbf7d0'):(((xx*3+yy)&3)?'#3a2a1a':'#e03a10')); } } c.restore(); }
 function groundFxUpdate(dt){ for(let i=G.groundFx.length-1;i>=0;i--){ const f=G.groundFx[i]; f.t-=dt; if(f.t<=0){ G.groundFx.splice(i,1); if(f.onEnd) f.onEnd(f); continue; } if(f.kind==='strip'||f.kind==='shell'||f.kind==='aimshell') continue; if(f.kind==='summon'){ if(Math.random()<.3) part(f.x+rnd(-20,20),f.y+rnd(-8,8),0,-40,f.col,.5,3,0,true); continue; } if(f.kind==='frost') for(const e of liveEnemies()) if(inCircle(e,f.x,f.y,f.r)) addStatus(e,'slow',.4); if(f.kind==='spore'){ const p=G.player; if(p&&p.alive&&inCircle(p,f.x,f.y,f.r)) addStatus(p,'spore',.25); }
   if(f.kind==='venom'){ const p=G.player; if(p&&p.alive&&inCircle(p,f.x,f.y,f.r)){ addStatus(p,'poison',3); addStatus(p,'spore',.25); } if(G.state==='PLAYING'&&Math.random()<.15) part(f.x+rnd(-f.r,f.r)*.8,f.y+rnd(-f.r,f.r)*.4,0,-20,Math.random()<.5?'#4ade80':'#bbf7d0',.6,2.5,-10,true); }   // poison puddle: poison + slow, bubbling   // slows the player 20% while standing in it
-  if(f.kind==='scorch') for(const e of liveEnemies()) if(inCircle(e,f.x,f.y,f.r)&&!e.status.burn) addStatus(e,'burn',2,{dps:4,stacks:1}); } }
+  if(f.kind==='scorch') for(const e of liveEnemies()) if(inCircle(e,f.x,f.y,f.r)&&!e.status.burn) addStatus(e,'burn',2,{dps:f.dps||0,stacks:1}); } }
 function drawChiSlot(c,b,p){
   const used=!!(WORLD.arena&&G.arena&&G.arena.spinUsed), cd=used?0:(p.spinCd||0), has=(SAVE.chi||0)>0&&cd<=0&&!used, busy=spinBusy(p)||(p.spin&&p.spin.state); const sh=G.chiShake>0?Math.sin(G.time*60)*3:0; if(G.chiShake>0) G.chiShake-=1/60;
   c.save(); c.translate(b.x+sh,b.y); c.scale(2,2); g=c;
