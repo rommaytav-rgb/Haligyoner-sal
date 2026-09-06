@@ -369,6 +369,17 @@
   .gembtns{display:flex;flex-direction:column;gap:5px;align-items:stretch} .btn.sm.sell{padding:4px 8px;font-size:10px;background:linear-gradient(180deg,#f59e0b,#b45309);border-color:#fde68a;display:flex;align-items:center;justify-content:center;gap:3px}
   .sellask{font-size:11px;font-weight:800;color:#fde68a;max-width:170px;text-align:right;line-height:1.3} .gembtns{align-items:flex-end}
   .gemitem.dim{opacity:.55} .gemitem{border-color:var(--g)} .gemic{border-color:var(--g)} .gemcol{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:12px}
+  /* ---- result screens + co-op ---- */
+  .rtitle{font-weight:900;font-size:clamp(34px,9vh,64px);letter-spacing:6px;text-shadow:0 4px 0 #000,0 0 30px currentColor;margin-top:-4px} .rtitle.win{color:#fde047} .rtitle.lose{color:#f87171}
+  .rsub{font-weight:800;font-size:clamp(12px,2.6vh,16px);color:#e9d5ff;letter-spacing:1px;margin:2px 0 6px;text-align:center}
+  .rbox{width:min(92vw,420px);background:rgba(10,8,28,.8);border:2px solid #5b4a8a;border-radius:12px;padding:6px 12px 8px;box-shadow:0 0 0 2px #0b0820,0 8px 24px rgba(0,0,0,.5);margin-bottom:8px}
+  .rhead{font-family:Georgia,serif;font-weight:700;letter-spacing:3px;font-size:11px;color:#c4b5fd;text-align:center;margin-bottom:4px}
+  .rgrid{display:flex;flex-direction:column;gap:3px} .rs{display:flex;justify-content:space-between;font-size:clamp(12px,2.5vh,15px);font-weight:800;color:#e5e7eb;border-bottom:1px solid rgba(255,255,255,.07);padding:2px 0} .rs b{color:#fde68a} .rs span{display:flex;align-items:center;gap:5px} .rs .chiorb{width:12px;height:12px} .rs .coinic{width:14px;height:14px} .rs.good b{color:#4ade80}
+  .ov.gmenu.fail{background:radial-gradient(ellipse at 50% 60%,#3a1020 0%,#150818 55%,#050510 100%)}
+  .mbtn.coop{background:linear-gradient(180deg,#06b6d4,#0e7490 55%,#0c2a3a);border-color:#a5f3fc;box-shadow:0 0 18px rgba(34,211,238,.45),0 10px 20px rgba(0,0,0,.5)}
+  .roomcode{font-family:monospace;font-weight:900;font-size:clamp(30px,8vh,48px);letter-spacing:10px;color:#fde047;text-shadow:0 3px 0 #000,0 0 18px rgba(253,224,71,.5);margin:2px 0}
+  #coopMaps .btn{margin:2px 0}
+  #toast{position:fixed;left:50%;bottom:clamp(8px,2.5vh,18px);transform:translate(-50%,40px);z-index:21;display:none;padding:8px 16px;border-radius:12px;background:rgba(10,8,28,.92);border:2px solid #a5f3fc;color:#fff;font-weight:900;font-size:13px;letter-spacing:.5px;box-shadow:0 0 14px rgba(165,243,252,.5);pointer-events:none;opacity:0;transition:transform .25s,opacity .2s} #toast.on{display:block;transform:translate(-50%,0);opacity:1}
 </style>
 </head>
 <body>
@@ -397,9 +408,15 @@
 <div id="ovDaily" class="ov"><div class="panel" style="max-width:640px"><div class="topline" style="margin:0"><div class="ptitle" style="color:#fde68a">DAILY MISSIONS</div><div class="ptitle" style="font-size:14px;color:#c4b5fd" id="dailyDone"></div><div class="xbtn" id="bDailyBack">✕</div></div><div class="dnote" id="dailyNote"></div><div class="dlist" id="dailyList"></div></div></div>
 <div id="ovShop" class="ov"><div class="panel" style="max-width:640px"><div class="topline" style="margin:0"><div class="ptitle" style="color:#bae6fd">❄ ICE SHOP</div><div class="ptitle" style="font-size:14px;color:#fde68a" id="shopGold"></div><div class="xbtn" id="bShopBack">✕</div></div><div class="shopkeep">"Cold out there, ninja. Warm coats, fair prices. Every coat fits one ninja."</div><div class="eqlist" id="shopList"></div><div class="dnote" id="shopMsg"></div></div></div>
 <div id="ovEquip" class="ov"><div class="panel" style="max-width:640px"><div class="topline" style="margin:0"><div class="ptitle" style="color:#bae6fd" id="equipTitle">EQUIPMENT</div><div class="xbtn" id="bEquipBack">✕</div></div><div class="dnote">One slot per ninja. Once worn, an item is locked on that ninja until a different item replaces it. Each ninja needs its own copy.</div><div class="eqlist" id="equipList"></div></div></div>
-<div id="gemFlash"></div>
+<div id="gemFlash"></div><div id="toast"></div>
 <div id="gemPanel"><canvas id="gemPanelCv" width="120" height="120"></canvas><div id="gemPanelRar"></div><div id="gemPanelTxt"></div><div id="gemPanelSub"></div></div>
 <div id="ovGems" class="ov"><div class="panel" style="max-width:640px"><div class="topline" style="margin:0"><div class="ptitle" style="color:#e9d5ff" id="gemTitle">GEMS</div><div class="xbtn" id="bGemsBack">✕</div></div><div class="dnote" id="gemNote"></div><div class="eqlist" id="gemList"></div></div></div>
+<div id="ovCoop" class="ov"><div class="panel" style="max-width:640px"><div class="topline" style="margin:0"><div class="ptitle" style="color:#a5f3fc">👥 CO-OP</div><div class="xbtn" id="bCoopBack">✕</div></div>
+  <div class="dnote" id="coopStatus"></div>
+  <div class="row" id="coopPick" style="margin-top:6px"><div class="mbtn play sm" id="bCoopCreate">CREATE ROOM</div><div class="mbtn ice sm" id="bCoopJoinOpen">JOIN ROOM</div></div>
+  <div id="coopCodeBox" style="display:none;text-align:center"><div class="rhead">ROOM CODE</div><div class="roomcode" id="coopCode"></div><div class="dnote">Tell your friend this code. Both phones need internet.</div></div>
+  <div id="coopJoinBox" style="display:none;text-align:center"><input class="nin" id="coopCodeIn" maxlength="5" autocomplete="off" spellcheck="false" placeholder="ROOM CODE" style="max-width:260px;text-transform:uppercase"><div class="row" style="margin-top:8px"><div class="mbtn play sm" id="bCoopJoin">JOIN</div></div></div>
+  <div class="row" id="coopMaps" style="margin-top:8px;flex-direction:column;align-items:stretch"></div></div></div>
 <div id="ovMenu" class="ov menu">
   <div class="stars"></div><div class="neb n1"></div><div class="neb n1b"></div><div class="neb n2"></div><div class="neb n2b"></div><div class="neb n3"></div><div class="neb n4"></div>
   <div class="frame"></div>
@@ -411,7 +428,7 @@
   <div class="sub" style="margin:2px 0 8px">OPEN-WORLD PIXEL ACTION</div>
   <div class="mbtns">
     <div class="mbtn play" id="bPlay">PLAY</div>
-    <div class="mbtn boss" id="bBoss">☠ BOSS FIGHT</div>
+    <div class="mrow"><div class="mbtn boss" id="bBoss">☠ BOSS FIGHT</div><div class="mbtn coop" id="bCoop">👥 CO-OP</div></div>
     <div class="mrow"><div class="mbtn earth" id="bChars">CHARACTERS &amp; SHOP</div><div class="mbtn daily" id="bDaily">DAILY MISSIONS</div></div>
     <div class="mrow"><div class="mbtn ice" id="bSettings">SETTINGS</div><div class="mbtn fire" id="bAbout">ABOUT &amp; CREDITS</div></div>
   </div>
@@ -422,7 +439,14 @@
 <div id="ovBossPre" class="ov"><div class="panel" style="max-width:640px"><div class="topline" style="margin:0"><div class="ptitle" style="color:#fecaca" id="bfPreTitle">STAGE</div><div class="xbtn" id="bBossPreBack">✕</div></div>
   <div class="bfpre"><div id="bfPrePortrait"></div><div style="flex:1;min-width:240px"><div class="bfnote" id="bfPreSub"></div><div class="bfwarn">ONE ATTEMPT ONLY. DEATH = START OVER.</div><div class="bfwarn" style="background:#1f1030;border-color:#a855f7;color:#e9d5ff">Kills here do not count toward the character quests.</div><div class="bfnote" id="bfPreChi"></div></div></div>
   <div class="row" style="margin-top:8px"><div class="btn primary" id="bBossFight" style="background:linear-gradient(180deg,#ef4444,#7f1d1d);border-color:#fca5a5;box-shadow:0 0 28px rgba(239,68,68,.55)">FIGHT</div></div></div></div>
-<div id="ovBossWin" class="ov"><p class="big" style="color:#fde047">VICTORY</p><div class="stat" id="bfWinTime"></div><div class="stat" id="bfWinRewards" style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center"></div><div class="row" style="margin-top:12px"><div class="btn primary" id="bfAgain">AGAIN</div><div class="btn" id="bfMenu">BACK TO MENU</div></div></div>
+<div id="ovBossWin" class="ov gmenu"><div class="stars"></div><div class="frame"></div>
+  <div class="rtitle win">VICTORY</div><div class="rsub" id="bfWinTime"></div>
+  <div class="rbox"><div class="rhead">REWARDS</div><div class="rgrid" id="bfWinRewards"></div></div>
+  <div class="mbtns"><div class="mbtn play sm" id="bfAgain">FIGHT AGAIN</div><div class="mbtn ice sm" id="bfMenu">BACK TO MENU</div></div></div>
+<div id="ovBossFail" class="ov gmenu fail"><div class="stars"></div><div class="frame"></div>
+  <div class="rtitle lose">DEFEATED</div><div class="rsub" id="bfFailBoss"></div>
+  <div class="rbox"><div class="rhead">THE FIGHT</div><div class="rgrid" id="bfFailStats"></div></div>
+  <div class="mbtns"><div class="mbtn play sm" id="bfFailRetry">TRY AGAIN</div><div class="mrow"><div class="mbtn ice sm" id="bfFailList">BOSS LIST</div><div class="mbtn fire sm" id="bfFailMenu">MENU</div></div></div></div></div>
 <div id="ovMaps" class="ov"><div class="panel" style="max-width:820px"><div class="topline" style="margin:0"><div class="ptitle">MAP SELECTION</div><div class="xbtn" id="bMapBack">✕</div></div><div class="maplist" id="mapList"></div><div class="msg" id="mapMsg"></div></div></div>
 
 <div id="ovChars" class="ov">
@@ -1197,7 +1221,7 @@ const UI={ stickR:52, mini(){ const mw=Math.min(120,Math.round(SW*.15)), mh=Math
 const IN={mx:0,my:0,aim:false,ax:1,ay:0,fire:null,ability:false,jump:false,dash:false,keys:{},mouse:{x:0,y:0,down:false,aiming:false}};
 const sticks={L:null,R:null}; const touchMap=new Map();
 const KEYMAP={KeyW:'u',ArrowUp:'u',KeyS:'d',ArrowDown:'d',KeyA:'l',ArrowLeft:'l',KeyD:'r',ArrowRight:'r',KeyE:'ability',Space:'jump',ShiftLeft:'jump',KeyQ:'chi',Escape:'pause',KeyM:'map'};
-addEventListener('keydown',e=>{ const k=KEYMAP[e.code]; if(!k) return; e.preventDefault(); audioInit(); if(!IN.keys[k]){ if(k==='pause') togglePause(); if(k==='map') toggleFullMap(); if(k==='ability') IN.ability=true; if(k==='jump') IN.jump=true; if(k==='chi') startSpinjitzu(G.player); } IN.keys[k]=true; });
+addEventListener('keydown',e=>{ const k=KEYMAP[e.code]; if(!k) return; e.preventDefault(); audioInit(); if(!IN.keys[k]){ if(k==='pause') togglePause(); if(k==='map') toggleFullMap(); if(k==='ability') IN.ability=true; if(k==='jump') IN.jump=true; if(k==='chi') { if(!netGuestSpin()) startSpinjitzu(G.player); }; } IN.keys[k]=true; });
 addEventListener('keyup',e=>{ const k=KEYMAP[e.code]; if(k) IN.keys[k]=false; });
 function hitBtn(x,y){ const b=UI.btn(); for(const k in b) if(Math.hypot(x-b[k].x,y-b[k].y)<=b[k].r+10) return k; return null; }
 function pDown(id,x,y){
@@ -1205,7 +1229,7 @@ function pDown(id,x,y){
   if(G.fullMap){ G.fullMap=false; return; }
   const mm=UI.mini(); if(!WORLD.arena&&x>=mm.x-6&&x<=mm.x+mm.w+6&&y>=mm.y-6&&y<=mm.y+mm.h+6){ toggleFullMap(); return; }
   if(Math.abs(x-UI.pause().x)<28&&y<44){ togglePause(); return; }
-  const bk=hitBtn(x,y); if(bk==='chars'){ openCharsFromGame(); return; } if(bk==='chi'){ startSpinjitzu(G.player); return; } if(bk){ touchMap.set(id,{type:'btn',k:bk}); IN[bk]=true; return; }
+  const bk=hitBtn(x,y); if(bk==='chars'){ openCharsFromGame(); return; } if(bk==='chi'){ { if(!netGuestSpin()) startSpinjitzu(G.player); }; return; } if(bk){ touchMap.set(id,{type:'btn',k:bk}); IN[bk]=true; return; }
   const side=x<SW/2?'L':'R'; if(sticks[side]) return;
   sticks[side]={id,cx:x,cy:y,dx:0,dy:0,t0:performance.now(),moved:false}; touchMap.set(id,{type:'stick',side});
 }
@@ -1216,7 +1240,7 @@ function pUp(id){ const h=touchMap.get(id); if(!h) return; touchMap.delete(id); 
 cv.addEventListener('touchstart',e=>{ e.preventDefault(); for(const t of e.changedTouches) pDown(t.identifier,t.clientX,t.clientY); },{passive:false});
 cv.addEventListener('touchmove',e=>{ e.preventDefault(); for(const t of e.changedTouches) pMove(t.identifier,t.clientX,t.clientY); },{passive:false});
 const tEnd=e=>{ for(const t of e.changedTouches) pUp(t.identifier); }; cv.addEventListener('touchend',tEnd); cv.addEventListener('touchcancel',tEnd);
-cv.addEventListener('mousedown',e=>{ audioInit(); if(G.state!=='PLAYING') return; if(G.fullMap){ G.fullMap=false; return; } const mm=UI.mini(); if(!WORLD.arena&&e.clientX>=mm.x&&e.clientX<=mm.x+mm.w&&e.clientY>=mm.y&&e.clientY<=mm.y+mm.h){ toggleFullMap(); return; } if(Math.abs(e.clientX-UI.pause().x)<28&&e.clientY<44){ togglePause(); return; } const bk=hitBtn(e.clientX,e.clientY); if(bk==='chars'){ openCharsFromGame(); return; } if(bk==='chi'){ startSpinjitzu(G.player); return; } if(bk){ IN[bk]=true; return; } IN.mouse.down=true; IN.mouse.aiming=true; IN.mouse.x=e.clientX; IN.mouse.y=e.clientY; });
+cv.addEventListener('mousedown',e=>{ audioInit(); if(G.state!=='PLAYING') return; if(G.fullMap){ G.fullMap=false; return; } const mm=UI.mini(); if(!WORLD.arena&&e.clientX>=mm.x&&e.clientX<=mm.x+mm.w&&e.clientY>=mm.y&&e.clientY<=mm.y+mm.h){ toggleFullMap(); return; } if(Math.abs(e.clientX-UI.pause().x)<28&&e.clientY<44){ togglePause(); return; } const bk=hitBtn(e.clientX,e.clientY); if(bk==='chars'){ openCharsFromGame(); return; } if(bk==='chi'){ { if(!netGuestSpin()) startSpinjitzu(G.player); }; return; } if(bk){ IN[bk]=true; return; } IN.mouse.down=true; IN.mouse.aiming=true; IN.mouse.x=e.clientX; IN.mouse.y=e.clientY; });
 addEventListener('mousemove',e=>{ IN.mouse.x=e.clientX; IN.mouse.y=e.clientY; });
 addEventListener('mouseup',()=>{ if(IN.mouse.down){ IN.mouse.down=false; IN.mouse.aiming=false; IN.fire={ang:mouseAngle(),auto:false}; } });
 addEventListener('contextmenu',e=>e.preventDefault());
@@ -1492,8 +1516,8 @@ function gemDrop(x,y,rar){ if(!rar) return null; const type=Math.random()<.5?'at
 function gemsUpdate(dt){ const p=G.player; if(!G.gems.length) return; for(let i=G.gems.length-1;i>=0;i--){ const g=G.gems[i]; g.t+=dt;
     if(!g.landed){ g.x+=g.vx*dt; g.y+=g.vy*dt; g.h+=g.vh*dt; g.vh-=520*dt; if(g.h<=0){ g.h=0; g.landed=true; g.vx=g.vy=0; burst(g.x,g.y-4,[GEM_RAR[GEM_RI[g.rar]].pal.h,GEM_RAR[GEM_RI[g.rar]].pal.l],8,90,.5,2,-40,true); } continue; }
     if(!p||!p.alive) continue; const d=Math.hypot(p.x-g.x,p.y-8-g.y);
-    if(g.drift>0||d<4*TS*PIX||WORLD.arena){ if(g.drift===0){ g.sx=g.x; g.sy=g.y; } g.drift=Math.min(1,g.drift+dt/1.2); const k=g.drift*g.drift*(3-2*g.drift); g.x=g.sx+(p.x-g.sx)*k; g.y=g.sy+(p.y-8-g.sy)*k; g.h=6+Math.sin(g.drift*Math.PI)*20; if(g.drift>=1||Math.hypot(p.x-g.x,p.y-8-g.y)<6){ G.gems.splice(i,1); gemCollect(g); } }
-    else if(Math.random()<.4){ const R=GEM_RAR[GEM_RI[g.rar]]; part(g.x+rnd(-14,14),g.y-rnd(4,60),rnd(-8,8),rnd(-50,-15),Math.random()<.5?R.pal.h:R.pal.s,.8,2,-20,true); } } }
+    { if(g.drift===0){ g.sx=g.x; g.sy=g.y; } g.drift=Math.min(1,g.drift+dt/1.2); const k=g.drift*g.drift*(3-2*g.drift); g.x=g.sx+(p.x-g.sx)*k; g.y=g.sy+(p.y-8-g.sy)*k; g.h=6+Math.sin(g.drift*Math.PI)*20; if(g.drift>=1||Math.hypot(p.x-g.x,p.y-8-g.y)<6){ G.gems.splice(i,1); gemCollect(g); } }
+    if(g.drift<1&&Math.random()<.4){ const R=GEM_RAR[GEM_RI[g.rar]]; part(g.x+rnd(-14,14),g.y-rnd(4,60),rnd(-8,8),rnd(-50,-15),Math.random()<.5?R.pal.h:R.pal.s,.8,2,-20,true); } } }
 function drawGems(c){ if(!G.gems.length) return; const t=G.time; for(const g of G.gems){ const R=GEM_RAR[GEM_RI[g.rar]], sc=2.6, bob=g.landed?Math.sin(t*3+g.spin)*2:0; c.save();
     if(g.landed&&g.drift===0){ for(let k=0;k<8;k++){ c.globalAlpha=.5*(1-k/8); c.fillStyle=R.pal.l; c.fillRect(g.x-3,g.y-36-k*18,6,18); c.globalAlpha=.25*(1-k/8); c.fillStyle=R.pal.h; c.fillRect(g.x-8,g.y-36-k*18,16,18); } c.globalAlpha=1; }   /* the beam: a column of its colour rising into the air */
     { const pulse=.5+.5*Math.sin(t*3+g.spin); for(let ring=0;ring<3;ring++){ const rr=30+ring*10+pulse*6, n=16+ring*6; c.fillStyle=ring?R.pal.l:R.pal.h; c.globalAlpha=(.6-ring*.15)*(.6+.4*pulse); for(let i=0;i<n;i++){ const a=i/n*TAU+t*(ring%2?.6:-.4); c.fillRect(g.x+Math.cos(a)*rr-3,g.y-g.h-bob-26+Math.sin(a)*rr*.75-3,6,6); } } c.globalAlpha=1; }   /* the glow: three pulsing pixel rings turning around the gem */
@@ -1587,6 +1611,96 @@ function gemShopBuy(i){ gemShopCheck(); const it=SAVE.shopGems.items[i]; if(!it|
 function gemShopHtml(){ gemShopCheck(); const n=SAVE.selected; return `<div class="psec" style="margin-top:8px">GEMS OF THE DAY · new gems in ${dailyResetText()}</div><div class="eqlist">`+SAVE.shopGems.items.map((it,i)=>{ const R=GEM_RAR[GEM_RI[it.rar]], T=GEM_TYPES[it.type], price=GEM_BUY[it.rar], can=!it.sold&&SAVE.gold>=price;
   return `<div class="shopitem gemshop ${it.sold?'dim':''}" data-gi="${i}" style="--g:${R.glow}"><div class="eqic gemic"></div><div class="eqbody"><div class="eqname" style="color:${R.glow}">${R.name} · ${T.name}</div><div class="eqdesc">+${gemAddedFor(n,it.type,it.rar)} ${T.stat} for ${n}</div><div class="eqwho">${it.sold?'SOLD':'one copy'}</div></div><div class="shopbuy"><div class="price"><img class="coinic" src="${COIN_URI}" alt=""> ${price}</div><div class="btn sm ${can?'primary':'dis'}">${it.sold?'SOLD':can?'BUY':'NEED '+(price-SAVE.gold)+' GOLD'}</div></div></div>`; }).join('')+'</div>'; }
 function gemShopWire(){ document.querySelectorAll('.gemshop').forEach(d=>{ const it=SAVE.shopGems.items[+d.dataset.gi]; d.querySelector('.gemic').appendChild(gemCanvas(GEM_RAR[GEM_RI[it.rar]],it.type,56,false,.3)); d.querySelector('.btn').onclick=()=>{ const g=gemShopBuy(+d.dataset.gi); if(!g) return; SFX.levelup(); $('shopMsg').textContent='Bought a '+GEM_RAR[GEM_RI[g.rar]].name.toLowerCase()+' '+GEM_TYPES[g.type].name.toLowerCase()+' gem. Equip it from the Characters screen.'; buildShop(); }; }); }
+/* =====================================================================
+   CO-OP: two players in the open world. Rooms with a 5-letter code over PeerJS (WebRTC data channel; the PeerJS cloud
+   only does the handshake, then the phones talk directly). The host runs the whole world; the guest sends input at
+   20 Hz and renders the host's snapshots (15 Hz). Kills, XP and quest progress are shared; pickups go to whoever
+   takes them. Maps: only worlds open to BOTH players (the lower player level decides); the guest picks the map.
+   ===================================================================== */
+const NET={on:false,host:false,guest:false,peer:null,conn:null,code:'',status:'',peerName:'',peerPlv:1,peerNinja:null,peerMaps:null,in2:{mx:0,my:0,aim:false,ax:1,ay:0,fire:null,ab:false,jump:false,dash:false,spin:false},guestChi:0,snap:null,ev:[],sendT:0,inT:0,nid:1,emap:new Map(),pl:[null,null],lastSeq:0,test:false,chan:null,died:0};
+const NET_SEND_HZ=15, NET_IN_HZ=20;
+function netCode(){ const A='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; let s=''; for(let i=0;i<5;i++) s+=A[Math.floor(Math.random()*A.length)]; return s; }
+function netStatus(t){ NET.status=t; const el=$('coopStatus'); if(el) el.textContent=t; }
+function netLoadPeer(cb){ if(window.Peer) return cb(true); const s=document.createElement('script'); s.src='https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js'; s.onload=()=>cb(true); s.onerror=()=>cb(false); document.head.appendChild(s); }
+function netSend(m){ try{ if(NET.test){ fetch('/relay?room='+NET.code+'&from='+(NET.host?'host':'guest'),{method:'POST',body:JSON.stringify(m)}); } else if(NET.conn&&NET.conn.open) NET.conn.send(m); }catch(e){} }
+function netTestPoll(){ if(!NET.test||!NET.on) return; const me=NET.host?'host':'guest'; fetch('/relay?room='+NET.code+'&for='+me).then(r=>r.json()).then(list=>{ for(const m of list) netOnMsg(m); if(NET.test&&NET.on) setTimeout(netTestPoll,25); }).catch(()=>{ if(NET.test&&NET.on) setTimeout(netTestPoll,200); }); }
+function netMyHello(){ const n=SAVE.selected; return {t:'hello',name:playerName()||'NINJA',plv:playerLevel(),chi:SAVE.chi||0,maps:Object.keys(SAVE.maps||{}).filter(k=>SAVE.maps[k]),ninja:{name:n,lv:SAVE.levels[n]||1,hp:makePlayer(n).maxHp,dmg:makePlayer(n).dmg,coat:hasEffect(n,'blizzardImmune')}}; }
+/* ---- rooms ---- */
+function netCreate(){ netReset(); NET.host=true; NET.code=netCode(); $('coopCode').textContent=NET.code; $('coopCodeBox').style.display=''; $('coopJoinBox').style.display='none'; $('coopMaps').innerHTML=''; netStatus('Waiting for a friend to join with this code…');
+  if(NET.test){ NET.on=true; netTestPoll(); return; }
+  netLoadPeer(ok=>{ if(!ok){ netStatus('No connection: the network library needs internet.'); return; } const peer=new Peer('ninjas-'+NET.code); NET.peer=peer; peer.on('open',()=>{ NET.on=true; }); peer.on('connection',conn=>{ if(NET.conn){ conn.close(); return; } NET.conn=conn; conn.on('data',netOnMsg); conn.on('close',()=>netEnd('Your friend left the room')); conn.on('error',()=>netEnd('Connection lost')); }); peer.on('error',e=>{ netStatus('Room error: '+(e.type||e)); }); }); }
+function netJoin(code){ code=(code||'').trim().toUpperCase(); if(code.length<5){ netStatus('Enter the 5-letter room code'); return; } netReset(); NET.guest=true; NET.code=code; netStatus('Connecting to room '+code+'…');
+  if(NET.test){ NET.on=true; netTestPoll(); netSend(netMyHello()); return; }
+  netLoadPeer(ok=>{ if(!ok){ netStatus('No connection: the network library needs internet.'); return; } const peer=new Peer(); NET.peer=peer; peer.on('open',()=>{ const conn=peer.connect('ninjas-'+code,{reliable:true}); NET.conn=conn; conn.on('open',()=>{ NET.on=true; netSend(netMyHello()); }); conn.on('data',netOnMsg); conn.on('close',()=>netEnd('The host left the room')); conn.on('error',()=>netEnd('Connection lost')); }); peer.on('error',e=>{ netStatus(e.type==='peer-unavailable'?'No room with that code':'Connection error: '+(e.type||e)); }); }); }
+function netReset(){ try{ if(NET.conn) NET.conn.close(); if(NET.peer) NET.peer.destroy(); }catch(e){} Object.assign(NET,{on:false,host:false,guest:false,peer:null,conn:null,code:'',peerName:'',peerPlv:1,peerNinja:null,peerMaps:null,snap:null,ev:[],sendT:0,inT:0,nid:1,pl:[null,null],chan:null,died:0}); NET.emap=new Map(); G.p2=null; }
+function netEnd(msg){ const was=NET.on; netReset(); if(was){ if(G.state==='PLAYING'||G.state==='PAUSED'){ setState('MENU'); } netStatus(msg); const el=$('coopCodeBox'); if(el) el.style.display='none'; showToast(msg); } }
+/* ---- messages ---- */
+function netOnMsg(m){ if(!m||!m.t) return;
+  if(m.t==='hello'&&NET.host){ NET.peerName=m.name; NET.peerPlv=m.plv; NET.peerNinja=m.ninja; NET.guestChi=m.chi||0; NET.peerMaps=m.maps; netSend({t:'welcome',name:playerName()||'NINJA',plv:playerLevel(),maps:Object.keys(SAVE.maps||{}).filter(k=>SAVE.maps[k]),ninja:{name:SAVE.selected,lv:SAVE.levels[SAVE.selected]||1}}); netStatus(m.name+' joined (player level '+m.plv+', '+m.ninja.name+' LV '+m.ninja.lv+'). Waiting for them to choose the map…'); }
+  else if(m.t==='welcome'&&NET.guest){ NET.peerName=m.name; NET.peerPlv=m.plv; NET.peerMaps=m.maps; NET.peerNinja=m.ninja||{name:'SHADE',lv:1}; netStatus('Joined '+m.name+"'s room (player level "+m.plv+'). Choose a map open to both of you:'); netBuildMaps(); }
+  else if(m.t==='map'&&NET.host){ const def=MAPS.find(x=>x.id===m.id); if(!def||!netMapAllowed(def)) return; netHostStart(def); }
+  else if(m.t==='start'&&NET.guest){ const def=MAPS.find(x=>x.id===m.id); if(def) netGuestStart(def); }
+  else if(m.t==='in'&&NET.host){ const i=NET.in2; i.mx=m.mx; i.my=m.my; i.aim=m.aim; i.ax=m.ax; i.ay=m.ay; if(m.fire) i.fire=m.fire; if(m.ab) i.ab=true; if(m.jump) i.jump=true; if(m.dash) i.dash=true; if(m.spin) i.spin=true; }
+  else if(m.t==='s'&&NET.guest){ NET.snap=m; }
+  else if(m.t==='ev'&&NET.guest){ for(const e of m.list) netApplyEv(e); }
+  else if(m.t==='leave'){ netEnd(NET.host?'Your friend left':'The host ended the session'); } }
+function netMapAllowed(def){ const both=Math.min(playerLevel(),NET.peerPlv||1); return !def.locked&&(def.plv||1)<=both; }
+function netBuildMaps(){ const el=$('coopMaps'); if(!el) return; el.innerHTML=''; for(const m of MAPS){ if(m.locked) continue; const ok=netMapAllowed(m); const d=document.createElement('div'); d.className='btn sm '+(ok?'primary':'dis'); d.textContent=m.name+(ok?'':' · needs player level '+m.plv+' for both'); if(ok) d.onclick=()=>{ netSend({t:'map',id:m.id}); netStatus('Starting '+m.name+'…'); }; el.appendChild(d); } }
+/* ---- the host ---- */
+function netHostStart(def){ enterMap(def); netMakeP2(); setState('PLAYING'); netSend({t:'start',id:def.id}); }
+function netMakeP2(){ const n=NET.peerNinja||{name:'SHADE',lv:1}; const p=makePlayer(CH[n.name]?n.name:'SHADE'); p.net=true; p.lv=n.lv||1; if(n.hp) p.maxHp=p.hp=n.hp; if(n.dmg) p.dmg=n.dmg; p.coat=!!n.coat; p.label=NET.peerName; p.x=WORLD.playerSpawn.x+40; p.y=WORLD.playerSpawn.y+10; G.p2=p; return p; }
+function netTarget(e,p){ const q=G.p2; if(!q||!q.alive||q.hidden) return p; if(!p||!p.alive||p.hidden) return q; return dist(e,q)<dist(e,p)?q:p; }
+function netEv(e){ if(NET.host&&NET.on) NET.ev.push(e); }
+/* run something for the guest's ninja: whatever it picked up is taken off the host's save and sent to the guest */
+function withGuestSave(fn){ gemInit(); const s0={gold:SAVE.gold,chi:SAVE.chi||0,keys:SAVE.keys||0,xp:SAVE.xpTotal||0,kills:SAVE.kills,pity:SAVE.pity||0,gems:SAVE.gems.owned.length,found:JSON.stringify(SAVE.gems.found),daily:JSON.stringify(SAVE.daily),plv:G.plv};
+  fn();
+  const ev=[]; if(SAVE.gold!==s0.gold) ev.push({k:'gold',n:SAVE.gold-s0.gold}); if((SAVE.chi||0)!==s0.chi){ ev.push({k:'chi',n:(SAVE.chi||0)-s0.chi}); NET.guestChi=Math.max(0,NET.guestChi+(SAVE.chi||0)-s0.chi); } if((SAVE.keys||0)!==s0.keys) ev.push({k:'keys',n:(SAVE.keys||0)-s0.keys}); if((SAVE.xpTotal||0)!==s0.xp) ev.push({k:'xp',n:(SAVE.xpTotal||0)-s0.xp});
+  for(const g of SAVE.gems.owned.slice(s0.gems)) ev.push({k:'gem',type:g.type,rar:g.rar}); SAVE.gems.owned.length=s0.gems; SAVE.gems.found=JSON.parse(s0.found);
+  SAVE.gold=s0.gold; SAVE.chi=s0.chi; SAVE.keys=s0.keys; SAVE.xpTotal=s0.xp; SAVE.kills=s0.kills; SAVE.pity=s0.pity; SAVE.daily=JSON.parse(s0.daily); G.plv=s0.plv; for(const e of ev) NET.ev.push(e); }
+function netHostUpdate(dt){ const p2=G.p2; if(!p2) return; const i=NET.in2;
+  if(!p2.alive){ p2.respawnT=(p2.respawnT||4)-dt; if(p2.respawnT<=0){ const n=netMakeP2(); n.hp=n.maxHp; } return; }
+  const keep={mx:IN.mx,my:IN.my,aim:IN.aim,ax:IN.ax,ay:IN.ay,fire:IN.fire,ability:IN.ability,jump:IN.jump,dash:IN.dash};
+  IN.mx=i.mx; IN.my=i.my; IN.aim=i.aim; IN.ax=i.ax; IN.ay=i.ay; IN.fire=i.fire; IN.ability=i.ab; IN.jump=i.jump; IN.dash=i.dash;
+  withGuestSave(()=>{ if(i.spin){ i.spin=false; startSpinjitzu(p2); } playerUpdate(p2,dt); });
+  i.fire=IN.fire; i.ab=IN.ability; i.jump=IN.jump; i.dash=IN.dash; Object.assign(IN,keep); }
+const NET_PF=['name','x','y','vx','vy','face','animT','attackT','atkCd','jumpT','jumpCd','dashT','dAng','hp','maxHp','alive','deadT','hidden','inv','flash','stagger','lunge','lungeA','combo','comboT','iced','icedT','abCd','abPress','abFlash','spinCd','bob','dunk','kbT','lv','coat','label','respawnT','hideT'];
+function serP(p){ if(!p) return null; const o={}; for(const k of NET_PF) if(p[k]!==undefined) o[k]=p[k]; o.st={}; for(const k in p.status) o.st[k]=p.status[k].t; if(p.spin) o.spin={state:p.spin.state,t:p.spin.t,tot:p.spin.tot,loopT:p.spin.loopT,ticks:p.spin.ticks}; return o; }
+function serE(e){ if(e.nid===undefined) e.nid=NET.nid++; const o={n:e.nid,type:e.type}; for(const k of ['x','y','vx','vy','face','hp','maxHp','alive','deadT','spawnT','flash','flinch','hidden','vulnT','sinkT','boss','summoned','r','animT','crashT','engaged','spinHitT']) if(e[k]!==undefined) o[k]=e[k]; o.sub=!!e.sub; o.ai={}; for(const k in e.ai){ const v=e.ai[k]; if(v===null||typeof v!=='object') o.ai[k]=v; } if(e.ai.tele) o.ai.tele=Object.assign({},e.ai.tele); o.st={}; for(const k in e.status) o.st[k]=e.status[k].t; return o; }
+function serQ(q){ const o={}; for(const k in q){ const v=q[k]; if(v===null||typeof v!=='object') o[k]=v; } o.ok=q.owner?q.owner.kind:null; if(q.onHit) o.oh=1; return o; }
+function netSnapshot(){ const H=G.haz; const s={t:'s',time:G.time,mapT:G.mapT,shake:G.shake,slowmo:G.slowmo,hudGold:G.hudGold,pl:[serP(G.player),serP(G.p2)],en:G.enemies.filter(e=>e.alive||(e.deadT!==undefined&&e.deadT>0)).map(serE),pr:G.projs.filter(q=>q.alive).map(serQ),co:G.coins.map(c=>[Math.round(c.x),Math.round(c.y),c.z||0,c.v]),ch:G.chis.map(c=>[Math.round(c.x),Math.round(c.y),c.h||0]),ge:G.gems.map(g=>[Math.round(g.x),Math.round(g.y),g.h||0,g.type,g.rar,g.landed?1:0,g.drift,g.spin]),fl:[],banner:G.banner?{text:G.banner.text,sub:G.banner.sub,t:G.banner.t}:null,ann:G.announce?{type:G.announce.type,x:G.announce.x,y:G.announce.y,t:G.announce.t}:null,boss:G.boss&&G.boss.alive?G.boss.nid:null,bm:G.bossMark?{x:G.bossMark.x,y:G.bossMark.y}:null,chests:G.chests.map(c=>c.open?1:0),ring:G.ring?{x:G.ring.x,y:G.ring.y,r:G.ring.r,max:G.ring.max,t:G.ring.t,col:G.ring.col,earth:G.ring.earth}:null};
+  for(const f of G.floats) if(!f.sent){ f.sent=true; s.fl.push({x:f.x,y:f.y,txt:f.txt,col:f.col,big:f.big,crit:f.crit}); }
+  if(H) s.haz={erupt:{active:H.erupt.active,next:H.erupt.next,warned:H.erupt.warned},bliz:{active:H.bliz.active,next:H.bliz.next,warned:H.bliz.warned},bombs:H.bombs.map(b=>({x:b.x,y:b.y,t:b.t,hit:b.hit})),burns:H.burns.map(b=>({x:b.x,y:b.y,r:b.r,t:b.t})),zone:H.zone,flash:H.flash,eruptEnd:H.eruptEnd};
+  return s; }
+function netHostTick(raw){ if(!NET.host||!NET.on) return; NET.sendT+=raw; if(NET.sendT>=1/NET_SEND_HZ){ NET.sendT=0; netSend(netSnapshot()); if(NET.ev.length){ netSend({t:'ev',list:NET.ev}); NET.ev=[]; } } }
+/* ---- the guest ---- */
+function netGuestStart(def){ enterMap(def); G.enemies=[]; G.spawners=[]; G.coins=[]; G.chis=[]; G.gems=[]; G.projs=[]; NET.emap=new Map(); const me=G.player; me.x=WORLD.playerSpawn.x+40; me.y=WORLD.playerSpawn.y+10; me.label=playerName(); const hn=NET.peerNinja&&CH[NET.peerNinja.name]?NET.peerNinja.name:'SHADE'; const host=makePlayer(hn); host.label=NET.peerName; G.p2=host; setState('PLAYING'); }
+function netApplyEv(e){ if(e.k==='hint'){ showHint(e.t); G.chiShake=.4; return; } if(e.k==='died'){ return; } if(e.k==='gold') SAVE.gold+=e.n; else if(e.k==='chi') SAVE.chi=Math.max(0,(SAVE.chi||0)+e.n); else if(e.k==='keys') SAVE.keys=Math.max(0,(SAVE.keys||0)+e.n); else if(e.k==='xp') gainXP(e.n); else if(e.k==='gem'){ gemAdd(e.type,e.rar); gemSound(GEM_RI[e.rar]); gemPanelOpen({gem:{type:e.type,rar:e.rar},R:GEM_RAR[GEM_RI[e.rar]],ri:GEM_RI[e.rar]}); } else if(e.k==='kill'){ SAVE.kills++; SAVE.killsBy=SAVE.killsBy||{}; SAVE.killsBy[e.type]=(SAVE.killsBy[e.type]||0)+1; gainXP(e.xp||0); dailyEvent('kill',e.type); checkUnlocks(); } else if(e.k==='boss'){ SAVE.bosses[e.type]=(SAVE.bosses[e.type]||0)+1; gainXP(e.xp||0); dailyEvent('boss',e.type); checkUnlocks(); } save(); G.hudGold=3; }
+function netShadowP(o,cur){ const p=cur&&cur.name===o.name?cur:Object.assign(makePlayer(CH[o.name]?o.name:'SHADE'),{kind:'player'}); for(const k of NET_PF) if(o[k]!==undefined) p[k]=o[k]; p.status={}; for(const k in o.st) p.status[k]={t:o.st[k],tick:0,dps:7}; if(o.spin){ p.spin=Object.assign(p.spin||{},o.spin,{C:SPIN[p.name]}); } else p.spin=null; p.kbx=p.kby=0; p.dashHit=p.dashHit||[]; return p; }
+function netShadowE(o){ let e=NET.emap.get(o.n); if(!e){ e=Object.assign(makeEnemy(o.type,o.x,o.y),{shadow:true}); G.enemies.pop(); if(G.boss===e) G.boss=null; NET.emap.set(o.n,e); } for(const k in o){ if(k==='ai'||k==='st'||k==='n'||k==='sub') continue; e[k]=o[k]; } e.ai=Object.assign(e.ai||{},o.ai); if(!o.ai.tele) e.ai.tele=null; e.sub=o.sub?{}:null; e.status={}; for(const k in o.st) e.status[k]={t:o.st[k],tick:0}; if(e.type==='imp'&&e.spawnT>0) e.impBorn=1; e.seen=G.time; return e; }
+function netApplySnap(s){ G.time=s.time; G.mapT=s.mapT; if(s.shake>G.shake) G.shake=s.shake; G.hudGold=s.hudGold;
+  G.player=netShadowP(s.pl[1]||s.pl[0],G.player); G.player.label=playerName(); G.p2=s.pl[0]?netShadowP(s.pl[0],G.p2):null; if(G.p2) G.p2.label=NET.peerName;
+  const list=[]; for(const o of s.en) list.push(netShadowE(o)); G.enemies=list; G.boss=s.boss!==null?NET.emap.get(s.boss)||null:null; for(const [k,e] of NET.emap) if(e.seen!==G.time) NET.emap.delete(k);
+  G.projs=s.pr.map(o=>{ const q=Object.assign({},o); q.owner={kind:o.ok||'enemy'}; q.alive=true; delete q.ok; delete q.oh; return q; });
+  G.coins=s.co.map(a=>({x:a[0],y:a[1],z:a[2],v:a[3],vx:0,vy:0,t:1,fly:false})); G.chis=s.ch.map(a=>({x:a[0],y:a[1],h:a[2],t:1,landed:true,fly:false,vh:0,vx:0,vy:0})); G.gems=s.ge.map(a=>({x:a[0],y:a[1],h:a[2],type:a[3],rar:a[4],landed:!!a[5],drift:a[6]||0,spin:a[7]||0,t:1,vx:0,vy:0,vh:0}));
+  for(const f of s.fl) G.floats.push({x:f.x,y:f.y,txt:f.txt,col:f.col,t:0,vy:-70,vx:rnd(-20,20),big:!!f.big,crit:!!f.crit});
+  G.banner=s.banner; G.announce=s.ann?Object.assign({},s.ann):null; G.bossMark=s.bm; G.ring=s.ring; for(let i=0;i<G.chests.length&&i<s.chests.length;i++) G.chests[i].open=!!s.chests[i];
+  if(s.haz&&G.haz){ Object.assign(G.haz.erupt,s.haz.erupt); Object.assign(G.haz.bliz,s.haz.bliz); G.haz.bombs=s.haz.bombs; G.haz.burns=s.haz.burns.map(b=>Object.assign({tick:.5},b)); G.haz.zone=s.haz.zone; G.haz.flash=s.haz.flash; G.haz.eruptEnd=s.haz.eruptEnd; } }
+function netGuestFrame(raw){ if(!NET.guest||!NET.on||G.state!=='PLAYING') return; pollInput();
+  NET.inT+=raw; const latch=NET.latch||(NET.latch={fire:null,ab:false,jump:false,dash:false,spin:false}); if(IN.fire){ latch.fire=IN.fire; IN.fire=null; } if(IN.ability){ latch.ab=true; IN.ability=false; } if(IN.jump){ latch.jump=true; IN.jump=false; } if(IN.dash){ latch.dash=true; IN.dash=false; }
+  if(NET.inT>=1/NET_IN_HZ){ NET.inT=0; netSend({t:'in',mx:IN.mx,my:IN.my,aim:IN.aim,ax:IN.ax,ay:IN.ay,fire:latch.fire,ab:latch.ab,jump:latch.jump,dash:latch.dash,spin:latch.spin}); latch.fire=null; latch.ab=latch.jump=latch.dash=latch.spin=false; }
+  if(NET.snap){ const s=NET.snap; NET.snap=null; netApplySnap(s); } else { const dt=Math.min(raw,.05); for(const e of G.enemies) if(e.alive&&e.spawnT<=0){ e.x+=(e.vx||0)*dt; e.y+=(e.vy||0)*dt; } for(const p of [G.player,G.p2]) if(p&&p.alive){ p.x+=(p.vx||0)*dt; p.y+=(p.vy||0)*dt; } for(const q of G.projs){ q.x+=(q.vx||0)*dt; q.y+=(q.vy||0)*dt; } G.time+=dt; }
+  const dt=Math.min(raw,.05); for(const a of G.parts) if(a.alive){ a.t-=dt; a.x+=a.vx*dt; a.y+=a.vy*dt; a.vy+=a.grav*dt; a.vx*=Math.pow(.08,dt); a.vy*=Math.pow(.2,dt); if(a.t<=0) a.alive=false; }
+  for(let i=G.floats.length-1;i>=0;i--){ const f=G.floats[i]; f.t+=dt; f.x+=f.vx*dt; f.y+=f.vy*dt; f.vy+=220*dt; if(f.t>(f.big?1.3:.85)) G.floats.splice(i,1); }
+  if(G.banner){ G.banner.t-=dt; if(G.banner.t<=0) G.banner=null; } if(G.hudGold>0) G.hudGold-=dt; if(G.shake>0) G.shake=Math.max(0,G.shake-dt*30);
+  for(const e of G.enemies) if(e.flash>0&&!e.flashed){ e.flashed=true; burst(e.x,e.y-8,['#ffffff',e.d.boss?'#fde047':'#fca5a5'],5,90,.4,3,0,true); } else if(e.flash<=0) e.flashed=false;
+  gemTrailUpdate(G.player,dt); if(G.player) camUpdate(dt,G.player); }
+function netGuestSpin(){ if(!NET.guest) return false; const p=G.player; if((SAVE.chi||0)<1){ showHint('No Chi — enemies drop it'); G.chiShake=.4; SFX.block(); return true; } if(p.spinCd>0){ showHint('Spinjitzu recharging'); G.chiShake=.4; SFX.block(); return true; } (NET.latch||(NET.latch={})).spin=true; return true; }
+function netLeave(){ if(NET.on) netSend({t:'leave'}); netReset(); }
+/* the second ninja's name tag */
+function drawNetTag(c,p){ if(!p||!p.label) return; c.save(); c.font='900 10px Arial'; c.textAlign='center'; c.lineWidth=3; c.strokeStyle='rgba(0,0,0,.7)'; c.strokeText(p.label,p.x,p.y-52); c.fillStyle=p.net||p!==G.player?'#7fd4ff':'#fff'; c.fillText(p.label,p.x,p.y-52); if(!p.alive){ c.font='800 9px Arial'; c.fillStyle='#fca5a5'; c.fillText('RESPAWNING',p.x,p.y-40); } c.restore(); }
+
+/* a small message strip at the bottom (co-op notices) */
+let TOAST_TO=null; function showToast(msg){ const el=$('toast'); if(!el) return; el.textContent=msg; el.className='on'; if(TOAST_TO) clearTimeout(TOAST_TO); TOAST_TO=setTimeout(()=>{ el.className=''; },2600); }
 /* =====================================================================
    WORLD — "Bone Shore": one connected hand-shaped world.
    Irregular coastline, curving river with fords and a waterfall, darkening swamp,
@@ -2139,15 +2253,15 @@ function damage(e,amt,src,o){
   if(src&&!o.noKb&&!(e.kind==='player'&&spinBusy(e))){ if(e.boss) e.flinch=.14; else { const d=Math.max(1,dist(src,e)), kb=o.kb!==undefined?o.kb:180; e.kbx+=(e.x-src.x)/d*kb; e.kby+=(e.y-src.y)/d*kb; if(e.kind==='player'&&kb>=200) e.kbT=.35; } }   // bosses are too heavy to push: they only flinch
   if(SAVE.settings.dmgNums&&(!o.silent||amt>=1)) floatText(e.x+rnd(-6,6),e.y-e.r-18,String(amt),o.color||(e.kind==='player'?'#f87171':o.crit?'#fde047':'#ffffff'),o.big||o.crit,o.crit);
   if(e.kind==='enemy'&&!e.boss&&!o.silent&&!o.noHitstop){ hitstop(o.crit||o.big?60:40); shake(o.big||o.crit?5:1.3); }   // no hit-stop on bosses: flashes and numbers only
-  if(e.hp<=0){ e.hp=0; e.kind==='player'?playerDie():enemyDie(e); }
+  if(e.hp<=0){ e.hp=0; e.kind==='player'?playerDie(e):enemyDie(e); }
   return amt;
 }
 function enemyDie(e){
   e.alive=false; G.kills++; let n=rndi(e.d.coins[0],e.d.coins[1]), gold=rndi(e.d.gold[0],e.d.gold[1]); if(e.summoned){ n=Math.ceil(n/2); gold=Math.ceil(gold/2); }   // boss adds drop half
   const per=Math.ceil(gold/n); for(let i=0;i<n;i++) G.coins.push({x:e.x,y:e.y,vx:rnd(-120,120),vy:rnd(-220,-80),v:per,t:0,fly:false,z:0});
   if(e.boss&&WORLD.arena){ if(G.boss===e) G.boss=null; arenaWin(e); return; }   // Boss Fight: separate rewards, nothing counts toward the open world
-  if(e.boss){ e.deadT=3.2; burst(e.x,e.y-10,['#c8a878','#8a6a4a','#fde047','#ffffff'],80,260,1.4,6,200,true); shake(16); vibrate(300); SFX.death(); const bxp=e.d.xpBoss||XP_BOSS; floatText(e.x,e.y-60,'BOSS DEFEATED  +'+bxp+' XP','#fde047',true,true); if(G.boss===e) G.boss=null; G.lastBossDeath=G.time; G.bossMark=null; SAVE.bosses[e.type]=(SAVE.bosses[e.type]||0)+1; dailyEvent('boss',e.type); gemDrop(e.x,e.y,gemRoll(gemTableBoss(bossGemTier(e.type)))); gainXP(bxp); dropChi(e.x,e.y,2); keyDrop(e.x,e.y); checkUnlocks(); checkLevelUp(); }
-  else { deathFx(e); e.deadT=1.4; if(e.spawner) e.spawner.alive--; if(e.type==='imp'&&G.haz) G.haz.burns.push({x:e.x,y:e.y+4,r:24,t:2,tick:.5}); SAVE.kills++; SAVE.killsBy=SAVE.killsBy||{}; SAVE.killsBy[e.type]=(SAVE.killsBy[e.type]||0)+1; dailyEvent('kill',e.type); if(!e.summoned&&!WORLD.arena) gemDrop(e.x,e.y,gemRoll(gemTableCommon(gemTier()))); if(!e.summoned&&(Math.random()<.005||DEBUG.forceChi)) dropChi(e.x,e.y,1); { const p=G.player; if(p&&p.name==='SHADE'&&spinning(p)&&e.spinHitT===G.time&&Math.random()<.25) G.coins.push({x:e.x,y:e.y,vx:rnd(-80,80),vy:-120,v:5,t:0,fly:false,z:0}); } gainXP(e.d.xp||XP_KILL,e.x,e.y-44); if(!e.summoned){ SAVE.pity=(SAVE.pity||0)+1; if(Math.random()<.02||SAVE.pity>=80) keyDrop(e.x,e.y); } checkUnlocks(); checkLevelUp(); if(!SAVE.hints.kill){ SAVE.hints.kill=true; G.arrowTarget=null; showHint('Try your ability ✦'); } }
+  if(e.boss){ e.deadT=3.2; burst(e.x,e.y-10,['#c8a878','#8a6a4a','#fde047','#ffffff'],80,260,1.4,6,200,true); shake(16); vibrate(300); SFX.death(); const bxp=e.d.xpBoss||XP_BOSS; floatText(e.x,e.y-60,'BOSS DEFEATED  +'+bxp+' XP','#fde047',true,true); if(G.boss===e) G.boss=null; G.lastBossDeath=G.time; G.bossMark=null; SAVE.bosses[e.type]=(SAVE.bosses[e.type]||0)+1; dailyEvent('boss',e.type); netEv({k:'boss',type:e.type,xp:bxp}); gemDrop(e.x,e.y,gemRoll(gemTableBoss(bossGemTier(e.type)))); gainXP(bxp); dropChi(e.x,e.y,2); keyDrop(e.x,e.y); checkUnlocks(); checkLevelUp(); }
+  else { deathFx(e); e.deadT=1.4; if(e.spawner) e.spawner.alive--; if(e.type==='imp'&&G.haz) G.haz.burns.push({x:e.x,y:e.y+4,r:24,t:2,tick:.5}); SAVE.kills++; SAVE.killsBy=SAVE.killsBy||{}; SAVE.killsBy[e.type]=(SAVE.killsBy[e.type]||0)+1; dailyEvent('kill',e.type); netEv({k:'kill',type:e.type,xp:e.d.xp||XP_KILL}); if(!e.summoned&&!WORLD.arena) gemDrop(e.x,e.y,gemRoll(gemTableCommon(gemTier()))); if(!e.summoned&&(Math.random()<.005||DEBUG.forceChi)) dropChi(e.x,e.y,1); { const p=G.player; if(p&&p.name==='SHADE'&&spinning(p)&&e.spinHitT===G.time&&Math.random()<.25) G.coins.push({x:e.x,y:e.y,vx:rnd(-80,80),vy:-120,v:5,t:0,fly:false,z:0}); } gainXP(e.d.xp||XP_KILL,e.x,e.y-44); if(!e.summoned){ SAVE.pity=(SAVE.pity||0)+1; if(Math.random()<.02||SAVE.pity>=80) keyDrop(e.x,e.y); } checkUnlocks(); checkLevelUp(); if(!SAVE.hints.kill){ SAVE.hints.kill=true; G.arrowTarget=null; showHint('Try your ability ✦'); } }
   save();
 }
 /* Chi key: 2% from any common enemy, always from a boss, pity after 80 kills; capped at 3 */
@@ -2161,7 +2275,7 @@ function deathFx(e){
   else if(e.type==='wolf'){ burst(e.x,e.y-10,['#bfeaff','#ffffff','#7fb8d8'],18,170,.7,3,300); tone(900,.25,'sine',.12,-300); }
   else if(e.type==='pirate'){ const hat=part(e.x,e.y-34,rnd(-40,40),-240,'#5e3d22',1.1,8,650); if(hat) hat.hat=true; burst(e.x,e.y-8,['#c9a24a','#8ab0a0','#f2ede0'],12,150,.8,4,300); if(Math.random()<.03){ SAVE.gold+=180; gainXP(40); floatText(e.x,e.y-76,'GOLDEN KEY! A golden chest opens: +180 GOLD  +40 XP','#fde047',true,true); burst(e.x,e.y-20,['#fde047','#ffffff'],24,180,.9,4,250,true); SFX.levelup(); } }
 }
-function playerDie(){ const p=G.player; p.alive=false; p.deadT=1; SFX.death(); shake(10); vibrate(400); burst(p.x,p.y-8,[p.ch.color,p.ch.glow,'#ffffff'],40,200,1.1,5,150,true); if(WORLD.arena){ arenaFail(); return; } const lost=Math.floor(SAVE.gold*.1); SAVE.gold-=lost; G.lostGold=lost; save(); }
+function playerDie(p){ p=p||G.player; p.alive=false; p.deadT=1; SFX.death(); shake(10); vibrate(400); burst(p.x,p.y-8,[p.ch.color,p.ch.glow,'#ffffff'],40,200,1.1,5,150,true); if(NET.on){ p.respawnT=4; if(p.net) netEv({k:'died'}); return; }   /* co-op: no death screen, the ninja respawns in the village after 4 s */ if(WORLD.arena){ arenaFail(); return; } const lost=Math.floor(SAVE.gold*.1); SAVE.gold-=lost; G.lostGold=lost; save(); }
 function openChest(c){
   c.open=true; dailyEvent('chest'); SFX.levelup(); burst(c.x,c.y-6,['#fde047','#ffffff','#e0a020'],26,180,.9,4,250,true); const p=G.player;
   if(c.kind==='normal'){ const n=rndi(20,60); SAVE.chests[c.id]=true; SAVE.gold+=n; gainXP(40); floatText(c.x,c.y-30,'+'+n+' GOLD  +40 XP','#fde68a',true); }
@@ -2173,7 +2287,7 @@ function openChest(c){
 
 /* ---------- player ---------- */
 function playerUpdate(p,dt){
-  if(!p.alive){ p.deadT-=dt; if(p.deadT<=0&&G.state==='PLAYING'&&!WORLD.arena) onPlayerDead(); return; }   /* in the arena the fight itself decides win or fail */
+  if(!p.alive){ p.deadT-=dt; if(p.deadT<=0&&G.state==='PLAYING'&&!WORLD.arena&&!NET.on) onPlayerDead(); return; }   /* in the arena the fight itself decides win or fail */
   p.flash=Math.max(0,p.flash-dt); p.stagger=Math.max(0,p.stagger-dt); p.inv=Math.max(0,p.inv-dt); p.abGrace=Math.max(0,(p.abGrace||0)-dt); p.spinCd=Math.max(0,(p.spinCd||0)-dt); p.atkCd-=dt; p.dashCd-=dt; p.abCd-=dt; p.comboT-=dt; p.attackT=Math.max(0,p.attackT-dt); tickStatus(p,dt); if(p.comboT<=0) p.combo=0;
   spinUpdate(p,dt); chiUpdate(p,dt); groundFxUpdate(dt); const flash=p.spin&&p.spin.state==='FLASH';
   const zone=zoneOf(p.x,p.y); if(zone==='swamp') G.swampT+=dt; const max=p.spd*statMult(p,'spd')*terrainMod(p.x,p.y)*spinSpeedMul(p), canMove=p.stagger<=0&&p.dashT<=0&&p.jumpT<=0&&!p.hidden&&!flash&&!arenaBusy()&&!(p.dunk>0)&&!p.drag&&!p.iced;
@@ -2463,7 +2577,7 @@ function worldUpdate(dt){
   for(const sp of G.spawners){ const S=SPAWN[sp.k]; if(sp.refill>0){ sp.refill-=dt; if(sp.refill<=0) sp.count=0; } else if(sp.count>=S.max) sp.refill=S.refill; const d=dist(sp,p); sp.t-=dt; if(sp.count<S.max&&sp.alive<S.max&&d<1000&&d>260&&sp.t<=0){ sp.t=2.5; spawnFrom(sp,false); } }
   G.enemies=G.enemies.filter(e=>e.alive||(e.deadT!==undefined&&e.deadT>0));
   G.chasers=G.enemies.filter(e=>e.alive&&!e.boss&&!e.summoned&&e.ai.state!=='idle').length;
-  for(const e of G.enemies) enemyUpdate(e,dt,p);
+  for(const e of G.enemies) enemyUpdate(e,dt,netTarget(e,p));
 }
 /* balance check against the ninjas (debug: Settings → Balance table): hits and seconds an average combo needs per common enemy */
 function balanceReport(){ const rows=[]; for(const n of ORDER) for(const lv of [1,6]){ const ch=CH[n], m=LV_DMG(lv), hit=ch.dmg*m, dps=hit*ch.rate*(1+.5/3); for(const t of ['mush','priest','pirate']){ const hp=EN[t].hp*(t==='pirate'?1/.7:1); rows.push({ninja:n,lv,enemy:t,hp:Math.round(hp),hits:Math.ceil(hp/(hit*1.17)),ttk:+(hp/dps).toFixed(2),enemyDps:+(EN[t].dmg/EN[t].atk).toFixed(1)}); } } return rows; }
@@ -3123,12 +3237,13 @@ function spinning(p){ return !!(p&&p.spin&&p.spin.state==='ACTIVE'); }
 function spinBusy(p){ return !!(p&&p.spin&&(p.spin.state==='FLASH'||p.spin.state==='ACTIVE')); }
 function startSpinjitzu(p){
   if(!p||!p.alive||G.state!=='PLAYING') return; if(p.spin&&p.spin.state){ return; }
-  if((SAVE.chi||0)<1){ showHint('No Chi — enemies drop it'); G.chiShake=.4; SFX.block(); return; }
+  if(p.net){ const hint=(p.spinCd>0)?'Spinjitzu recharging':inSafeZone(p.x,p.y)?'Leave the blue circle to fight':(NET.guestChi||0)<1?'No Chi':null; if(hint){ netEv({k:'hint',t:hint}); return; } }   /* the guest's ninja: hints go to the guest's phone, never to the host's */
+  if(!p.net&&(SAVE.chi||0)<1){ showHint('No Chi — enemies drop it'); G.chiShake=.4; SFX.block(); return; }
   if(WORLD.arena&&G.arena&&G.arena.spinUsed){ showHint('Boss Fight: Spinjitzu only once per fight'); G.chiShake=.4; SFX.block(); return; }   /* one Spinjitzu per Boss Fight */
   if(p.spinCd>0){ showHint('Spinjitzu recharging — '+Math.ceil(p.spinCd)+' s'); G.chiShake=.4; SFX.block(); return; }
   if(inSafeZone(p.x,p.y)){ showHint('Leave the blue circle to fight'); return; }
   dailyEvent('spin'); if(WORLD.arena&&G.arena) G.arena.spinUsed=true;
-  SAVE.chi--; save(); p.spinCd=SPIN_CD; const C=SPIN[p.name]; p.spin={state:'FLASH',t:.5,C,tickT:0,ticks:0,loopT:0,tot:.5}; p.vx=p.vy=0; p.queued=null; p.hidden=false; p.hideT=0;
+  if(p.net){ if((NET.guestChi||0)<1) return; NET.guestChi--; netEv({k:'chi',n:-1}); } else { SAVE.chi--; save(); } p.spinCd=SPIN_CD; const C=SPIN[p.name]; p.spin={state:'FLASH',t:.5,C,tickT:0,ticks:0,loopT:0,tot:.5}; p.vx=p.vy=0; p.queued=null; p.hidden=false; p.hideT=0;
   SFX.spinCharge(); G.zoomPulse=1.08; CAM.flashDim=1;
 }
 function spinUpdate(p,dt){
@@ -3379,12 +3494,12 @@ function render(){
   drawGroundFx(c); drawChis(c); drawGems(c);
   for(const cn of G.coins){ c.fillStyle='rgba(0,0,0,.25)'; c.beginPath(); c.ellipse(cn.x,cn.y+8,7,3,0,0,TAU); c.fill(); c.save(); c.translate(cn.x,cn.y); c.scale(Math.max(.15,Math.abs(Math.cos(G.time*7+cn.x))),1); c.shadowColor='#fde047'; c.shadowBlur=8; c.drawImage(COIN_IMG,-9,-9,18,18); c.restore(); }
   // sprites sorted by y
-  const list=G.enemies.filter(e=>vis(e.x,e.y,120)); list.push(p); for(const n of WORLD.village.npcs) if(vis(n.x,n.y,80)) list.push({npc:n,x:n.x,y:n.y}); list.sort((a,b)=>a.y-b.y);
+  const list=G.enemies.filter(e=>vis(e.x,e.y,120)); list.push(p); if(G.p2) list.push(G.p2); for(const n of WORLD.village.npcs) if(vis(n.x,n.y,80)) list.push({npc:n,x:n.x,y:n.y}); list.sort((a,b)=>a.y-b.y);
   for(const e of list){
     if(e.npc){ drawNPC(c,e.npc,G.time); continue; }
     if(e.kind==='enemy'&&!e.alive){ drawRemains(c,e); continue; }
     if(e.kind==='enemy'&&e.hidden) continue;
-    if(e.kind==='player'){ if(e.alive){ if(e.spin&&e.spin.state&&e.spin.state!=='RECOVER') drawSpinPlayer(c,e); else drawNinja(c,e.ch,e,G.time); } continue; }
+    if(e.kind==='player'){ if(e.alive){ if(e.spin&&e.spin.state&&e.spin.state!=='RECOVER') drawSpinPlayer(c,e); else drawNinja(c,e.ch,e,G.time); } if(NET.on) drawNetTag(c,e); continue; }
     if(WORLD.frost&&G.haz&&G.haz.bliz.active>0&&m2InIce(p.x,p.y)&&!e.boss){ const d=dist(e,p); c.globalAlpha=d>192?clamp(1-(d-192)/120,0,1):1; if(c.globalAlpha<=0){ c.globalAlpha=1; continue; } }
     drawEnemy(c,e,G.time); c.globalAlpha=1;
     if(e.alive&&e.spawnT<=0&&!e.boss&&e.hp<e.maxHp){ c.fillStyle='rgba(0,0,0,.5)'; roundRect(c,e.x-16,e.y-40,32,5,2.5); c.fill(); c.fillStyle='#ef4444'; roundRect(c,e.x-15,e.y-39,30*clamp(e.hp/e.maxHp,0,1),3,1.5); c.fill(); }
@@ -3634,7 +3749,7 @@ function arenaUpdate(dt){ const F=G.arena, A=WORLD.arena, p=G.player; if(!F) ret
   else { F.time+=dt; if(F.fightFlash>0) F.fightFlash-=dt; if(A.id==='lord') lordArenaUpdate(dt); }
 }
 function arenaTick(raw){ const F=G.arena; if(!F||!F.over) return; F.overT+=raw;
-  if(F.over==='fail'&&F.overT>3){ const id=F.stage.id; leaveArena(); setState('BOSSLIST'); }
+  if(F.over==='fail'&&F.overT>1.6){ G.lastFail={stage:F.stage,bossLeft:F.bossLeft,time:F.time,chiSpent:F.chiSpent}; leaveArena(); showBossFail(); }
   if(F.over==='win'&&F.overT>3.2&&!F.claimed){ F.claimed=true; bfGrantRewards(F); showBossWin(F); } }
 function arenaFail(quiet){ const F=G.arena; if(!F||F.over) return; F.over='fail'; F.overT=0; F.bossLeft=G.boss&&G.boss.alive?Math.round(G.boss.hp/G.boss.maxHp*100):0; F.chiSpent=F.startChi-(SAVE.chi||0); save(); if(quiet){ leaveArena(); setState('BOSSLIST'); } }
 function arenaWin(e){ const F=G.arena; if(!F||F.over) return; F.over='win'; F.overT=0; G.slowmo=1.1; e.deadT=3; gemDrop(e.x,e.y,gemRoll(gemTableBoss(F.stage.n))); for(const o of G.enemies) if(o!==e&&o.alive){ o.alive=false; o.deadT=1; deathFx(o); } for(const q of G.projs) if(q.alive&&q.owner&&q.owner.kind!=='player') q.alive=false; G.groundFx=G.groundFx.filter(f=>!(f.kind==='shell'||f.kind==='strip'||f.kind==='aimshell'||f.kind==='venom')); const p=G.player; if(p){ p.drag=null; p.status={}; }   /* the moment the boss dies the fight is won: adds, shots and shells vanish */ shake(14); vibrate(300); SFX.death(); burst(e.x,e.y-20,['#fde047','#ffffff','#c8a878'],90,300,1.6,6,150,true); }
@@ -3677,8 +3792,9 @@ function openBossPre(st){ BF_SEL=st; const n=SAVE.selected, lv=SAVE.levels[n]; c
     +'<div class="rwrow"><span class="rwlab">STARS</span>'+[5,4,3,2].map((s,i)=>'<span class="rw"><b style="color:#fde047">'+'★'.repeat(s)+'</b> '+fmtT(st.stars[i])+'</span>').join('')+'</div>'
     +'<div class="rwrow"><span class="rwlab" style="color:#93c5fd">YOU BRING</span><span class="rw">'+(SAVE.chi||0)+' '+ic('chi')+'</span><span class="rw" style="color:#9ca3af;font-weight:700">Chi spent in a failed attempt is gone</span></div>';
   setState('BOSSPRE'); }
+function showBossFail(){ const L=G.lastFail; if(!L) return setState('BOSSLIST'); $('bfFailBoss').textContent=EN[L.stage.boss].name+' · '+L.stage.name; $('bfFailStats').innerHTML='<div class="rs"><span>Boss health left</span><b>'+L.bossLeft+'%</b></div><div class="rs"><span>Time</span><b>'+fmtT(L.time)+'</b></div>'+(L.chiSpent>0?'<div class="rs"><span>Chi spent</span><b>'+L.chiSpent+'</b></div>':'')+'<div class="rs"><span><i class="chiorb"></i> Your Chi</span><b>'+(SAVE.chi||0)+'</b></div>'; setState('BOSSFAIL'); }
 function showBossWin(F){ const r=F.rewards, st=F.stage; $('bfWinTime').innerHTML='<span style="color:#fde047;font-size:1.5em;letter-spacing:3px">'+starStr(r.stars)+'</span>'+(r.newStars?' <span class="bfok">NEW!</span>':'')+'<br>TIME <b>'+fmtT(F.time)+'</b>'+(r.newBest?' <span class="bfok">NEW BEST!</span>':'  ·  best '+fmtT(SAVE.bossFightBestTime[st.id]));
-  $('bfWinRewards').innerHTML='<div>✦ +1 Chi</div><div>⚡ +'+r.xp+' XP</div><div>🪙 +'+r.coins+' gold</div>'+(r.first?'<div class="bfok">FIRST CLEAR: +2 Chi · +1 Chi key</div>':''); setState('BOSSWIN'); }
+  $('bfWinRewards').innerHTML='<div class="rs good"><span><i class="chiorb"></i> Chi</span><b>+1</b></div><div class="rs good"><span>⚡ XP</span><b>+'+r.xp+'</b></div><div class="rs good"><span><img class="coinic" src="'+COIN_URI+'" alt=""> Gold</span><b>+'+r.coins+'</b></div>'+(r.first?'<div class="rs good"><span>First clear</span><b>+2 <i class="chiorb"></i> · +1 🔑</b></div>':''); setState('BOSSWIN'); }
 /* =====================================================================
    THE PIRATE LORD — third boss. One entity for the open world (beach) and Boss Fight stage 3.
    Drawing = LORD kit (boss-pirate-lord.html rig). Moves: Double Slash, Sword Whirl, Anchor Pull (+drag, +slash),
@@ -3810,8 +3926,8 @@ function lordArenaFx(c,ox,oy,vw,vh,t,vis,P){ const A=WORLD.arena, W=WORLD, live=
    MENUS, STATE MACHINE, CAMERA, MAIN LOOP
    ===================================================================== */
 const $=id=>document.getElementById(id);
-const OVS={NAME:'ovName',PROFILE:'ovProfile',DAILY:'ovDaily',SHOP:'ovShop',EQUIP:'ovEquip',GEMS:'ovGems',MENU:'ovMenu',MAP_SELECT:'ovMaps',CHARACTERS:'ovChars',SETTINGS:'ovSettings',PAUSED:'ovPause',DEAD:'ovDead',ABOUT:'ovAbout',BOSSLIST:'ovBossList',BOSSPRE:'ovBossPre',BOSSWIN:'ovBossWin'};
-function setState(s){ if(s==='PLAYING'&&G.state!=='PLAYING') menuMusicStop(); if(s!==G.state&&s!=='PLAYING'&&AUDIO.ctx&&!SPLASH.on) SFX.swoosh(); if(s!==G.state&&OVS[s]){ const el=$(OVS[s]); el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); } G.state=s; for(const k in OVS) $(OVS[k]).classList.toggle('on',k===s); if(s==='MENU'){ if(WORLD.arena) leaveArena(); G.player=null; G.map=null; } if(s==='BOSSLIST'){ if(WORLD.arena) leaveArena(); buildBossList(); }  if(s==='MAP_SELECT') buildMapList(); if(s==='CHARACTERS'){ CVIEW='grid'; VIEW=null; buildCards(); } if(s==='SETTINGS') buildSettings(); if(s==='PROFILE') buildProfile(); if(s==='DAILY') buildDaily(); if(s==='SHOP'){ $('shopMsg').textContent=''; buildShop(); } if(s==='EQUIP') buildEquipPicker(); if(s==='GEMS') buildGemPicker(); if(s==='MENU') dailyMenuBadge(); if(s==='NAME') nameOpen(); const pc=$('profCard'); if(pc){ const show=s==='MENU'||s==='MAP_SELECT'||s==='CHARACTERS'; pc.classList.toggle('on',show); pc.classList.toggle('mini',show&&s!=='MENU'); if(show) profileCardRefresh(); } if(s!=='PLAYING'){ sticks.L=sticks.R=null; touchMap.clear(); IN.mouse.aiming=false; IN.mouse.down=false; IN.fire=null; $('hint').style.display='none'; } else if(G.hintT>0) $('hint').style.display='block'; }
+const OVS={NAME:'ovName',PROFILE:'ovProfile',DAILY:'ovDaily',SHOP:'ovShop',EQUIP:'ovEquip',GEMS:'ovGems',COOP:'ovCoop',BOSSFAIL:'ovBossFail',MENU:'ovMenu',MAP_SELECT:'ovMaps',CHARACTERS:'ovChars',SETTINGS:'ovSettings',PAUSED:'ovPause',DEAD:'ovDead',ABOUT:'ovAbout',BOSSLIST:'ovBossList',BOSSPRE:'ovBossPre',BOSSWIN:'ovBossWin'};
+function setState(s){ if(s==='MENU'&&NET.on&&(G.state==='PLAYING'||G.state==='PAUSED'||G.state==='DEAD')) netLeave(); if(s==='COOP') coopReset(); if(s==='PLAYING'&&G.state!=='PLAYING') menuMusicStop(); if(s!==G.state&&s!=='PLAYING'&&AUDIO.ctx&&!SPLASH.on) SFX.swoosh(); if(s!==G.state&&OVS[s]){ const el=$(OVS[s]); el.classList.remove('in'); void el.offsetWidth; el.classList.add('in'); } G.state=s; for(const k in OVS) $(OVS[k]).classList.toggle('on',k===s); if(s==='MENU'){ if(WORLD.arena) leaveArena(); G.player=null; G.map=null; } if(s==='BOSSLIST'){ if(WORLD.arena) leaveArena(); buildBossList(); }  if(s==='MAP_SELECT') buildMapList(); if(s==='CHARACTERS'){ CVIEW='grid'; VIEW=null; buildCards(); } if(s==='SETTINGS') buildSettings(); if(s==='PROFILE') buildProfile(); if(s==='DAILY') buildDaily(); if(s==='SHOP'){ $('shopMsg').textContent=''; buildShop(); } if(s==='EQUIP') buildEquipPicker(); if(s==='GEMS') buildGemPicker(); if(s==='MENU') dailyMenuBadge(); if(s==='NAME') nameOpen(); const pc=$('profCard'); if(pc){ const show=s==='MENU'||s==='MAP_SELECT'||s==='CHARACTERS'; pc.classList.toggle('on',show); pc.classList.toggle('mini',show&&s!=='MENU'); if(show) profileCardRefresh(); } if(s!=='PLAYING'){ sticks.L=sticks.R=null; touchMap.clear(); IN.mouse.aiming=false; IN.mouse.down=false; IN.fire=null; $('hint').style.display='none'; } else if(G.hintT>0) $('hint').style.display='block'; }
 function togglePause(){ if(G.state==='PLAYING') setState('PAUSED'); else if(G.state==='PAUSED') setState('PLAYING'); }
 function toggleFullMap(){ if(G.state==='PLAYING') G.fullMap=!G.fullMap; }
 function showHint(t){ const h=$('hint'); if(!t){ h.style.display='none'; G.hintT=0; return; } if(WORLD.arena) return;   /* no hints at all during a Boss Fight */ h.textContent=t; h.style.display='block'; G.hintT=5; }
@@ -3881,7 +3997,14 @@ $('bNameRnd').onclick=()=>{ $('nameIn').value=randomName(); nameCheck(); if(SFX.
 $('bNameGo').onclick=()=>{ const v=$('nameIn').value.trim(); if(!nameValid(v)) return; SAVE.player=SAVE.player||{}; SAVE.player.name=v; save(); setState(G.nameFrom==='SETTINGS'?'SETTINGS':'MENU'); };
 $('bNameBack').onclick=()=>setState(G.nameFrom==='SETTINGS'?'SETTINGS':'MENU');
 $('bRename').onclick=()=>{ G.nameFrom='SETTINGS'; setState('NAME'); };
-$('bDaily').onclick=()=>setState('DAILY'); $('bGemsBack').onclick=()=>{ setState('CHARACTERS'); if(G.gemFor){ VIEW=G.gemFor.n; CVIEW='detail'; showCharDetail(G.gemFor.n); } }; $('gemPanel').onclick=gemPanelClose; $('bShopBack').onclick=()=>setState('PLAYING'); $('bEquipBack').onclick=()=>{ setState('CHARACTERS'); if(G.equipFor){ VIEW=G.equipFor; CVIEW='detail'; showCharDetail(G.equipFor); } }; $('bDailyBack').onclick=()=>setState('MENU');
+$('bDaily').onclick=()=>setState('DAILY');
+/* co-op screen */
+function coopReset(){ NET.test=!!window.__NET_TEST; $('coopCodeBox').style.display='none'; $('coopJoinBox').style.display='none'; $('coopMaps').innerHTML=''; $('coopPick').style.display='flex'; netStatus('Play the open world together. One of you creates a room and shares the code; the other joins and picks the map.'); }
+$('bCoop').onclick=()=>setState('COOP'); $('bCoopBack').onclick=()=>{ netLeave(); setState('MENU'); };
+$('bCoopCreate').onclick=()=>{ $('coopPick').style.display='none'; netCreate(); };
+$('bCoopJoinOpen').onclick=()=>{ $('coopPick').style.display='none'; $('coopJoinBox').style.display=''; setTimeout(()=>{ try{ $('coopCodeIn').focus(); }catch(e){} },50); };
+$('bCoopJoin').onclick=()=>netJoin($('coopCodeIn').value); $('coopCodeIn').onkeydown=e=>{ e.stopPropagation(); if(e.key==='Enter') netJoin($('coopCodeIn').value); }; $('coopCodeIn').onkeyup=e=>e.stopPropagation();
+$('bfFailRetry').onclick=()=>{ const L=G.lastFail; if(L) openBossPre(L.stage); else setState('BOSSLIST'); }; $('bfFailList').onclick=()=>setState('BOSSLIST'); $('bfFailMenu').onclick=()=>setState('MENU'); $('bGemsBack').onclick=()=>{ setState('CHARACTERS'); if(G.gemFor){ VIEW=G.gemFor.n; CVIEW='detail'; showCharDetail(G.gemFor.n); } }; $('gemPanel').onclick=gemPanelClose; $('bShopBack').onclick=()=>setState('PLAYING'); $('bEquipBack').onclick=()=>{ setState('CHARACTERS'); if(G.equipFor){ VIEW=G.equipFor; CVIEW='detail'; showCharDetail(G.equipFor); } }; $('bDailyBack').onclick=()=>setState('MENU');
 $('profCard').onclick=()=>{ G.profFrom=G.state; setState('PROFILE'); };
 $('bProfBack').onclick=()=>setState(OVS[G.profFrom]&&G.profFrom!=='PROFILE'?G.profFrom:'MENU');
 $('bSetBack').onclick=()=>{ if(G.settingsFrom==='PAUSED'&&G.map){ G.settingsFrom=null; setState('PAUSED'); } else setState('MENU'); }; $('bDeadMenu').onclick=()=>{ save(); setState('MENU'); }; $('bQuit').onclick=()=>{ if(WORLD.arena&&G.arena&&!G.arena.over){ if(!confirm('Leaving cancels the attempt — leave?')) return; arenaFail(true); return; } save(); setState('MENU'); }; $('bResume').onclick=()=>setState('PLAYING'); $('bSwitch').onclick=()=>{ if(!G.player||!G.player.alive) return; G.charsFrom='GAME'; setState('CHARACTERS'); }; $('bPauseSettings').onclick=()=>{ G.settingsFrom='PAUSED'; setState('SETTINGS'); };
@@ -3914,12 +4037,13 @@ function camUpdate(dt,p){
   G.camZoom=lerp(G.camZoom||1,(G.boss&&G.boss.alive&&dist(G.boss,p)<1000)?.86:1,1-Math.pow(.1,dt));   // pull back a little so the whole boss fits
 }
 const STEP=1/60; let last=0, acc=0;
-function update(dt){ G.time+=dt; SAVE.playTime=(SAVE.playTime||0)+dt; const p=G.player; playerUpdate(p,dt); for(const q of G.projs) if(q.alive) projUpdate(q,dt,p); worldUpdate(dt); fxUpdate(dt); gemsUpdate(dt); gemTrailUpdate(p,dt); camUpdate(dt,p); }
+function update(dt){ G.time+=dt; SAVE.playTime=(SAVE.playTime||0)+dt; const p=G.player; playerUpdate(p,dt); if(NET.host){ netHostUpdate(dt); if(!p.alive){ p.respawnT=(p.respawnT||4)-dt; if(p.respawnT<=0) respawn(); } } for(const q of G.projs) if(q.alive) projUpdate(q,dt,netTarget(q,p)); worldUpdate(dt); fxUpdate(dt); gemsUpdate(dt); gemTrailUpdate(p,dt); camUpdate(dt,p); }
 function frame(now){
   requestAnimationFrame(frame); const raw=Math.min(.1,(now-last)/1000)||0; last=now; G.frames++; G.fpsT+=raw; if(G.fpsT>=1){ G.fps=G.frames; G.frames=0; G.fpsT-=1; }
-  if(G.state==='PLAYING'){ pollInput(); let ts=1; if(G.hitstop>0){ G.hitstop-=raw; ts=.06; } if(G.slowmo>0){ G.slowmo-=raw; ts=Math.min(ts,.5); }   // key drop: brief slow motion
+  if(G.state==='PLAYING'&&NET.guest&&NET.on){ netGuestFrame(raw); musicTick(raw); if(G.hintT>0){ G.hintT-=raw; if(G.hintT<=0) $('hint').style.display='none'; } }
+  else if(G.state==='PLAYING'){ pollInput(); let ts=1; if(G.hitstop>0){ G.hitstop-=raw; ts=.06; } if(G.slowmo>0){ G.slowmo-=raw; ts=Math.min(ts,.5); }   // key drop: brief slow motion
     if(G.levelFx){ const f=G.levelFx; f.t+=raw; $('hint').style.visibility='hidden'; if(f.t>=f.dur) $('hint').style.visibility=''; if(!f.short){ ts=f.t<.3?.15:f.t<f.dur-.4?0:Math.min(ts,(f.t-(f.dur-.4))/.4); } if(f.t>=f.dur) G.levelFx=null; }   // level-up: freeze frame, pause, fade back in (shortened during a boss fight)
-    if(G.hudGold>0) G.hudGold-=raw; if(G.arena&&G.arena.over){ arenaTick(raw); if(G.state!=='PLAYING'||!G.player){ render(); return; } if(G.arena&&G.arena.over==='fail'&&G.arena.overT>.6) ts=0; } acc+=raw*ts; let n=0; while(acc>=STEP&&n<4){ update(STEP); acc-=STEP; n++; } if(n===4) acc=0; musicTick(raw); if(G.hintT>0){ G.hintT-=raw; if(G.hintT<=0) $('hint').style.display='none'; } }
+    if(G.hudGold>0) G.hudGold-=raw; if(G.arena&&G.arena.over){ arenaTick(raw); if(G.state!=='PLAYING'||!G.player){ render(); return; } if(G.arena&&G.arena.over==='fail'&&G.arena.overT>.6) ts=0; } acc+=raw*ts; let n=0; while(acc>=STEP&&n<4){ update(STEP); acc-=STEP; n++; } if(n===4) acc=0; musicTick(raw); netHostTick(raw); if(G.hintT>0){ G.hintT-=raw; if(G.hintT<=0) $('hint').style.display='none'; } }
   if(G.state!=='PLAYING') menuMusicTick(raw);   /* menu music also under the loading screen (as soon as the browser lets audio run) */
   render();
 }
