@@ -1471,7 +1471,7 @@ function gemCountOwned(){ gemInit(); return SAVE.gems.owned.length; }
 /* ---------- drop tables: Map 1 is tier 1, one multiplier rule per tier ---------- */
 const GEM_CAP=25;
 function gemTableCommon(tier){ const k=Math.pow(1.35,tier-1); const t={green:.8*k,orange:.15*k,purple:.05*k,red:tier>=3?.01*k:0,gold:tier>=5?.002*k:0}; for(const r in t) t[r]=Math.min(GEM_CAP,t[r]); const total=Math.min(100,3.5+.5*(tier-1)); let rest=total; for(const r in t) rest-=t[r]; t.grey=Math.max(0,Math.min(GEM_CAP,rest)); return t; }
-function gemTableBoss(tier){ const t={orange:12.95*Math.pow(1.25,tier-1),purple:3*Math.pow(1.4,tier-1),red:1*Math.pow(1.5,tier-1),gold:.05*Math.pow(1.6,tier-1)}; for(const r in t) t[r]=Math.min(GEM_CAP,t[r]); let rest=100; for(const r in t) rest-=t[r]; t.grey=rest*55/83; t.green=rest*28/83; return t; }
+function gemTableBoss(tier){ const t={orange:12.95*Math.pow(1.25,tier-1),purple:1.5*Math.pow(1.4,tier-1),red:.4*Math.pow(1.5,tier-1),gold:.02*Math.pow(1.6,tier-1)};   /* Epic / Mythic / Legendary halved and lower: a boss usually pays in Common to Rare */ for(const r in t) t[r]=Math.min(GEM_CAP,t[r]); let rest=100; for(const r in t) rest-=t[r]; t.grey=rest*55/83; t.green=rest*28/83; return t; }
 function gemRoll(table){ const x=Math.random()*100; let acc=0; for(const r of ['gold','red','purple','orange','green','grey']){ acc+=table[r]||0; if(x<acc) return r; } return null; }
 const BOSS_RANK={hippo:1,croc:2,lord:3,titan:4,yeti:5};   /* the rarer the boss, the better its gem table (and its gold) */
 function bossGemTier(type){ return BOSS_RANK[type]||gemTier(); }
