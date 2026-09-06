@@ -2960,11 +2960,11 @@ function drawCoatWorn(c,ch,anim,at,face,s,x,y,t,bliz){ const C=ISC; const img=sp
    ===================================================================== */
 const SPIN_CD=25;   /* seconds between Spinjitzus */
 const SPIN={
- CLAY:  {ring:['#e0b96a','#c89a4e','#8a6a34'], core:'#fff0c0', suit:'#5b3a1c', head:'#f1c39c', eye:'#ffcc33', extra:'rocks',  dur:9.0, rad:1.9, pct:110, tick:4, spd:20, dr:75, regen:2.5},
- BECK:  {ring:['#4fd0ff','#1f9a8a','#bffaff'], core:'#ffffff', suit:'#1c3f7a', head:'#9fc8e8', eye:'#33e0ff', extra:'drops',  dur:5.0, rad:1.1, pct:100, tick:7, spd:80, dr:50, regen:1.5},
- BOREAS:{ring:['#9ff0ff','#7fd4ff','#ffffff'], core:'#eaffff', suit:'#c9d3dd', head:'#c8dcec', eye:'#66e0ff', extra:'shards', dur:8.0, rad:1.7, pct:120, tick:5, spd:30, dr:60, regen:2},
- APOLLO:{ring:['#ff7a1a','#ffd23f','#e03a10'], core:'#fff0a0', suit:'#a8101c', head:'#f1c39c', eye:'#ff2020', extra:'sparks', dur:4.5, rad:1.2, pct:130, tick:5, spd:40, dr:35, regen:1},
- SHADE: {ring:['#a040ff','#6a2fbf','#e0b0ff'], core:'#f0d0ff', suit:'#2a1a3a', head:'#2a1a3a', eye:'#c060ff', extra:'wisps',  dur:7.0, rad:1.4, pct:140, tick:5, spd:45, dr:60, regen:2},
+ CLAY:  {ring:['#e0b96a','#c89a4e','#8a6a34'], core:'#fff0c0', suit:'#5b3a1c', head:'#f1c39c', eye:'#ffcc33', extra:'rocks',  dur:9.0, rad:1.9, pct:60, tick:4, spd:20, dr:75, regen:2.5},
+ BECK:  {ring:['#4fd0ff','#1f9a8a','#bffaff'], core:'#ffffff', suit:'#1c3f7a', head:'#9fc8e8', eye:'#33e0ff', extra:'drops',  dur:5.0, rad:1.1, pct:48, tick:7, spd:80, dr:50, regen:1.5},
+ BOREAS:{ring:['#9ff0ff','#7fd4ff','#ffffff'], core:'#eaffff', suit:'#c9d3dd', head:'#c8dcec', eye:'#66e0ff', extra:'shards', dur:8.0, rad:1.7, pct:58, tick:5, spd:30, dr:60, regen:2},
+ APOLLO:{ring:['#ff7a1a','#ffd23f','#e03a10'], core:'#fff0a0', suit:'#a8101c', head:'#f1c39c', eye:'#ff2020', extra:'sparks', dur:4.5, rad:1.2, pct:53, tick:5, spd:40, dr:35, regen:1},
+ SHADE: {ring:['#a040ff','#6a2fbf','#e0b0ff'], core:'#f0d0ff', suit:'#2a1a3a', head:'#2a1a3a', eye:'#c060ff', extra:'wisps',  dur:7.0, rad:1.4, pct:67, tick:5, spd:45, dr:60, regen:2},
 };
 const TILE_PX=32;   // one "tile" in world units
 const SPIN_VIS_RS=1.2/1.4;   // fixed tornado size for all ninjas
@@ -3123,7 +3123,7 @@ function spinUpdate(p,dt){
 function spinTick(p,C,n){
   const R=C.rad*TILE_PX; let base=p.dmg*C.pct/100;
   for(const e of liveEnemies()){ if(!inCircle(e,p.x,p.y,R)) continue; let dmg=base, o={noKb:true,kb:0,noHitstop:true,noBlock:true,spin:true,color:C.ring[2]};   // Spinjitzu never pushes enemies: they stay in place
-    if(e.boss) dmg*=.7;   /* bosses take 70% of the spin (it used to be half): about twice the basic attack's damage per second, plus the invulnerability */
+    if(e.boss) dmg*=.85;   /* Spinjitzu: 20% more than the basic attack per second on regular enemies; bosses take 85% of it */
     if(p.name==='SHADE'&&n%5===0){ dmg*=2; o.crit=true; }
     if(p.name==='BECK'&&Math.random()<.2){ damage(e,dmg,p,o); }
     if(p.name==='BOREAS'){ addStatus(e,'freeze',.7); addStatus(e,'slow',2); }
