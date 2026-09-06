@@ -366,6 +366,7 @@
   .val.gemv,.gemv{color:#4ade80!important}
   #gemFlash{display:none}
   @keyframes gemflash{0%{opacity:.55}100%{opacity:0}}
+  .gembtns{display:flex;flex-direction:column;gap:5px;align-items:stretch} .btn.sm.sell{padding:4px 8px;font-size:10px;background:linear-gradient(180deg,#f59e0b,#b45309);border-color:#fde68a;display:flex;align-items:center;justify-content:center;gap:3px}
   .gemitem{border-color:var(--g)} .gemic{border-color:var(--g)} .gemcol{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:12px}
 </style>
 </head>
@@ -1467,6 +1468,9 @@ function gemUnequip(n,type){ gemInit(); SAVE.gemSlots[n][type]=null; save(); if(
 function gemBonus(n,type){ const g=gemWorn(n,type); return g?GEM_RAR[GEM_RI[g.rar]].bonus:0; }
 function gemMult(n,type){ return 1+gemBonus(n,type)/100; }
 function gemRarest(n){ let best=-1; for(const t of ['atk','hp']){ const g=gemWorn(n,t); if(g) best=Math.max(best,GEM_RI[g.rar]); } return best<0?null:GEM_RAR[best]; }
+/* selling: gold for a gem, deliberately not much */
+const GEM_SELL={grey:25,green:60,orange:150,purple:350,red:800,gold:2000};
+function gemSell(id){ const g=gemCopy(id); if(!g) return 0; const w=gemWearer(id); if(w) SAVE.gemSlots[w][g.type]=null; SAVE.gems.owned=SAVE.gems.owned.filter(x=>x.id!==id); const gold=GEM_SELL[g.rar]||0; SAVE.gold+=gold; save(); if(w&&G.player&&G.player.name===w) refreshPlayerStats(G.player,false); return gold; }
 function gemCountOwned(){ gemInit(); return SAVE.gems.owned.length; }
 /* ---------- drop tables: Map 1 is tier 1, one multiplier rule per tier ---------- */
 const GEM_CAP=25;
@@ -1503,7 +1507,7 @@ function gemPanelOpen(s){ const el=$('gemPanel'), cv2=$('gemPanelCv'), R=s.R, T=
   if(GEM_PANEL_TO) clearTimeout(GEM_PANEL_TO); GEM_PANEL_TO=setTimeout(gemPanelClose,2000); }
 function gemPanelClose(){ G.gemShow=null; const el=$('gemPanel'); if(el) el.className=''; if(GEM_PANEL_TO){ clearTimeout(GEM_PANEL_TO); GEM_PANEL_TO=null; } }
 /* what a gem adds to this ninja in plain numbers (the characters screen shows the number, not the percent) */
-function gemAddedFor(n,type,rar){ const ch=CH[n], lv=SAVE.levels[n]||1, pct=GEM_RAR[GEM_RI[rar]].bonus/100, plv=playerLevel(); const base=type==='hp'?ch.hp*LV_MULT(lv)*PLV_MULT(plv):ch.dmg*LV_DMG(lv)*PLV_MULT(plv); return Math.round(base*pct); }
+function gemAddedFor(n,type,rar){ const ch=CH[n], lv=SAVE.levels[n]||1, pct=GEM_RAR[GEM_RI[rar]].bonus/100, plv=playerLevel(); const base=type==='hp'?ch.hp*LV_MULT(lv)*PLV_MULT(plv):ch.dmg*LV_DMG(lv)*PLV_MULT(plv); const v=base*pct; return v<1?Math.round(v*10)/10:Math.round(v); }   /* tiny bonuses show one decimal instead of +0 */
 /* ---------- trail (from gemtrails.html): ribbon, rising motes, orbiting sparks ---------- */
 const GEM_TRAIL={path:[],motes:[],orb:0,pool:[]};
 function gemTrailReset(){ GEM_TRAIL.path.length=0; GEM_TRAIL.motes.length=0; }
@@ -1557,8 +1561,9 @@ function gemAura(po,R){ if(!po) return; po.querySelectorAll('.aurap,.auraspark')
 function buildGemPicker(){ gemInit(); const {n,type}=G.gemFor, T=GEM_TYPES[type], cur=SAVE.gemSlots[n][type], el=$('gemList'); $('gemTitle').textContent=n+' · '+T.label.toUpperCase();
   const list=SAVE.gems.owned.filter(g=>g.type===type).sort((a,b)=>GEM_RI[b.rar]-GEM_RI[a.rar]); let h='';
   if(!list.length) h+='<div class="dnote">No '+T.name.toLowerCase()+' gems yet. Gems drop from enemies (rarely) and from every boss kill.</div>';
-  for(const g of list){ const R=GEM_RAR[GEM_RI[g.rar]], w=gemWearer(g.id), mine=g.id===cur; h+=`<div class="eqitem gemitem ${mine?'on':''}" data-id="${g.id}" style="--g:${R.glow}"><div class="eqic gemic"></div><div class="eqbody"><div class="eqname" style="color:${R.glow}">${R.name}</div><div class="eqdesc">+${gemAddedFor(n,type,g.rar)} ${T.stat} for ${n}</div><div class="eqwho">${mine?'EQUIPPED ON '+n:w?'worn by '+w+' · tap to move here':'in inventory'}</div></div><div class="btn sm ${mine?'':'primary'}">${mine?'REMOVE':'EQUIP'}</div></div>`; }
-  el.innerHTML=h; el.querySelectorAll('.gemitem').forEach(d=>{ const g=gemCopy(d.dataset.id); d.querySelector('.gemic').appendChild(gemCanvas(GEM_RAR[GEM_RI[g.rar]],g.type,52,false,.3)); d.onclick=()=>{ if(g.id===SAVE.gemSlots[n][type]) gemUnequip(n,type); else gemEquip(n,g.id); SFX.key(); buildGemPicker(); }; }); }
+  for(const g of list){ const R=GEM_RAR[GEM_RI[g.rar]], w=gemWearer(g.id), mine=g.id===cur; h+=`<div class="eqitem gemitem ${mine?'on':''}" data-id="${g.id}" style="--g:${R.glow}"><div class="eqic gemic"></div><div class="eqbody"><div class="eqname" style="color:${R.glow}">${R.name}</div><div class="eqdesc">+${gemAddedFor(n,type,g.rar)} ${T.stat} for ${n}</div><div class="eqwho">${mine?'EQUIPPED ON '+n:w?'worn by '+w+' · tap to move here':'in inventory'}</div></div><div class="gembtns"><div class="btn sm ${mine?'':'primary'}">${mine?'REMOVE':'EQUIP'}</div><div class="btn sm sell" data-sell="${g.id}"><img class="coinic" src="${COIN_URI}" alt=""> SELL ${GEM_SELL[g.rar]}</div></div></div>`; }
+  el.innerHTML=h; el.querySelectorAll('.gemitem').forEach(d=>{ const g=gemCopy(d.dataset.id); d.querySelector('.gemic').appendChild(gemCanvas(GEM_RAR[GEM_RI[g.rar]],g.type,52,false,.3)); d.onclick=()=>{ if(g.id===SAVE.gemSlots[n][type]) gemUnequip(n,type); else gemEquip(n,g.id); SFX.key(); buildGemPicker(); };
+    d.querySelector('[data-sell]').onclick=ev=>{ ev.stopPropagation(); const R=GEM_RAR[GEM_RI[g.rar]]; if(GEM_RI[g.rar]>=3&&!confirm('Sell this '+R.name+' gem for '+GEM_SELL[g.rar]+' gold?')) return; const got=gemSell(g.id); SFX.coin(); $('gemTitle').textContent=n+' · SOLD FOR '+got+' GOLD'; setTimeout(buildGemPicker,600); }; }); }
 function gemCollectionHtml(){ gemInit(); const f=SAVE.gems.found; return GEM_RAR.map(R=>`<span style="color:${R.glow}">${R.name} <b>${f[R.key]||0}</b></span>`).join(' · '); }
 /* =====================================================================
    WORLD — "Bone Shore": one connected hand-shaped world.
