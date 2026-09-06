@@ -1567,7 +1567,7 @@ function buildGemPicker(){ gemInit(); const {n,type}=G.gemFor, T=GEM_TYPES[type]
 function gemCollectionHtml(){ gemInit(); const f=SAVE.gems.found; return GEM_RAR.map(R=>`<span style="color:${R.glow}">${R.name} <b>${f[R.key]||0}</b></span>`).join(' · '); }
 
 /* ---------- the Ice Shop's gems: two a day, up to Epic, rolled with odds, reset at midnight, the same gem can show twice ---------- */
-const GEM_SHOP_ODDS={grey:45,green:32,orange:17,purple:6}, GEM_BUY={grey:300,green:700,orange:1800,purple:4500};
+const GEM_SHOP_ODDS={grey:45,green:32,orange:17,purple:6}, GEM_BUY={grey:600,green:1500,orange:4000,purple:10000};   /* expensive but fair: about the price of a level; buying is a choice, not a bargain */
 function gemShopCheck(){ const day=new Date().toDateString(); if(SAVE.shopGems&&SAVE.shopGems.day===day&&SAVE.shopGems.items&&SAVE.shopGems.items.length===2) return; const R=dailySeed(day+'|iceshop'), items=[];
   for(let i=0;i<2;i++){ const x=R()*100; let acc=0, rar='grey'; for(const r of ['purple','orange','green','grey']){ acc+=GEM_SHOP_ODDS[r]; if(x<acc){ rar=r; break; } } items.push({type:R()<.5?'atk':'hp',rar,sold:false}); }
   SAVE.shopGems={day,items}; save(); }
