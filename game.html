@@ -3112,9 +3112,10 @@ function spinBusy(p){ return !!(p&&p.spin&&(p.spin.state==='FLASH'||p.spin.state
 function startSpinjitzu(p){
   if(!p||!p.alive||G.state!=='PLAYING') return; if(p.spin&&p.spin.state){ return; }
   if((SAVE.chi||0)<1){ showHint('No Chi — enemies drop it'); G.chiShake=.4; SFX.block(); return; }
+  if(WORLD.arena&&G.arena&&G.arena.spinUsed){ showHint('Boss Fight: Spinjitzu only once per fight'); G.chiShake=.4; SFX.block(); return; }   /* one Spinjitzu per Boss Fight */
   if(p.spinCd>0){ showHint('Spinjitzu recharging — '+Math.ceil(p.spinCd)+' s'); G.chiShake=.4; SFX.block(); return; }
   if(inSafeZone(p.x,p.y)){ showHint('Leave the blue circle to fight'); return; }
-  dailyEvent('spin');
+  dailyEvent('spin'); if(WORLD.arena&&G.arena) G.arena.spinUsed=true;
   SAVE.chi--; save(); p.spinCd=SPIN_CD; const C=SPIN[p.name]; p.spin={state:'FLASH',t:.5,C,tickT:0,ticks:0,loopT:0,tot:.5}; p.vx=p.vy=0; p.queued=null; p.hidden=false; p.hideT=0;
   SFX.spinCharge(); G.zoomPulse=1.08; CAM.flashDim=1;
 }
@@ -3184,14 +3185,15 @@ function groundFxUpdate(dt){ for(let i=G.groundFx.length-1;i>=0;i--){ const f=G.
   if(f.kind==='venom'){ const p=G.player; if(p&&p.alive&&inCircle(p,f.x,f.y,f.r)){ addStatus(p,'poison',3); addStatus(p,'spore',.25); } if(G.state==='PLAYING'&&Math.random()<.15) part(f.x+rnd(-f.r,f.r)*.8,f.y+rnd(-f.r,f.r)*.4,0,-20,Math.random()<.5?'#4ade80':'#bbf7d0',.6,2.5,-10,true); }   // poison puddle: poison + slow, bubbling   // slows the player 20% while standing in it
   if(f.kind==='scorch') for(const e of liveEnemies()) if(inCircle(e,f.x,f.y,f.r)&&!e.status.burn) addStatus(e,'burn',2,{dps:4,stacks:1}); } }
 function drawChiSlot(c,b,p){
-  const cd=p.spinCd||0, has=(SAVE.chi||0)>0&&cd<=0, busy=spinBusy(p)||(p.spin&&p.spin.state); const sh=G.chiShake>0?Math.sin(G.time*60)*3:0; if(G.chiShake>0) G.chiShake-=1/60;
+  const used=!!(WORLD.arena&&G.arena&&G.arena.spinUsed), cd=used?0:(p.spinCd||0), has=(SAVE.chi||0)>0&&cd<=0&&!used, busy=spinBusy(p)||(p.spin&&p.spin.state); const sh=G.chiShake>0?Math.sin(G.time*60)*3:0; if(G.chiShake>0) G.chiShake-=1/60;
   c.save(); c.translate(b.x+sh,b.y); c.scale(2,2); g=c;
   const glow=has&&!busy&&Math.sin(G.time*5)>0; c.lineWidth=1.2; c.strokeStyle=has?(glow?'#bff0ff':'#4fb0e8'):'#2a3a4a'; c.beginPath(); c.arc(0,0,14,0,TAU); c.stroke(); if(glow){ c.strokeStyle='rgba(79,176,232,.6)'; c.lineWidth=1; c.beginPath(); c.arc(0,0,15.3,0,TAU); c.stroke(); }
   rect(-9,-9,18,18,'#132030');
   if(has){ chiOrb(0,0,G.time); c.fillStyle='#bff0ff'; c.font='7px monospace'; c.textAlign='center'; c.fillText('x'+SAVE.chi,11,13); }
   else if(cd>0&&(SAVE.chi||0)>0){ c.globalAlpha=.35; chiOrb(0,0,G.time); c.globalAlpha=1; c.strokeStyle='#4fb0e8'; c.lineWidth=1.6; c.beginPath(); c.arc(0,0,14,-Math.PI/2,-Math.PI/2+TAU*(1-cd/SPIN_CD)); c.stroke(); c.fillStyle='#bff0ff'; c.font='7px monospace'; c.textAlign='center'; c.fillText(Math.ceil(cd)+'s',0,3); c.fillText('x'+SAVE.chi,11,13); }   /* recharging: dim orb, ring wipes clockwise, seconds left */
+  else if(used){ c.globalAlpha=.3; chiOrb(0,0,G.time); c.globalAlpha=1; c.fillStyle='#fca5a5'; c.font='7px monospace'; c.textAlign='center'; c.fillText('USED',0,3); }
   else { c.fillStyle='#3a4a5a'; c.font='7px monospace'; c.textAlign='center'; c.fillText('CHI',0,3); }
-  c.restore(); c.font='800 9px Arial'; c.textAlign='center'; c.fillStyle=has?'#7fd8f8':'rgba(255,255,255,.35)'; c.fillText('SPINJITZU',b.x,b.y+b.r+12);
+  c.restore(); c.font='800 9px Arial'; c.textAlign='center'; c.fillStyle=has?'#7fd8f8':'rgba(255,255,255,.35)'; c.fillText(used?'1 PER FIGHT':'SPINJITZU',b.x,b.y+b.r+12);
 }
 /* =====================================================================
    FX2 — the hand-made pixel effects from allanimations.html, ported into the game's PIX space
