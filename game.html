@@ -1129,17 +1129,17 @@ function checkUnlocks(){ SAVE.ready=SAVE.ready||{}; for(const n in QUESTS) if(!S
 /* Maps: level range gate + tier for enemy scaling. Map layout lives in WORLD. */
 const MAPS=[{id:'bone_shore',name:'Bone Shore',plv:1,lvl:[1,9],tier:0,bosses:'Hippo · Crocodile · Pirate Lord',desc:'Village in the centre, forest all around, mushroom clusters in the forest, pirate wrecks on the eastern beach, insect nests in the swamp to the south, river to the north.'},
             {id:'frost_ember',name:'Frost & Ember',plv:8,lvl:[9,17],tier:0,bosses:'Magma Titan · The Yeti',desc:'A frozen west and a volcanic east split by a winding seam, the village on the seam. Eruptions rain lava bombs on the ember side; blizzards slow everyone but BOREAS on the frost side. Seven hidden areas hold Chi chests. More XP and gold.'},{id:'map3',name:'Map 3',plv:16,lvl:[19,30],tier:2,bosses:'?',desc:'Coming soon',locked:true}];
-const TIERS=[{hp:1,dmg:1},{hp:2.2,dmg:1.9},{hp:4.5,dmg:3.2},{hp:8,dmg:5}];
 /* enemy roster (sprite = index into ENEMIES from enemies-pixel.html). Common enemies are locked to one biome each; atk = seconds between swings.
    Tuned to ninja levels (damage x1.12 / x1.57 / x1.97 / x2.48 of base for LV 2 / 5 / 7 / 9): Mushroom = LV 2, Insect Priest = LV 5, Pirate = LV 7;
    Hippo = LV 5 (hard at 5), Crocodile = LV 7 (hard at 7), Pirate Lord = LV 9 (still a fight at 9). Nothing scales with the ninja's level. */
+/* enemy table. Stats come from statsFor(): world-1 commons carry a class (+modifiers), the Titan and the Yeti sit on BOSS_LADDER; the rest keep their own numbers for now */
 const EN={
-  mush:  {hp:50, dmg:9, spd:118,r:14,range:46,atk:1.2,coins:[5,8],gold:[10,16],xp:12,sprite:0,scale:1.5,biome:'forest',name:'MUSHROOM'},
-  priest:{hp:54, dmg:16,spd:197,r:13,range:44,atk:.8, coins:[6,8],gold:[30,44],xp:22,sprite:1,scale:1.5,biome:'swamp', name:'INSECT PRIEST'},
-  pirate:{hp:127,dmg:15,spd:104,r:15,range:50,atk:1.3,coins:[6,8],gold:[20,30],xp:20,sprite:2,scale:1.5,biome:'beach', name:'PIRATE'},
+  mush:  {cls:'weak',world:1,spd:118,r:14,range:46,atk:1.2,coins:[5,8],gold:[10,16],xp:12,sprite:0,scale:1.5,biome:'forest',name:'MUSHROOM'},
+  priest:{cls:'normal',mods:['fast'],world:1,spd:141,r:13,range:44,atk:.8, coins:[6,8],gold:[30,44],xp:22,sprite:1,scale:1.5,biome:'swamp', name:'INSECT PRIEST'},
+  pirate:{cls:'normal',mods:['tanky'],world:1,spd:130,r:15,range:50,atk:1.3,coins:[6,8],gold:[20,30],xp:20,sprite:2,scale:1.5,biome:'beach', name:'PIRATE'},
   /* Frost & Ember regular enemies: the Magma Golem is built for a level-11 ninja, the Wolf Warrior for level 14; both stay inside their own half */
-  titan:{hp:18000,dmg:68,spd:82, r:46,range:112,coins:[50,50],gold:[1100,1100],boss:true,name:'MAGMA TITAN',rig:true,big:true,scale:1.4,adds:'golem',xpBoss:800,biome:'ember'},
-  yeti: {hp:29500,dmg:82,spd:104,r:46,range:118,coins:[60,60],gold:[1400,1400],boss:true,name:'THE YETI',rig:true,big:true,scale:1.45,adds:'wolf',xpBoss:900,biome:'frost'},
+  titan:{spd:82, r:46,range:112,coins:[50,50],gold:[1100,1100],boss:true,name:'MAGMA TITAN',rig:true,big:true,scale:1.4,adds:'golem',xpBoss:800,biome:'ember'},
+  yeti: {spd:104,r:46,range:118,coins:[60,60],gold:[1400,1400],boss:true,name:'THE YETI',rig:true,big:true,scale:1.45,adds:'wolf',xpBoss:900,biome:'frost'},
   golem:{hp:420,dmg:34,spd:92, r:15,range:50,atk:1.4,coins:[8,12],gold:[24,36],xp:26,rig:true,scale:1.5,biome:'ember',name:'MAGMA GOLEM'},
   wolf: {hp:520,dmg:44,spd:178,r:13,range:46,atk:1.0,coins:[9,13],gold:[40,56],xp:34,rig:true,scale:1.5,biome:'frost',name:'WOLF WARRIOR'},
   /* World 2 mobs (mobs2.js): the Lava Imp is born from lava bombs during eruptions (level 11); the Ice Fox lives in dens deep in the frost (level 15). Both too light to be staggered by normal hits */
@@ -1305,11 +1305,47 @@ function buildProfile(){ const el=$('profBody'); const plv=playerLevel(), lo=plv
   const B=SAVE.bosses||{}, names={hippo:'Hippo',croc:'Crocodile',lord:'Pirate Lord',titan:'Magma Titan',yeti:'The Yeti'};
   h+=`<div class="pgrid"><div class="pbox"><div class="psec">RECORD</div><div>Total kills: <b>${SAVE.kills||0}</b></div><div>Playtime: <b>${fmtTime(SAVE.playTime)}</b></div><div>Secrets found: <b>${secretsFound()} / ${SECRETS_TOTAL}</b></div><div>Account XP: <b>${SAVE.xpTotal||0}</b></div></div>`;
   h+=`<div class="pbox"><div class="psec">BOSSES DEFEATED</div>${Object.keys(names).map(k=>`<div>${names[k]}: <b>${B[k]||0}</b></div>`).join('')}</div>`;
-  const bt=SAVE.bossFightBestTime||{}; h+=`<div class="pbox"><div class="psec">BOSS FIGHT BEST TIMES</div>${BF_STAGES.map(s=>`<div>${s.name}: <b>${bt[s.id]?bt[s.id].toFixed(1)+'s':'—'}</b>${(SAVE.bossFightStars&&SAVE.bossFightStars[s.id])?' '+'★'.repeat(SAVE.bossFightStars[s.id]):''}</div>`).join('')}</div></div>`;
+  const bt=SAVE.bossFightBestTime||{}; h+=`<div class="pbox"><div class="psec">BOSS FIGHT BEST TIMES</div>${BF_STAGES.map(s=>`<div>${s.name}: <b>${bt[s.id]?bt[s.id].toFixed(1)+'s':'—'}</b></div>`).join('')}</div></div>`;
   el.innerHTML=h; el.querySelector('.pport').appendChild(charCanvas(CH[SAVE.selected],false,3,88,104,.97)); }
 /* ---- save defaults for older saves ---- */
 function migrateSave(){ SAVE.player=SAVE.player||{name:''}; for(const n of ORDER) SAVE.levels[n]=Math.min(MAX_LV,Math.max(1,SAVE.levels[n]||1)); }
 migrateSave(); gemInit();
+/* =====================================================================
+   STAT SYSTEM — the only place enemy and boss numbers live.
+   World base × class × modifiers for common enemies, a ninja-level ladder for bosses,
+   attack tiers instead of per-attack numbers, hazards in one table. worldTable() prints it all.
+   ===================================================================== */
+const WORLD_BASE={1:{hp:140,dmg:16},2:{hp:490,dmg:26}};   /* world 1 = 2.0× the old numbers; from world 2 on, growth per world is HP ×2.8, damage ×1.6 → world 3 would be {hp:1372,dmg:41} */
+const CLASSES={weak:{hp:.7,dmg:.75},normal:{hp:1,dmg:1},strong:{hp:1.4,dmg:1.25},elite:{hp:2.3,dmg:1.6}};
+const MODIFIERS={fast:{hp:.75,spd:1.4},tanky:{hp:1.25,spd:.8}};
+const ATTACK_TIERS={light:.6,basic:1,heavy:1.3,ultimate:1.75,dot:.2};   /* share of the attacker's own damage stat; dot = per second */
+/* boss ladder: one boss every 4 ninja levels from world 2 on. slot 1 = first boss of its world (105 s fight), slot 2 = second (120 s) */
+const BOSS_LADDER={titan:{world:2,lv:14,slot:1},yeti:{world:2,lv:18,slot:2}};
+const LADDER={fight:[105,120],uptime:.55,hpDiv:4.6};   /* fight length per slot, ninja attack uptime, boss damage = average ninja HP / hpDiv */
+/* the average ninja at a level (player level assumed equal to the ninja level, no gems): HP and raw DPS (rate × hit, every third hit +50%) */
+function ninjaAvg(lv){ let hp=0,dps=0; for(const n of ORDER){ const ch=CH[n]; hp+=ch.hp*LV_MULT(lv)*PLV_MULT(lv); dps+=ch.dmg*LV_DMG(lv)*PLV_MULT(lv)*ch.rate*(1+.5/3); } return {hp:hp/ORDER.length,dps:dps/ORDER.length}; }
+const ninjaHP=(n,lv)=>CH[n].hp*LV_MULT(lv)*PLV_MULT(lv);
+const bossDamage=lv=>Math.round(ninjaAvg(lv).hp/LADDER.hpDiv);
+const bossHP=(lv,slot)=>Math.round(ninjaAvg(lv).dps*LADDER.uptime*LADDER.fight[slot-1]);
+/* statsFor(id) → {hp, dmg, speedMult, atk(tier)}: classed enemies from the world base, ladder bosses from the ladder, everything else its own table row */
+function statsFor(id){ const d=EN[id]; if(!d) return null; let hp=d.hp||0, dmg=d.dmg||0, speedMult=1;
+  if(d.cls){ const W=WORLD_BASE[d.world||1], C=CLASSES[d.cls]; hp=W.hp*C.hp; dmg=W.dmg*C.dmg; for(const m of d.mods||[]){ const M=MODIFIERS[m]; hp*=M.hp||1; dmg*=M.dmg||1; speedMult*=M.spd||1; } hp=Math.round(hp); dmg=Math.round(dmg); }
+  else if(BOSS_LADDER[id]){ const L=BOSS_LADDER[id]; hp=bossHP(L.lv,L.slot); dmg=bossDamage(L.lv); }
+  return {hp,dmg,speedMult,atk:tier=>Math.round(dmg*ATTACK_TIERS[tier])}; }
+const tierDmg=(e,tier)=>Math.round(e.dmg*ATTACK_TIERS[tier]);   /* a live entity's attack of a tier (e.dmg already carries phase/status multipliers applied by the caller) */
+/* hazards: not enemies, so they are plain numbers here, once. APOLLO takes half from lava. */
+const HAZARD={lavaPool:{dmg:10,apollo:5,tick:.5},lavaBomb:{player:60,apollo:30,enemy:120,boss:60},arenaDunk:15};
+const hazardDmg=(name,p)=>{ const h=HAZARD[name]; return typeof h==='number'?h:(p&&p.name==='APOLLO'&&h.apollo!==undefined?h.apollo:(h.player!==undefined?h.player:h.dmg)); };
+/* debug: the whole balance as text (also console.table'd). Call worldTable() in the console. */
+function worldTable(){ const out=[];
+  for(const w in WORLD_BASE){ const W=WORLD_BASE[w]; out.push(`WORLD ${w}  base HP ${W.hp}  DMG ${W.dmg}`);
+    const cls=[]; for(const c in CLASSES) cls.push({cls:c,hp:Math.round(W.hp*CLASSES[c].hp),dmg:Math.round(W.dmg*CLASSES[c].dmg)}); out.push('  classes: '+cls.map(r=>`${r.cls} ${r.hp}/${r.dmg}`).join('  ')); console.table(cls);
+    const ens=[]; for(const id in EN){ const d=EN[id]; if(d.cls&&(d.world||1)==+w){ const S=statsFor(id); ens.push({enemy:d.name,cls:d.cls+(d.mods?' '+d.mods.join('+'):''),hp:S.hp,dmg:S.dmg,speed:Math.round(d.spd*S.speedMult),light:S.atk('light'),basic:S.atk('basic'),heavy:S.atk('heavy'),ultimate:S.atk('ultimate'),dot:S.atk('dot')}); } }
+    if(ens.length){ out.push('  enemies: '+ens.map(r=>`${r.enemy} [${r.cls}] ${r.hp}/${r.dmg}`).join('  ')); console.table(ens); }
+    const bosses=[]; for(const id in BOSS_LADDER){ const L=BOSS_LADDER[id]; if(L.world!=+w) continue; const S=statsFor(id), A=ninjaAvg(L.lv), surv={}; for(const n of ORDER) surv[n]=+(ninjaHP(n,L.lv)/S.dmg).toFixed(1);
+      bosses.push({boss:EN[id].name,lv:L.lv,hp:S.hp,dmg:S.dmg,fight:LADDER.fight[L.slot-1]+' s',light:S.atk('light'),basic:S.atk('basic'),heavy:S.atk('heavy'),ultimate:S.atk('ultimate'),dot:S.atk('dot')+'/s',avgNinjaHP:Math.round(A.hp),avgDPS:Math.round(A.dps),...Object.fromEntries(Object.entries(surv).map(([n,v])=>['hits '+n,v]))}); }
+    if(bosses.length){ out.push('  bosses: '+bosses.map(r=>`${r.boss} (lv ${r.lv}) HP ${r.hp} DMG ${r.dmg} ${r.fight} | light ${r.light} basic ${r.basic} heavy ${r.heavy} ult ${r.ultimate} dot ${r.dot} | survives basic: `+ORDER.map(n=>n+' '+r['hits '+n]).join(', ')).join('\n          ')); console.table(bosses); } }
+  const s=out.join('\n'); console.log(s); return s; }
 /* ===== DAILY MISSIONS: three missions a day (easy / medium / hard), gold + XP rewards that scale with the player level ===== */
 const DAILY_TIERS={easy:{gold:300,xp:150,col:'#4ade80',name:'EASY'},medium:{gold:800,xp:400,col:'#fbbf24',name:'MEDIUM'},hard:{gold:2000,xp:1000,col:'#f87171',name:'HARD'}};
 const DAILY_MULT=plv=>1+0.12*(plv-1);                                     // player level 8: x1.84, level 15: x2.68
@@ -2177,7 +2213,7 @@ function m2HazUpdate(dt){ const H=G.haz, p=G.player; if(!H||!p) return; const E=
   if(H.erupt.active>0){ if(Math.random()<.3) shake(1.5); H.bombT-=dt; if(H.bombT<=0){ H.bombT=1.2; for(let tries=0;tries<12;tries++){ const x=CAM.x+rnd(-SW/ZOOM*.6,SW/ZOOM*.6), y=CAM.y+rnd(-SH/ZOOM*.6,SH/ZOOM*.6); if(m2Biome(x,y)!=='lava'||!inLand(x,y)||Math.hypot(x-p.x,y-p.y)<70||inSecretCave(x,y)) continue; H.bombs.push({x,y,t:0}); break; } } }
   for(let i=H.bombs.length-1;i>=0;i--){ const b=H.bombs[i]; b.t+=dt; if(b.t>=.8&&!b.hit){ b.hit=true; m2BombImpact(b); } if(b.t>1.1) H.bombs.splice(i,1); }
   if(H.erupt.active<=0&&H.eruptEnd!==undefined&&G.time-H.eruptEnd>30) impSinkAll();   /* 30 s after the eruption the imps sink back into the ground */
-  for(let i=H.burns.length-1;i>=0;i--){ const b=H.burns[i]; b.t-=dt; b.tick-=dt; if(b.tick<=0){ b.tick=.5; if(p.alive&&Math.hypot(p.x-b.x,p.y-b.y)<b.r+p.r*.5&&p.jumpT<=0) damage(p,(p.name==='APOLLO'?5:10)*.5,{kind:'hazard',x:b.x,y:b.y},{sure:true,ranged:true}); for(const e of G.enemies) if(e.alive&&!e.boss&&Math.hypot(e.x-b.x,e.y-b.y)<b.r+e.r*.5) damage(e,10,null,{silent:true,color:'#fb923c',noKb:true}); } if(b.t<=0) H.burns.splice(i,1); }
+  for(let i=H.burns.length-1;i>=0;i--){ const b=H.burns[i]; b.t-=dt; b.tick-=dt; if(b.tick<=0){ b.tick=.5; if(p.alive&&Math.hypot(p.x-b.x,p.y-b.y)<b.r+p.r*.5&&p.jumpT<=0) damage(p,hazardDmg('lavaPool',p)*HAZARD.lavaPool.tick,{kind:'hazard',x:b.x,y:b.y},{sure:true,ranged:true}); for(const e of G.enemies) if(e.alive&&!e.boss&&Math.hypot(e.x-b.x,e.y-b.y)<b.r+e.r*.5) damage(e,10,null,{silent:true,color:'#fb923c',noKb:true}); } if(b.t<=0) H.burns.splice(i,1); }
   if(H.erupt.active>0&&m2Biome(p.x,p.y)==='lava'&&Math.random()<.15) part(CAM.x+rnd(-400,400),CAM.y+250,rnd(-20,20),rnd(-120,-60),LP.ember,1.2,2,-30,true);
   // secrets: discovery
   for(const s of M2.secrets){ const key=M2.id+'_'+s.n; if(!SAVE.secrets[key]&&Math.hypot(p.x-s.x,p.y-s.y)<s.r*.7){ SAVE.secrets[key]=true; gainXP(150,p.x,p.y-70,'  HIDDEN AREA'); save(); G.banner={text:'HIDDEN AREA',sub:s.name+' · '+m2SecretsFound()+' / 7  ·  +150 XP',t:2.8}; SFX.key(); explore(s.x,s.y); burst(p.x,p.y-10,['#ffffff','#fde047','#7fd4ff'],20,160,.9,3,-40,true); if(m2SecretsFound()>=7&&!SAVE.secretsBonus[M2.id]){ SAVE.secretsBonus[M2.id]=true; SAVE.chi=(SAVE.chi||0)+2; SAVE.keys=(SAVE.keys||0)+1; floatText(p.x,p.y-60,'ALL SECRETS FOUND  +2 CHI  +1 KEY','#fde047',true,true); save(); } } }
@@ -2185,8 +2221,8 @@ function m2HazUpdate(dt){ const H=G.haz, p=G.player; if(!H||!p) return; const E=
 function inSecretCave(x,y){ return M2.secrets.some(s=>(s.kind==='lavacave'||s.kind==='icecave')&&Math.hypot(x-s.x,y-s.y)<s.r); }
 function m2SecretsFound(){ let n=0; for(const s of M2.secrets) if(SAVE.secrets[M2.id+'_'+s.n]) n++; return n; }
 function m2BombImpact(b){ const p=G.player, H=G.haz; shake(6); vibrate(30); noise(.18,.25); tone(70,.3,'sine',.3,-40); burst(b.x,b.y-6,[LP.lavaW,LP.lava,LP.ember],22,260,.6,4,-100,true);
-  if(p.alive&&Math.hypot(p.x-b.x,p.y-b.y)<46+p.r*.5&&p.jumpT<=0) damage(p,p.name==='APOLLO'?30:60,{kind:'hazard',x:b.x,y:b.y},{sure:true,ranged:true,kb:200});
-  for(const e of G.enemies) if(e.alive&&Math.hypot(e.x-b.x,e.y-b.y)<50+e.r*.5) damage(e,e.boss?60:120,null,{color:'#fb923c'});
+  if(p.alive&&Math.hypot(p.x-b.x,p.y-b.y)<46+p.r*.5&&p.jumpT<=0) damage(p,hazardDmg('lavaBomb',p),{kind:'hazard',x:b.x,y:b.y},{sure:true,ranged:true,kb:200});
+  for(const e of G.enemies) if(e.alive&&Math.hypot(e.x-b.x,e.y-b.y)<50+e.r*.5) damage(e,e.boss?HAZARD.lavaBomb.boss:HAZARD.lavaBomb.enemy,null,{color:'#fb923c'});
   H.burns.push({x:b.x,y:b.y,r:40,t:3,tick:.5});
   if(Math.random()<.35) impBirth(b.x,b.y); }   /* 35% of landing bombs birth a Lava Imp (cap 10 alive) */
 function m2DrawHazardsWorld(c,ox,oy,vw,vh,t){ const H=G.haz, A=v=>v/PIX;
@@ -2220,7 +2256,7 @@ function addStatus(e,k,dur,data){ if(e.kind==='player'&&spinBusy(e)&&k!=='shield
 function statMult(e,k){ let m=1; if(WORLD.frost&&G.haz&&m2BlizzardOn(e)){ if(k==='spd') m*=.65; else if(k==='rate') m*=.8; } for(const s in e.status){ const d=STATUS[s]; if(d.mult&&d.mult[k]!==undefined) m*=(e.boss&&(s==='slow'||s==='soak'))?1-(1-d.mult[k])/2:d.mult[k]; } return m; }   // bosses take slows at half strength
 function tickStatus(e,dt){ for(const k in e.status){ const s=e.status[k]; s.t-=dt;
   if(k==='burn'){ s.tick+=dt; if(s.tick>=STATUS.burn.tick){ s.tick-=STATUS.burn.tick; damage(e,s.dps*STATUS.burn.tick,null,{silent:true,color:'#fb923c',noKb:true}); if(Math.random()<.7) part(e.x+rnd(-8,8),e.y-10,rnd(-10,10),-40,'#fb923c',.5,4,0,true); } }
-  if(k==='poison'){ s.tick+=dt; if(s.tick>=STATUS.poison.tick){ s.tick-=STATUS.poison.tick; damage(e,STATUS.poison.dps,null,{silent:true,color:'#4ade80',noKb:true}); } if(Math.random()<dt*7) part(e.x+rnd(-9,9),e.y-4,rnd(-6,6),-34,Math.random()<.5?'#4ade80':'#86efac',rnd(.5,.9),rnd(2,3.5),-25,true); }   // green bubbles drift up
+  if(k==='poison'){ s.tick+=dt; if(s.tick>=STATUS.poison.tick){ s.tick-=STATUS.poison.tick; damage(e,s.dps||STATUS.poison.dps,null,{silent:true,color:'#4ade80',noKb:true}); } if(Math.random()<dt*7) part(e.x+rnd(-9,9),e.y-4,rnd(-6,6),-34,Math.random()<.5?'#4ade80':'#86efac',rnd(.5,.9),rnd(2,3.5),-25,true); }   // green bubbles drift up
   if(s.t<=0) delete e.status[k]; } }
 function tintOf(e){ for(const k of ['freeze','stun','slow','foxslow','burn','shield','haste']) if(e.status[k]) return STATUS[k].tint; return null; }
 function proj(o){ let p=G.projs.find(p=>!p.alive); if(!p){ p={}; G.projs.push(p); } for(const k in p) delete p[k]; Object.assign(p,{alive:true,life:1,r:7,vr:7,pierce:0,hit:[],trail:0,type:'bolt',big:false,pellet:false,basic:false,venom:false,mud:false,kb:140,delay:0,flew:0},o); return p; }   // a reused slot is wiped first: no leftover flags from a previous projectile
@@ -2230,7 +2266,7 @@ function floatText(x,y,txt,col,big,crit){ G.floats.push({x,y,txt,col:col||'#fff'
 
 const JUMP_DUR=.6, JUMP_CD=0;   // no cooldown: you can jump again as soon as you land
 function makePlayer(name){ const ch=CH[name], lv=SAVE.levels[name], m=LV_MULT(lv)*PLV_MULT(playerLevel())*gemMult(name,'hp'), md=LV_DMG(lv)*PLV_MULT(playerLevel())*gemMult(name,'atk'); return {kind:'player',name,ch,lv,x:0,y:0,vx:0,vy:0,r:15,animT:0,face:0,hp:ch.hp*m,maxHp:ch.hp*m,dmg:ch.dmg*md,jumpT:0,jumpCd:0,spd:ch.spd,rate:ch.rate,attackT:0,atkCd:0,queued:null,combo:0,comboT:0,lunge:0,lungeA:0,dashT:0,dashCd:0,dAng:0,abCd:0,status:{},flash:0,stagger:0,inv:0,alive:true,hidden:false,hideT:0,kbx:0,kby:0,dashHit:[],deadT:0,bob:0}; }
-function makeEnemy(type,x,y){ const d=EN[type], tier=TIERS[G.map?G.map.tier:0]; const e={kind:'enemy',type,d,x,y,vx:0,vy:0,r:d.r,face:0,hp:d.hp*tier.hp,maxHp:d.hp*tier.hp,dmg:d.dmg*tier.dmg,spd:d.spd,status:{},flash:0,stagger:0,flinch:0,hidden:false,sub:null,canSwim:false,crashT:0,alive:true,ai:{state:'idle',t:rnd(.3,2),angle:Math.random()*TAU,atkT:rnd(.5,1.2),tele:null,retreated:false,hit:[],home:{x,y},phase2:false},boss:!!d.boss,biome:d.biome||null,summoned:false,dodgeCd:0,holdAnim:false,kbx:0,kby:0,kvx:0,kvy:0,attackT:0,abCd:2,spawnT:.6,deadT:undefined,animT:Math.random()*3,spawner:null}; if(d.boss){ G.boss=e; e.ai.state='chase'; } G.enemies.push(e); return e; }
+function makeEnemy(type,x,y){ const d=EN[type], S=statsFor(type); const e={kind:'enemy',type,d,x,y,vx:0,vy:0,r:d.r,face:0,hp:S.hp,maxHp:S.hp,dmg:S.dmg,spd:d.spd*S.speedMult,status:{},flash:0,stagger:0,flinch:0,hidden:false,sub:null,canSwim:false,crashT:0,alive:true,ai:{state:'idle',t:rnd(.3,2),angle:Math.random()*TAU,atkT:rnd(.5,1.2),tele:null,retreated:false,hit:[],home:{x,y},phase2:false},boss:!!d.boss,biome:d.biome||null,summoned:false,dodgeCd:0,holdAnim:false,kbx:0,kby:0,kvx:0,kvy:0,attackT:0,abCd:2,spawnT:.6,deadT:undefined,animT:Math.random()*3,spawner:null}; if(d.boss){ G.boss=e; e.ai.state='chase'; } G.enemies.push(e); return e; }
 function fromFront(e,src){ return Math.abs(angDiff(e.face,Math.atan2(src.y-e.y,src.x-e.x)))<1.1; }
 /* is this world point inside a prop collider (tree trunk, rock, crate…)? used by pellets so cover works */
 function hitsCollider(x,y){ const W=WORLD, gx=Math.floor(x/W.CG), gy=Math.floor(y/W.CG); for(let yy=gy-1;yy<=gy+1;yy++) for(let xx=gx-1;xx<=gx+1;xx++){ const a=W.cgrid.get(xx+','+yy); if(a) for(const o of a) if(Math.abs(o.x-x)<o.r+2&&Math.abs(o.y-y)<o.r+2&&Math.hypot(o.x-x,o.y-y)<o.r+2) return true; } return false; }
@@ -2450,7 +2486,7 @@ const AI={
     if(a.state==='circle'){ const R=150; a.angle+=a.dir*dt*1.7; moveToward(e,p.x+Math.cos(a.angle)*R,p.y+Math.sin(a.angle)*R,dt,spd*.95); const charging=(p.spin&&p.spin.state==='FLASH')||!!p.queued;   // interrupts: a charging player gets attacked first
       if(a.t<=0||charging||(low&&a.t<.5)){ a.state='dart'; a.t=1.2; } }
     else if(a.state==='dart'){ moveToward(e,p.x,p.y,dt,spd*1.15); if(d<e.d.range+8){ a.state='combo'; a.n=0; a.t=.2; e.vx*=.3; e.vy*=.3; e.animT=0; } else if(a.t<=0){ a.state='circle'; a.t=rnd(.5,1.2); } }
-    else if(a.state==='combo'){ e.vx*=.6; e.vy*=.6; if(a.t<=0){ a.n++; e.attackT=.22; e.animT=.25; if(inArc(p,e.x,e.y,e.face,e.d.range+14,1.1)){ damage(p,e.dmg,e,{kb:120}); addStatus(p,'poison',3); } a.t=.3; if(a.n>=2){ a.state='back'; a.t=.5; a.angle=Math.atan2(e.y-p.y,e.x-p.x); } } }
+    else if(a.state==='combo'){ e.vx*=.6; e.vy*=.6; if(a.t<=0){ a.n++; e.attackT=.22; e.animT=.25; if(inArc(p,e.x,e.y,e.face,e.d.range+14,1.1)){ damage(p,e.dmg,e,{kb:120}); addStatus(p,'poison',3,{dps:tierDmg(e,'dot')}); } a.t=.3; if(a.n>=2){ a.state='back'; a.t=.5; a.angle=Math.atan2(e.y-p.y,e.x-p.x); } } }
     else if(a.state==='back'){ moveToward(e,p.x+Math.cos(a.angle)*190,p.y+Math.sin(a.angle)*190,dt,spd*1.1); if(a.t<=0){ a.state='circle'; a.t=rnd(.5,1.2)*(low?.5:1); a.dir=Math.random()<.5?1:-1; } }
   },
   /* ---- PIRATE (beach): limps, never retreats, cutlass up close, blunderbuss volley every 4 s at medium range ---- */
@@ -2475,14 +2511,14 @@ const AI={
         if(pick==='slam'){ a.t=1.1; a.ix=e.x+Math.cos(a.aim)*120; a.iy=e.y+Math.sin(a.aim)*120; telegraph(e,{s:'circ',r:95,ox:a.ix-e.x,oy:a.iy-e.y},1.1); e.holdAnim=true; e.animT=.05; }   // flail held high, cracking ground at the impact point
         else if(pick==='charge') telegraph(e,{s:'line',a:a.aim,l:600,w:56},1); else telegraph(e,{s:'circ',r:90},1); }
       else if(d<e.d.range&&a.atkT<=0){ a.state='swing'; a.t=.45; a.aim=e.face; e.vx=e.vy=0; a.ix=e.x+Math.cos(a.aim)*(e.d.range*.6); a.iy=e.y+Math.sin(a.aim)*(e.d.range*.6); telegraph(e,{s:'circ',r:e.d.range*.85,ox:a.ix-e.x,oy:a.iy-e.y},.45); } }
-    else if(a.state==='swing'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='chase'; a.atkT=2; a.tele=null; e.attackT=.3; e.animT=.25; shake(4); SFX.hit(); if(inCircle(p,a.ix,a.iy,e.d.range*.85)) damage(p,Math.round(35*P2),e,{kb:220}); } }
+    else if(a.state==='swing'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='chase'; a.atkT=2; a.tele=null; e.attackT=.3; e.animT=.25; shake(4); SFX.hit(); if(inCircle(p,a.ix,a.iy,e.d.range*.85)) damage(p,Math.round(HIPPO_DMG.swing*P2),e,{kb:220}); } }
     else if(a.state==='slam'){ if(a.t<=0){ a.state='chase'; e.abCd=2.7; a.recover=.65; a.tele=null; e.holdAnim=false; e.attackT=.3; e.animT=.26; shake(12); vibrate(120); const ix=a.ix, iy=a.iy;
         if(inCircle(p,ix,iy,95)) damage(p,Math.round(e.dmg*P2),e,{kb:420}); else if(inCircle(p,ix,iy,170)&&p.alive){ const dd=Math.max(1,Math.hypot(p.x-ix,p.y-iy)); p.kbx+=(p.x-ix)/dd*380; p.kby+=(p.y-iy)/dd*380; }   // shockwave: knockback just outside the circle
         for(const o of G.enemies) if(o!==e&&o.alive&&!o.boss&&inCircle(o,ix,iy,170)){ const dd=Math.max(1,Math.hypot(o.x-ix,o.y-iy)); o.kbx+=(o.x-ix)/dd*300; o.kby+=(o.y-iy)/dd*300; }
         burst(ix,iy,['#9ca3af','#4b5563','#d9a34a','#c9a86a'],44,320,.7,6,0,true); for(let i=0;i<14;i++) part(ix+rnd(-40,40),iy+rnd(-20,20),rnd(-90,90),rnd(-260,-120),i%2?'#8a6a4a':'#5a3a20',rnd(.5,.9),rnd(4,7),600); G.ring={x:ix,y:iy,r:0,max:170,t:0,col:'#d9a34a',earth:true}; noise(.25,.35); tone(60,.3,'sine',.4,-30); proj({type:'ring',mud:true,x:ix,y:iy,r:30,life:9,spd:230,max:640,delay:.1,owner:e,dmg:WAVE_DMG,hit:[]}); floatText(ix,iy-30,'MUD WAVE','#c9a86a');
         if(a.phase2) proj({type:'ring',x:ix,y:iy,r:20,life:9,spd:240,max:220,delay:.4,owner:e,dmg:WAVE_DMG,hit:[]}); } }   // phase 2: the slam gains a second shockwave
     else if(a.state==='charge'){ if(a.t<=0){ a.state='charging'; a.t=.9; a.tele=null; a.hit=[]; SFX.roar(); } }
-    else if(a.state==='charging'){ const sp=e.spd*5; e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; if(!a.hit.includes(p)&&inCircle(p,e.x,e.y,e.r+6)){ a.hit.push(p); damage(p,Math.round(35*P2),e,{kb:520}); } for(const o of G.enemies) if(o!==e&&o.alive&&!a.hit.includes(o)&&inCircle(o,e.x,e.y,e.r+6)){ a.hit.push(o); damage(o,20,e,{kb:400,noBlock:true}); } part(e.x+rnd(-24,24),e.y+22,rnd(-40,40),-60,'#c9a86a',.5,6); if(a.t<=0||wallAhead(e,a.aim)){ a.state='chase'; e.abCd=2.7; a.recover=.65; e.vx=e.vy=0; shake(6); crashBoulder(e); } }
+    else if(a.state==='charging'){ const sp=e.spd*5; e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; if(!a.hit.includes(p)&&inCircle(p,e.x,e.y,e.r+6)){ a.hit.push(p); damage(p,Math.round(HIPPO_DMG.charge*P2),e,{kb:520}); } for(const o of G.enemies) if(o!==e&&o.alive&&!a.hit.includes(o)&&inCircle(o,e.x,e.y,e.r+6)){ a.hit.push(o); damage(o,20,e,{kb:400,noBlock:true}); } part(e.x+rnd(-24,24),e.y+22,rnd(-40,40),-60,'#c9a86a',.5,6); if(a.t<=0||wallAhead(e,a.aim)){ a.state='chase'; e.abCd=2.7; a.recover=.65; e.vx=e.vy=0; shake(6); crashBoulder(e); } }
     else if(a.state==='stomp'){ if(a.t<=0){ a.state='chase'; e.abCd=2.7; a.recover=.65; a.tele=null; shake(12); vibrate(120); for(let i=0;i<2;i++) proj({type:'ring',x:e.x,y:e.y+10,r:20,life:9,spd:200,max:300,delay:i*.9,owner:e,dmg:WAVE_DMG,hit:[]}); burst(e.x,e.y+10,['#8a6a4a','#d9a34a'],30,220,.6,6,300); } }
   },
   /* ---- CROCODILE boss: cleaver, tail spin, lunge + bite combo; phase 2 at 50% ---- */
@@ -2522,13 +2558,14 @@ function bossLeash(e,p,dt){ const a=e.ai; if(a.recover>0){ a.recover-=dt; e.vx*=
 /* CROCODILE — built from the level-7 ninjas (x1.48 of base): HP  SHADE 207 · BECK 185 · BOREAS 170 · APOLLO 163 · CLAY 266;  hit  SHADE 22 · BECK 19 · BOREAS 24 · APOLLO 30 · CLAY 22
    Croc HP 2600 = about 120 level-7 SHADE hits (~70 s of fighting with dodging).  Each croc hit below is a fixed number, the same at every level:
    phase 1 (full HP) costs a level-7 SHADE 11-28% per hit, phase 2 (under 50%) 14-36%; nothing scales with the ninja's level. */
-const CROC_DMG={swing:[29,43],tail:[45,64],cleaver:[62,90],dash:[24,35],bite:[27,39],spit:[34,51],barrage:[23,33]};   /* [phase 1, phase 2] */
+const HIPPO_DMG={swing:35,charge:35};   /* world-1 boss: its own table, unchanged */
+const CROC_DMG={swing:[29,43],tail:[45,64],cleaver:[62,90],dash:[24,35],bite:[27,39],spit:[34,51],barrage:[23,33],lurk:[20,20]};   /* [phase 1, phase 2] */
 function bossPhase(e,dt){ const a=e.ai; if(!a.phase2&&e.hp<e.maxHp*.5){ a.phase2=true; a.addsLeft=2; a.addsT=15; summonAdds(e); G.banner={text:'THE '+e.d.name+' GOES BERSERK',sub:'FASTER · HARDER · MORE OF THEM',t:.9};   /* under a second: it must not get in the way */ }
   if(a.phase2&&a.addsLeft>0){ a.addsT-=dt; if(a.addsT<=0){ a.addsLeft--; a.addsT=15; summonAdds(e); } } }   /* half HP: the boss goes berserk (+35% attack speed, +30% move speed, harder hits, 4 adds that return twice) */
 function summonAdds(e){ const col=e.type==='hippo'?'#c084fc':'#4ade80'; e.attackT=.6; e.animT=0; shake(9); vibrate(120); SFX.roar(); G.ring={x:e.x,y:e.y,r:0,max:200,t:0,col}; burst(e.x,e.y-20,[col,'#ffffff'],30,220,.8,5,0,true);
   const n=e.ai.phase2?4:3; for(let i=0;i<n;i++){ const an=i/n*TAU+e.ai.t; const s=makeEnemy((WORLD.frost&&(e.type==='hippo'||e.type==='croc'))?(e.type==='hippo'?'golem':'wolf'):e.d.adds,e.x+Math.cos(an)*80,e.y+Math.sin(an)*80); s.spawnT=1; G.groundFx.push({kind:'summon',x:s.x,y:s.y+6,r:34,t:1,col}); s.summoned=true; s.biome=null; s.ai.state=s.type==='priest'?'circle':'chase'; s.ai.t=.8; s.ai.dir=1; G.chasers++; collide(s); burst(s.x,s.y,e.type==='hippo'?['#7a4aaa','#8ac06a']:['#c8202a','#8ab08a'],12,110,.6,4,200,true); } }
 /* the pirate's blunderbuss: five pellet projectiles in a narrow spread, ~7 tiles of travel, blocked by props */
-function firePellets(e,gx,gy,ang){ for(let i=0;i<5;i++){ const a=ang+(i-2)*.08+rnd(-.03,.03), v=rnd(230,260); proj({type:'bolt',pellet:true,basic:false,x:gx,y:gy,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:(7*TILE_PX)/v,r:6,vr:2,col:'#e5e7eb',glow:'#fbbf24',owner:e,dmg:e.crew?10:6,kb:90,hit:[]}); }
+function firePellets(e,gx,gy,ang){ for(let i=0;i<5;i++){ const a=ang+(i-2)*.08+rnd(-.03,.03), v=rnd(230,260); proj({type:'bolt',pellet:true,basic:false,x:gx,y:gy,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:(7*TILE_PX)/v,r:6,vr:2,col:'#e5e7eb',glow:'#fbbf24',owner:e,dmg:e.crew?LORD_HIT.crewPellet:Math.round(tierDmg(e,'heavy')/5),kb:90,hit:[]}); }
   burst(gx,gy,['#fde68a','#ffffff','#fb923c'],10,140,.2,3,0,true); for(let i=0;i<8;i++) part(gx+rnd(-4,4),gy+rnd(-4,4),Math.cos(ang)*rnd(20,60)+rnd(-20,20),rnd(-40,-10),'#9ca3af',rnd(.5,.9),rnd(3,6),-30); shake(3); SFX.shot(); }
 function enemyUpdate(e,dt,p){
   if(!e.alive){ if(e.deadT!==undefined) e.deadT-=dt; return; }
@@ -2585,7 +2622,7 @@ function worldUpdate(dt){
   for(const e of G.enemies) enemyUpdate(e,dt,netTarget(e,p));
 }
 /* balance check against the ninjas (debug: Settings → Balance table): hits and seconds an average combo needs per common enemy */
-function balanceReport(){ const rows=[]; for(const n of ORDER) for(const lv of [1,6]){ const ch=CH[n], m=LV_DMG(lv), hit=ch.dmg*m, dps=hit*ch.rate*(1+.5/3); for(const t of ['mush','priest','pirate']){ const hp=EN[t].hp*(t==='pirate'?1/.7:1); rows.push({ninja:n,lv,enemy:t,hp:Math.round(hp),hits:Math.ceil(hp/(hit*1.17)),ttk:+(hp/dps).toFixed(2),enemyDps:+(EN[t].dmg/EN[t].atk).toFixed(1)}); } } return rows; }
+function balanceReport(){ return worldTable(); }
 /* =====================================================================
    FROST & EMBER ENEMIES (from enemiesicelava.html): the Magma Golem (ember side, built for a level-11 ninja) and the
    Wolf Warrior (frost side, built for a level-14 ninja). Regular enemies, not bosses. Rigs drawn with rect/px in PIX space.
@@ -2642,7 +2679,7 @@ AI.golem=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.abC
   else if(a.state==='smash'){ e.vx*=.6; e.vy*=.6; if(a.t>.7) faceTo(e,p); const k=1-a.t/1.1; if(!a.hitDone&&k>=.46){ a.hitDone=true; shake(5); noise(.15,.2); tone(70,.25,'sine',.3,-30); const ix=e.x+Math.cos(e.face)*40, iy=e.y+Math.sin(e.face)*10; if(inCircle(p,ix,iy,46+p.r*.5)&&p.jumpT<=0) damage(p,e.dmg,e,{kb:260}); G.ring={x:ix,y:iy,r:0,max:52,t:0,col:'#ff7a1a',earth:true}; burst(ix,iy+6,['#3a3038','#ff5a10','#ffb020'],12,180,.5,3,300); } if(a.t<=0){ a.state='chase'; a.atkT=e.d.atk; } }
   else if(a.state==='windup'){ e.vx=e.vy=0; faceTo(e,p); a.aim=e.face; if(Math.random()<.4) part(e.x+rnd(-20,20),e.y+16,rnd(-20,20),rnd(-40,-10),'#6a5e66',.5,3,0); if(a.t<=0){ a.state='whirl'; a.t=1.1; a.hitT=0; a.tele=null; SFX.roar(); } }
   else if(a.state==='whirl'){ const sp=e.spd*3.1, want=Math.atan2(p.y-e.y,p.x-e.x), df=angDiff(want,a.aim); a.aim+=clamp(df,-3.2*dt,3.2*dt); e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; e.face=a.aim; a.hitT-=dt; if(Math.random()<.6) part(e.x+rnd(-16,16),e.y+rnd(-6,12),rnd(-60,60),rnd(-90,-20),Math.random()<.5?'#ffb020':'#ff5a10',.4,2,-60,true);
-    if(a.hitT<=0&&inCircle(p,e.x,e.y,e.r+p.r+12)&&p.jumpT<=0){ a.hitT=.6; damage(p,Math.round(e.dmg*1.4),e,{kb:340}); shake(4); }
+    if(a.hitT<=0&&inCircle(p,e.x,e.y,e.r+p.r+12)&&p.jumpT<=0){ a.hitT=.6; damage(p,tierDmg(e,'heavy'),e,{kb:340}); shake(4); }
     if(a.t<=0||wallAhead(e,a.aim)||outOfBiome(e)){ a.state='chase'; e.abCd=7; a.atkT=.8; e.vx=e.vy=0; shake(3); } } };
 AI.wolf=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.abCd-=dt; e.dodgeCd-=dt; const sees=commonSees(e,p);
   if(a.state==='idle'){ wander(e,dt,120,.5); if(d<320&&sees&&(G.chasers<6||e.summoned)){ a.state='chase'; a.t=0; G.chasers++; floatText(e.x,e.y-40,'!','#ef4444',true); e.kvy-=120; } return; }
@@ -2650,7 +2687,7 @@ AI.wolf=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.abCd
     if(e.abCd<=0&&e.hp<e.maxHp&&d<190&&!inSafeZone(p.x,p.y)&&Math.random()<dt*.4){ a.state='howl'; a.t=.8; e.vx=e.vy=0; a.aim=e.face; telegraph(e,{s:'line',a:a.aim,l:190,w:64},.8); }   /* Pack Hunt: only after the ninja has hurt it, close range, at a random moment */
     else if(d<e.d.range+8&&a.atkT<=0){ a.state='slash'; a.t=.7; a.hitDone=false; e.vx*=.3; e.vy*=.3; } }
   else if(a.state==='slash'){ e.vx*=.6; e.vy*=.6; if(a.t>.5) faceTo(e,p); const k=1-a.t/.7; if(!a.hitDone&&k>=.28){ a.hitDone=true; SFX.hit(); slashFx(e,e.face,44,.9,['#bfeaff','#ffffff']); if(inArc(p,e.x,e.y,e.face,e.d.range+16,1.1)&&p.jumpT<=0){ damage(p,e.dmg,e,{kb:180}); addStatus(p,'slow',1.2); } } if(a.t<=0){ a.state='chase'; a.atkT=e.d.atk; } }
-  else if(a.state==='howl'){ e.vx=e.vy=0; faceTo(e,p); a.aim=e.face; if(a.t<=0){ a.state='chase'; e.abCd=7; a.atkT=.6; a.tele=null; SFX.roar(); for(let i=0;i<3;i++){ const an=a.aim+(i-1)*.26; proj({type:'bolt',wolf:true,x:e.x+Math.cos(an)*20,y:e.y+Math.sin(an)*20+4,vx:Math.cos(an)*340,vy:Math.sin(an)*340,life:.55,r:16,vr:9,col:'#bfeaff',glow:'#ffffff',owner:e,dmg:Math.round(e.dmg*.6),kb:140,onHit:t=>addStatus(t,'slow',1.5)}); } } } };
+  else if(a.state==='howl'){ e.vx=e.vy=0; faceTo(e,p); a.aim=e.face; if(a.t<=0){ a.state='chase'; e.abCd=7; a.atkT=.6; a.tele=null; SFX.roar(); for(let i=0;i<3;i++){ const an=a.aim+(i-1)*.26; proj({type:'bolt',wolf:true,x:e.x+Math.cos(an)*20,y:e.y+Math.sin(an)*20+4,vx:Math.cos(an)*340,vy:Math.sin(an)*340,life:.55,r:16,vr:9,col:'#bfeaff',glow:'#ffffff',owner:e,dmg:tierDmg(e,'light'),kb:140,onHit:t=>addStatus(t,'slow',1.5)}); } } } };
 function drawWolfProjs(c,t){ for(const q of G.projs) if(q.alive&&q.wolf){ const face=q.vx>=0?1:-1; c.save(); c.translate(q.x,q.y); c.scale(PIX*face,PIX); g=c; rigPackWolf(-6,-3,t+q.life,1); c.restore(); } }
 /* =====================================================================
    MAP 2 BOSSES (from bossesicelava.html): the Magma Titan (ember side, built for a level-15 ninja) and the Yeti (frost side, level 19).
@@ -2660,7 +2697,8 @@ function drawWolfProjs(c,t){ for(const q of G.projs) if(q.alive&&q.wolf){ const 
 const TP={ rock:'#4a3f42', rockD:'#2e2529', rockL:'#63545a', mortar:'#7a6a62', lava:'#ff5a10', lavaL:'#ffb020', lavaW:'#fff0a0', lavaD:'#c02800', flame1:'#ff7a1a', flame2:'#ffd23f', flame3:'#e8420f', eye:'#ff9a20', ash:'#5a5058' };
 const YP={ ice:'#dff2ff', iceD:'#a8d4ec', iceM:'#c4e6f8', iceB:'#7fb8d8', deep:'#5f92b4', fur:'#eefaff', eye:'#7fe8ff', eyeW:'#ffffff', maw:'#3f6a86', tooth:'#ffffff', shard:'#9fdcf8', glow:'#bff0ff' };
 /* damage table per boss: built for the recommended level (ninja HP ≈ 290 at 15, ≈ 330 at 19) */
-const TITAN_HIT={slam:68,wave:55,meteor:52,whirl:60,beam:80}, YETI_HIT={claw:82,breath:12,ring:72,wall:66,leap:92};   /* ≈23% of the median ninja's HP per basic hit at the recommended level, heavy hits ≈27% */
+const TITAN_HIT={slam:'basic',wave:'light',meteor:'light',whirl:'heavy',beam:'ultimate'}, YETI_HIT={claw:'basic',breath:'dot',ring:'heavy',wall:'heavy',leap:'ultimate'};   /* attack tiers (see ATTACK_TIERS); the boss's damage stat comes from the ladder. Phase 2 multiplies on top */
+const BH=(e,k)=>tierDmg(e,k);
 /* ---------- Magma Titan rig ---------- */
 function titanFlame(x,y,t,big){ const n=big?7:5; for(let i=0;i<n;i++){ const h=(big?9:6)+Math.round(Math.abs(Math.sin(t*7+i*1.3))*(big?9:6)), w=Math.max(1,(big?4:3)-Math.abs(i-(n-1)/2)), col=i%3===0?TP.flame2:(i%2?TP.flame1:TP.flame3); RR(x+i*(big?3:2.6),y-h,w,h,col); if(h>8) PP(x+i*(big?3:2.6),y-h-1,TP.lavaW); } }
 function lavaFallDown(x,y,h,t,seed){ for(let j=0;j<h;j++){ const w=3-Math.floor(j/(h*0.6)); RR(x+Math.sin(j*.42+t*4+seed)*1.3,y+j,Math.max(1,w),1,j%4===0?TP.lavaW:(j%2?TP.lava:TP.lavaL)); } for(let i=0;i<3;i++){ const q=(t*.9+i*.33+seed)%1; PP(x+Math.sin(t*3+i)*2,y+h-q*7,TP.lavaL); } }
@@ -2758,22 +2796,22 @@ function b2Summon(e){ const alive=G.enemies.filter(x=>x.alive&&x.summoned&&!x.bo
 function b2Phase2Banner(e){ const a=e.ai; if(a.phase2&&!a.p2Shown){ a.p2Shown=true; G.banner={text:'PHASE 2',sub:e.type==='titan'?'THE TITAN BURNS WHITE-HOT':'THE YETI\'S FROZEN RAGE',t:2.4}; if(G.haz) G.haz.flash=.4; shake(16); vibrate(200); SFX.roar(); } }
 AI.titan=function(e,p,dt){ const a=e.ai, d=dist(e,p), rt=statMult(e,'rate')*(a.phase2?1.3:1), P2=a.phase2?1.2:1; a.t-=dt; e.abCd-=dt*rt; a.atkT-=dt*rt; bossPhase(e,dt); b2Phase2Banner(e); a.cycle=a.cycle||0;
   /* a lava wave every 4 s (3 s when berserk), whatever the Titan is doing, as long as the ninja is near */
-  a.waveT=(a.waveT===undefined?4:a.waveT)-dt; if(a.waveT<=0&&p.alive&&d<760&&!inSafeZone(p.x,p.y)){ a.waveT=4; lavaWave(e,Math.round(TITAN_HIT.wave*P2),e.face); floatText(e.x,e.y-70,a.phase2?'DOUBLE LAVA WAVE':'LAVA WAVE','#ffb020'); shake(5); noise(.15,.2); if(a.phase2){ a.wave2=1; } }
-  if(a.wave2!==undefined){ a.wave2-=dt; if(a.wave2<=0){ a.wave2=undefined; if(e.alive) lavaWave(e,Math.round(TITAN_HIT.wave*P2),e.face+1.1); } }   /* phase 2: a second wave 1 s behind the first, its gaps turned so you have to move */
+  a.waveT=(a.waveT===undefined?4:a.waveT)-dt; if(a.waveT<=0&&p.alive&&d<760&&!inSafeZone(p.x,p.y)){ a.waveT=4; lavaWave(e,Math.round(BH(e,TITAN_HIT.wave)*P2),e.face); floatText(e.x,e.y-70,a.phase2?'DOUBLE LAVA WAVE':'LAVA WAVE','#ffb020'); shake(5); noise(.15,.2); if(a.phase2){ a.wave2=1; } }
+  if(a.wave2!==undefined){ a.wave2-=dt; if(a.wave2<=0){ a.wave2=undefined; if(e.alive) lavaWave(e,Math.round(BH(e,TITAN_HIT.wave)*P2),e.face+1.1); } }   /* phase 2: a second wave 1 s behind the first, its gaps turned so you have to move */
   if(a.state==='chase'){ if(b2Home(e,p,dt)) return; const safe=inSafeZone(p.x,p.y); if(d<900&&!safe) moveToward(e,p.x,p.y,dt,a.phase2?1.25:1); else { e.vx*=.9; e.vy*=.9; } faceTo(e,p);
     if(e.abCd<=0&&p.alive&&d<720&&!safe){ const pick=['windup','meteors','windup','beamPrep','summon'][a.cycle%5]; a.cycle++; a.state=pick; e.vx=e.vy=0; a.aim=e.face; if(pick==='summon'){ a.t=.9; telegraph(e,{s:'circ',r:120},.9); }
       if(pick==='meteors'){ a.t=.9; a.n=a.phase2?9:6; a.mt=0; telegraph(e,{s:'circ',r:170,ox:p.x-e.x,oy:p.y-e.y},.9); SFX.roar(); }
       else if(pick==='windup'){ a.t=.66; telegraph(e,{s:'line',a:a.aim,l:420,w:70},.66); }
       else { a.t=1.2; telegraph(e,{s:'line',a:a.aim,l:280,w:16},1.2); a.dir=Math.random()<.5?1:-1; } }
     else if(d<e.d.range&&a.atkT<=0){ a.state='slam'; a.t=.7; a.aim=e.face; e.vx=e.vy=0; telegraph(e,{s:'circ',r:e.d.range*.9,ox:Math.cos(a.aim)*60,oy:Math.sin(a.aim)*30},.7); } }
-  else if(a.state==='slam'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='chase'; a.atkT=2.2; a.tele=null; shake(9); vibrate(80); noise(.2,.3); tone(60,.35,'sine',.35,-30); if(inCircle(p,e.x+Math.cos(a.aim)*60,e.y+Math.sin(a.aim)*30,e.d.range*.9)&&p.jumpT<=0) damage(p,Math.round(TITAN_HIT.slam*P2),e,{kb:320}); } }
-  else if(a.state==='meteors'){ e.vx*=.5; e.vy*=.5; faceTo(e,p); if(a.t<=0){ a.tele=null; a.mt-=dt; if(a.mt<=0&&a.n>0){ a.mt=.35; a.n--; const an=Math.random()*TAU, rr=rnd(30,150); meteorAt(p.x+Math.cos(an)*rr,p.y+Math.sin(an)*rr*.7,Math.round(TITAN_HIT.meteor*P2)); } if(a.n<=0&&a.mt<=-.9){ a.state='chase'; e.abCd=a.phase2?1.8:2.6; a.atkT=.6; } } }
+  else if(a.state==='slam'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='chase'; a.atkT=2.2; a.tele=null; shake(9); vibrate(80); noise(.2,.3); tone(60,.35,'sine',.35,-30); if(inCircle(p,e.x+Math.cos(a.aim)*60,e.y+Math.sin(a.aim)*30,e.d.range*.9)&&p.jumpT<=0) damage(p,Math.round(BH(e,TITAN_HIT.slam)*P2),e,{kb:320}); } }
+  else if(a.state==='meteors'){ e.vx*=.5; e.vy*=.5; faceTo(e,p); if(a.t<=0){ a.tele=null; a.mt-=dt; if(a.mt<=0&&a.n>0){ a.mt=.35; a.n--; const an=Math.random()*TAU, rr=rnd(30,150); meteorAt(p.x+Math.cos(an)*rr,p.y+Math.sin(an)*rr*.7,Math.round(BH(e,TITAN_HIT.meteor)*P2)); } if(a.n<=0&&a.mt<=-.9){ a.state='chase'; e.abCd=a.phase2?1.8:2.6; a.atkT=.6; } } }
   else if(a.state==='windup'){ e.vx=e.vy=0; faceTo(e,p); a.aim=e.face; if(Math.random()<.5) part(e.x+rnd(-40,40),e.y+30,rnd(-20,20),rnd(-40,-10),TP.ash,.5,3,0); if(a.t<=0){ a.state='whirl'; a.t=2.2; a.hitT=0; a.mt=.3; a.tele=null; SFX.roar(); } }
   else if(a.state==='whirl'){ const sp=e.spd*4.2, want=Math.atan2(p.y-e.y,p.x-e.x), df=angDiff(want,a.aim); a.aim+=clamp(df,-3.0*dt,3.0*dt); e.vx=Math.cos(a.aim)*sp; e.vy=Math.sin(a.aim)*sp; e.face=a.aim; a.hitT-=dt; a.mt-=dt; if(Math.random()<.7) part(e.x+rnd(-30,30),e.y+rnd(-10,20),rnd(-80,80),rnd(-120,-30),Math.random()<.5?TP.lavaL:TP.lava,.4,3,-60,true);
-    if(a.hitT<=0&&inCircle(p,e.x,e.y,e.r+p.r+10)&&p.jumpT<=0){ a.hitT=.6; damage(p,Math.round(TITAN_HIT.whirl*P2),e,{kb:380}); shake(5); }
-    if(a.mt<=0){ a.mt=a.phase2?.4:.55; const an=Math.random()*TAU, rr=rnd(40,130); meteorAt(p.x+Math.cos(an)*rr,p.y+Math.sin(an)*rr*.7,Math.round(TITAN_HIT.meteor*P2)); }
+    if(a.hitT<=0&&inCircle(p,e.x,e.y,e.r+p.r+10)&&p.jumpT<=0){ a.hitT=.6; damage(p,Math.round(BH(e,TITAN_HIT.whirl)*P2),e,{kb:380}); shake(5); }
+    if(a.mt<=0){ a.mt=a.phase2?.4:.55; const an=Math.random()*TAU, rr=rnd(40,130); meteorAt(p.x+Math.cos(an)*rr,p.y+Math.sin(an)*rr*.7,Math.round(BH(e,TITAN_HIT.meteor)*P2)); }
     if(a.t<=0||wallAhead(e,a.aim)){ a.state='chase'; e.abCd=a.phase2?2:2.8; a.atkT=1; e.vx=e.vy=0; shake(4); } }
-  else if(a.state==='beamPrep'){ e.vx=e.vy=0; if(a.t>.5){ faceTo(e,p); a.aim=e.face; } if(a.t<=0){ a.state='beam'; a.t=3; a.tele=null; B2.beam={e,a0:a.aim,ang:a.aim,dir:a.dir,t:0,dur:3,len:300,dmg:Math.round(TITAN_HIT.beam*P2),reh:0}; SFX.roar(); shake(6); floatText(e.x,e.y-70,'LAVA BEAM','#ffb020'); } }
+  else if(a.state==='beamPrep'){ e.vx=e.vy=0; if(a.t>.5){ faceTo(e,p); a.aim=e.face; } if(a.t<=0){ a.state='beam'; a.t=3; a.tele=null; B2.beam={e,a0:a.aim,ang:a.aim,dir:a.dir,t:0,dur:3,len:300,dmg:Math.round(BH(e,TITAN_HIT.beam)*P2),reh:0}; SFX.roar(); shake(6); floatText(e.x,e.y-70,'LAVA BEAM','#ffb020'); } }
   else if(a.state==='beam'){ e.vx=e.vy=0; if(B2.beam) e.face=B2.beam.ang; if(a.t<=0){ a.state='chase'; B2.beam=null; e.abCd=a.phase2?2:3; a.atkT=.8; } }
   else if(a.state==='summon'){ e.vx=e.vy=0; faceTo(e,p); if(a.t<=0){ a.tele=null; b2Summon(e); a.state='chase'; e.abCd=a.phase2?1.8:2.6; a.atkT=.8; } } };
 AI.yeti=function(e,p,dt){ const a=e.ai, d=dist(e,p), rt=statMult(e,'rate')*(a.phase2?1.3:1), P2=a.phase2?1.2:1; a.t-=dt; e.abCd-=dt*rt; a.atkT-=dt*rt; bossPhase(e,dt); b2Phase2Banner(e); a.cycle=a.cycle||0;
@@ -2784,13 +2822,13 @@ AI.yeti=function(e,p,dt){ const a=e.ai, d=dist(e,p), rt=statMult(e,'rate')*(a.ph
       else if(pick==='roar'){ a.t=1; B2.roar={x:e.x,y:e.y+10,R:340,t:0}; telegraph(e,{s:'circ',r:340},1); SFX.roar(); }
       else { a.t=1; telegraph(e,{s:'circ',r:120},1); } }
     else if(d<e.d.range&&a.atkT<=0){ a.state='claw'; a.t=.6; a.aim=e.face; e.vx=e.vy=0; telegraph(e,{s:'circ',r:e.d.range*.95,ox:Math.cos(a.aim)*50,oy:Math.sin(a.aim)*25},.6); } }
-  else if(a.state==='claw'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='chase'; a.atkT=1.8; a.tele=null; shake(6); SFX.hit(); slashFx(e,a.aim,110,1,[YP.glow,YP.eyeW]); if(inArc(p,e.x,e.y,a.aim,e.d.range+10,1.05)&&p.jumpT<=0){ damage(p,Math.round(YETI_HIT.claw*P2),e,{kb:300}); addStatus(p,'slow',.8); } } }
-  else if(a.state==='breath'){ e.vx=e.vy=0; if(a.t>1.6){ faceTo(e,p); a.aim=e.face; } else { a.tele=null; e.face=a.aim; a.tick-=dt; if(a.tick<=0){ a.tick=.25; if(inArc(p,e.x,e.y-10,a.aim,300,.55)&&p.jumpT<=0){ damage(p,Math.round(YETI_HIT.breath*P2),e,{noKb:true,haz:true,ranged:true,sure:true}); addStatus(p,'slow',1); } for(let i=0;i<4;i++){ const an=a.aim+rnd(-.5,.5), v=rnd(200,420); part(e.x+Math.cos(a.aim)*50,e.y-10+Math.sin(a.aim)*25,Math.cos(an)*v,Math.sin(an)*v*.7,i%2?YP.eyeW:YP.glow,rnd(.3,.5),3,0,true); } } } if(a.t<=0){ a.state='chase'; e.abCd=a.phase2?1.8:2.6; a.atkT=.6; } }
-  else if(a.state==='pound'){ e.vx=e.vy=0; if(a.t<=0){ a.state='chase'; e.abCd=a.phase2?1.8:2.6; a.atkT=.8; a.tele=null; shake(10); vibrate(100); noise(.2,.3); tone(60,.35,'sine',.35,-30); iceRing(e,Math.round(YETI_HIT.ring*P2)); for(let i=0;i<9;i++){ const an=i/9*TAU+.2; G.groundFx.push({kind:'frost',x:e.x+Math.cos(an)*90,y:e.y+10+Math.sin(an)*40,r:30,t:3}); } floatText(e.x,e.y-80,'ICE SPIKES','#bff0ff'); } }
+  else if(a.state==='claw'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='chase'; a.atkT=1.8; a.tele=null; shake(6); SFX.hit(); slashFx(e,a.aim,110,1,[YP.glow,YP.eyeW]); if(inArc(p,e.x,e.y,a.aim,e.d.range+10,1.05)&&p.jumpT<=0){ damage(p,Math.round(BH(e,YETI_HIT.claw)*P2),e,{kb:300}); addStatus(p,'slow',.8); } } }
+  else if(a.state==='breath'){ e.vx=e.vy=0; if(a.t>1.6){ faceTo(e,p); a.aim=e.face; } else { a.tele=null; e.face=a.aim; a.tick-=dt; if(a.tick<=0){ a.tick=.25; if(inArc(p,e.x,e.y-10,a.aim,300,.55)&&p.jumpT<=0){ damage(p,Math.max(1,Math.round(BH(e,YETI_HIT.breath)*.25*P2)),e,{noKb:true,haz:true,ranged:true,sure:true}); addStatus(p,'slow',1); } for(let i=0;i<4;i++){ const an=a.aim+rnd(-.5,.5), v=rnd(200,420); part(e.x+Math.cos(a.aim)*50,e.y-10+Math.sin(a.aim)*25,Math.cos(an)*v,Math.sin(an)*v*.7,i%2?YP.eyeW:YP.glow,rnd(.3,.5),3,0,true); } } } if(a.t<=0){ a.state='chase'; e.abCd=a.phase2?1.8:2.6; a.atkT=.6; } }
+  else if(a.state==='pound'){ e.vx=e.vy=0; if(a.t<=0){ a.state='chase'; e.abCd=a.phase2?1.8:2.6; a.atkT=.8; a.tele=null; shake(10); vibrate(100); noise(.2,.3); tone(60,.35,'sine',.35,-30); iceRing(e,Math.round(BH(e,YETI_HIT.ring)*P2)); for(let i=0;i<9;i++){ const an=i/9*TAU+.2; G.groundFx.push({kind:'frost',x:e.x+Math.cos(an)*90,y:e.y+10+Math.sin(an)*40,r:30,t:3}); } floatText(e.x,e.y-80,'ICE SPIKES','#bff0ff'); } }
   else if(a.state==='roar'){ e.vx=e.vy=0; faceTo(e,p); if(a.t<=0){ a.tele=null; if(p.alive&&dist(e,p)<340&&p.jumpT<=0&&!spinBusy(p)&&p.abGrace<=0){ p.iced=2; p.icedT=3.5; p.vx=p.vy=0; burst(p.x,p.y-10,[YP.eyeW,YP.iceM],16,120,.5,3,0,true); floatText(p.x,p.y-56,'FROZEN — TAP TO BREAK','#bff0ff',true); } a.state='leapPrep'; a.leaps=a.phase2?3:2; a.t=.1; } }
-  else if(a.state==='leapPrep'){ e.vx=e.vy=0; if(a.t<=0){ if(a.leaps<=0){ a.state='chase'; e.abCd=a.phase2?2:3; a.atkT=1; return; } a.leaps--; a.state='leapAir'; a.t=1.0; const L={x:p.x,y:p.y,t:0,dur:1.0,lock:.55,dmg:Math.round(YETI_HIT.leap*P2)}; B2.leaps.push(L); a.leap=L; a.sx=e.x; a.sy=e.y; } }
+  else if(a.state==='leapPrep'){ e.vx=e.vy=0; if(a.t<=0){ if(a.leaps<=0){ a.state='chase'; e.abCd=a.phase2?2:3; a.atkT=1; return; } a.leaps--; a.state='leapAir'; a.t=1.0; const L={x:p.x,y:p.y,t:0,dur:1.0,lock:.55,dmg:Math.round(BH(e,YETI_HIT.leap)*P2)}; B2.leaps.push(L); a.leap=L; a.sx=e.x; a.sy=e.y; } }
   else if(a.state==='leapAir'){ const L=a.leap, q=1-a.t/1.0; if(L.t<L.lock){ L.x=p.x; L.y=p.y; } const k=Math.min(1,Math.max(0,(q-.15)/.75)); e.x=lerp(a.sx,L.x,k); e.y=lerp(a.sy,L.y,k); e.vx=e.vy=0; if(a.t<=0){ collide(e); shake(12); vibrate(120); noise(.25,.35); tone(55,.4,'sine',.4,-30); burst(e.x,e.y+10,[YP.eyeW,YP.iceB,YP.iceM],30,300,.6,4,300); if(Math.hypot(p.x-e.x,p.y-e.y)<70+p.r*.5) hazHit(p,L.dmg,e.x,e.y,360); if(p.iced&&Math.hypot(p.x-e.x,p.y-e.y)<70+p.r*.5) icedFree(p); a.state='leapPrep'; a.t=.5; } }
-  else if(a.state==='wallsPrep'){ e.vx=e.vy=0; faceTo(e,p); if(Math.random()<.4) part(e.x+rnd(-40,40),e.y+30,rnd(-30,30),rnd(-50,-10),YP.iceM,.5,3,0); if(a.t<=0){ a.tele=null; a.state='walls'; a.t=(a.phase2?5:4)*.8+1.2; const n=a.phase2?5:4, A=WORLD.arena; const y0=A?0:e.y-520, y1=A?WORLD.h:e.y+520, x0=A?WORLD.w/2:e.x, w=A?WORLD.w:1000; for(let i=0;i<n;i++) B2.walls.push({x:x0,w,y:y0-i*210,y1,spd:270,gapX:x0-w/2+120+Math.random()*(w-240),gapW:110,dmg:Math.round(YETI_HIT.wall*P2)}); floatText(e.x,e.y-80,'ICE STORM — FIND THE GAP','#bff0ff',true); shake(8); SFX.roar(); } }
+  else if(a.state==='wallsPrep'){ e.vx=e.vy=0; faceTo(e,p); if(Math.random()<.4) part(e.x+rnd(-40,40),e.y+30,rnd(-30,30),rnd(-50,-10),YP.iceM,.5,3,0); if(a.t<=0){ a.tele=null; a.state='walls'; a.t=(a.phase2?5:4)*.8+1.2; const n=a.phase2?5:4, A=WORLD.arena; const y0=A?0:e.y-520, y1=A?WORLD.h:e.y+520, x0=A?WORLD.w/2:e.x, w=A?WORLD.w:1000; for(let i=0;i<n;i++) B2.walls.push({x:x0,w,y:y0-i*210,y1,spd:270,gapX:x0-w/2+120+Math.random()*(w-240),gapW:110,dmg:Math.round(BH(e,YETI_HIT.wall)*P2)}); floatText(e.x,e.y-80,'ICE STORM — FIND THE GAP','#bff0ff',true); shake(8); SFX.roar(); } }
   else if(a.state==='walls'){ e.vx=e.vy=0; if(Math.sin(G.time*7)>.9) shake(2); if(a.t<=0){ a.state='chase'; e.abCd=a.phase2?2:3; a.atkT=1; } }
   else if(a.state==='summon'){ e.vx=e.vy=0; faceTo(e,p); if(a.t<=0){ a.tele=null; b2Summon(e); a.state='chase'; e.abCd=a.phase2?1.8:2.6; a.atkT=.8; } } };
 /* ---------- Boss Fight arenas ---------- */
@@ -3623,15 +3661,11 @@ function drawFullMap(c,p){
    ===================================================================== */
 const AT=32;   // arena tile = one world tile
 const BF_STAGES=[
-  {id:'hippo',n:1,name:'THE RIVER PIT',boss:'hippo',lvl:5,coins:200,xp:350,stars:[31,40,52,68]},
-  {id:'croc', n:2,name:'THE SWAMP HEART',boss:'croc',lvl:7,coins:350,xp:350,stars:[38,49,64,83]},
-  {id:'lord', n:3,name:'THE BROKEN PIER',boss:'lord',lvl:9,coins:550,xp:350,stars:[37,48,62,81]},
-  {id:'titan',n:4,name:'THE CALDERA',boss:'titan',lvl:15,coins:800,xp:350,stars:[58,74,96,125]},
-  {id:'yeti', n:5,name:'THE FROZEN HOLLOW',boss:'yeti',lvl:19,coins:1100,xp:350,stars:[66,84,110,143]}];
-/* stars by clear time. Model: median of the five ninjas at the boss's level, 70% attack uptime, boss HP / DPS = T.
-   5 stars = 0.78 T (out of reach at the recommended level even with perfect play, reachable two levels higher), 4 = T, 3 = 1.3 T, 2 = 1.7 T, 1 = any clear. */
-function bfStars(st,t){ const s=st.stars; return t<=s[0]?5:t<=s[1]?4:t<=s[2]?3:t<=s[3]?2:1; }
-const starStr=n=>'★'.repeat(n)+'☆'.repeat(5-n);
+  {id:'hippo',n:1,name:'THE RIVER PIT',boss:'hippo',lvl:5,coins:200,xp:350},
+  {id:'croc', n:2,name:'THE SWAMP HEART',boss:'croc',lvl:7,coins:350,xp:350},
+  {id:'lord', n:3,name:'THE BROKEN PIER',boss:'lord',lvl:9,coins:550,xp:350},
+  {id:'titan',n:4,name:'THE CALDERA',boss:'titan',lvl:BOSS_LADDER.titan.lv,coins:800,xp:350},
+  {id:'yeti', n:5,name:'THE FROZEN HOLLOW',boss:'yeti',lvl:BOSS_LADDER.yeti.lv,coins:1100,xp:350}];
 const BF_PAINT={wall:'rockwall',mud:'mud',shallow:'shallow',stone:'stone',sluice:'water',deep:'swampw',plank:'plank',bridge:'plank',island:'mud'};
 function emptyWorld(cols,rows){ return {w:cols*AT,h:rows*AT,land:{x0:0,y0:0,x1:cols*AT,y1:rows*AT},corner:0,river:{bridges:[],bh:0,fords:[],fw:0,broken:-99999},lakes:[],pools:[],
   village:{x:-99999,y:-99999,r:1,houses:[],npcs:[],signs:[],lanterns:[],barrels:[],crates:[],fences:[],safeR:1,dummies:[],flags:[],campfires:[]},secret:{x:-99999,y:-99999,r:1},ancient:{x:-99999,y:-99999,r:1,cr:1},shrine:{x:-99999,y:-99999},shipwreck:{x:-99999,y:-99999},rockform:{x:-99999,y:-99999},
@@ -3688,7 +3722,7 @@ function arenaCollide(e){ const A=WORLD.arena, r=e.r; e.x=clamp(e.x,r,WORLD.w-r)
     else if(e.kind==='player'&&A.tile(e.x,e.y)==='deep'&&(e.kbT>0)&&!(e.dunk>0)){ arenaDunk(e); }   // knocked into the water
     else { if(ok(e.lx,e.y)) e.x=e.lx; else if(ok(e.x,e.ly)) e.y=e.ly; else { e.x=e.lx; e.y=e.ly; } } }
   e.lx=e.x; e.ly=e.y; }
-function arenaDunk(p){ p.dunk=1; p.vx=p.vy=0; p.kbx=p.kby=0; p.stagger=Math.max(p.stagger,1.05); damage(p,15,null,{noKb:true,color:'#60a5fa'}); burst(p.x,p.y,['#2c4a34','#3a5e42','#9ad0c0'],20,150,.7,4,200); SFX.hurt(); floatText(p.x,p.y-50,'SPLASH!','#93c5fd',true); }
+function arenaDunk(p){ p.dunk=1; p.vx=p.vy=0; p.kbx=p.kby=0; p.stagger=Math.max(p.stagger,1.05); damage(p,HAZARD.arenaDunk,null,{noKb:true,color:'#60a5fa'}); burst(p.x,p.y,['#2c4a34','#3a5e42','#9ad0c0'],20,150,.7,4,200); SFX.hurt(); floatText(p.x,p.y-50,'SPLASH!','#93c5fd',true); }
 function arenaHook(kind,x,y){ const A=WORLD.arena; if(!A) return;
   if(kind==='tail'&&A.id==='croc'){ const p=G.player; for(const b of A.bridges){ if(!b.breakable||b.broken) continue; let near=false; for(let ty=b.y0;ty<=b.y1&&!near;ty++) for(let tx=b.x0;tx<=b.x1;tx++) if(Math.hypot((tx+.5)*AT-x,(ty+.5)*AT-y)<190){ near=true; break; } if(!near) continue;
     b.broken=true; for(let ty=b.y0;ty<=b.y1;ty++) for(let tx=b.x0;tx<=b.x1;tx++){ A.set(tx,ty,'deep'); burst((tx+.5)*AT,(ty+.5)*AT,['#7a5230','#5e3d22','#9ad0c0'],8,140,.8,4,300); } WORLD.chunks.clear(); shake(6); noise(.3,.3); floatText(((b.x0+b.x1)/2+.5)*AT,(b.y0+.5)*AT-20,'THE BRIDGE BREAKS!','#fca5a5',true);
@@ -3701,7 +3735,7 @@ function diveTarget(e,p){ const A=WORLD.arena; let best=null,bd=1e9;
 function bossDive(e,dt,p){ const s=e.sub; s.t-=dt;
   if(s.st==='dive'){ if(Math.random()<.6) part(e.x+rnd(-30,30),e.y+rnd(-10,10),0,-30,'#9ad0c0',.5,3,0,true); if(s.t<=0){ const t=diveTarget(e,p); s.tx=t.x; s.ty=t.y; s.st='travel'; } }
   else if(s.st==='travel'){ const d=Math.hypot(s.tx-e.x,s.ty-e.y); if(d>8){ e.x+=(s.tx-e.x)/d*Math.min(d,420*dt); e.y+=(s.ty-e.y)/d*Math.min(d,420*dt); if(Math.random()<.5) part(e.x+rnd(-14,14),e.y+rnd(-8,8),0,-22,'#9ad0c0',.6,2.5,0,true); } else { s.st='rise'; s.t=1; e.ai.tele={s:'circ',r:90,t:0,dur:1}; } }
-  else if(s.st==='rise'){ if(Math.random()<.9) part(e.x+rnd(-40,40),e.y+rnd(-20,20),0,-30,Math.random()<.5?'#bbf7d0':'#9ad0c0',.5,3,0,true); if(s.t<=0){ e.sub=null; e.hidden=false; e.ai.tele=null; e.ai.state='chase'; e.abCd=1.2; e.ai.recover=.3; e.swimT=rnd(7,11); burst(e.x,e.y,['#2c4a34','#9ad0c0','#ffffff','#4ade80'],40,300,.8,5,200,true); shake(9); vibrate(80); SFX.roar(); faceTo(e,p); if(p.alive&&inCircle(p,e.x,e.y,95)) damage(p,20,e,{kb:340}); } }
+  else if(s.st==='rise'){ if(Math.random()<.9) part(e.x+rnd(-40,40),e.y+rnd(-20,20),0,-30,Math.random()<.5?'#bbf7d0':'#9ad0c0',.5,3,0,true); if(s.t<=0){ e.sub=null; e.hidden=false; e.ai.tele=null; e.ai.state='chase'; e.abCd=1.2; e.ai.recover=.3; e.swimT=rnd(7,11); burst(e.x,e.y,['#2c4a34','#9ad0c0','#ffffff','#4ade80'],40,300,.8,5,200,true); shake(9); vibrate(80); SFX.roar(); faceTo(e,p); if(p.alive&&inCircle(p,e.x,e.y,95)) damage(p,CROC_DMG.lurk[e.ai.phase2?1:0],e,{kb:340}); } }
   e.lx=e.x; e.ly=e.y; }
 function arenaEnemyGate(e,dt,p){ const A=WORLD.arena, F=G.arena; if(!F||F.phase!=='fight'||F.over){ e.vx=e.vy=0; return true; } if(e.sub){ bossDive(e,dt,p); return true; } if(e.crashT>0) e.crashT-=dt; return false; }
 function crashBoulder(e){ const W=WORLD; for(const o of W.colliders) if(o.crash&&Math.hypot(o.x-e.x,o.y-e.y)<o.r+e.r+12){ e.status.stun={t:1.5,tick:0}; e.crashT=1.5; e.vx=e.vy=0; burst(o.x,o.y-10,['#8a8a94','#a6a6b0','#6e6e78'],26,240,.8,5,300); shake(10); vibrate(100); floatText(e.x,e.y-100,'CRASHED! STUNNED','#fde047',true); noise(.3,.3); return true; } return false; }
@@ -3761,7 +3795,7 @@ function arenaWin(e){ const F=G.arena; if(!F||F.over) return; F.over='win'; F.ov
 function bfGrantRewards(F){ const st=F.stage, id=st.id, first=!SAVE.bossFightFirstClearClaimed[id]; const r={chi:1,coins:st.coins,xp:st.xp,first};
   SAVE.chi=(SAVE.chi||0)+1; SAVE.gold+=st.coins; gainXP(st.xp); dailyEvent('bf',st.id);
   if(first){ SAVE.bossFightFirstClearClaimed[id]=true; SAVE.chi+=2; SAVE.keys=Math.min(3,(SAVE.keys||0)+1); r.bonusChi=2; r.bonusKey=(SAVE.keys<=3); }
-  SAVE.bossFightCleared[id]=true; const t=Math.round(F.time*10)/10; r.stars=bfStars(st,t); SAVE.bossFightStars=SAVE.bossFightStars||{}; if((SAVE.bossFightStars[id]||0)<r.stars){ SAVE.bossFightStars[id]=r.stars; r.newStars=true; } if(!SAVE.bossFightBestTime[id]||t<SAVE.bossFightBestTime[id]){ SAVE.bossFightBestTime[id]=t; r.newBest=true; } save(); F.rewards=r; }
+  SAVE.bossFightCleared[id]=true; const t=Math.round(F.time*10)/10; if(!SAVE.bossFightBestTime[id]||t<SAVE.bossFightBestTime[id]){ SAVE.bossFightBestTime[id]=t; r.newBest=true; } save(); F.rewards=r; }
 const fmtT=t=>{ t=Math.max(0,t||0); const m=Math.floor(t/60), s=t-m*60; return m+':'+(s<10?'0':'')+s.toFixed(1); };
 /* ---------- HUD + screens ---------- */
 function drawArenaHUD(c,p,bw){ const F=G.arena; if(!F) return; const best=SAVE.bossFightBestTime[F.stage.id];
@@ -3777,7 +3811,7 @@ function bossPortrait(st,size){ if(st.boss==='lord') return lordPortrait(size); 
 function buildBossList(){ const el=$('bfList'); el.innerHTML='';
   for(const st of BF_STAGES){ const locked=(st.n===2&&!SAVE.bossFightCleared.hippo)||(st.n===3&&!SAVE.bossFightCleared.croc)||(st.n===4&&!SAVE.bossFightCleared.lord)||(st.n===5&&!SAVE.bossFightCleared.titan), cleared=!!SAVE.bossFightCleared[st.id], best=SAVE.bossFightBestTime[st.id], tries=SAVE.bossFightAttempts[st.id]||0;
     const d=document.createElement('div'); d.className='bfcard'+(locked?' locked':''); d.appendChild(bossPortrait(st,96));
-    d.insertAdjacentHTML('beforeend',`<div class="grow"><div class="bft">STAGE ${st.n} — ${EN[st.boss].name}${cleared?' <span class="bfok">✔ CLEARED</span>':''}</div><div class="bfd">${st.name}${locked?' · 🔒 clear stage '+(st.n-1)+' first':''}</div><div class="bfd">${best?'Best time <b>'+fmtT(best)+'</b>':'No clear yet'} · ${tries} attempt${tries===1?'':'s'} · <span style="color:#fde047">${starStr((SAVE.bossFightStars&&SAVE.bossFightStars[st.id])||0)}</span></div></div><div class="bfskull">☠</div>`);
+    d.insertAdjacentHTML('beforeend',`<div class="grow"><div class="bft">STAGE ${st.n} — ${EN[st.boss].name}${cleared?' <span class="bfok">✔ CLEARED</span>':''}</div><div class="bfd">${st.name}${locked?' · 🔒 clear stage '+(st.n-1)+' first':''}</div><div class="bfd">${best?'Best time <b>'+fmtT(best)+'</b>':'No clear yet'} · ${tries} attempt${tries===1?'':'s'}</div></div><div class="bfskull">☠</div>`);
     if(!locked) d.onclick=()=>openBossPre(st); el.appendChild(d); }
   el.insertAdjacentHTML('beforeend','<div class="bfcard soon"><div class="bfskull">…</div><div class="grow"><div class="bft">COMING SOON</div><div class="bfd">More bosses will join the pit</div></div></div>');
 }
@@ -3794,18 +3828,17 @@ function openBossPre(st){ BF_SEL=st; const n=SAVE.selected, lv=SAVE.levels[n]; c
   const ic=k=>'<img class="rwic" src="'+rewardIcon(k).toDataURL()+'">', first=!SAVE.bossFightFirstClearClaimed[st.id];
   $('bfPreChi').innerHTML='<div class="rwrow"><span class="rwlab">WIN</span><span class="rw">1× '+ic('chi')+'</span><span class="rw">'+st.xp+' '+ic('xp')+'</span><span class="rw">'+st.coins+' '+ic('gold')+'</span></div>'
     +(first?'<div class="rwrow"><span class="rwlab" style="color:#86efac">FIRST CLEAR</span><span class="rw">+2 '+ic('chi')+'</span><span class="rw">+1 '+ic('key')+'</span></div>':'')
-    +'<div class="rwrow"><span class="rwlab">STARS</span>'+[5,4,3,2].map((s,i)=>'<span class="rw"><b style="color:#fde047">'+'★'.repeat(s)+'</b> '+fmtT(st.stars[i])+'</span>').join('')+'</div>'
     +'<div class="rwrow"><span class="rwlab" style="color:#93c5fd">YOU BRING</span><span class="rw">'+(SAVE.chi||0)+' '+ic('chi')+'</span><span class="rw" style="color:#9ca3af;font-weight:700">Chi spent in a failed attempt is gone</span></div>';
   setState('BOSSPRE'); }
 function showBossFail(){ const L=G.lastFail; if(!L) return setState('BOSSLIST'); $('bfFailBoss').textContent=EN[L.stage.boss].name+' · '+L.stage.name; $('bfFailStats').innerHTML='<div class="rs"><span>Boss health left</span><b>'+L.bossLeft+'%</b></div><div class="rs"><span>Time</span><b>'+fmtT(L.time)+'</b></div>'+(L.chiSpent>0?'<div class="rs"><span>Chi spent</span><b>'+L.chiSpent+'</b></div>':'')+'<div class="rs"><span><i class="chiorb"></i> Your Chi</span><b>'+(SAVE.chi||0)+'</b></div>'; setState('BOSSFAIL'); }
-function showBossWin(F){ const r=F.rewards, st=F.stage; $('bfWinTime').innerHTML='<span style="color:#fde047;font-size:1.5em;letter-spacing:3px">'+starStr(r.stars)+'</span>'+(r.newStars?' <span class="bfok">NEW!</span>':'')+'<br>TIME <b>'+fmtT(F.time)+'</b>'+(r.newBest?' <span class="bfok">NEW BEST!</span>':'  ·  best '+fmtT(SAVE.bossFightBestTime[st.id]));
+function showBossWin(F){ const r=F.rewards, st=F.stage; $('bfWinTime').innerHTML='TIME <b>'+fmtT(F.time)+'</b>'+(r.newBest?' <span class="bfok">NEW BEST!</span>':'  ·  best '+fmtT(SAVE.bossFightBestTime[st.id]));
   $('bfWinRewards').innerHTML='<div class="rs good"><span><i class="chiorb"></i> Chi</span><b>+1</b></div><div class="rs good"><span>⚡ XP</span><b>+'+r.xp+'</b></div><div class="rs good"><span><img class="coinic" src="'+COIN_URI+'" alt=""> Gold</span><b>+'+r.coins+'</b></div>'+(r.first?'<div class="rs good"><span>First clear</span><b>+2 <i class="chiorb"></i> · +1 🔑</b></div>':''); setState('BOSSWIN'); }
 /* =====================================================================
    THE PIRATE LORD — third boss. One entity for the open world (beach) and Boss Fight stage 3.
    Drawing = LORD kit (boss-pirate-lord.html rig). Moves: Double Slash, Sword Whirl, Anchor Pull (+drag, +slash),
    Call the Crew (75/50/25%), Broadside (phase 2). Each move punishes a different habit.
    ===================================================================== */
-const LORD_HIT={slash1:21,slash2:35,whirl:42,anchor:35,contact:28,shell:12,mortar:21};   /* a touch harder */
+const LORD_HIT={slash1:21,slash2:35,whirl:42,anchor:35,contact:28,shell:12,mortar:21,crewPellet:10};   /* a touch harder */
 const LORD_CD=1.2;
 /* tiers by HP: 0 calm (100-75%), 1 angry (75-35%), 2 berserk (under 35%) */
 const LORD_TIER=[{rate:1,spd:1,hit:1,mortarN:1,mortarT:2.4,mark:1,crew:3},{rate:1.2,spd:1.15,hit:1.15,mortarN:2,mortarT:1.6,mark:.9,crew:4},{rate:1.35,spd:1.3,hit:1.3,mortarN:4,mortarT:1.2,mark:.8,crew:5}];
