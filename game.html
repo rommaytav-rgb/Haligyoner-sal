@@ -367,7 +367,7 @@
   #gemFlash{display:none}
   @keyframes gemflash{0%{opacity:.55}100%{opacity:0}}
   .gembtns{display:flex;flex-direction:column;gap:5px;align-items:stretch} .btn.sm.sell{padding:4px 8px;font-size:10px;background:linear-gradient(180deg,#f59e0b,#b45309);border-color:#fde68a;display:flex;align-items:center;justify-content:center;gap:3px}
-  .gemitem{border-color:var(--g)} .gemic{border-color:var(--g)} .gemcol{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:12px}
+  .gemitem.dim{opacity:.55} .gemitem{border-color:var(--g)} .gemic{border-color:var(--g)} .gemcol{display:flex;flex-wrap:wrap;gap:8px 14px;font-size:12px}
 </style>
 </head>
 <body>
@@ -398,7 +398,7 @@
 <div id="ovEquip" class="ov"><div class="panel" style="max-width:640px"><div class="topline" style="margin:0"><div class="ptitle" style="color:#bae6fd" id="equipTitle">EQUIPMENT</div><div class="xbtn" id="bEquipBack">✕</div></div><div class="dnote">One slot per ninja. A copy is worn by one ninja at a time; tap a copy to move it here.</div><div class="eqlist" id="equipList"></div></div></div>
 <div id="gemFlash"></div>
 <div id="gemPanel"><canvas id="gemPanelCv" width="120" height="120"></canvas><div id="gemPanelRar"></div><div id="gemPanelTxt"></div><div id="gemPanelSub"></div></div>
-<div id="ovGems" class="ov"><div class="panel" style="max-width:640px"><div class="topline" style="margin:0"><div class="ptitle" style="color:#e9d5ff" id="gemTitle">GEMS</div><div class="xbtn" id="bGemsBack">✕</div></div><div class="dnote">One gem per slot. A gem is worn by one ninja at a time; tap one to move it here. Sorted rarest first.</div><div class="eqlist" id="gemList"></div></div></div>
+<div id="ovGems" class="ov"><div class="panel" style="max-width:640px"><div class="topline" style="margin:0"><div class="ptitle" style="color:#e9d5ff" id="gemTitle">GEMS</div><div class="xbtn" id="bGemsBack">✕</div></div><div class="dnote" id="gemNote"></div><div class="eqlist" id="gemList"></div></div></div>
 <div id="ovMenu" class="ov menu">
   <div class="stars"></div><div class="neb n1"></div><div class="neb n1b"></div><div class="neb n2"></div><div class="neb n2b"></div><div class="neb n3"></div><div class="neb n4"></div>
   <div class="frame"></div>
@@ -1463,14 +1463,16 @@ function gemCopy(id){ gemInit(); return SAVE.gems.owned.find(g=>g.id===id)||null
 function gemAdd(type,rar){ gemInit(); const g={id:'g'+(SAVE.gems.next++),type,rar}; SAVE.gems.owned.push(g); SAVE.gems.found[rar]=(SAVE.gems.found[rar]||0)+1; save(); return g; }
 function gemWorn(n,type){ gemInit(); const id=SAVE.gemSlots[n][type]; return id?gemCopy(id):null; }
 function gemWearer(id){ gemInit(); for(const n of ORDER) for(const t of ['atk','hp']) if(SAVE.gemSlots[n][t]===id) return n; return null; }
-function gemEquip(n,id){ const g=gemCopy(id); if(!g) return; const w=gemWearer(id); if(w) SAVE.gemSlots[w][g.type]=null; SAVE.gemSlots[n][g.type]=id; save(); if(G.player&&G.player.name===n) refreshPlayerStats(G.player,false); }
+/* a worn gem is locked on its ninja: it only comes off when a rarer gem replaces it, and then it returns to the inventory */
+function gemCanEquip(n,id){ const g=gemCopy(id); if(!g) return false; if(gemWearer(id)) return false; const cur=gemWorn(n,g.type); return !cur||GEM_RI[g.rar]>GEM_RI[cur.rar]; }
+function gemEquip(n,id){ const g=gemCopy(id); if(!g||!gemCanEquip(n,id)) return false; SAVE.gemSlots[n][g.type]=id; save(); if(G.player&&G.player.name===n) refreshPlayerStats(G.player,false); return true; }
 function gemUnequip(n,type){ gemInit(); SAVE.gemSlots[n][type]=null; save(); if(G.player&&G.player.name===n) refreshPlayerStats(G.player,false); }
 function gemBonus(n,type){ const g=gemWorn(n,type); return g?GEM_RAR[GEM_RI[g.rar]].bonus:0; }
 function gemMult(n,type){ return 1+gemBonus(n,type)/100; }
 function gemRarest(n){ let best=-1; for(const t of ['atk','hp']){ const g=gemWorn(n,t); if(g) best=Math.max(best,GEM_RI[g.rar]); } return best<0?null:GEM_RAR[best]; }
 /* selling: gold for a gem, deliberately not much */
 const GEM_SELL={grey:80,green:200,orange:500,purple:1200,red:3000,gold:8000};
-function gemSell(id){ const g=gemCopy(id); if(!g) return 0; const w=gemWearer(id); if(w) SAVE.gemSlots[w][g.type]=null; SAVE.gems.owned=SAVE.gems.owned.filter(x=>x.id!==id); const gold=GEM_SELL[g.rar]||0; SAVE.gold+=gold; save(); if(w&&G.player&&G.player.name===w) refreshPlayerStats(G.player,false); return gold; }
+function gemSell(id){ const g=gemCopy(id); if(!g||gemWearer(id)) return 0; SAVE.gems.owned=SAVE.gems.owned.filter(x=>x.id!==id); const gold=GEM_SELL[g.rar]||0; SAVE.gold+=gold; save(); return gold; }
 function gemCountOwned(){ gemInit(); return SAVE.gems.owned.length; }
 /* ---------- drop tables: Map 1 is tier 1, one multiplier rule per tier ---------- */
 const GEM_CAP=25;
@@ -1558,12 +1560,15 @@ function gemSlotsHtml(n){ gemInit(); const a=gemWorn(n,'atk'), h=gemWorn(n,'hp')
 function gemSlotsWire(n){ for(const type of ['atk','hp']){ const el=$(type==='atk'?'gemSlotAtk':'gemSlotHp'); if(!el) continue; const g=gemWorn(n,type); el.insertBefore(gemCanvas(g?GEM_RAR[GEM_RI[g.rar]]:null,type,48,false,.3),el.firstChild); el.onclick=ev=>{ ev.stopPropagation(); G.gemFor={n,type}; setState('GEMS'); }; }
   gemAura($('cdetail').querySelector('.bportrait'),gemRarest(n)); }
 function gemAura(po,R){ if(!po) return; po.querySelectorAll('.aurap,.auraspark').forEach(e=>e.remove()); po.classList.toggle('aura',!!R); if(!R) return; po.style.setProperty('--aura',R.glow); for(let i=0;i<3;i++){ const d=document.createElement('i'); d.className='aurap'; d.style.left=(30+i*20+Math.random()*10)+'%'; d.style.animationDelay=(i*1.1)+'s'; d.style.animationDuration=(3.2+Math.random())+'s'; po.appendChild(d); } const s=document.createElement('i'); s.className='auraspark'; po.appendChild(s); }
-function buildGemPicker(){ gemInit(); const {n,type}=G.gemFor, T=GEM_TYPES[type], cur=SAVE.gemSlots[n][type], el=$('gemList'); $('gemTitle').textContent=n+' · '+T.label.toUpperCase();
+function buildGemPicker(){ gemInit(); const {n,type}=G.gemFor, T=GEM_TYPES[type], cur=SAVE.gemSlots[n][type], el=$('gemList'); $('gemTitle').textContent=n+' · '+T.label.toUpperCase(); $('gemNote').textContent='A worn gem is locked on its ninja. Only a rarer gem can replace it; the old one comes back to your inventory.';
   const list=SAVE.gems.owned.filter(g=>g.type===type).sort((a,b)=>GEM_RI[b.rar]-GEM_RI[a.rar]); let h='';
   if(!list.length) h+='<div class="dnote">No '+T.name.toLowerCase()+' gems yet. Gems drop from enemies (rarely) and from every boss kill.</div>';
-  for(const g of list){ const R=GEM_RAR[GEM_RI[g.rar]], w=gemWearer(g.id), mine=g.id===cur; h+=`<div class="eqitem gemitem ${mine?'on':''}" data-id="${g.id}" style="--g:${R.glow}"><div class="eqic gemic"></div><div class="eqbody"><div class="eqname" style="color:${R.glow}">${R.name}</div><div class="eqdesc">+${gemAddedFor(n,type,g.rar)} ${T.stat} for ${n}</div><div class="eqwho">${mine?'EQUIPPED ON '+n:w?'worn by '+w+' · tap to move here':'in inventory'}</div></div><div class="gembtns"><div class="btn sm ${mine?'':'primary'}">${mine?'REMOVE':'EQUIP'}</div><div class="btn sm sell" data-sell="${g.id}"><img class="coinic" src="${COIN_URI}" alt=""> SELL ${GEM_SELL[g.rar]}</div></div></div>`; }
-  el.innerHTML=h; el.querySelectorAll('.gemitem').forEach(d=>{ const g=gemCopy(d.dataset.id); d.querySelector('.gemic').appendChild(gemCanvas(GEM_RAR[GEM_RI[g.rar]],g.type,52,false,.3)); d.onclick=()=>{ if(g.id===SAVE.gemSlots[n][type]) gemUnequip(n,type); else gemEquip(n,g.id); SFX.key(); buildGemPicker(); };
-    d.querySelector('[data-sell]').onclick=ev=>{ ev.stopPropagation(); const R=GEM_RAR[GEM_RI[g.rar]]; if(GEM_RI[g.rar]>=3&&!confirm('Sell this '+R.name+' gem for '+GEM_SELL[g.rar]+' gold?')) return; const got=gemSell(g.id); SFX.coin(); $('gemTitle').textContent=n+' · SOLD FOR '+got+' GOLD'; setTimeout(buildGemPicker,600); }; }); }
+  const curG=cur?gemCopy(cur):null;
+  for(const g of list){ const R=GEM_RAR[GEM_RI[g.rar]], w=gemWearer(g.id), mine=g.id===cur, rarer=!curG||GEM_RI[g.rar]>GEM_RI[curG.rar], can=!w&&rarer;
+    const who=mine?'EQUIPPED ON '+n+' · locked until a rarer gem replaces it':w?'locked on '+w:rarer?(curG?'replaces the '+GEM_RAR[GEM_RI[curG.rar]].name.toLowerCase()+' gem, which returns to you':'in inventory'):'in inventory · not rarer than the worn gem';
+    h+=`<div class="eqitem gemitem ${mine?'on':''} ${w&&!mine?'dim':''}" data-id="${g.id}" style="--g:${R.glow}"><div class="eqic gemic"></div><div class="eqbody"><div class="eqname" style="color:${R.glow}">${R.name}</div><div class="eqdesc">+${gemAddedFor(n,type,g.rar)} ${T.stat} for ${n}</div><div class="eqwho">${who}</div></div><div class="gembtns">${mine?'<div class="btn sm dis">🔒 LOCKED</div>':w?'':`<div class="btn sm ${can?'primary':'dis'}">${can?'EQUIP':'NEED RARER'}</div>`}${!w&&!mine?`<div class="btn sm sell" data-sell="${g.id}"><img class="coinic" src="${COIN_URI}" alt=""> SELL ${GEM_SELL[g.rar]}</div>`:''}</div></div>`; }
+  el.innerHTML=h; el.querySelectorAll('.gemitem').forEach(d=>{ const g=gemCopy(d.dataset.id); d.querySelector('.gemic').appendChild(gemCanvas(GEM_RAR[GEM_RI[g.rar]],g.type,52,false,.3)); d.onclick=()=>{ if(gemEquip(n,g.id)){ SFX.key(); buildGemPicker(); } else { SFX.block&&SFX.block(); } };
+    const sb=d.querySelector('[data-sell]'); if(sb) sb.onclick=ev=>{ ev.stopPropagation(); const R=GEM_RAR[GEM_RI[g.rar]]; if(GEM_RI[g.rar]>=3&&!confirm('Sell this '+R.name+' gem for '+GEM_SELL[g.rar]+' gold?')) return; const got=gemSell(g.id); SFX.coin(); $('gemTitle').textContent=n+' · SOLD FOR '+got+' GOLD'; setTimeout(buildGemPicker,600); }; }); }
 function gemCollectionHtml(){ gemInit(); const f=SAVE.gems.found; return GEM_RAR.map(R=>`<span style="color:${R.glow}">${R.name} <b>${f[R.key]||0}</b></span>`).join(' · '); }
 
 /* ---------- the Ice Shop's gems: two a day, up to Epic, rolled with odds, reset at midnight, the same gem can show twice ---------- */
