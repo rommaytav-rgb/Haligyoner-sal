@@ -1469,7 +1469,7 @@ function gemBonus(n,type){ const g=gemWorn(n,type); return g?GEM_RAR[GEM_RI[g.ra
 function gemMult(n,type){ return 1+gemBonus(n,type)/100; }
 function gemRarest(n){ let best=-1; for(const t of ['atk','hp']){ const g=gemWorn(n,t); if(g) best=Math.max(best,GEM_RI[g.rar]); } return best<0?null:GEM_RAR[best]; }
 /* selling: gold for a gem, deliberately not much */
-const GEM_SELL={grey:25,green:60,orange:150,purple:350,red:800,gold:2000};
+const GEM_SELL={grey:80,green:200,orange:500,purple:1200,red:3000,gold:8000};
 function gemSell(id){ const g=gemCopy(id); if(!g) return 0; const w=gemWearer(id); if(w) SAVE.gemSlots[w][g.type]=null; SAVE.gems.owned=SAVE.gems.owned.filter(x=>x.id!==id); const gold=GEM_SELL[g.rar]||0; SAVE.gold+=gold; save(); if(w&&G.player&&G.player.name===w) refreshPlayerStats(G.player,false); return gold; }
 function gemCountOwned(){ gemInit(); return SAVE.gems.owned.length; }
 /* ---------- drop tables: Map 1 is tier 1, one multiplier rule per tier ---------- */
