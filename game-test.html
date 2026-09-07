@@ -1193,7 +1193,7 @@ const EN={
   skel: {cls:'normal',world:3,spd:118,r:14,range:48,atk:1.3,coins:[10,14],gold:[60,90],xp:70,rig:true,scale:1.5,biome:'under',name:'UNDERWORLD SKELETON'},
   askel:{cls:'strong',mods:['tanky'],world:3,spd:120,r:20,range:58,atk:1.6,coins:[12,16],gold:[110,160],xp:120,rig:true,scale:1.95,biome:'under',name:'ARMOURED SKELETON'},   /* the armoured one is visibly bigger than the normal one */
   keeper:{hp:1,dmg:0,spd:0,r:14,range:0,atk:9,coins:[0,0],gold:[0,0],xp:0,rig:true,scale:2.3,name:'BARKEEPER',keeper:true},
-  witch:{cls:'boss1',world:3,spd:96,r:44,range:120,coins:[70,70],gold:[2600,2600],boss:true,name:'SKELETON WITCH',rig:true,scale:2.6,adds:'skel',xpBoss:1200,biome:'under'},   /* world 3, boss 1: artillery behind a crowd of raised skeletons */
+  witch:{cls:'boss1',world:3,spd:96,r:40,range:120,coins:[70,70],gold:[2600,2600],boss:true,name:'SKELETON WITCH',rig:true,scale:2.3,adds:'skel',xpBoss:1200,biome:'under'},   /* world 3, boss 1: artillery behind a crowd of raised skeletons */
   golem:{cls:'normal',world:2,spd:92, r:15,range:50,atk:1.4,coins:[8,12],gold:[24,36],xp:26,rig:true,scale:1.5,biome:'ember',name:'MAGMA GOLEM'},
   wolf: {cls:'strong',world:2,spd:178,r:13,range:46,atk:1.0,coins:[9,13],gold:[40,56],xp:34,rig:true,scale:1.5,biome:'frost',name:'WOLF WARRIOR'},
   /* World 2 mobs (mobs2.js): the Lava Imp is born from lava bombs during eruptions (level 11); the Ice Fox lives in dens deep in the frost (level 15). Both too light to be staggered by normal hits */
@@ -4705,7 +4705,7 @@ return {U,VW,VH,CX,CY,SUMMON,BRAZ,PILLARS,OOZE,arenaFloor,arenaWalls,arenaProps,
    WORLD 3 — the Skeleton Witch (boss 1: constant poison bolts, dark waves, Raise the Dead with empowered minions),
    the Trader (Chi ↔ gold, 3 trades per direction per day), the village portal, the underworld's boss lairs.
    ===================================================================== */
-const WITCH={boltRate:[1.4,.5],boltSpd:[480,660],charge:.4,waves:[4,5],waveGap:1.2,waveSpd:620,waveMax:840,waveR0:100,raiseTele:1.0,raiseR:240,empower:8,raiseCd:[16,10],raiseMax:2,wavesCd:[6,4.5]};
+const WITCH={boltRate:[1.4,.5],boltSpd:[480,660],charge:.4,waves:[4,5],waveGap:2.3,waveSpd:280,waveMax:700,waveR0:80,raiseTele:1.0,raiseR:150,empower:8,raiseCd:[16,10],raiseMax:2,wavesCd:[6,4.5]};
 const TRADE={sell:900,buy:1500,cap:3};
 function witchMinionsAlive(){ return G.enemies.filter(m=>m.alive&&m.witchMinion).length; }
 function witchOrb(e){ const face=Math.cos(e.face)>=0?1:-1; return {x:e.x+face*42,y:e.y+e.r*.9-110}; }
