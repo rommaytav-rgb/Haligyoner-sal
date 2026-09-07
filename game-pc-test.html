@@ -1856,7 +1856,7 @@ function inVillage(x,y,pad){ if(WORLD.arena) return false; return Math.hypot(x-W
 function onPath(x,y){ if(WORLD.arena) return false; const W=WORLD, gw=Math.ceil(W.w/W.PG), gx=Math.floor(x/W.PG), gy=Math.floor(y/W.PG); return gx>=0&&gy>=0&&gx<gw&&!!W.pathGrid[gy*gw+gx]; }
 function zoneOf(x,y){ if(WORLD.arena) return isShallow(x,y)?'shallow':WORLD.arena.zone; if(WORLD.w3) return w3Zone(x,y); if(WORLD.frost) return inVillage(x,y)?'village':m2Biome(x,y)==='ice'?'frost':'ember'; if(isShallow(x,y)) return 'shallow'; if(inVillage(x,y)) return 'village'; if(y>swampY(x)) return 'swamp'; if(x>beachX(y)) return 'beach'; if(y<riverY(x)-riverHW(x)&&x<520) return 'secret'; return 'forest'; }
 /* movement multiplier: sand, swamp and shallow water slow, paths speed up */
-function terrainMod(x,y){ if(WORLD.w3) return w3Terrain(x,y); const z=zoneOf(x,y); if(WORLD.frost) return z==='village'?1.15:z==='frost'?.95:1; if(WORLD.arena) return z==='shallow'?(WORLD.arena.id==='lord'?.75:.85):1; if(z==='shallow') return .7; if(onPath(x,y)||z==='village') return 1.15; return z==='beach'?.85:z==='swamp'?.8:1; }
+function terrainMod(x,y){ if(WORLD.w3) return w3Terrain(x,y); const z=zoneOf(x,y); if(WORLD.frost) return z==='village'?1.15:z==='frost'?.95:1; if(WORLD.arena) return z==='shallow'?(WORLD.arena.id==='lord'?.75:WORLD.arena.witch?.7:.85):1; if(z==='shallow') return .7; if(onPath(x,y)||z==='village') return 1.15; return z==='beach'?.85:z==='swamp'?.8:1; }
 function buildWorld(seed){
   if(G.map&&G.map.id==='frost_ember'){ WORLD=WORLD_CUR=buildWorld2(); WORLD.chunks.clear(); paintMini(); return; }
   if(G.map&&G.map.id==='underworld'){ WORLD=WORLD_CUR=buildWorld3(G.w3area||'surface'); WORLD.chunks.clear(); paintMini(); return; }   /* World 3: three areas, one map id */
@@ -1990,7 +1990,7 @@ function pxMast(){ const w=WORLD.shipwreck, x=w.x/PIX, y=w.y/PIX; rect(x-2,y-46,
 function pxRockForm(){ const rf=WORLD.rockform; for(const o of WORLD.rocks) if(o.big) pxRock(o.x/PIX-o.r/PIX,o.y/PIX-o.r/PIX*.75,o.r*2/PIX|0); }
 /* --- paint one art-pixel rectangle of the world (chunk or minimap) --- */
 function paintAll(c,ax,ay,aw,ah){
-  if(WORLD.arena) return paintArena(c,ax,ay,aw,ah); if(WORLD.frost) return m2PaintAll(c,ax,ay,aw,ah); if(WORLD.w3) return w3PaintAll(c,ax,ay,aw,ah);
+  if(WORLD.arena) return WORLD.arena.witch?w3ArenaPaint(c,ax,ay,aw,ah):paintArena(c,ax,ay,aw,ah); if(WORLD.frost) return m2PaintAll(c,ax,ay,aw,ah); if(WORLD.w3) return w3PaintAll(c,ax,ay,aw,ah);
   g=c; const W=WORLD, vis=(x,y,m)=>x>ax-m&&x<ax+aw+m&&y>ay-m&&y<ay+ah+m; const A=(v)=>v/PIX;
   const tx0=Math.floor(ax/TS)-1, ty0=Math.floor(ay/TS)-1, tx1=Math.ceil((ax+aw)/TS)+1, ty1=Math.ceil((ay+ah)/TS)+1, kinds=new Map();
   const K=(tx,ty)=>{ const k=tx+','+ty; let v=kinds.get(k); if(v===undefined){ v=kindAt((tx*TS+8)*PIX,(ty*TS+8)*PIX); kinds.set(k,v); } return v; };
@@ -2036,7 +2036,7 @@ function drawWorldFx(c,ox,oy,vw,vh,t){
   const f=Math.floor(t*4)%3; const tx0=Math.floor(A(ox)/TS), ty0=Math.floor(A(oy)/TS), tx1=Math.ceil(A(ox+vw)/TS), ty1=Math.ceil(A(oy+vh)/TS);
   if(!W.frost) for(let ty=ty0;ty<=ty1;ty++) for(let tx=tx0;tx<=tx1;tx++){ if(((tx*3+ty*5)%4)!==0) continue; const k=kindAt((tx*TS+8)*PIX,(ty*TS+8)*PIX); if(k!=='water'&&k!=='sandwet') continue; const x=tx*TS, y=ty*TS, off=Math.sin(y*.4+t*2+tx)*2|0; rect(x+((off+f*3+8)%TS),y+6,4,1,k==='water'?PAL.water[3]:'#bfe4f7'); if(k==='water'&&HR(tx*31+ty)>.7) px(x+(f*4+3)%TS,y+(tx*13%TS|0),PAL.water[3]); }
   // waterfall spray
-  if(W.arena) arenaWorldFx(c,ox,oy,vw,vh,t);
+  if(W.arena){ if(W.arena.witch) w3ArenaFx(c,ox,oy,vw,vh,t); else arenaWorldFx(c,ox,oy,vw,vh,t); }
   if(!W.arena&&vis(W.land.x0,riverY(W.land.x0),160)){ const x=A(W.land.x0)+12, yr=A(riverY(W.land.x0)), hw=A(riverHW(W.land.x0)); for(let i=0;i<8;i++){ const yy=yr-hw+4+((t*70+i*11)%(hw*2-8)); rect(x+i*2,yy,1,4+(i%3)*2,i%2?'#ffffff':'#bfe4f7'); } if(live&&Math.random()<.4) part(W.land.x0+40+rnd(-16,16),riverY(W.land.x0)+rnd(-30,30),rnd(20,70),rnd(-30,10),'#ffffff',.5,3,60,true); }
   // campfire flames + glow, lanterns glow, flags
   const ff=Math.floor(t*8)%3; for(const cf of W.campfires){ if(!vis(cf.x,cf.y,80)) continue; const x=A(cf.x), y=A(cf.y), s=cf.big?1.4:1; const gl=c.createRadialGradient(x,y-4,2,x,y-4,26*s); gl.addColorStop(0,'rgba(255,170,60,'+(.3+.08*Math.sin(t*13))+')'); gl.addColorStop(1,'rgba(255,120,20,0)'); c.fillStyle=gl; c.fillRect(x-26*s,y-30*s,52*s,52*s); const h=[5,7,6][ff]*s; rect(x-2,y-h,4,h,PAL.fire[0]); rect(x-1,y-h+1,2,h-1,PAL.fire[1]); px(x-1+((ff+1)%2),y-h-1,PAL.fire[2]); if(live&&Math.random()<.2) part(cf.x+rnd(-4,4),cf.y-14,rnd(-8,8),rnd(-50,-30),'#fbbf24',rnd(.5,1),2,-20,true); }
@@ -4517,6 +4517,191 @@ function witchDeath(t){
 return {K,trader,traderShop,witch,witchDeath,staff,skullFace};
 })();
 /* =====================================================================
+   WORLD 3 — the Skeleton Witch's Boss Fight arena, imported as is from witcharena1.html (40×30 tiles like the hippo pit).
+   One reference unit = AT/10 world px; R/P draw through R3/P3 at the current W3S.
+   ===================================================================== */
+const W3AR=(()=>{
+const R=R3, P=P3, rnd=HR, TS=10, AW=40, AH=30, VW=AW*TS, VH=AH*TS;
+const U={
+  rock:'#1f2a22', rockD:'#131b16', rockL:'#2e3d31', rockH:'#3f5342',
+  soil:'#1a2118', soilD:'#0f140e', soilL:'#26301f',
+  glow:'#3ef07a', glowD:'#1f9a4a', glowL:'#9dffc0', glowW:'#e0ffe8',
+  ooze:'#2bbf5e', oozeD:'#14743a', oozeL:'#6effa0',
+  poi:'#1f6b34', poiL:'#3fae52', poiD:'#0e3a1c', poiW:'#8fe89a',
+  bone:'#d8e0cc', boneD:'#a8b49c', boneS:'#6e7a66',
+  blk:'#141a18', blkL:'#2e3835',
+  metal:'#2a3230', metalD:'#151b1a', metalL:'#3e4a47',
+  dark:'#080c09'
+};
+const CX=VW/2, CY=VH/2+10;          // מרכז הזירה
+/* ---------- אריחים ---------- */
+function tFloor(x,y,s){
+  R(x,y,TS,TS,U.soil);
+  for(let i=0;i<10;i++) P(x+rnd(s*3+i)*TS, y+rnd(s*7+i)*TS, rnd(i+s)>.5?U.soilL:U.soilD);
+  if(rnd(s*13)>.88) R(x+3,y+4,3,2,U.rockD);
+}
+function tRune(x,y,s,t){
+  R(x,y,TS,TS,U.soilD);
+  for(let i=0;i<6;i++) P(x+rnd(s*5+i)*TS, y+rnd(s*9+i)*TS, U.soilL);
+  if(rnd(s*7)>.5){ const on=Math.sin(t*2+s)>0;
+    R(x+3,y+3,4,1,on?U.glowD:U.soilL); R(x+4,y+4,1,3,on?U.glowD:U.soilL); }
+}
+function tOozeT(x,y,s,t){
+  R(x,y,TS,TS,U.oozeD);
+  for(let j=0;j<TS;j+=3){ const off=Math.sin((y+j)*.5+t*1.6+s)*2|0;
+    R(x,y+j,TS,2,U.ooze); R(x+((off+6)%TS),y+j,3,1,U.oozeL); }
+}
+
+/* ---------- אובייקטים ---------- */
+function skull(x,y,t,lit){
+  R(x,y,7,6,U.bone); R(x,y,7,1,'#eef4e6');
+  R(x+1,y+2,2,2,lit?U.glow:U.dark); R(x+4,y+2,2,2,lit?U.glow:U.dark);
+  if(lit && Math.sin(t*4+x)>0){ P(x+1,y+2,U.glowW); P(x+4,y+2,U.glowW); }
+  R(x+1,y+6,5,1,U.boneD);
+}
+function bonePile(x,y,t){
+  R(x+1,y+8,12,2,'rgba(0,0,0,.3)');
+  for(let i=0;i<4;i++) R(x+i*3,y+5-((i%2)*2),6,2,U.boneD);
+  skull(x+3,y,t,true);
+}
+function pillar(x,y,h,t,broken){
+  R(x-2,y+h,10,3,'rgba(0,0,0,.3)');
+  for(let j=0;j<h;j+=4){
+    R(x,y+j,7,4, (j/4)%2?U.rock:U.rockL);
+    R(x,y+j,7,1,U.rockH);
+    if(j%8===0) R(x+1,y+j+1,5,1,U.rockD);
+  }
+  // רונה זוהרת על העמוד
+  if(Math.sin(t*2+x)>0){ R(x+2,y+Math.round(h/2),3,1,U.glowD); P(x+3,y+Math.round(h/2)+1,U.glow); }
+  if(!broken){
+    R(x-2,y-4,11,4,U.rock); R(x-2,y-4,11,1,U.rockH);
+    skull(x+1,y-10,t,true);
+  } else {
+    for(let i=0;i<3;i++) R(x+i*2, y-2-((i%2)*2), 3,2, U.rockD);
+  }
+}
+function brazier(x,y,t){
+  R(x-1,y+12,10,2,'rgba(0,0,0,.3)');
+  // רגליים
+  R(x,y+8,2,5,U.metalD); R(x+6,y+8,2,5,U.metalD); R(x+3,y+9,2,4,U.metalD);
+  // קערה
+  R(x-1,y+4,10,5,U.metal); R(x-1,y+4,10,1,U.metalL);
+  R(x,y+3,8,1,U.metalD);
+  // להבה ירוקה
+  const f=Math.floor(t*8)%3, hh=[6,8,7][f];
+  for(let j=0;j<hh;j++){ const w=Math.max(1,4-Math.floor(j/2));
+    R(x+4-w/2, y+3-j, w,1, j<2?U.glowW:(j<4?U.glowL:U.glow)); }
+  for(let i=0;i<10;i++){ const a=i/10*6.28;
+    P(x+4+Math.cos(a)*9, y+2+Math.sin(a)*9, U.glow, .2); }
+  for(let i=0;i<3;i++){ const q=(t*.9+i*.33)%1; P(x+4+Math.sin(t*3+i)*2, y-q*10, U.glowL, 1-q); }
+}
+function ribArch(x,y,t){
+  for(let i=0;i<14;i++){ const a=Math.PI+(i/13)*Math.PI, r=18;
+    R(x+Math.cos(a)*r-1, y+Math.sin(a)*r*.9-1, 3,3, i<3||i>10?U.boneS:U.boneD); }
+  R(x-20,y,4,3,U.boneD); R(x+16,y,4,3,U.boneD);
+  skull(x-3,y-21,t,true);
+}
+function crystal(x,y,h,t,seed){
+  for(let k=0;k<3;k++){ const dx=(k-1)*3, hh=h-Math.abs(k-1)*3;
+    for(let j=0;j<hh;j++){ const w=Math.max(1,Math.round((1-j/hh)*4));
+      R(x+dx-w/2, y-j, w,1, j<hh*.3?U.glowW:(j<hh*.65?U.glowL:U.glowD)); } }
+  R(x-4,y,9,2,'rgba(0,0,0,.25)');
+}
+function cage(x,y,t){
+  for(let i=0;i<4;i++){ const sw=Math.sin(t*1.2+i*.4)*.6;
+    R(x+5+sw,y-12+i*4,2,3,U.metal); }
+  R(x,y,12,14,U.metalD);
+  for(let i=0;i<4;i++) R(x+1+i*3,y+1,1,12,U.metal);
+  R(x,y,12,2,U.metal); R(x,y+12,12,2,U.metal);
+  skull(x+3,y+5,t,false);
+}
+function summonCircle(x,y,t,active){
+  const r=13;
+  for(let i=0;i<Math.round(r*3);i++){ const a=i/Math.round(r*3)*6.28 + (active?t*.9:0);
+    P(x+Math.cos(a)*r, y+Math.sin(a)*r*.42, active?U.glowL:U.glowD, active?.9:.4); }
+  for(let i=0;i<Math.round(r*2);i++){ const a=i/Math.round(r*2)*6.28 - (active?t*1.3:0);
+    P(x+Math.cos(a)*(r*.6), y+Math.sin(a)*(r*.6)*.42, active?U.glow:U.glowD, active?.8:.3); }
+  // סמל גולגולת קטן במרכז
+  R(x-2,y-2,5,4,active?U.glowL:U.glowD, active?.9:.45);
+  P(x-1,y-1,U.dark); P(x+1,y-1,U.dark);
+}
+
+/* ================= פריסת הזירה ================= */
+// ארבעה מעגלי זימון בפינות, ארבע קערות אש, שמונה עמודים, בריכות רפש
+const SUMMON=[[70,80],[330,80],[70,240],[330,240]];
+const BRAZ=[[52,44],[340,44],[52,258],[340,258]];
+const PILLARS=[[26,60],[26,180],[366,60],[366,180],[150,26],[242,26],[150,268],[242,268]];
+const OOZE=[[120,150],[280,150],[200,66],[200,238]];
+
+function arenaFloor(t){
+  for(let j=0;j<AH;j++) for(let i=0;i<AW;i++){
+    const x=i*TS, y=j*TS, s=i*7.3+j*3.1;
+    // טבעת רונות סביב המרכז
+    const d=Math.hypot(x+5-CX,(y+5-CY)*1.35);
+    if(d>112 && d<128) tRune(x,y,s,t);
+    else tFloor(x,y,s);
+  }
+  // בריכות רפש קבועות ברצפה
+  OOZE.forEach(function(o,i){
+    for(let j=-2;j<=2;j++) for(let k=-2;k<=2;k++){
+      if(Math.hypot(k,j*1.3)>2.4) continue;
+      tOozeT(o[0]+k*TS, o[1]+j*TS, o[0]*3+o[1]+k+j, t);
+    }
+  });
+}
+function arenaWalls(t){
+  // קיר אבן מסביב
+  for(let i=0;i<AW;i++){
+    for(let j=0;j<2;j++){ const o=(j%2)*5;
+      R(i*TS+o,j*TS,9,10,(i+j)%4===0?U.rockL:U.rock);
+      R(i*TS+o,j*TS,9,1,U.rockH); }
+    R(i*TS,(AH-1)*TS,10,10,(i%4===0)?U.rockL:U.rock);
+    R(i*TS,(AH-1)*TS,10,1,U.rockH);
+  }
+  for(let j=2;j<AH-1;j++){
+    R(0,j*TS,10,10,(j%4===0)?U.rockL:U.rock); R(0,j*TS,10,1,U.rockH);
+    R((AW-1)*TS,j*TS,10,10,(j%4===0)?U.rockL:U.rock); R((AW-1)*TS,j*TS,10,1,U.rockH);
+  }
+  // נטיפים מהקיר העליון
+  for(let i=0;i<11;i++){ const x=18+i*36, h=4+((i*5)%7);
+    for(let j=0;j<h;j++){ const w=Math.max(1,Math.round((1-j/h)*6));
+      R(x-w/2,20+j,w,1,j<2?U.rockL:U.rock); } }
+  // גולגולות משובצות בקיר
+  for(let i=0;i<6;i++) skull(34+i*62, 8, t, i%2===0);
+}
+function arenaProps(t,phase2){
+  // שער עצמות בקצה הצפוני — כניסת הבוס
+  ribArch(CX,58,t);
+  // ארבע קערות אש
+  BRAZ.forEach(function(b){ brazier(b[0],b[1],t); });
+  // שמונה עמודים
+  PILLARS.forEach(function(p,i){ pillar(p[0],p[1],22+((i*5)%10),t, i%3===0); });
+  // כלובים תלויים בפינות
+  [[40,96],[352,96],[40,214],[352,214]].forEach(function(a){ cage(a[0],a[1],t); });
+  // גבישים
+  [[110,52],[292,52],[110,254],[292,254],[200,120],[200,190]].forEach(function(a,i){
+    crystal(a[0],a[1],11+(i%3)*4,t,i); });
+  // ערימות עצמות
+  [[88,140],[312,140],[168,90],[236,90],[168,224],[236,224]].forEach(function(a){
+    bonePile(a[0],a[1],t); });
+  // מעגלי הזימון
+  SUMMON.forEach(function(sc){ summonCircle(sc[0],sc[1],t,phase2); });
+}
+function arenaFX(t,phase2){
+  // ערפל
+  for(let i=0;i<70;i++){ const x=(i*23+t*5)%VW, y=(i*37+t*2)%VH;
+    R(x,y,8,2,phase2?U.glow:U.poiL,.045); }
+  // ניצוצות עולים
+  for(let i=0;i<26;i++){ const q=(t*.3+i*.04)%1;
+    P((i*31)%VW, VH-q*VH, U.glowL, .4*(1-q)); }
+  // ויניית
+  for(let j=0;j<VH;j+=2) for(let i=0;i<VW;i+=2){
+    const d=Math.max(0,1-Math.hypot(i-CX,(j-CY)*1.2)/230);
+    if(d<.22&&(i+j)%4===0) P(i,j,'#000',.5); }
+}
+return {U,VW,VH,CX,CY,SUMMON,BRAZ,PILLARS,OOZE,arenaFloor,arenaWalls,arenaProps,arenaFX,summonCircle};
+})();
+/* =====================================================================
    WORLD 3 — the Skeleton Witch (boss 1: constant poison bolts, dark waves, Raise the Dead with empowered minions),
    the Trader (Chi ↔ gold, 3 trades per direction per day), the village portal, the underworld's boss lairs.
    ===================================================================== */
@@ -4528,7 +4713,7 @@ function witchBolt(e,p){ const o=witchOrb(e), v=WITCH.boltSpd[e.ai.phase2?1:0], 
   proj({type:'bolt',basic:false,x:o.x,y:o.y,vx:Math.cos(ang)*v,vy:Math.sin(ang)*v,life:1000/v,r:12,vr:6,col:'#3fae52',glow:'#8fe89a',poison:true,owner:e,dmg:tierDmg(e,'basic'),kb:90,hit:[]}); }
 function witchRaise(e){ const a=e.ai, p=G.player; const ph2=a.phase2; shake(12); vibrate(140); SFX.roar(); G.ring={x:e.x,y:e.y+8,r:0,max:WITCH.raiseR,t:0,col:'#4dfa42'};
   if(p&&p.alive&&inCircle(p,e.x,e.y+8,WITCH.raiseR)&&p.jumpT<=0) damage(p,tierDmg(e,'ultimate'),e,{kb:260,ranged:true,sure:true,haz:true,color:'#4dfa42'});
-  const comp=ph2?['askel','askel','askel','askel']:['askel','skel','askel','skel']; comp.forEach((type,i)=>{ const an=i/4*TAU+a.t+.6, x=e.x+Math.cos(an)*150, y=e.y+Math.sin(an)*90; const m=makeEnemy(type,x,y); m.spawnT=.7; m.summoned=true; m.noLoot=true; m.witchMinion=true; m.biome=null; m.empowerT=WITCH.empower; m.ai.state='chase'; m.ai.home={x:m.x,y:m.y}; collide(m); G.chasers++; G.groundFx.push({kind:'w3pillar',vec:true,x:m.x,y:m.y,r:0,t:1.6,t0:1.6}); burst(m.x,m.y-10,['#4dfa42','#b6ffae','#e8ffe4'],14,150,.6,3,-40,true); });
+  const comp=ph2?['askel','skel','askel','skel']:['skel','skel','skel','askel'], SC=WORLD.arena&&WORLD.arena.summon; comp.forEach((type,i)=>{ const an=i/4*TAU+a.t+.6, x=SC?SC[i].x:e.x+Math.cos(an)*150, y=SC?SC[i].y:e.y+Math.sin(an)*90; const m=makeEnemy(type,x,y); m.spawnT=.7; m.summoned=true; m.noLoot=true; m.witchMinion=true; m.biome=null; m.empowerT=WITCH.empower; m.ai.state='chase'; m.ai.home={x:m.x,y:m.y}; collide(m); G.chasers++; G.groundFx.push({kind:'w3pillar',vec:true,x:m.x,y:m.y,r:0,t:1.6,t0:1.6}); burst(m.x,m.y-10,['#4dfa42','#b6ffae','#e8ffe4'],14,150,.6,3,-40,true); });
   e.empowerT=WITCH.empower; floatText(e.x,e.y-120,'RISE!','#b6ffae',true); }
 AI.witch=function(e,p,dt){ const a=e.ai, d=dist(e,p), ph=a.phase2?1:0; a.t-=dt; e.abCd-=dt; a.atkT-=dt; a.raiseCd=(a.raiseCd===undefined?8:a.raiseCd)-dt; a.st=(a.st||0)+dt; const safe=inSafeZone(p.x,p.y);
   if(!a.phase2&&e.hp<e.maxHp*.5){ a.phase2=true; G.banner={text:'RISE, MY SERVANTS',sub:'PHASE 2 · THE WITCH FIRES THREE TIMES FASTER',t:2.6,col:'#b6ffae'}; shake(18); vibrate(220); SFX.roar(); burst(e.x,e.y-40,['#4dfa42','#b6ffae','#e8ffe4'],60,300,1,5,-40,true); a.raiseCd=Math.min(a.raiseCd,1.5); e.abCd=Math.min(e.abCd,2); a.raises=0; }   /* a fresh count of two summons for phase 2 */
@@ -4575,12 +4760,23 @@ function tradeDo(dir){ const T=tradeDay(), Q=G.tradeQ; let msg;
 function drawTraderShop(c,t,vis){ const W=WORLD, S=W.w3shop; if(!S||!vis(S.x+140,S.y+100,260)) return; const A=v=>v/PIX; g=c; c.save(); c.translate(A(S.x),A(S.y)); W3S=1; W3B.traderShop(t); c.restore(); W3S=1;
   const q=traderCircle(); c.save(); c.strokeStyle='rgba(232,193,74,.35)'; c.lineWidth=2; c.setLineDash([6,5]); c.lineDashOffset=-t*20; c.beginPath(); c.ellipse(A(W.safe2.x),A(W.safe2.y),A(W.safe2.r),A(W.safe2.r)*.6,0,0,TAU); c.stroke(); c.setLineDash([]); c.restore(); }
 
-/* the Boss Fight stage: a round stone floor ringed by rock, four boulders, three ooze pools you cannot cross */
-function makeWitchArena(A,W,R){ const cols=A.cols, rows=A.rows, cx=cols/2, cy=rows/2; A.paint={wall:'rockwall',deep:'swampw',floor:'stone',stone:'stone'}; A.zone='under';
-  for(let ty=0;ty<rows;ty++) for(let tx=0;tx<cols;tx++){ const d=Math.hypot((tx+.5-cx)/(cols*.47),(ty+.5-cy)/(rows*.47)); let k='wall'; if(d<=1) k=R()<.06?'stone':'floor'; A.set(tx,ty,k); }
-  for(const [px,py,r] of [[cx-13,cy-3,2.2],[cx+13,cy+4,2.4],[cx-1,cy+11,2]]) for(let ty=0;ty<rows;ty++) for(let tx=0;tx<cols;tx++) if(Math.hypot(tx+.5-px,(ty+.5-py)*1.2)<=r&&A.tile((tx+.5)*AT,(ty+.5)*AT)!=='wall') A.set(tx,ty,'deep');
-  A.center={x:cx*AT,y:cy*AT}; W.playerSpawn={x:cx*AT,y:(rows-6)*AT}; A.bossStart={x:cx*AT,y:7*AT};
-  for(const [tx,ty] of [[cx-7,cy-2],[cx+7,cy-2],[cx-6,cy+6],[cx+6,cy+6]]){ const x=(tx+.5)*AT, y=(ty+.5)*AT; W.rocks.push({x,y,r:26,s:R(),big:true}); W.colliders.push({x,y,r:26,crash:true}); } }
+/* the Boss Fight stage from the reference: stone walls, a rune ring, four ooze pools (slow), eight pillars, braziers, cages, crystals, the bone gate the witch enters through, four summoning circles in the corners */
+const W3AU=3.2;   /* world px per arena unit (AT/10; AT is defined later in the bundle) */
+function makeWitchArena(A,W,R){ const cols=A.cols, rows=A.rows, K=W3AR; A.paint={wall:'rockwall',floor:'stone',shallow:'swampw'}; A.zone='under'; A.witch=true;
+  for(let ty=0;ty<rows;ty++) for(let tx=0;tx<cols;tx++) A.set(tx,ty,(ty<2||ty>=rows-1||tx===0||tx>=cols-1)?'wall':'floor');
+  for(const [ox,oy] of K.OOZE) for(let j=-2;j<=2;j++) for(let k=-2;k<=2;k++){ if(Math.hypot(k,j*1.3)>2.4) continue; A.set(Math.floor(ox/10)+k,Math.floor(oy/10)+j,'shallow'); }   /* ooze pools: passable, slow */
+  const u=v=>v*W3AU, add=(x,y,r)=>W.colliders.push({x:u(x),y:u(y),r:u(r)});
+  K.PILLARS.forEach(([x,y],i)=>add(x+3.5,y+22+((i*5)%10)-3,4)); for(const [x,y] of K.BRAZ) add(x+4,y+9,5); for(const [x,y] of [[40,96],[352,96],[40,214],[352,214]]) add(x+6,y+7,6);
+  [[110,52],[292,52],[110,254],[292,254],[200,120],[200,190]].forEach(([x,y])=>add(x,y-2,4)); add(K.CX-18,58,3); add(K.CX+18,58,3);
+  A.center={x:u(K.CX),y:u(K.CY)}; W.playerSpawn={x:u(K.CX),y:u(250)}; A.bossStart={x:u(K.CX),y:u(78)}; A.summon=K.SUMMON.map(([x,y])=>({x:u(x),y:u(y)})); }
+function w3ArenaPaint(c,ax,ay,aw,ah){ g=c; W3S=W3AU/PIX; const K=W3AR; K.arenaFloor(0); K.arenaWalls(0);
+  const VW=K.VW, VH=K.VH; for(let j=0;j<VH;j+=2) for(let i=0;i<VW;i+=2){ const d=Math.max(0,1-Math.hypot(i-K.CX,(j-K.CY)*1.2)/230); if(d<.22&&(i+j)%4===0) P3(i,j,'#000',.5); }   /* the vignette, once */
+  W3S=1; }
+function w3ArenaFx(c,ox,oy,vw,vh,t){ const K=W3AR, b=G.boss, ph2=!!(b&&b.alive&&b.ai.phase2), raising=!!(b&&b.alive&&b.ai.state==='raise'); g=c; W3S=W3AU/PIX;
+  K.arenaProps(t,ph2||raising);
+  for(let i=0;i<70;i++){ const x=(i*23+t*5)%K.VW, y=(i*37+t*2)%K.VH; R3(x,y,8,2,ph2?K.U.glow:K.U.poiL,.045); }
+  for(let i=0;i<26;i++){ const q=(t*.3+i*.04)%1; P3((i*31)%K.VW,K.VH-q*K.VH,K.U.glowL,.4*(1-q)); }
+  W3S=1; }
 /* =====================================================================
    ICE SHOP (from iceshop.html): the wooden hut on a stone base, the old keeper behind the open counter, the sign,
    lanterns, barrels; the Frost Coat item icon; the coat worn on a ninja. Drawn with rect/px in PIX space (1 unit = 2 px).
@@ -5205,7 +5401,7 @@ function emptyWorld(cols,rows){ return {w:cols*AT,h:rows*AT,land:{x0:0,y0:0,x1:c
   landmarks:[],spawners:[],chests:[],golden:[],hippoLairs:[],crocLairs:[],chiChests:[],playerSpawn:{x:0,y:0},paths:[],rocks:[],trees:[],logs:[],bushes:[],patches:[],pebbles:[],flowers:[],shells:[],riverRocks:[],deadPlants:[],planks:[],campfires:[],reeds:[],bones:[],lights:[],
   colliders:[],cgrid:new Map(),CG:200,pathGrid:null,PG:32,chunks:new Map(),CS:640,mini:null,explored:null,FOG:64,ex:0,ey:0,arena:null}; }
 function makeArena(stage){
-  const cols=stage.id==='croc'?50:stage.id==='lord'?32:stage.id==='titan'?44:(stage.id==='yeti'||stage.id==='witch')?46:40, rows=stage.id==='croc'?36:stage.id==='lord'?25:stage.id==='titan'?32:(stage.id==='yeti'||stage.id==='witch')?34:30, W=emptyWorld(cols,rows), R=mulberry(stage.n*17+3), grid=new Array(cols*rows).fill('deep');
+  const cols=stage.id==='croc'?50:stage.id==='lord'?32:stage.id==='titan'?44:stage.id==='yeti'?46:40, rows=stage.id==='croc'?36:stage.id==='lord'?25:stage.id==='titan'?32:stage.id==='yeti'?34:30, W=emptyWorld(cols,rows), R=mulberry(stage.n*17+3), grid=new Array(cols*rows).fill('deep');
   const A={id:stage.id,cols,rows,grid,bridges:[],zone:stage.id==='croc'?'swamp':'forest',
     tile(x,y){ const tx=Math.floor(x/AT), ty=Math.floor(y/AT); if(tx<0||ty<0||tx>=cols||ty>=rows) return 'wall'; return grid[ty*cols+tx]; },
     set(tx,ty,k){ if(tx>=0&&ty>=0&&tx<cols&&ty<rows) grid[ty*cols+tx]=k; },
