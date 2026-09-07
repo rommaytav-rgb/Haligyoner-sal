@@ -3157,7 +3157,8 @@ function shopUpdate(p,dt){ const k=shopKeeper(); if(!k||!p||!p.alive||WORLD.aren
    ===================================================================== */
 let W3U=6;   /* world px per reference unit: 6 in the underworld, 3 on the small surface and in the one-room bar */
 let W3S=1;   /* the art kit's scale: units → art px */
-const R3=(x,y,w,h,col,a)=>{ if(!col) return; if(a!==undefined) g.globalAlpha=a; g.fillStyle=col; g.fillRect((x*W3S)|0,(y*W3S)|0,Math.max(1,(w*W3S)|0),Math.max(1,(h*W3S)|0)); if(a!==undefined) g.globalAlpha=1; };
+let W3_CEIL=false;   /* at fractional scales, round sizes up so tiles leave no seams */
+const R3=(x,y,w,h,col,a)=>{ if(!col) return; if(a!==undefined) g.globalAlpha=a; g.fillStyle=col; g.fillRect((x*W3S)|0,(y*W3S)|0,Math.max(1,W3_CEIL?Math.ceil(w*W3S):(w*W3S)|0),Math.max(1,W3_CEIL?Math.ceil(h*W3S):(h*W3S)|0)); if(a!==undefined) g.globalAlpha=1; };
 const P3=(x,y,col,a)=>R3(x,y,1,1,col,a);
 let W3EMIT=null;
 /* ---------- the map art kit (verbatim, scoped) ---------- */
@@ -4720,7 +4721,7 @@ AI.witch=function(e,p,dt){ const a=e.ai, d=dist(e,p), ph=a.phase2?1:0; a.t-=dt; 
   /* the constant bolt: 0.4 s of charge at the orb, then a shot at where the ninja stands */
   if(p.alive&&!safe&&d<1100&&a.state!=='raise'){ a.boltT=(a.boltT===undefined?.8:a.boltT)-dt; if(!(a.chg>0)&&a.boltT<=0){ a.chg=WITCH.charge; } if(a.chg>0){ a.chg-=dt; if(a.chg<=0){ a.chg=0; witchBolt(e,p); a.boltT=WITCH.boltRate[ph]; } } } else a.chg=0;
   if(a.state==='chase'){ if(b2Home(e,p,dt)) return; faceTo(e,p);
-    if(safe||d>1000){ e.vx*=.9; e.vy*=.9; } else if(d<260){ moveToward(e,e.x-(p.x-e.x),e.y-(p.y-e.y),dt,.95); } else if(d>520){ moveToward(e,p.x,p.y,dt,1); } else { a.strafe=a.strafe||1; if(a.t<=0){ a.strafe=-a.strafe; a.t=rnd(1.2,2.4); } const an=Math.atan2(p.y-e.y,p.x-e.x)+a.strafe*Math.PI/2; moveToward(e,e.x+Math.cos(an)*60,e.y+Math.sin(an)*60,dt,.55); }   /* an artillery piece: keeps its distance, drifts sideways */
+    if(safe||d>1000){ e.vx*=.9; e.vy*=.9; } else if(d<200){ moveToward(e,e.x-(p.x-e.x),e.y-(p.y-e.y),dt,.95); } else if(d>380){ moveToward(e,p.x,p.y,dt,1.05); } else { a.strafe=a.strafe||1; if(a.t<=0){ a.strafe=-a.strafe; a.t=rnd(1.2,2.4); } const an=Math.atan2(p.y-e.y,p.x-e.x)+a.strafe*Math.PI/2; moveToward(e,e.x+Math.cos(an)*60,e.y+Math.sin(an)*60,dt,.55); }   /* an artillery piece: keeps its distance, drifts sideways */
     if(p.alive&&!safe&&d<900){ if(a.raiseCd<=0&&witchMinionsAlive()<2&&(a.raises||0)<WITCH.raiseMax){ a.raises=(a.raises||0)+1; a.state='raise'; a.st=0; e.vx=e.vy=0; a.tele=null; telegraph(e,{s:'circ',r:WITCH.raiseR},WITCH.raiseTele); a.raiseDone=false; }
       else if(e.abCd<=0&&d<760){ a.state='waves'; a.st=0; e.vx=e.vy=0; a.n=WITCH.waves[ph]; a.slam=false; telegraph(e,{s:'circ',r:100},.9); floatText(e.x,e.y-120,'DARK WAVES','#8fe89a'); } } }
   else if(a.state==='waves'){ e.vx=e.vy=0; faceTo(e,p); const T=a.st; if(!a.slam&&T>=1.23){ a.slam=true; a.tele=null; shake(12); vibrate(120); noise(.22,.3); tone(60,.35,'sine',.35,-30); const gx=e.x+(Math.cos(e.face)>=0?1:-1)*42, gy=e.y+e.r*.9; burst(gx,gy,['#3fae52','#8fe89a','#0e3a1c'],28,240,.7,4,-20,true); const dmg=tierDmg(e,'heavy'); for(let i=0;i<a.n;i++) proj({type:'ring',poison:true,x:gx,y:gy,r:WITCH.waveR0,life:12,spd:WITCH.waveSpd,max:WITCH.waveMax,delay:i*WITCH.waveGap,owner:e,dmg,hit:[]}); }
@@ -4766,22 +4767,22 @@ function drawTraderShop(c,t,vis){ const W=WORLD, S=W.w3shop; if(!S||!vis(S.x+140
   const q=traderCircle(); c.save(); c.strokeStyle='rgba(232,193,74,.35)'; c.lineWidth=2; c.setLineDash([6,5]); c.lineDashOffset=-t*20; c.beginPath(); c.ellipse(A(W.safe2.x),A(W.safe2.y),A(W.safe2.r),A(W.safe2.r)*.6,0,0,TAU); c.stroke(); c.setLineDash([]); c.restore(); }
 
 /* the Boss Fight stage from the reference: stone walls, a rune ring, four ooze pools (slow), eight pillars, braziers, cages, crystals, the bone gate the witch enters through, four summoning circles in the corners */
-const W3AU=3.2;   /* world px per arena unit (AT/10; AT is defined later in the bundle) */
+const W3AU=37*32/400;   /* world px per arena unit: the 400-unit reference art spans 37 tiles of 32 px */
 function makeWitchArena(A,W,R){ const cols=A.cols, rows=A.rows, K=W3AR; A.paint={wall:'rockwall',floor:'stone',shallow:'swampw'}; A.zone='under'; A.witch=true;
   for(let ty=0;ty<rows;ty++) for(let tx=0;tx<cols;tx++) A.set(tx,ty,(ty<2||ty>=rows-1||tx===0||tx>=cols-1)?'wall':'floor');
-  for(const [ox,oy] of K.OOZE) for(let j=-2;j<=2;j++) for(let k=-2;k<=2;k++){ if(Math.hypot(k,j*1.3)>2.4) continue; A.set(Math.floor(ox/10)+k,Math.floor(oy/10)+j,'shallow'); }   /* ooze pools: passable, slow */
+  for(const [ox,oy] of K.OOZE) for(let j=-2;j<=2;j++) for(let k=-2;k<=2;k++){ if(Math.hypot(k,j*1.3)>2.4) continue; A.set(Math.floor((ox+k*10+5)*W3AU/32),Math.floor((oy+j*10+5)*W3AU/32),'shallow'); }   /* ooze pools: passable, slow */
   const u=v=>v*W3AU, add=(x,y,r)=>W.colliders.push({x:u(x),y:u(y),r:u(r)});
   K.PILLARS.forEach(([x,y],i)=>add(x+3.5,y+22+((i*5)%10)-3,4)); for(const [x,y] of K.BRAZ) add(x+4,y+9,5); for(const [x,y] of [[40,96],[352,96],[40,214],[352,214]]) add(x+6,y+7,6);
-  [[110,52],[292,52],[110,254],[292,254],[200,120],[200,190]].forEach(([x,y])=>add(x,y-2,4)); add(K.CX-18,58,3); add(K.CX+18,58,3);
+  [[110,52],[292,52],[110,254],[292,254]].forEach(([x,y])=>add(x,y-2,4)); add(K.CX-18,58,3); add(K.CX+18,58,3);   /* the two crystals in the middle stay decorative: the witch walks the centre */
   A.center={x:u(K.CX),y:u(K.CY)}; W.playerSpawn={x:u(K.CX),y:u(250)}; A.bossStart={x:u(K.CX),y:u(108)}; A.summon=K.SUMMON.map(([x,y])=>({x:u(x),y:u(y)})); }
-function w3ArenaPaint(c,ax,ay,aw,ah){ g=c; W3S=W3AU/PIX; const K=W3AR; K.arenaFloor(0); K.arenaWalls(0);
+function w3ArenaPaint(c,ax,ay,aw,ah){ g=c; W3S=W3AU/PIX; W3_CEIL=true; const K=W3AR; R3(0,0,K.VW,K.VH,K.U.dark); K.arenaFloor(0); K.arenaWalls(0);
   const VW=K.VW, VH=K.VH; for(let j=0;j<VH;j+=2) for(let i=0;i<VW;i+=2){ const d=Math.max(0,1-Math.hypot(i-K.CX,(j-K.CY)*1.2)/230); if(d<.22&&(i+j)%4===0) P3(i,j,'#000',.5); }   /* the vignette, once */
-  W3S=1; }
-function w3ArenaFx(c,ox,oy,vw,vh,t){ const K=W3AR, b=G.boss, ph2=!!(b&&b.alive&&b.ai.phase2), raising=!!(b&&b.alive&&b.ai.state==='raise'); g=c; W3S=W3AU/PIX;
+  W3S=1; W3_CEIL=false; }
+function w3ArenaFx(c,ox,oy,vw,vh,t){ const K=W3AR, b=G.boss, ph2=!!(b&&b.alive&&b.ai.phase2), raising=!!(b&&b.alive&&b.ai.state==='raise'); g=c; W3S=W3AU/PIX; W3_CEIL=true;
   K.arenaProps(t,ph2||raising);
   for(let i=0;i<70;i++){ const x=(i*23+t*5)%K.VW, y=(i*37+t*2)%K.VH; R3(x,y,8,2,ph2?K.U.glow:K.U.poiL,.045); }
   for(let i=0;i<26;i++){ const q=(t*.3+i*.04)%1; P3((i*31)%K.VW,K.VH-q*K.VH,K.U.glowL,.4*(1-q)); }
-  W3S=1; }
+  W3S=1; W3_CEIL=false; }
 /* =====================================================================
    ICE SHOP (from iceshop.html): the wooden hut on a stone base, the old keeper behind the open counter, the sign,
    lanterns, barrels; the Frost Coat item icon; the coat worn on a ninja. Drawn with rect/px in PIX space (1 unit = 2 px).
@@ -5242,7 +5243,7 @@ function drawAim(c,p){
   c.restore();
 }
 function render(){
-  const c=ctx; c.setTransform(DPR,0,0,DPR,0,0); c.fillStyle=WORLD.w3?'#080c09':'#1c6bb5'; c.fillRect(0,0,SW,SH);   /* beyond the walls: sea in worlds 1–2, the dark in the underworld */
+  const c=ctx; c.setTransform(DPR,0,0,DPR,0,0); c.fillStyle=(WORLD.w3||(WORLD.arena&&WORLD.arena.witch))?'#080c09':'#1c6bb5'; c.fillRect(0,0,SW,SH);   /* beyond the walls: sea in worlds 1–2, the dark in the underworld */
   const inGame=G.player&&(G.state==='PLAYING'||G.state==='PAUSED'||G.state==='DEAD');
   if(!inGame){ drawMenuBg(c); return; }
   const ZOOM=ZOOM_BASE*(G.zoomPulse||1)*(G.camZoom||1); const p=G.player, vw=SW/ZOOM, vh=SH/ZOOM, ox=CAM.x-vw/2+CAM.sx, oy=CAM.y-vh/2+CAM.sy;
@@ -5406,7 +5407,7 @@ function emptyWorld(cols,rows){ return {w:cols*AT,h:rows*AT,land:{x0:0,y0:0,x1:c
   landmarks:[],spawners:[],chests:[],golden:[],hippoLairs:[],crocLairs:[],chiChests:[],playerSpawn:{x:0,y:0},paths:[],rocks:[],trees:[],logs:[],bushes:[],patches:[],pebbles:[],flowers:[],shells:[],riverRocks:[],deadPlants:[],planks:[],campfires:[],reeds:[],bones:[],lights:[],
   colliders:[],cgrid:new Map(),CG:200,pathGrid:null,PG:32,chunks:new Map(),CS:640,mini:null,explored:null,FOG:64,ex:0,ey:0,arena:null}; }
 function makeArena(stage){
-  const cols=stage.id==='croc'?50:stage.id==='lord'?32:stage.id==='titan'?44:stage.id==='yeti'?46:40, rows=stage.id==='croc'?36:stage.id==='lord'?25:stage.id==='titan'?32:stage.id==='yeti'?34:30, W=emptyWorld(cols,rows), R=mulberry(stage.n*17+3), grid=new Array(cols*rows).fill('deep');
+  const cols=stage.id==='croc'?50:stage.id==='lord'?32:stage.id==='titan'?44:stage.id==='yeti'?46:stage.id==='witch'?37:40, rows=stage.id==='croc'?36:stage.id==='lord'?25:stage.id==='titan'?32:stage.id==='yeti'?34:stage.id==='witch'?28:30, W=emptyWorld(cols,rows), R=mulberry(stage.n*17+3), grid=new Array(cols*rows).fill('deep');
   const A={id:stage.id,cols,rows,grid,bridges:[],zone:stage.id==='croc'?'swamp':'forest',
     tile(x,y){ const tx=Math.floor(x/AT), ty=Math.floor(y/AT); if(tx<0||ty<0||tx>=cols||ty>=rows) return 'wall'; return grid[ty*cols+tx]; },
     set(tx,ty,k){ if(tx>=0&&ty>=0&&tx<cols&&ty<rows) grid[ty*cols+tx]=k; },
