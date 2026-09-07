@@ -4519,7 +4519,7 @@ return {K,trader,traderShop,witch,witchDeath,staff,skullFace};
    WORLD 3 — the Skeleton Witch (boss 1: constant poison bolts, dark waves, Raise the Dead with empowered minions),
    the Trader (Chi ↔ gold, 3 trades per direction per day), the village portal, the underworld's boss lairs.
    ===================================================================== */
-const WITCH={boltRate:[1.4,.5],boltSpd:[480,660],charge:.4,waves:[4,5],waveGap:1.2,waveSpd:300,waveMax:900,raiseTele:1.0,raiseR:240,empower:8,raiseCd:[16,10],wavesCd:[6,4.5]};
+const WITCH={boltRate:[1.4,.5],boltSpd:[480,660],charge:.4,waves:[4,5],waveGap:1.2,waveSpd:300,waveMax:900,raiseTele:1.0,raiseR:240,empower:8,raiseCd:[16,10],raiseMax:2,wavesCd:[6,4.5]};
 const TRADE={sell:900,buy:1500,cap:3};
 function witchMinionsAlive(){ return G.enemies.filter(m=>m.alive&&m.witchMinion).length; }
 function witchOrb(e){ const face=Math.cos(e.face)>=0?1:-1; return {x:e.x+face*42,y:e.y+e.r*.9-110}; }
@@ -4530,12 +4530,12 @@ function witchRaise(e){ const a=e.ai, p=G.player; const ph2=a.phase2; shake(12);
   const comp=ph2?['askel','askel','askel','askel']:['askel','skel','askel','skel']; comp.forEach((type,i)=>{ const an=i/4*TAU+a.t+.6, x=e.x+Math.cos(an)*150, y=e.y+Math.sin(an)*90; const m=makeEnemy(type,x,y); m.spawnT=.7; m.summoned=true; m.noLoot=true; m.witchMinion=true; m.biome=null; m.empowerT=WITCH.empower; m.ai.state='chase'; m.ai.home={x:m.x,y:m.y}; collide(m); G.chasers++; G.groundFx.push({kind:'w3pillar',vec:true,x:m.x,y:m.y,r:0,t:1.6,t0:1.6}); burst(m.x,m.y-10,['#4dfa42','#b6ffae','#e8ffe4'],14,150,.6,3,-40,true); });
   e.empowerT=WITCH.empower; floatText(e.x,e.y-120,'RISE!','#b6ffae',true); }
 AI.witch=function(e,p,dt){ const a=e.ai, d=dist(e,p), ph=a.phase2?1:0; a.t-=dt; e.abCd-=dt; a.atkT-=dt; a.raiseCd=(a.raiseCd===undefined?0:a.raiseCd)-dt; a.st=(a.st||0)+dt; const safe=inSafeZone(p.x,p.y);
-  if(!a.phase2&&e.hp<e.maxHp*.5){ a.phase2=true; G.banner={text:'RISE, MY SERVANTS',sub:'PHASE 2 · THE WITCH FIRES THREE TIMES FASTER',t:2.6,col:'#b6ffae'}; shake(18); vibrate(220); SFX.roar(); burst(e.x,e.y-40,['#4dfa42','#b6ffae','#e8ffe4'],60,300,1,5,-40,true); a.raiseCd=Math.min(a.raiseCd,1.5); e.abCd=Math.min(e.abCd,2); }
+  if(!a.phase2&&e.hp<e.maxHp*.5){ a.phase2=true; G.banner={text:'RISE, MY SERVANTS',sub:'PHASE 2 · THE WITCH FIRES THREE TIMES FASTER',t:2.6,col:'#b6ffae'}; shake(18); vibrate(220); SFX.roar(); burst(e.x,e.y-40,['#4dfa42','#b6ffae','#e8ffe4'],60,300,1,5,-40,true); a.raiseCd=Math.min(a.raiseCd,1.5); e.abCd=Math.min(e.abCd,2); a.raises=0; }   /* a fresh count of two summons for phase 2 */
   /* the constant bolt: 0.4 s of charge at the orb, then a shot at where the ninja stands */
   if(p.alive&&!safe&&d<1100&&a.state!=='raise'){ a.boltT=(a.boltT===undefined?.8:a.boltT)-dt; if(!(a.chg>0)&&a.boltT<=0){ a.chg=WITCH.charge; } if(a.chg>0){ a.chg-=dt; if(a.chg<=0){ a.chg=0; witchBolt(e,p); a.boltT=WITCH.boltRate[ph]; } } } else a.chg=0;
   if(a.state==='chase'){ if(b2Home(e,p,dt)) return; faceTo(e,p);
     if(safe||d>1000){ e.vx*=.9; e.vy*=.9; } else if(d<260){ moveToward(e,e.x-(p.x-e.x),e.y-(p.y-e.y),dt,.95); } else if(d>520){ moveToward(e,p.x,p.y,dt,1); } else { a.strafe=a.strafe||1; if(a.t<=0){ a.strafe=-a.strafe; a.t=rnd(1.2,2.4); } const an=Math.atan2(p.y-e.y,p.x-e.x)+a.strafe*Math.PI/2; moveToward(e,e.x+Math.cos(an)*60,e.y+Math.sin(an)*60,dt,.55); }   /* an artillery piece: keeps its distance, drifts sideways */
-    if(p.alive&&!safe&&d<900){ if(a.raiseCd<=0&&witchMinionsAlive()<2){ a.state='raise'; a.st=0; e.vx=e.vy=0; a.tele=null; telegraph(e,{s:'circ',r:WITCH.raiseR},WITCH.raiseTele); a.raiseDone=false; }
+    if(p.alive&&!safe&&d<900){ if(a.raiseCd<=0&&witchMinionsAlive()<2&&(a.raises||0)<WITCH.raiseMax){ a.raises=(a.raises||0)+1; a.state='raise'; a.st=0; e.vx=e.vy=0; a.tele=null; telegraph(e,{s:'circ',r:WITCH.raiseR},WITCH.raiseTele); a.raiseDone=false; }
       else if(e.abCd<=0&&d<760){ a.state='waves'; a.st=0; e.vx=e.vy=0; a.n=WITCH.waves[ph]; a.slam=false; telegraph(e,{s:'circ',r:100},.9); floatText(e.x,e.y-120,'DARK WAVES','#8fe89a'); } } }
   else if(a.state==='waves'){ e.vx=e.vy=0; faceTo(e,p); const T=a.st; if(!a.slam&&T>=1.23){ a.slam=true; a.tele=null; shake(12); vibrate(120); noise(.22,.3); tone(60,.35,'sine',.35,-30); const gx=e.x+(Math.cos(e.face)>=0?1:-1)*42, gy=e.y+e.r*.9; burst(gx,gy,['#3fae52','#8fe89a','#0e3a1c'],28,240,.7,4,-20,true); const dmg=tierDmg(e,'heavy'); for(let i=0;i<a.n;i++) proj({type:'ring',poison:true,x:gx,y:gy,r:16,life:12,spd:WITCH.waveSpd,max:WITCH.waveMax,delay:i*WITCH.waveGap,owner:e,dmg,hit:[]}); }
     if(T>=1.23+(a.n-1)*WITCH.waveGap+.9){ a.state='chase'; e.abCd=WITCH.wavesCd[ph]; a.t=.5; } }
