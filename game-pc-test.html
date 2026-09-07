@@ -414,7 +414,7 @@
 <div id="ovProfile" class="ov"><div class="panel" style="max-width:760px"><div class="topline" style="margin:0"><div class="ptitle">PLAYER PROFILE</div><div class="xbtn" id="bProfBack">✕</div></div><div id="profBody"></div></div></div>
 <div id="ovDaily" class="ov"><div class="panel" style="max-width:640px"><div class="topline" style="margin:0"><div class="ptitle" style="color:#fde68a">DAILY MISSIONS</div><div class="ptitle" style="font-size:14px;color:#c4b5fd" id="dailyDone"></div><div class="xbtn" id="bDailyBack">✕</div></div><div class="dnote" id="dailyNote"></div><div class="dlist" id="dailyList"></div></div></div>
 <div id="ovShop" class="ov"><div class="panel" style="max-width:640px"><div class="topline" style="margin:0"><div class="ptitle" style="color:#bae6fd">❄ ICE SHOP</div><div class="ptitle" style="font-size:14px;color:#fde68a" id="shopGold"></div><div class="xbtn" id="bShopBack">✕</div></div><div class="shopkeep">"Cold out there, ninja. Warm coats, fair prices. Every coat fits one ninja."</div><div class="eqlist" id="shopList"></div><div class="dnote" id="shopMsg"></div></div></div>
-<div id="ovTrade" class="ov"><div class="panel" style="max-width:640px"><div class="topline" style="margin:0"><div class="ptitle" style="color:#fde68a">💰 THE TRADER</div><div class="ptitle" style="font-size:14px;color:#fde68a" id="tradeBal"></div><div class="xbtn" id="bTradeBack">✕</div></div><div class="shopkeep" style="color:#fde68a">"Chi for gold, gold for Chi. The spread is my cut, ninja — three trades each way a day."</div><div class="eqlist" id="tradeList"></div><div class="dnote" id="tradeMsg"></div></div></div>
+<div id="ovTrade" class="ov"><div class="panel" style="max-width:640px"><div class="topline" style="margin:0"><div class="ptitle" style="color:#fde68a">💰 THE TRADER</div><div class="ptitle" style="font-size:14px;color:#fde68a" id="tradeBal"></div><div class="xbtn" id="bTradeBack">✕</div></div><div class="shopkeep" style="color:#fde68a">"Chi for gold, gold for Chi. The spread is my cut, ninja — three trades each way a day."</div><div class="eqlist" id="tradeList"></div></div></div>
 <div id="ovEquip" class="ov"><div class="panel" style="max-width:640px"><div class="topline" style="margin:0"><div class="ptitle" style="color:#bae6fd" id="equipTitle">EQUIPMENT</div><div class="xbtn" id="bEquipBack">✕</div></div><div class="dnote">One slot per ninja. Once worn, an item is locked on that ninja until a different item replaces it. Each ninja needs its own copy.</div><div class="eqlist" id="equipList"></div></div></div>
 <div id="gemFlash"></div><div id="toast"></div>
 <div id="gemPanel"><canvas id="gemPanelCv" width="120" height="120"></canvas><div id="gemPanelRar"></div><div id="gemPanelTxt"></div><div id="gemPanelSub"></div></div>
@@ -1193,7 +1193,7 @@ const EN={
   skel: {cls:'normal',world:3,spd:118,r:14,range:48,atk:1.3,coins:[10,14],gold:[60,90],xp:70,rig:true,scale:1.5,biome:'under',name:'UNDERWORLD SKELETON'},
   askel:{cls:'strong',mods:['tanky'],world:3,spd:120,r:20,range:58,atk:1.6,coins:[12,16],gold:[110,160],xp:120,rig:true,scale:1.95,biome:'under',name:'ARMOURED SKELETON'},   /* the armoured one is visibly bigger than the normal one */
   keeper:{hp:1,dmg:0,spd:0,r:14,range:0,atk:9,coins:[0,0],gold:[0,0],xp:0,rig:true,scale:2.3,name:'BARKEEPER',keeper:true},
-  witch:{cls:'boss1',world:3,spd:96,r:36,range:120,coins:[70,70],gold:[2600,2600],boss:true,name:'SKELETON WITCH',rig:true,scale:2,adds:'skel',xpBoss:1200,biome:'under'},   /* world 3, boss 1: artillery behind a crowd of raised skeletons */
+  witch:{cls:'boss1',world:3,spd:96,r:44,range:120,coins:[70,70],gold:[2600,2600],boss:true,name:'SKELETON WITCH',rig:true,scale:2.6,adds:'skel',xpBoss:1200,biome:'under'},   /* world 3, boss 1: artillery behind a crowd of raised skeletons */
   golem:{cls:'normal',world:2,spd:92, r:15,range:50,atk:1.4,coins:[8,12],gold:[24,36],xp:26,rig:true,scale:1.5,biome:'ember',name:'MAGMA GOLEM'},
   wolf: {cls:'strong',world:2,spd:178,r:13,range:46,atk:1.0,coins:[9,13],gold:[40,56],xp:34,rig:true,scale:1.5,biome:'frost',name:'WOLF WARRIOR'},
   /* World 2 mobs (mobs2.js): the Lava Imp is born from lava bombs during eruptions (level 11); the Ice Fox lives in dens deep in the frost (level 15). Both too light to be staggered by normal hits */
@@ -1297,7 +1297,7 @@ function pDown(id,x,y){
 }
 function pMove(id,x,y){ const h=touchMap.get(id); if(!h||h.type!=='stick') return; const s=sticks[h.side]; if(!s) return; let dx=x-s.cx, dy=y-s.cy; const d=Math.hypot(dx,dy), R=UI.stickR; if(d>R){ if(h.side==='L'){ s.cx+=dx/d*(d-R); s.cy+=dy/d*(d-R); } dx=dx/d*R; dy=dy/d*R; } s.dx=dx/R; s.dy=dy/R; if(Math.hypot(s.dx,s.dy)>.22) s.moved=true; }
 function pUp(id){ const h=touchMap.get(id); if(!h) return; touchMap.delete(id); if(h.type==='btn') return; const s=sticks[h.side]; if(!s) return;
-  if(h.side==='R'){ const m=Math.hypot(s.dx,s.dy); if(s.moved&&m>.22) IN.fire={ang:Math.atan2(s.dy,s.dx),auto:false}; else IN.fire={ang:null,auto:true}; }
+  if(h.side==='R'&&!s.held){ const m=Math.hypot(s.dx,s.dy); if(s.moved&&m>.22) IN.fire={ang:Math.atan2(s.dy,s.dx),auto:false}; else IN.fire={ang:null,auto:true}; }   /* a short tap or flick fires on release; a long hold already fired */
   sticks[h.side]=null; }
 cv.addEventListener('touchstart',e=>{ e.preventDefault(); for(const t of e.changedTouches) pDown(t.identifier,t.clientX,t.clientY); },{passive:false});
 cv.addEventListener('touchmove',e=>{ e.preventDefault(); for(const t of e.changedTouches) pMove(t.identifier,t.clientX,t.clientY); },{passive:false});
@@ -1309,7 +1309,8 @@ addEventListener('contextmenu',e=>e.preventDefault());
 addEventListener('pointerdown',audioInit);
 function mouseAngle(){ const p=G.player; if(!p) return 0; const z=ZOOM_BASE*(G.zoomPulse||1)*(G.camZoom||1), wx=CAM.x+CAM.sx+(IN.mouse.x-SW/2)/z, wy=CAM.y+CAM.sy+(IN.mouse.y-SH/2)/z; return Math.atan2(wy-p.y,wx-p.x); }
 function pollInput(){
-  if(PC&&IN.mouse.down&&!IN.fire&&G.state==='PLAYING') IN.fire={ang:mouseAngle(),auto:true};   /* PC: hold the mouse to keep attacking; auto-aims the nearest enemy, otherwise fires toward the mouse */
+  if(PC&&IN.mouse.down&&!IN.fire&&G.state==='PLAYING') IN.fire={ang:mouseAngle(),auto:true};
+  if(!PC&&sticks.R&&!IN.fire&&G.state==='PLAYING'&&performance.now()-sticks.R.t0>350){ const s=sticks.R; s.held=true; const m=Math.hypot(s.dx,s.dy); IN.fire=(s.moved&&m>.22)?{ang:Math.atan2(s.dy,s.dx),auto:false}:{ang:null,auto:true}; }   /* phone: hold the right stick to keep attacking (aimed if pushed, otherwise at the nearest enemy) */   /* PC: hold the mouse to keep attacking; auto-aims the nearest enemy, otherwise fires toward the mouse */
   let mx=0,my=0; const k=IN.keys; if(k.l)mx-=1; if(k.r)mx+=1; if(k.u)my-=1; if(k.d)my+=1;
   if(sticks.L){ mx=sticks.L.dx; my=sticks.L.dy; }
   const d=Math.hypot(mx,my); if(d>1){mx/=d;my/=d;} if(d<.12){mx=0;my=0;}
@@ -4519,7 +4520,7 @@ return {K,trader,traderShop,witch,witchDeath,staff,skullFace};
    WORLD 3 — the Skeleton Witch (boss 1: constant poison bolts, dark waves, Raise the Dead with empowered minions),
    the Trader (Chi ↔ gold, 3 trades per direction per day), the village portal, the underworld's boss lairs.
    ===================================================================== */
-const WITCH={boltRate:[1.4,.5],boltSpd:[480,660],charge:.4,waves:[4,5],waveGap:1.2,waveSpd:300,waveMax:900,raiseTele:1.0,raiseR:240,empower:8,raiseCd:[7,3.5],wavesCd:[6,4.5]};
+const WITCH={boltRate:[1.4,.5],boltSpd:[480,660],charge:.4,waves:[4,5],waveGap:1.2,waveSpd:300,waveMax:900,raiseTele:1.0,raiseR:240,empower:8,raiseCd:[16,10],wavesCd:[6,4.5]};
 const TRADE={sell:900,buy:1500,cap:3};
 function witchMinionsAlive(){ return G.enemies.filter(m=>m.alive&&m.witchMinion).length; }
 function witchOrb(e){ const face=Math.cos(e.face)>=0?1:-1; return {x:e.x+face*42,y:e.y+e.r*.9-110}; }
@@ -4564,7 +4565,6 @@ function buildTrade(msg){ const T=tradeDay(); G.tradeQ=G.tradeQ||{sell:1,buy:1};
   const row=(id,title,sub,q,goText,ok,after)=>`<div class="trow"><div class="grow"><div class="tt">${title}</div><div class="ts">${sub}</div><div class="ts" style="color:#bbf7d0">${after}</div></div><div class="tstep"><div class="btn sm" data-tq="${id}" data-d="-1">−</div><div class="tq">${q}</div><div class="btn sm" data-tq="${id}" data-d="1">+</div></div><div class="btn sm tgo${ok?'':' off'}" data-tgo="${id}">${goText}</div></div>`;
   $('tradeList').innerHTML=row('sell',`SELL ${CH} CHI`,`1 ${CH} → ${TRADE.sell} ${CI} · ${sellLeft} of ${TRADE.cap} left today`,Q.sell,`GET ${TRADE.sell*Q.sell} ${CI}`,canSell,`after: ${SAVE.gold+TRADE.sell*Q.sell} ${CI} · ${(SAVE.chi||0)-Q.sell} ${CH}`)
     +row('buy',`BUY ${CH} CHI`,`${TRADE.buy} ${CI} → 1 ${CH} · ${buyLeft} of ${TRADE.cap} left today`,Q.buy,`PAY ${TRADE.buy*Q.buy} ${CI}`,canBuy,`after: ${SAVE.gold-TRADE.buy*Q.buy} ${CI} · ${(SAVE.chi||0)+Q.buy} ${CH}`);
-  $('tradeMsg').textContent=msg||'Trades are instant and cannot be undone. The spread is his cut.';
   $('tradeList').querySelectorAll('[data-tq]').forEach(b=>b.onclick=()=>{ const k=b.dataset.tq; Q[k]=clamp(Q[k]+(+b.dataset.d),1,TRADE.cap); buildTrade(); });
   $('tradeList').querySelectorAll('[data-tgo]').forEach(b=>b.onclick=()=>tradeDo(b.dataset.tgo)); }
 function tradeDo(dir){ const T=tradeDay(), Q=G.tradeQ; let msg;
