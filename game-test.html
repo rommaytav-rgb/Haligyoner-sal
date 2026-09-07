@@ -925,12 +925,7 @@ const ICON_BY={}; ICONS.forEach(ic=>ICON_BY[ic.name]=ic);
 const _dimPal={};
 function dimColor(hex){ if(_dimPal[hex]) return _dimPal[hex]; const n=parseInt(hex.slice(1),16); const f=v=>Math.round(v*.35); return _dimPal[hex]='rgb('+f(n>>16&255)+','+f(n>>8&255)+','+f(n&255)+')'; }
 /* draw one ability icon with fillRect on integer coords; o: {t (time, accent blinks ~2/s), dim (35% brightness, no blink), white (flash), shrink (pressed: 1 px smaller)} */
-/* the ability icon is drawn once per look (pulse on/off, dim, white, pressed) and reused: it was ~100 rectangles every frame */
-const ICON_CACHE=new Map();
-function drawAbilityIcon(c,name,x,y,s,o){ o=o||{}; const pulse=o.dim?1:(Math.sin((o.t||0)*4)>0?1:0), key=name+'|'+s+'|'+pulse+'|'+(o.dim?1:0)+'|'+(o.white?1:0)+'|'+(o.shrink?1:0); let img=ICON_CACHE.get(key);
-  if(!img){ img=document.createElement('canvas'); img.width=160; img.height=160; const cx=img.getContext('2d'); drawAbilityIconRaw(cx,name,80,80,s,Object.assign({},o,{t:pulse?.4:1.2})); ICON_CACHE.set(key,img); }
-  const sm=c.imageSmoothingEnabled; c.imageSmoothingEnabled=false; c.drawImage(img,(x|0)-80,(y|0)-80); c.imageSmoothingEnabled=sm; }
-function drawAbilityIconRaw(c,name,x,y,s,o){ const ic=ICON_BY[name]; if(!ic) return; o=o||{}; const pulse=o.dim?true:Math.sin((o.t||0)*4)>0; c.save(); c.imageSmoothingEnabled=false; x|=0; y|=0;
+function drawAbilityIcon(c,name,x,y,s,o){ const ic=ICON_BY[name]; if(!ic) return; o=o||{}; const pulse=o.dim?true:Math.sin((o.t||0)*4)>0; c.save(); c.imageSmoothingEnabled=false; x|=0; y|=0;
   if(o.shrink){ c.translate(x+1,y+1); c.scale((16*s-2)/(16*s),(16*s-2)/(16*s)); x=0; y=0; }
   ic.g.forEach((row,j)=>{ for(let i=0;i<row.length;i++){ const ch=row[i]; if(ch==='.') continue; if(ch==='E'&&!pulse) continue; c.fillStyle=o.white?'#ffffff':o.dim?dimColor(ic.pal[ch]):ic.pal[ch]; c.fillRect(x+i*s,y+j*s,s,s); } }); c.restore(); }
 /* a small DOM canvas with the icon at 2x, for menus (characters / upgrade card) */
@@ -2675,8 +2670,8 @@ function enemyUpdate(e,dt,p){
   { const v=WORLD.village, dx=e.x-v.x, dy=e.y-v.y, dd=Math.hypot(dx,dy), m=v.safeR+e.r; if(dd<m){ e.x=v.x+dx/(dd||1)*m; e.y=v.y+dy/(dd||1)*m; e.vx*=.2; e.vy*=.2; if(e.ai.state==='charging'||e.ai.state==='lunging') e.ai.t=0; } }   // the village circle is off-limits to enemies
 }
 /* ---------- biome spawners ---------- */
-const SPAWN={mush:{type:'mush',max:5,refill:40,label:'Mushroom cluster'},nest:{type:'priest',max:3,refill:50,label:'Insect nest'},wreck:{type:'pirate',max:4,refill:45,label:'Pirate wreck'},frost:{type:'wolf',max:3,refill:45,label:'Wolf den'},bones:{type:'skel',max:4,refill:45,label:'Bone camp'},askel:{type:'askel',max:1,refill:60,label:'Armoured sentry'},den:{type:'fox',max:2,refill:60,label:'Frozen den'},ember:{type:'golem',max:4,refill:45,label:'Golem cairn'}};
-function spawnFrom(sp,instant){ const p=G.player, S=SPAWN[sp.k]; if(G.enemies.filter(e=>e.alive&&!e.boss&&dist(e,p)<1500).length>=(WORLD.frost?14:16)) return; if((EN[S.type].base||S.type)==='priest'&&G.enemies.filter(e=>e.alive&&(e.d.base||e.type)==='priest'&&dist(e,p)<1500).length>=3) return;   // never more than 3 priests around
+const SPAWN={mush:{type:'mush',max:4,refill:40,label:'Mushroom cluster'},nest:{type:'priest',max:2,refill:50,label:'Insect nest'},wreck:{type:'pirate',max:3,refill:45,label:'Pirate wreck'},frost:{type:'wolf',max:3,refill:45,label:'Wolf den'},bones:{type:'skel',max:4,refill:45,label:'Bone camp'},askel:{type:'askel',max:1,refill:60,label:'Armoured sentry'},den:{type:'fox',max:2,refill:60,label:'Frozen den'},ember:{type:'golem',max:4,refill:45,label:'Golem cairn'}};
+function spawnFrom(sp,instant){ const p=G.player, S=SPAWN[sp.k]; if(G.enemies.filter(e=>e.alive&&!e.boss&&dist(e,p)<1500).length>=14) return; if((EN[S.type].base||S.type)==='priest'&&G.enemies.filter(e=>e.alive&&(e.d.base||e.type)==='priest'&&dist(e,p)<1500).length>=3) return;   // never more than 3 priests around
   const a=Math.random()*TAU; const e=makeEnemy(S.type,sp.x+Math.cos(a)*44,sp.y+Math.sin(a)*44); e.spawner=sp; e.spawnT=instant?0:.6; collide(e); keepOutOfSafe(e,e.r+4); e.ai.home={x:e.x,y:e.y}; sp.count++; sp.alive++;
   if(!instant) burst(e.x,e.y,sp.k==='mush'?['#7a4aaa','#8ac06a']:sp.k==='nest'?['#2f6b52','#c8202a']:(sp.k==='bones'||sp.k==='askel')?['#4dfa42','#d8e0cc']:['#c9a24a','#8ab0a0'],10,90,.6,4,200); }
 function enterMap(def){ fx2Reset(); b2Reset();
@@ -3863,7 +3858,7 @@ function buildWorld3(area){ area=area||'surface'; W3U=W3.upx[area]; const sz=W3.
     /* lane crossings: a pair of torches marks each one */
     for(const [x,y] of [[160,150],[450,150],[160,340],[450,340]]){ prop('torch',x-16,y-14); prop('torch',x+10,y-14); }
     /* spawners: bone camps (3–5 skeletons, 40% with an armoured one beside), armoured sentries by the lanes */
-    W3.camps.forEach(([x,y],i)=>{ W.spawners.push({x:w3px(x),y:w3px(y),k:'bones',max:4+(i%3)}); if(HR(i*7.7+3)<.4) W.spawners.push({x:w3px(x+22),y:w3px(y+10),k:'askel',max:1}); });
+    W3.camps.forEach(([x,y],i)=>{ W.spawners.push({x:w3px(x),y:w3px(y),k:'bones',max:3+(i%3)}); if(HR(i*7.7+3)<.4) W.spawners.push({x:w3px(x+22),y:w3px(y+10),k:'askel',max:1}); });
     for(const [x,y] of W3.sentries) W.spawners.push({x:w3px(x),y:w3px(y),k:'askel',max:1});
     W.playerSpawn={x:w3px(C.x),y:w3px(C.y-8)};
     /* the Trader's shop beside the north-east lane, on the right side of the map; his counter is a safe spot */
@@ -3977,11 +3972,7 @@ function drawW3Enemy(c,e,t){ if(e.type==='witch') return drawWitch(c,e,t); const
   else { if(a.state==='swing'){ anim='attack'; k=1-a.t/1.3; } else if(a.state==='slam'){ anim='slam'; tArg=(1-a.t/2.6)*2.6; } else if(mv) anim='walk'; }
   c.save(); if(e.spawnT>0) c.globalAlpha=Math.max(0,1-e.spawnT/.6); const fl=e.flinch>0?Math.sin(G.time*70)*2.5:0;
   W3EMIT=(x,y,n,pw,kind)=>{ for(let i=0;i<n;i++) part(e.x+(x-43)*s*face,e.y+e.r*.9+(y-51)*s,rnd(-pw,pw)*8,rnd(-pw*12,-30),kind==='soul'?(Math.random()<.5?'#b6ffae':'#e8ffe4'):'#2e3835',.5,2,kind==='soul'?-40:60,true); };
-  const img=w3RigFrame(e.type,anim,tArg,k); rigBlit(c,86,62,()=>{ g.drawImage(img,0,0); },tintFor(e),e.x+fl,e.y+e.r*.9+(e.spawnT>0?e.spawnT*40:0),s*face,s,-43,-51); W3EMIT=null; if(e.empowerT>0) w3FlameFx(e,e.type==='askel'?70:50); c.restore(); }
-/* skeleton frames are drawn once per pose and reused: a rig is ~100 rectangles, and a dozen skeletons on screen were the biggest draw cost in the underworld */
-const W3_RIGCACHE=new Map();
-function w3RigFrame(type,anim,t,k){ const q=anim==='attack'?Math.round(k*24):anim==='slam'?Math.floor(t*12):Math.floor((t%6)*12), key=type+'|'+anim+'|'+q; let img=W3_RIGCACHE.get(key); if(img) return img;
-  img=document.createElement('canvas'); img.width=86; img.height=62; const og=g; g=img.getContext('2d'); W3S=1; if(type==='skel') W3RIG.grunt(anim,t,k); else W3RIG.armored(anim,t,k); g=og; if(W3_RIGCACHE.size>600) W3_RIGCACHE.clear(); W3_RIGCACHE.set(key,img); return img; }
+  rigBlit(c,86,62,()=>{ if(e.type==='skel') W3RIG.grunt(anim,tArg,k); else W3RIG.armored(anim,tArg,k); },tintFor(e),e.x+fl,e.y+e.r*.9+(e.spawnT>0?e.spawnT*40:0),s*face,s,-43,-51); W3EMIT=null; if(e.empowerT>0) w3FlameFx(e,e.type==='askel'?70:50); c.restore(); }
 function drawW3Dead(c,e){ if(e.type==='witch') return drawWitchDead(c,e); const k=clamp(1-e.deadT/1.4,0,1), face=Math.cos(e.face)>=0?1:-1, s=e.d.scale; c.save(); c.translate(e.x,e.y+e.r*.9); c.scale(s*face,s); c.translate(-43,-51); g=c; W3S=1; if(e.type==='keeper'){ W3EMIT=null; for(let i=0;i<10;i++){ const a=i/10*6.28; W3RIG.K&&rect(43+Math.cos(a)*k*14,44+Math.sin(a)*k*6,2,2,i%2?'#d8e0cc':'#4dfa42'); } } else if(e.type==='skel') W3RIG.gruntDeath(k*2.2); else W3RIG.armoredDeath(k*2.6); c.restore(); }
 AI.keeper=function(e,p,dt){ e.vx=e.vy=0; e.ai.state='idle'; e.face=Math.PI/2; };
 AI.skel=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.abCd-=dt; const sees=commonSees(e,p);
@@ -4685,16 +4676,22 @@ function arenaWalls(t){
   // גולגולות משובצות בקיר
   for(let i=0;i<6;i++) skull(34+i*62, 8, t, i%2===0);
 }
-/* adapted: the still props go into the ground layer once; the braziers and the summoning circles are drawn live */
-function arenaStatic(t){
+function arenaProps(t,phase2){
+  // שער עצמות בקצה הצפוני — כניסת הבוס
   ribArch(CX,58,t);
-  PILLARS.forEach(function(p,i){ pillar(p[0],p[1],22+((i*5)%10),t, i%3===0); });
-  [[40,96],[352,96],[40,214],[352,214]].forEach(function(a){ cage(a[0],a[1],t); });
-  [[110,52],[292,52],[110,254],[292,254],[200,120],[200,190]].forEach(function(a,i){ crystal(a[0],a[1],11+(i%3)*4,t,i); });
-  [[88,140],[312,140],[168,90],[236,90],[168,224],[236,224]].forEach(function(a){ bonePile(a[0],a[1],t); });
-}
-function arenaLive(t,phase2){
+  // ארבע קערות אש
   BRAZ.forEach(function(b){ brazier(b[0],b[1],t); });
+  // שמונה עמודים
+  PILLARS.forEach(function(p,i){ pillar(p[0],p[1],22+((i*5)%10),t, i%3===0); });
+  // כלובים תלויים בפינות
+  [[40,96],[352,96],[40,214],[352,214]].forEach(function(a){ cage(a[0],a[1],t); });
+  // גבישים
+  [[110,52],[292,52],[110,254],[292,254],[200,120],[200,190]].forEach(function(a,i){
+    crystal(a[0],a[1],11+(i%3)*4,t,i); });
+  // ערימות עצמות
+  [[88,140],[312,140],[168,90],[236,90],[168,224],[236,224]].forEach(function(a){
+    bonePile(a[0],a[1],t); });
+  // מעגלי הזימון
   SUMMON.forEach(function(sc){ summonCircle(sc[0],sc[1],t,phase2); });
 }
 function arenaFX(t,phase2){
@@ -4709,7 +4706,7 @@ function arenaFX(t,phase2){
     const d=Math.max(0,1-Math.hypot(i-CX,(j-CY)*1.2)/230);
     if(d<.22&&(i+j)%4===0) P(i,j,'#000',.5); }
 }
-return {U,VW,VH,CX,CY,SUMMON,BRAZ,PILLARS,OOZE,arenaFloor,arenaWalls,arenaStatic,arenaLive,arenaFX,summonCircle};
+return {U,VW,VH,CX,CY,SUMMON,BRAZ,PILLARS,OOZE,arenaFloor,arenaWalls,arenaProps,arenaFX,summonCircle};
 })();
 /* =====================================================================
    WORLD 3 — the Skeleton Witch (boss 1: constant poison bolts, dark waves, Raise the Dead with empowered minions),
@@ -4784,11 +4781,11 @@ function makeWitchArena(A,W,R){ const cols=A.cols, rows=A.rows, K=W3AR; A.paint=
   K.PILLARS.forEach(([x,y],i)=>add(x+3.5,y+22+((i*5)%10)-3,4)); for(const [x,y] of K.BRAZ) add(x+4,y+9,5); for(const [x,y] of [[40,96],[352,96],[40,214],[352,214]]) add(x+6,y+7,6);
   [[110,52],[292,52],[110,254],[292,254]].forEach(([x,y])=>add(x,y-2,4)); add(K.CX-18,58,3); add(K.CX+18,58,3);   /* the two crystals in the middle stay decorative: the witch walks the centre */
   A.center={x:u(K.CX),y:u(K.CY)}; W.playerSpawn={x:u(K.CX),y:u(250)}; A.bossStart={x:u(K.CX),y:u(108)}; A.summon=K.SUMMON.map(([x,y])=>({x:u(x),y:u(y)})); }
-function w3ArenaPaint(c,ax,ay,aw,ah){ g=c; W3S=W3AU/PIX; W3_CEIL=true; const K=W3AR; R3(0,0,K.VW,K.VH,K.U.dark); K.arenaFloor(0); K.arenaStatic(0); K.arenaWalls(0);
+function w3ArenaPaint(c,ax,ay,aw,ah){ g=c; W3S=W3AU/PIX; W3_CEIL=true; const K=W3AR; R3(0,0,K.VW,K.VH,K.U.dark); K.arenaFloor(0); K.arenaWalls(0);
   const VW=K.VW, VH=K.VH; for(let j=0;j<VH;j+=2) for(let i=0;i<VW;i+=2){ const d=Math.max(0,1-Math.hypot(i-K.CX,(j-K.CY)*1.2)/230); if(d<.22&&(i+j)%4===0) P3(i,j,'#000',.5); }   /* the vignette, once */
   W3S=1; W3_CEIL=false; }
 function w3ArenaFx(c,ox,oy,vw,vh,t){ const K=W3AR, b=G.boss, ph2=!!(b&&b.alive&&b.ai.phase2), raising=!!(b&&b.alive&&b.ai.state==='raise'); g=c; W3S=W3AU/PIX; W3_CEIL=true;
-  K.arenaLive(t,ph2||raising);
+  K.arenaProps(t,ph2||raising);
   for(let i=0;i<70;i++){ const x=(i*23+t*5)%K.VW, y=(i*37+t*2)%K.VH; R3(x,y,8,2,ph2?K.U.glow:K.U.poiL,.045); }
   for(let i=0;i<26;i++){ const q=(t*.3+i*.04)%1; P3((i*31)%K.VW,K.VH-q*K.VH,K.U.glowL,.4*(1-q)); }
   W3S=1; W3_CEIL=false; }
