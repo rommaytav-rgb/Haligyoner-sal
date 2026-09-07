@@ -4732,8 +4732,13 @@ function drawWitch(c,e,t){ const a=e.ai, s=e.d.scale, face=Math.cos(e.face)>=0?1
   if(a.state==='waves'){ anim='waves'; tArg=a.st; } else if(a.state==='raise'){ anim='raise'; tArg=a.st; } else if(a.chg>0){ anim='attack'; k=.34*(1-a.chg/WITCH.charge); } else if(mv) anim='walk'; else if(a.phase2) anim='phase2';
   c.save(); if(e.spawnT>0) c.globalAlpha=Math.max(0,1-e.spawnT/.6); const fl=e.flinch>0?Math.sin(G.time*70)*2.5:0; W3_PH2=!!a.phase2;
   W3EMIT=(x,y,n,pw,kind)=>{ for(let i=0;i<n;i++) part(e.x+(x+90-151)*s*face,e.y+e.r*.9+(y+50-122)*s,rnd(-pw,pw)*8,rnd(-pw*12,-30),kind==='soul'?'#b6ffae':kind==='poi'?'#3fae52':'#2e3835',.5,2,kind==='soul'?-40:40,true); };
-  rigBlit(c,320,200,()=>{ W3S=1; g.save(); g.translate(90,50); W3B.witch(anim,tArg,k); g.restore(); },e.flash>0?null:tintFor(e),e.x+fl,e.y+e.r*.9,s*face*1.12,s,-151,-122); W3EMIT=null; W3_PH2=false;   /* a touch wider than tall */
+  rigBlitOutlined(c,320,200,()=>{ W3S=1; g.save(); g.translate(90,50); W3B.witch(anim,tArg,k); g.restore(); },e.flash>0?null:tintFor(e),e.x+fl,e.y+e.r*.9,s*face*1.12,s,-151,-122,a.phase2?'rgba(182,255,174,.7)':'rgba(77,250,66,.55)'); W3EMIT=null; W3_PH2=false;   /* a touch wider than tall; a green rim so the black bones read against the dark ground */
   if(e.empowerT>0) w3FlameFx(e,80); c.restore(); }
+/* like rigBlit, but the sprite gets a one-pixel rim in a colour first (drawn once, blitted five times) */
+const OUT_C=document.createElement('canvas'), OUT_X=OUT_C.getContext('2d');
+function rigBlitOutlined(c,w,h,draw,tint,x,y,sx,sy,ox,oy,col){ if(RIG_C.width!==w||RIG_C.height!==h){ RIG_C.width=w; RIG_C.height=h; } RIG_X.setTransform(1,0,0,1,0,0); RIG_X.globalCompositeOperation='source-over'; RIG_X.clearRect(0,0,w,h); const og=g; g=RIG_X; draw(); g=og; if(tint){ RIG_X.globalCompositeOperation='source-atop'; RIG_X.fillStyle=tint; RIG_X.fillRect(0,0,w,h); RIG_X.globalCompositeOperation='source-over'; }
+  if(OUT_C.width!==w||OUT_C.height!==h){ OUT_C.width=w; OUT_C.height=h; } OUT_X.globalCompositeOperation='source-over'; OUT_X.clearRect(0,0,w,h); OUT_X.drawImage(RIG_C,0,0); OUT_X.globalCompositeOperation='source-atop'; OUT_X.fillStyle=col; OUT_X.fillRect(0,0,w,h); OUT_X.globalCompositeOperation='source-over';
+  c.save(); c.translate(x,y); c.scale(sx,sy); c.imageSmoothingEnabled=false; for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]) c.drawImage(OUT_C,ox+dx,oy+dy); c.drawImage(RIG_C,ox,oy); c.restore(); }
 function drawWitchDead(c,e){ const k=clamp(1-e.deadT/3.2,0,1), face=Math.cos(e.face)>=0?1:-1, s=e.d.scale; c.save(); c.translate(e.x,e.y+e.r*.9); c.scale(s*face*1.12,s); c.translate(-151,-122); g=c; W3S=1; g.save(); g.translate(90,50); W3B.witchDeath(k*2.99); g.restore(); c.restore(); }
 function witchPortrait(size){ const cv2=document.createElement('canvas'); cv2.width=size; cv2.height=size; const c=cv2.getContext('2d'); c.imageSmoothingEnabled=false; const s=size/80; c.save(); c.translate(size/2,size*.97); c.scale(s*1.12,s); c.translate(-61,-72); g=c; W3S=1; W3B.witch('idle',.4,0); c.restore(); return cv2; }
 /* empowered units burn with green flame (the witch's gift: +40% damage, +25% speed, minions take 20% less) */
@@ -4768,7 +4773,7 @@ function makeWitchArena(A,W,R){ const cols=A.cols, rows=A.rows, K=W3AR; A.paint=
   const u=v=>v*W3AU, add=(x,y,r)=>W.colliders.push({x:u(x),y:u(y),r:u(r)});
   K.PILLARS.forEach(([x,y],i)=>add(x+3.5,y+22+((i*5)%10)-3,4)); for(const [x,y] of K.BRAZ) add(x+4,y+9,5); for(const [x,y] of [[40,96],[352,96],[40,214],[352,214]]) add(x+6,y+7,6);
   [[110,52],[292,52],[110,254],[292,254],[200,120],[200,190]].forEach(([x,y])=>add(x,y-2,4)); add(K.CX-18,58,3); add(K.CX+18,58,3);
-  A.center={x:u(K.CX),y:u(K.CY)}; W.playerSpawn={x:u(K.CX),y:u(250)}; A.bossStart={x:u(K.CX),y:u(78)}; A.summon=K.SUMMON.map(([x,y])=>({x:u(x),y:u(y)})); }
+  A.center={x:u(K.CX),y:u(K.CY)}; W.playerSpawn={x:u(K.CX),y:u(250)}; A.bossStart={x:u(K.CX),y:u(108)}; A.summon=K.SUMMON.map(([x,y])=>({x:u(x),y:u(y)})); }
 function w3ArenaPaint(c,ax,ay,aw,ah){ g=c; W3S=W3AU/PIX; const K=W3AR; K.arenaFloor(0); K.arenaWalls(0);
   const VW=K.VW, VH=K.VH; for(let j=0;j<VH;j+=2) for(let i=0;i<VW;i+=2){ const d=Math.max(0,1-Math.hypot(i-K.CX,(j-K.CY)*1.2)/230); if(d<.22&&(i+j)%4===0) P3(i,j,'#000',.5); }   /* the vignette, once */
   W3S=1; }
