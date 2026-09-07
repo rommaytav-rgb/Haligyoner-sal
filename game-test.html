@@ -3762,11 +3762,11 @@ return {K,grunt,armored,gruntDeath,armoredDeath,skullHead};
    ===================================================================== */
 const W3={ id:'underworld', sizes:{surface:{w:230,h:180},bar:{w:210,h:150},under:{w:620,h:470}}, upx:{surface:3,bar:3,under:6},
   circle:{x:115,y:108}, hut:{x:86,y:58}, barDoor:{x:105,y:146}, keeper:{x:86,y:32}, counter:{x0:20,x1:170,y0:58,y1:78}, ring:{x:105,y:100,r:40}, portal:{x:95,y:60},
-  pillars:[[32,48],[178,48],[32,132],[178,132]], arch:{x:300,y:240}, safe:{x:300,y:320,r:34},
-  camps:[[70,70],[240,70],[380,70],[550,80],[70,240],[550,240],[70,400],[240,420],[380,410],[550,400],[300,70],[300,410]],
-  sentries:[[120,200],[490,200],[120,290],[490,290],[230,400],[380,80],[200,180],[400,310],[230,60],[380,430]] };
+  pillars:[[32,48],[178,48],[32,132],[178,132]], arch:{x:300,y:240}, safe:{x:300,y:240,r:55},
+  camps:[[70,70],[220,70],[380,70],[550,90],[70,330],[550,330],[70,420],[210,420],[390,420],[550,420],[230,100],[360,100]],
+  sentries:[[120,200],[490,200],[120,290],[490,290],[230,400],[380,80],[200,180],[400,310],[230,60],[380,430]], land3:null };
 const w3px=u=>u*W3U;
-function w3OnLane(x,y){ if(Math.abs(y-150)<26) return true; if(Math.abs(y-340)<26) return true; if(Math.abs(x-160)<26) return true; if(Math.abs(x-450)<26) return true; if(Math.hypot(x-300,(y-240)*1.25)<70) return true; return false; }   /* underworld lanes, in units */
+function w3OnLane(x,y){ if(Math.abs(y-150)<26) return true; if(Math.abs(y-340)<26) return true; if(Math.abs(x-160)<26) return true; if(Math.abs(x-450)<26) return true; if(Math.hypot(x-300,(y-240)*1.25)<76) return true; return false; }   /* underworld lanes, in units */
 function buildWorld3(area){ area=area||'surface'; W3U=W3.upx[area]; const sz=W3.sizes[area], w=w3px(sz.w), h=w3px(sz.h);
   const W={w,h,land:{x0:60,y0:60,x1:w-60,y1:h-60},corner:0,frost:false,w3:area,w3u:W3U,id:'underworld',
     river:{bridges:[],bh:0,fords:[],fw:0,broken:-9999}, lakes:[], pools:[], chiChests:[], village:null, secret:{x:0,y:0,r:0,none:true}, ancient:{x:-9999,y:-9999,r:0,cr:0}, shrine:{x:-9999,y:-9999}, shipwreck:{x:-9999,y:-9999}, rockform:{x:-9999,y:-9999}, waterfall:{x:-9999},
@@ -3811,32 +3811,46 @@ function buildWorld3(area){ area=area||'surface'; W3U=W3.upx[area]; const sz=W3.
   }
   else {
     W.land={x0:w3px(8),y0:w3px(8),x1:w3px(sz.w-8),y1:w3px(sz.h-8)};
-    const S=W3.safe; W.village={x:w3px(S.x),y:w3px(S.y),r:0,houses:[],npcs:[],signs:[],lanterns:[],barrels:[],crates:[],fences:[],safeR:w3px(S.r),dummies:[],flags:[],campfires:[]};
-    for(let gy=16;gy<sz.h-12;gy+=30) for(let gx=10;gx<sz.w-12;gx+=30){ const sd=gx*3.7+gy*9.1; if(HR(sd*11)<0.22) continue; const jx=gx+(HR(sd)-0.5)*18, jy=gy+(HR(sd*2)-0.5)*16; if(w3OnLane(jx,jy)) continue; if(Math.hypot(jx-S.x,jy-S.y)<S.r+14) continue; const r=HR(sd*5);
-      if(r<.16){ prop('stalag',jx,jy,{h:10+((sd|0)%9)}); add(jx,jy-1,3.5); } else if(r<.28){ prop('crystal',jx,jy,{h:12+((sd|0)%8),sd}); add(jx,jy-2,4); } else if(r<.36){ prop('arch',jx,jy); add(jx-16,jy+1,3); add(jx+16,jy+1,3); }
-      else if(r<.52) prop('bones',jx,jy); else if(r<.64) prop('skull',jx,jy,{lit:HR(sd*3)>.5}); else if(r<.76) prop('ooze',jx+6,jy+4,{r:7+((sd|0)%5)}); else if(r<.86) prop('torch',jx,jy); else if(r<.94){ prop('cage',jx,jy); add(jx+6,jy+7,7); } else prop('shards',jx,jy); }
-    /* the plaza: the entry arch, crystals, torches */
-    prop('arch',W3.arch.x,W3.arch.y,{entry:true}); add(W3.arch.x-16,W3.arch.y+1,3); add(W3.arch.x+16,W3.arch.y+1,3);
-    for(let i=0;i<3;i++){ prop('crystal',268+i*32,214,{h:16+i*3,sd:i}); add(268+i*32,212,4); }
-    for(const [x,y] of [[248,268],[352,268],[248,212],[352,212]]) prop('torch',x,y);
-    /* the hub (like the villages of worlds 1 and 2, in bone and green): signposts, torches around the circle, two huts, two skeletons who keep the place */
-    W.village.signs=[{x:w3px(300),y:w3px(196),t:'NORTH: BONE FIELDS',w3:true},{x:w3px(300),y:w3px(378),t:'SOUTH: OOZE HOLLOWS',w3:true},{x:w3px(372),y:w3px(322),t:'EAST: CRYSTAL CAVES',w3:true},{x:w3px(228),y:w3px(322),t:'WEST: THE CAGES',w3:true}];
-    W.village.npcs=[{x:w3px(270),y:w3px(348),k:'upgrade',w3:true},{x:w3px(330),y:w3px(348),k:'select',w3:true}];
-    for(let i=0;i<8;i++){ const a=i/8*6.28+.39, x=S.x+Math.cos(a)*44, y=S.y+Math.sin(a)*44*.8; prop('torch',x-3,y-6); add(x,y+2,2.5); }
-    for(const [x,y] of [[198,178],[336,178]]){ prop('hut',x,y,{noDoorGlow:true}); W.w3rects.push({x0:w3px(x-4),y0:w3px(y+14),x1:w3px(x+63),y1:w3px(y+40)}); }
-    for(const [x,y] of [[90,110],[520,110],[90,410],[520,410]]) prop('ooze',x,y,{r:20});
-    for(const [x,y] of [[60,240],[560,240],[300,60],[300,430]]){ prop('crystal',x,y,{h:22,sd:x}); add(x,y-3,5); }
-    for(const [x,y] of [[230,90],[380,90],[230,400],[380,400]]){ prop('cage',x,y); add(x+6,y+7,7); }
-    for(const [x,y] of [[110,300],[500,300],[110,190],[500,190]]){ prop('arch',x,y); add(x-16,y+1,3); add(x+16,y+1,3); }
+    /* THE BONE VILLAGE — the underworld's hub, laid out like the villages of worlds 1 and 2: the safe circle over the whole village, the arch you arrive through at its centre, four huts, keepers, signposts at the four exits */
+    const C=W3.arch, S=W3.safe; W.village={x:w3px(C.x),y:w3px(C.y),r:w3px(38),houses:[],npcs:[],signs:[],lanterns:[],barrels:[],crates:[],fences:[],safeR:w3px(S.r),dummies:[],flags:[],campfires:[]};
+    W.village.signs=[{x:w3px(C.x),y:w3px(C.y-40),t:'NORTH: BONE FIELDS',w3:true},{x:w3px(C.x),y:w3px(C.y+46),t:'SOUTH: OOZE HOLLOWS',w3:true},{x:w3px(C.x+64),y:w3px(C.y+2),t:'EAST: CRYSTAL CAVES',w3:true},{x:w3px(C.x-64),y:w3px(C.y+2),t:'WEST: THE CAGES',w3:true}];
+    W.village.npcs=[{x:w3px(C.x-14),y:w3px(C.y+22),k:'upgrade',w3:true},{x:w3px(C.x+14),y:w3px(C.y+22),k:'select',w3:true}];
+    for(const [dx,dy] of [[-55,-44],[15,-44],[-55,14],[15,16]]){ const x=C.x+dx, y=C.y+dy; prop('hut',x,y,{noDoorGlow:true,s:.5}); W.w3rects.push({x0:w3px(x-2),y0:w3px(y+7),x1:w3px(x+32),y1:w3px(y+20)}); }
+    for(let i=0;i<8;i++){ const a=i/8*6.28+.39, x=C.x+Math.cos(a)*48, y=C.y+Math.sin(a)*48*.85; prop('torch',x-3,y-6); add(x,y+2,2.5); }
+    for(const [x,y] of [[C.x-18,C.y-42],[C.x+18,C.y-42],[C.x-18,C.y+44],[C.x+18,C.y+44]]) prop('torch',x-3,y-6);
+    for(const [x,y] of [[C.x-30,C.y-20],[C.x+22,C.y-20]]){ prop('barrel',x,y); add(x+2,y+2,2.5); }
+    prop('pit',C.x,C.y+34);
+    for(const [dx,dy] of [[-50,-52],[50,-52],[-50,48],[50,48]]){ const x=C.x+dx, y=C.y+dy; prop('rpillar',x,y,{h:10,broken:false}); prop('skull',x-1,y-8,{lit:true}); add(x+2.5,y+6,3); }
+    prop('arch',C.x,C.y,{entry:true}); add(C.x-16,C.y+1,3); add(C.x+16,C.y+1,3);
+    /* four regions, each with its own furniture and a landmark worth walking to; the lanes between them stay clear */
+    const region=(x,y)=>{ const dx=x-C.x, dy=(y-C.y)*1.3; return Math.abs(dx)>Math.abs(dy)?(dx<0?'west':'east'):(dy<0?'north':'south'); };
+    const L=W3.land3={skull:[300,52],cages:[70,240],garden:[548,238],lake:[300,420]};
+    for(let gy=16;gy<sz.h-12;gy+=28) for(let gx=10;gx<sz.w-12;gx+=28){ const sd=gx*3.7+gy*9.1; if(HR(sd*11)<0.2) continue; const jx=gx+(HR(sd)-0.5)*18, jy=gy+(HR(sd*2)-0.5)*16; if(w3OnLane(jx,jy)) continue; if(Math.hypot(jx-C.x,(jy-C.y)*1.2)<S.r+16) continue;
+      if(Math.hypot(jx-L.skull[0],jy-L.skull[1])<34||Math.hypot(jx-L.cages[0],jy-L.cages[1])<40||Math.hypot(jx-L.garden[0],jy-L.garden[1])<36||Math.hypot(jx-L.lake[0],(jy-L.lake[1])*1.6)<46) continue;
+      const r=HR(sd*5), reg=region(jx,jy);
+      if(reg==='north'){ if(r<.30) prop('bones',jx,jy); else if(r<.52) prop('skull',jx,jy,{lit:HR(sd*3)>.4}); else if(r<.64){ prop('arch',jx,jy); add(jx-16,jy+1,3); add(jx+16,jy+1,3); } else if(r<.76){ prop('stalag',jx,jy,{h:10+((sd|0)%9)}); add(jx,jy-1,3.5); } else if(r<.86) prop('torch',jx,jy); else prop('shards',jx,jy); }
+      else if(reg==='west'){ if(r<.34){ prop('cage',jx,jy); add(jx+6,jy+7,7); } else if(r<.46) prop('chain',jx,jy,{n:5+((sd|0)%5)}); else if(r<.58) prop('torch',jx,jy); else if(r<.72){ prop('stalag',jx,jy,{h:12+((sd|0)%8)}); add(jx,jy-1,3.5); } else if(r<.86) prop('bones',jx,jy); else prop('skull',jx,jy,{lit:HR(sd*3)>.6}); }
+      else if(reg==='east'){ if(r<.42){ prop('crystal',jx,jy,{h:10+((sd|0)%12),sd}); add(jx,jy-2,4); } else if(r<.54){ prop('stalag',jx,jy,{h:10+((sd|0)%9)}); add(jx,jy-1,3.5); } else if(r<.64) prop('torch',jx,jy); else if(r<.80) prop('shards',jx,jy); else if(r<.90) prop('skull',jx,jy,{lit:true}); else prop('bones',jx,jy); }
+      else { if(r<.36) prop('ooze',jx+6,jy+4,{r:8+((sd|0)%8)}); else if(r<.50) prop('bones',jx,jy); else if(r<.62) prop('skull',jx,jy,{lit:HR(sd*3)>.5}); else if(r<.72){ prop('stalag',jx,jy,{h:9+((sd|0)%8)}); add(jx,jy-1,3.5); } else if(r<.84) prop('torch',jx,jy); else prop('shards',jx,jy); } }
+    /* NORTH — the Great Skull: a skull the size of a house, torches at its jaw, a chest in its mouth */
+    { const [x,y]=L.skull; prop('skull',x-14,y-12,{lit:true,s:4}); add(x,y,15); for(const dx of [-22,22]) prop('torch',x+dx-3,y+4); for(let i=0;i<7;i++) prop('bones',x-36+i*12,y+26+((i*5)%7)); W.chests.push([w3px(x),w3px(y+22)]); }
+    /* WEST — the Cage Gallery: three rows of hanging cages on chains, a chest at the centre */
+    { const [x,y]=L.cages; for(let r=0;r<3;r++) for(let k=0;k<4;k++){ const cx=x-36+k*24, cy=y-28+r*26; prop('chain',cx+5,cy-14,{n:4}); prop('cage',cx,cy); add(cx+6,cy+7,7); } for(const dy of [-40,36]) prop('torch',x-3,y+dy); W.chests.push([w3px(x+3),w3px(y+8)]); }
+    /* EAST — the Crystal Garden: a ring of crystals around one great crystal, glowing moss underfoot, a chest at its foot */
+    { const [x,y]=L.garden; prop('crystal',x,y,{h:32,sd:9}); add(x,y-3,6); for(let i=0;i<8;i++){ const a=i/8*6.28, cx=x+Math.cos(a)*24, cy=y+Math.sin(a)*14; prop('crystal',cx,cy,{h:12+(i%3)*5,sd:i}); add(cx,cy-2,4); } for(const [dx,dy] of [[-34,-22],[34,-22],[-34,22],[34,22]]) prop('torch',x+dx,y+dy); W.chests.push([w3px(x),w3px(y+12)]); }
+    /* SOUTH — the Ooze Lake: one wide pool you must wade through (30% slower) to reach the bone island and its chest */
+    { const [x,y]=L.lake; prop('ooze',x,y,{r:36}); prop('island',x,y); for(const [dx,dy] of [[-44,-4],[44,-4],[0,-26],[0,22]]) prop('torch',x+dx,y+dy); W.chests.push([w3px(x),w3px(y-2)]); }
+    W.chests.push([w3px(560),w3px(60)]);
+    /* lane crossings: a pair of torches marks each one */
+    for(const [x,y] of [[160,150],[450,150],[160,340],[450,340]]){ prop('torch',x-16,y-14); prop('torch',x+10,y-14); }
     /* spawners: bone camps (3–5 skeletons, 40% with an armoured one beside), armoured sentries by the lanes */
     W3.camps.forEach(([x,y],i)=>{ W.spawners.push({x:w3px(x),y:w3px(y),k:'bones',max:3+(i%3)}); if(HR(i*7.7+3)<.4) W.spawners.push({x:w3px(x+22),y:w3px(y+10),k:'askel',max:1}); });
     for(const [x,y] of W3.sentries) W.spawners.push({x:w3px(x),y:w3px(y),k:'askel',max:1});
-    W.chests=[[100,60],[520,60],[100,420],[520,420],[300,400]].map(([x,y])=>[w3px(x),w3px(y)]);
-    W.playerSpawn={x:w3px(W3.arch.x),y:w3px(W3.arch.y+30)};
-    W.landmarks=[{x:w3px(W3.arch.x),y:w3px(W3.arch.y),name:'Entry Arch',icon:'🦴'},{x:w3px(S.x),y:w3px(S.y),name:'Safe Circle',icon:'🛡'}];
+    W.playerSpawn={x:w3px(C.x),y:w3px(C.y+30)};
+    W.landmarks=[{x:w3px(C.x),y:w3px(C.y),name:'The Bone Village',icon:'🏚'},{x:w3px(L.skull[0]),y:w3px(L.skull[1]),name:'The Great Skull',icon:'💀'},{x:w3px(L.cages[0]),y:w3px(L.cages[1]),name:'The Cage Gallery',icon:'⛓'},{x:w3px(L.garden[0]),y:w3px(L.garden[1]),name:'The Crystal Garden',icon:'💎'},{x:w3px(L.lake[0]),y:w3px(L.lake[1]),name:'The Ooze Lake',icon:'🟢'}];
   }
   W.cgrid.clear(); for(const o of W.colliders){ const k=Math.floor(o.x/W.CG)+','+Math.floor(o.y/W.CG); let a=W.cgrid.get(k); if(!a){ a=[]; W.cgrid.set(k,a); } a.push(o); }
-  W.ex=Math.ceil(W.w/W.FOG); W.ey=Math.ceil(W.h/W.FOG); W.explored=new Uint8Array(W.ex*W.ey); if(isVeteran()||area!=='under') W.explored.fill(1);
+  W.ex=Math.ceil(W.w/W.FOG); W.ey=Math.ceil(W.h/W.FOG); W.explored=new Uint8Array(W.ex*W.ey); if(area!=='under') W.explored.fill(1);   /* the small areas are known; the underworld is uncovered as you walk it */
   return W;
 }
 function w3Rebuild(){ const W=WORLD; W.cgrid.clear(); for(const o of W.colliders){ const k=Math.floor(o.x/W.CG)+','+Math.floor(o.y/W.CG); let a=W.cgrid.get(k); if(!a){ a=[]; W.cgrid.set(k,a); } a.push(o); } W.chunks.clear(); }
@@ -3844,11 +3858,11 @@ function w3Rebuild(){ const W=WORLD; W.cgrid.clear(); for(const o of W.colliders
 function w3KindAt(wx,wy){ const W=WORLD, a=W.w3, tx=Math.floor(wx/(10*W3U)), ty=Math.floor(wy/(10*W3U));
   if(a==='surface'){ if(wx<W.land.x0||wy<W.land.y0||wx>W.land.x1||wy>W.land.y1) return 'gravel'; return W3ART.surfBiome(tx,ty); }
   if(a==='bar'){ if(wy<w3px(30)) return 'wall'; if(wx<w3px(10)||wx>w3px(200)||wy>w3px(146)) return 'stonefloor'; return 'plank'; }
-  if(wx<W.land.x0||wy<W.land.y0||wx>W.land.x1||wy>W.land.y1) return 'rock'; if(Math.hypot(wx-w3px(W3.arch.x),(wy-w3px(W3.arch.y+30))*1.1)<w3px(74)) return 'stonefloor';   /* the hub: a stone plaza around the arch and the safe circle */ const b=W3ART.underBiome(tx,ty); if(b==='soil'&&HR((tx*7.3+ty*3.1)*17)>.85) return 'moss'; return b; }
+  if(wx<W.land.x0||wy<W.land.y0||wx>W.land.x1||wy>W.land.y1) return 'rock'; const L=W3.land3; if(L){ if(Math.hypot(wx-w3px(L.lake[0]),(wy-w3px(L.lake[1]))*1.6)<w3px(9)) return 'bone'; if(Math.hypot(wx-w3px(L.lake[0]),(wy-w3px(L.lake[1]))*1.6)<w3px(36)) return 'ooze'; if(Math.hypot(wx-w3px(L.garden[0]),wy-w3px(L.garden[1]))<w3px(40)) return 'moss'; } if(Math.hypot(wx-w3px(W3.arch.x),(wy-w3px(W3.arch.y))*1.15)<w3px(64)) return 'stonefloor';   /* the village floor */ const b=W3ART.underBiome(tx,ty); if(b==='soil'&&HR((tx*7.3+ty*3.1)*17)>.85) return 'moss'; return b; }
 const W3TILE={grass:'tGrass',dirt:'tDirt',gravel:'tGravel',dead:'tDeadGrass',soil:'tSoil',rock:'tRock',ooze:'tOoze',bone:'tBonefield',moss:'tGlowMoss',plank:'tPlank',stonefloor:'tStoneFloor',wall:'tRock'};
 const W3EDGE={grass:'#2e3a24',dirt:'#3a2f22',gravel:'#242822',dead:'#1d2617',soil:'#1a2118',rock:'#1f2a22',ooze:'#14743a',bone:'#0f140e',moss:'#1a2118',plank:'#3a2c22',stonefloor:'#131b16',wall:'#131b16'};
 function w3Zone(x,y){ return WORLD.w3; }
-function w3Terrain(x,y){ const W=WORLD; if(W.w3!=='under') return 1; if(w3KindAt(x,y)==='ooze') return .7; for(const p of W.props) if(p.k==='ooze'&&Math.hypot(x-p.x,(y-p.y)/.42)<w3px(p.r)) return .7; return 1; }   /* ooze: passable, 30% slower */
+function w3Terrain(x,y){ const W=WORLD; if(W.w3!=='under') return 1; const k=w3KindAt(x,y); if(k==='ooze') return .7; if(k==='bone'||k==='stonefloor') return 1; for(const p of W.props) if(p.k==='ooze'&&Math.hypot(x-p.x,(y-p.y)/.42)<w3px(p.r)) return .7; return 1; }   /* ooze: passable, 30% slower */
 /* ---------- painting (static layer) ---------- */
 function w3PaintAll(c,ax,ay,aw,ah){ g=c; const W=WORLD, A=v=>v/PIX, vis=(x,y,m)=>x>ax-m&&x<ax+aw+m&&y>ay-m&&y<ay+ah+m, K=W3ART, U=K.U;
   /* tiles on the reference's own 10-unit grid (one tile = 60 world px), everything at 6 world px per unit so props and ground share one scale */
@@ -3857,7 +3871,7 @@ function w3PaintAll(c,ax,ay,aw,ah){ g=c; const W=WORLD, A=v=>v/PIX, vis=(x,y,m)=
   W3S=W3U/2; for(let ty=ty0;ty<=ty1;ty++) for(let tx=tx0;tx<=tx1;tx++){ const kind=KK(tx,ty), x=tx*10, y=ty*10, s=tx*7.3+ty*3.1; K[W3TILE[kind]||'tSoil'](x,y,s,0); if(kind==='wall') R3(x,y,10,10,'rgba(0,0,0,.35)');
     for(const [dx,dy] of [[0,-1],[0,1],[-1,0],[1,0]]){ const nk=KK(tx+dx,ty+dy); if(nk!==kind&&W3EDGE[nk]) for(let i=0;i<10;i++){ if(HR(s*3+i*1.7+dx*5+dy*9)<.45) continue; const ex=dx===0?x+i:(dx<0?x:x+9), ey=dy===0?y+i:(dy<0?y:y+9); P3(ex,ey,W3EDGE[nk]); } } }   /* a stippled edge in the neighbour's tone */
   const u=v=>A(v)/W3S;   /* props: unit coordinates */
-  for(const p of W.props){ if(!vis(A(p.x),A(p.y),240)) continue; const x=u(p.x), y=u(p.y); switch(p.k){
+  for(const p of W.props){ if(!vis(A(p.x),A(p.y),300)) continue; let x=u(p.x), y=u(p.y); if(p.s){ W3S=W3U/2*p.s; x/=p.s; y/=p.s; } switch(p.k){
     case 'tomb': K.tombstone(x,y,0); break; case 'dtree': K.deadTree(x,y,0); break; case 'dbush': K.deadBush(x,y); break; case 'rpillar': K.ruinPillar(x,y,p.h,p.broken); break; case 'bones': K.bonePile(x,y,0); break; case 'skull': K.skull(x,y,0,p.lit); break;
     case 'hut': K.graveyardHut(x,y,0); break; case 'path': R3(x,y,12,7,U.stoneD,.75); break; case 'lantern': K.lantern(x,y,0); break; case 'pit': for(let q=0;q<16;q++){ const ang=q/16*6.28; P3(x+Math.cos(ang)*9,y+Math.sin(ang)*9*.45,U.glowD); } break; case 'circle': break;
     case 'walls': { R3(0,0,210,30,U.rockD); for(let i=0;i<210;i+=10) for(let j=0;j<30;j+=6){ const o=(j/6%2)*5; R3(i+o,j,9,5,(i+j)%20===0?U.rockL:U.rock); } R3(0,29,210,2,U.rockH);
@@ -3869,14 +3883,15 @@ function w3PaintAll(c,ax,ay,aw,ah){ g=c; const W=WORLD, A=v=>v/PIX, vis=(x,y,m)=
     case 'dust': { for(let i=0;i<14;i++) P3(x-8+HR(i*3+x)*22,y+4+HR(i*7+y)*14,i%2?'#1a231c':'#0f150f',.7); } break;
     case 'torch': K.greenTorch(x,y,0); break;
     case 'stalag': K.stalagmite(x,y,p.h); break; case 'crystal': K.crystal(x,y,p.h,0,p.sd||0); break; case 'arch': K.ribArch(x,y,0); break; case 'ooze': K.oozePool(x,y,p.r,0); break; case 'cage': K.cage(x,y,0); break; case 'shards': for(let q=0;q<9;q++) P3(x+q,y+((q*3)%5),U.boneD); break;
-    case 'ring': case 'portal': break; } }
+    case 'chain': K.chain(x,y,p.n||5,0); break; case 'island': { for(let i=0;i<26;i++){ const a=i/26*6.28; P3(x+Math.cos(a)*9,y+Math.sin(a)*9*.55,U.boneD); } for(let i=0;i<12;i++) P3(x-6+HR(i*3+x)*12,y-3+HR(i*7+y)*6,i%2?U.bone:U.boneD); K.skull(x-3,y-4,0,true); } break;
+    case 'ring': case 'portal': break; } if(p.s) W3S=W3U/2; }
   if(W.w3==='under'){ for(let y=10;y<W.h/W3U;y+=6) for(let x=10;x<W.w/W3U;x+=6) if(w3OnLane(x,y)&&(x+y)%18===0&&vis(A(w3px(x)),A(w3px(y)),20)) P3(x,y,U.glowD,.35); }   /* the lanes: faint green dots */
   for(const sp of W.spawners) if(vis(A(sp.x),A(sp.y),80)){ const x=u(sp.x), y=u(sp.y); if(sp.k==='bones'){ K.bonePile(x-8,y-2,0); K.bonePile(x+6,y+4,0); K.skull(x-2,y+8,0,true); } else { K.skull(x,y+2,0,true); R3(x-3,y+9,13,2,U.boneD); } }
   W3S=1; }
 /* ---------- animated layer ---------- */
 function w3WorldFx(c,ox,oy,vw,vh,t){ const W=WORLD, A=v=>v/PIX, vis=(x,y,m)=>x>ox-m&&x<ox+vw+m&&y>oy-m&&y<oy+vh+m, K=W3ART, U=K.U, live=G.state==='PLAYING', u=v=>A(v)/(W3U/2), p=G.player;
   W3S=W3U/2;
-  for(const q of W.props){ if(!vis(q.x,q.y,240)) continue; const x=u(q.x), y=u(q.y);
+  for(const q of W.props){ if(!vis(q.x,q.y,240)) continue; let x=u(q.x), y=u(q.y);
     if(q.k==='torch'){ const f=Math.floor(t*8)%3, h=[5,7,6][f]; for(let j=0;j<h;j++){ const w=Math.max(1,3-Math.floor(j/2)); R3(x+3-w/2,y+5-j,w,1,j<2?U.flame2:(j<4?U.flame1:U.flame3)); } for(let i=0;i<3;i++){ const qq=(t*.9+i*.33)%1; P3(x+3+Math.sin(t*3+i)*2,y+2-qq*9,U.glowL,1-qq); } }
     else if(q.k==='lantern'){ const lit=Math.sin(t*2.4+x)>-.4; R3(x+1,y+2,4,6,lit?U.glow:U.glowD); if(lit) P3(x+2,y+3,U.glowW); }
     else if(q.k==='ooze'){ for(let i=0;i<4;i++){ const qq=(t*.6+i*.25)%1; P3(x-4+i*3,y-qq*8,U.glowL,1-qq); } }
@@ -3885,7 +3900,7 @@ function w3WorldFx(c,ox,oy,vw,vh,t){ const W=WORLD, A=v=>v/PIX, vis=(x,y,m)=>x>o
     else if(q.k==='bones'){ if(Math.sin(t*4+x)>0){ P3(x+4,y+2,U.glowW); P3(x+7,y+2,U.glowW); } }
     else if(q.k==='cage'){ for(let i=0;i<3;i++){ const sw=Math.sin(t*1.2+i*.4)*.6; R3(x+5+sw,y-10+i*4,2,3,U.metal); } }
     else if(q.k==='pit'){ for(let qq=0;qq<7;qq++){ const p2=(t*.5+qq*.14)%1; P3(x-3+qq,y-p2*8,U.glowL,1-p2); } }
-    else if(q.k==='hut'){ const dx=x+22, dy=y+22; if(!q.noDoorGlow) for(let i=0;i<9;i++){ const qq=(t*.5+i*.11)%1; R3(dx+1+((i*3)%12),dy+16-qq*15,2,2,U.glow,.55*(1-qq)); } if(Math.sin(t*2)>0){ R3(x+7,y+23,5,5,U.glowD); R3(x+46,y+23,5,5,U.glowD); } for(let i=0;i<6;i++){ const qq=(t*.4+i*.16)%1; R3(x+48+Math.sin(t+i)*2,y-2-qq*14,3,3,U.glow,.22*(1-qq)); } K.skull(x+25,y+4,t,true); }
+    else if(q.k==='hut'){ if(q.s){ W3S=W3U/2*q.s; x/=q.s; y/=q.s; } const dx=x+22, dy=y+22; if(!q.noDoorGlow) for(let i=0;i<9;i++){ const qq=(t*.5+i*.11)%1; R3(dx+1+((i*3)%12),dy+16-qq*15,2,2,U.glow,.55*(1-qq)); } if(Math.sin(t*2)>0){ R3(x+7,y+23,5,5,U.glowD); R3(x+46,y+23,5,5,U.glowD); } for(let i=0;i<6;i++){ const qq=(t*.4+i*.16)%1; R3(x+48+Math.sin(t+i)*2,y-2-qq*14,3,3,U.glow,.22*(1-qq)); } K.skull(x+25,y+4,t,true); if(q.s) W3S=W3U/2; }
     else if(q.k==='circle'){ const pulse=0.55+0.45*Math.sin(t*2.4), near=p&&Math.hypot(p.x-q.x,p.y-q.y)<w3px(13); for(let ring=0;ring<3;ring++){ const rr=13-ring*4, n=Math.round(rr*3.2); for(let i=0;i<n;i++){ const a=i/n*6.28+(ring%2?-t*0.6:t*0.6); P3(x+Math.cos(a)*rr,y+Math.sin(a)*rr*0.42,ring===0?U.glowL:(ring===1?U.glow:U.glowD),(near?.7:.35)+pulse*0.45); } } for(let i=0;i<26;i++){ const a=HR(i)*6.28, rr=HR(i*3)*11; P3(x+Math.cos(a)*rr,y+Math.sin(a)*rr*0.42,U.glowD,.25); } for(let i=0;i<7;i++){ const qq=(t*.7+i*.14)%1; P3(x-6+i*2,y-qq*14,U.glowL,(1-qq)*0.9); } if(Math.sin(t*3)>0) for(let j=0;j<4;j++) R3(x-j,y-6-j,1+j*2,1,U.glowW); }
     else if(q.k==='ring'){ const st=G.w3bar, on=st&&st.state==='fight', pulse=.5+.5*Math.sin(t*2); for(let ring=0;ring<2;ring++){ const rr=q.r?q.r:W3.ring.r-ring*4, n=Math.round(rr*3.0); for(let i=0;i<n;i++){ const a=i/n*6.28+(ring%2?-t*.25:t*.25); P3(x+Math.cos(a)*(W3.ring.r-ring*4),y+Math.sin(a)*(W3.ring.r-ring*4)*.42,ring?U.glowD:U.glow,on?.4+pulse*.5:.18); } }
       for(let i=0;i<8;i++){ const a=i/8*6.28+t*.3, rx=x+Math.cos(a)*(W3.ring.r+6), ry=y+Math.sin(a)*(W3.ring.r+6)*.42; R3(rx-1,ry-2,3,4,on?(Math.sin(t*4+i)>0?U.glowL:U.glow):U.glowD,on?.9:.35); P3(rx,ry-1,U.glowW,on?.9:.3); } }
