@@ -4707,7 +4707,7 @@ return {U,VW,VH,CX,CY,SUMMON,BRAZ,PILLARS,OOZE,arenaFloor,arenaWalls,arenaProps,
    WORLD 3 — the Skeleton Witch (boss 1: constant poison bolts, dark waves, Raise the Dead with empowered minions),
    the Trader (Chi ↔ gold, 3 trades per direction per day), the village portal, the underworld's boss lairs.
    ===================================================================== */
-const WITCH={boltRate:[1.4,.5],boltSpd:[480,660],charge:.4,waves:[4,5],waveGap:2.3,waveSpd:280,waveMax:700,waveR0:80,raiseTele:1.0,raiseR:150,empower:8,raiseCd:[16,10],raiseMax:2,wavesCd:[6,4.5]};
+const WITCH={boltRate:[1.4,.5],boltSpd:[480,660],charge:.4,waves:[4,5],waveGap:2.8,waveSpd:230,waveMax:700,waveR0:80,raiseTele:1.0,raiseR:150,empower:8,raiseCd:[16,10],raiseMax:2,wavesCd:[6,4.5]};
 const TRADE={sell:900,buy:1500,cap:3};
 function witchMinionsAlive(){ return G.enemies.filter(m=>m.alive&&m.witchMinion).length; }
 function witchOrb(e){ const face=Math.cos(e.face)>=0?1:-1; return {x:e.x+face*42,y:e.y+e.r*.9-110}; }
@@ -4734,7 +4734,7 @@ function drawWitch(c,e,t){ const a=e.ai, s=e.d.scale, face=Math.cos(e.face)>=0?1
   if(a.state==='waves'){ anim='waves'; tArg=a.st; } else if(a.state==='raise'){ anim='raise'; tArg=a.st; } else if(a.chg>0){ anim='attack'; k=.34*(1-a.chg/WITCH.charge); } else if(mv) anim='walk'; else if(a.phase2) anim='phase2';
   c.save(); if(e.spawnT>0) c.globalAlpha=Math.max(0,1-e.spawnT/.6); const fl=e.flinch>0?Math.sin(G.time*70)*2.5:0; W3_PH2=!!a.phase2;
   W3EMIT=(x,y,n,pw,kind)=>{ for(let i=0;i<n;i++) part(e.x+(x+90-151)*s*face,e.y+e.r*.9+(y+50-122)*s,rnd(-pw,pw)*8,rnd(-pw*12,-30),kind==='soul'?'#b6ffae':kind==='poi'?'#3fae52':'#2e3835',.5,2,kind==='soul'?-40:40,true); };
-  rigBlitOutlined(c,320,200,()=>{ W3S=1; g.save(); g.translate(90,50); W3B.witch(anim,tArg,k); g.restore(); },e.flash>0?null:tintFor(e),e.x+fl,e.y+e.r*.9,s*face*1.12,s,-151,-122,a.phase2?'rgba(182,255,174,.7)':'rgba(77,250,66,.55)'); W3EMIT=null; W3_PH2=false;   /* a touch wider than tall; a green rim so the black bones read against the dark ground */
+  rigBlitOutlined(c,320,200,()=>{ W3S=1; g.save(); g.translate(90,50); W3B.witch(anim,tArg,k); g.restore(); },tintFor(e),e.x+fl,e.y+e.r*.9,s*face*1.12,s,-151,-122,a.phase2?'rgba(182,255,174,.7)':'rgba(77,250,66,.55)'); W3EMIT=null; W3_PH2=false;   /* a touch wider than tall; a green rim so the black bones read against the dark ground */
   if(e.empowerT>0) w3FlameFx(e,80); c.restore(); }
 /* like rigBlit, but the sprite gets a one-pixel rim in a colour first (drawn once, blitted five times) */
 const OUT_C=document.createElement('canvas'), OUT_X=OUT_C.getContext('2d');
