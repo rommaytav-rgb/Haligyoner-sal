@@ -3768,6 +3768,7 @@ return {K,grunt,armored,gruntDeath,armoredDeath,skullHead};
 /* =====================================================================
    WORLD 3 — logic: the three areas, their layouts (ported from world3maps2.html), transitions, the bar gate, the skeletons.
    ===================================================================== */
+const W3_SLAM={len:170,w:24};   /* the armoured skeleton's ground slam: a short strip in front of him, marked in red and hit in full */
 const W3={ id:'underworld', sizes:{surface:{w:230,h:180},bar:{w:210,h:150},under:{w:620,h:470}}, upx:{surface:3,bar:3,under:6},
   circle:{x:115,y:108}, hut:{x:86,y:58}, barDoor:{x:105,y:146}, keeper:{x:86,y:32}, counter:{x0:20,x1:170,y0:58,y1:78}, ring:{x:105,y:100,r:40}, portal:{x:95,y:60},
   pillars:[[32,48],[178,48],[32,132],[178,132]], arch:{x:300,y:240}, safe:{x:300,y:240,r:55},
@@ -3976,14 +3977,14 @@ AI.skel=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.abCd
 AI.askel=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.abCd-=dt; const sees=commonSees(e,p);
   if(a.state==='idle'){ wander(e,dt,90,.3); if(d<320&&sees&&(G.chasers<8||e.summoned)){ a.state='chase'; a.t=0; G.chasers++; floatText(e.x,e.y-52,'!','#4dfa42',true); } return; }
   if(a.state==='chase'){ if(!e.summoned&&(d>600||!sees||dist(e,a.home)>760||outOfBiome(e))){ goHome(e); return; } spreadAngle(e,dt); const ring=e.r+p.r+18, tx=p.x+Math.cos(a.angle)*ring, ty=p.y+Math.sin(a.angle)*ring; moveToward(e,d>ring+60?p.x:tx,d>ring+60?p.y:ty,dt,1); faceTo(e,p);
-    if(e.abCd<=0&&d>3*TILE_PX&&d<360&&!inSafeZone(p.x,p.y)){ a.state='slam'; a.t=2.6; a.hitDone=false; e.vx=e.vy=0; a.aim=e.face; a.tele=null; }   /* no red line: the raised axe is the warning, the green trail on the ground is exactly where it hurts */   /* axe to the ground: from 3 tiles out, every ~8 s */
+    if(e.abCd<=0&&d>3*TILE_PX&&d<360&&!inSafeZone(p.x,p.y)){ a.state='slam'; a.t=2.6; a.hitDone=false; e.vx=e.vy=0; a.aim=e.face; telegraph(e,{s:'line',a:a.aim,l:W3_SLAM.len,w:W3_SLAM.w},.78); }   /* the red line is exactly the strip the axe and its trail hit */   /* axe to the ground: from 3 tiles out, every ~8 s */
     else if(d<e.d.range+12&&a.atkT<=0){ a.state='swing'; a.t=1.3; a.hitDone=false; e.vx*=.2; e.vy*=.2; } }
   else if(a.state==='swing'){ e.vx*=.5; e.vy*=.5; if(a.t>.85) faceTo(e,p); const k=1-a.t/1.3; if(!a.hitDone&&k>=.5){ a.hitDone=true; shake(4); SFX.hit(); noise(.12,.18); if(inArc(p,e.x,e.y,e.face,e.d.range+22,.9)&&p.jumpT<=0) damage(p,tierDmg(e,'basic'),e,{kb:280}); } if(a.t<=0){ a.state='chase'; a.atkT=e.d.atk; } }
-  else if(a.state==='slam'){ e.vx=e.vy=0; const q=1-a.t/2.6; if(q<.3){ faceTo(e,p); a.aim=e.face; } a.tele=null;
-    if(!a.hitDone&&q>=.42){ a.hitDone=true; shake(10); vibrate(90); noise(.22,.3); tone(60,.35,'sine',.35,-30); const dmg=tierDmg(e,'heavy'); if(inCircle(p,e.x,e.y,e.r+p.r+34)&&p.jumpT<=0) damage(p,dmg,e,{kb:360}); G.ring={x:e.x,y:e.y+6,r:0,max:70,t:0,col:'#4dfa42'}; G.groundFx.push({kind:'w3trail',vec:true,x:e.x+Math.cos(a.aim)*16,y:e.y+Math.sin(a.aim)*16,r:0,ang:a.aim,len:w3px(60),t:1.4,t0:1.4,dmg,hit:new Set()}); burst(e.x+Math.cos(a.aim)*20,e.y+6,['#4dfa42','#b6ffae','#2e3835'],20,220,.6,3,-40,true); }
+  else if(a.state==='slam'){ e.vx=e.vy=0; const q=1-a.t/2.6; if(q<.3){ faceTo(e,p); a.aim=e.face; if(a.tele) a.tele.a=a.aim; } else a.tele=null;
+    if(!a.hitDone&&q>=.42){ a.hitDone=true; shake(10); vibrate(90); noise(.22,.3); tone(60,.35,'sine',.35,-30); const dmg=tierDmg(e,'heavy'); if(inCircle(p,e.x,e.y,e.r+p.r+34)&&p.jumpT<=0) damage(p,dmg,e,{kb:360}); G.ring={x:e.x,y:e.y+6,r:0,max:70,t:0,col:'#4dfa42'}; G.groundFx.push({kind:'w3trail',vec:true,x:e.x,y:e.y,r:0,ang:a.aim,len:W3_SLAM.len,t:1.4,t0:1.4,dmg,hit:new Set()}); burst(e.x+Math.cos(a.aim)*20,e.y+6,['#4dfa42','#b6ffae','#2e3835'],20,220,.6,3,-40,true); }
     if(a.t<=0){ a.state='chase'; e.abCd=8; a.atkT=1; } } };
 /* the scorch trail hurts what stands in its line while it races forward */
-function w3TrailUpdate(dt){ const p=G.player; for(const f of G.groundFx){ if(f.kind!=='w3trail') continue; const q=Math.min(1,(f.t0-f.t)/.5), len=q*f.len, ca=Math.cos(f.ang), sa=Math.sin(f.ang); const test=(e)=>{ const dx=e.x-f.x, dy=e.y-f.y, s=clamp((dx*ca+dy*sa)/Math.max(1,len),0,1)*len, px2=f.x+ca*s, py2=f.y+sa*s; return Math.hypot(e.x-px2,e.y-py2)<26+e.r*.5&&s<=len; };
+function w3TrailUpdate(dt){ const p=G.player; for(const f of G.groundFx){ if(f.kind!=='w3trail') continue; const q=Math.min(1,(f.t0-f.t)/.5), len=q*f.len, ca=Math.cos(f.ang), sa=Math.sin(f.ang); const test=(e)=>{ const dx=e.x-f.x, dy=e.y-f.y, s=clamp((dx*ca+dy*sa)/Math.max(1,len),0,1)*len, px2=f.x+ca*s, py2=f.y+sa*s; return Math.hypot(e.x-px2,e.y-py2)<W3_SLAM.w+e.r*.5&&s<=len; };
     if(p&&p.alive&&!f.hit.has(p)&&p.jumpT<=0&&test(p)){ f.hit.add(p); damage(p,f.dmg,{kind:'hazard',x:p.x,y:p.y},{sure:true,ranged:true,haz:true,kb:200,color:'#4dfa42'}); } } }
 /* =====================================================================
    WORLD 3 — the Skeleton Witch (boss 1) and the Trader, imported as is from traderwitchworld3.html.
