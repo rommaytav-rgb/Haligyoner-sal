@@ -774,7 +774,51 @@ function drawSprite(c,ch,anim,t,face,s,x,y,tint,alpha){
   if(tint){ if(TINT_C.width!==img.width||TINT_C.height!==img.height){ TINT_C.width=img.width; TINT_C.height=img.height; } TINT_X.globalCompositeOperation='source-over'; TINT_X.clearRect(0,0,img.width,img.height); TINT_X.drawImage(img,0,0); TINT_X.globalCompositeOperation='source-atop'; TINT_X.fillStyle=tint; TINT_X.fillRect(0,0,img.width,img.height); c.drawImage(TINT_C,dx,dy); }
   else c.drawImage(img,dx,dy);
   c.globalAlpha=1; c.imageSmoothingEnabled=sm;
+}/* =====================================================================
+   NINJA REDESIGN — the new look from ninjasredesign.html, applied as new part grids + palettes on the five CHARS models.
+   Only the pixels change: the sprite engine (drawChar) and every animation — idle, walk, jump, attack, abilities, Spinjitzu — are untouched.
+   Same cut for all five: kimono with an overlapping lapel, belt with a knot, diagonal leather strap with gold studs, leg wraps, boots,
+   mask with a knot at the back and a small gold plate. What differs: the palette and one signature detail per ninja.
+   Letters: T gi · t gi dark · U gi light · u gi highlight · H hood · D hood dark · I hood light · Y belt · y belt dark · Z belt light
+            V wrap · v wrap dark · X boot · K skin · k skin dark · E eye · e eye white · Q gold · q gold light · o gold dark · A sleeve · a sleeve light · G hand
+   (W, w, g stay from the old palettes: the weapons use them)
+   ===================================================================== */
+const NINJA_SKIN={
+  SHADE: { gi:'#33204a',giD:'#1d1130',giL:'#452c63',giH:'#5c3a80', hood:'#291a3d',hoodD:'#180e26',hoodL:'#3d2757', belt:'#6a3fa0',beltD:'#452a6b',beltL:'#7a4aa8', wrap:'#2e1c44',wrapD:'#1a0f28',boot:'#150c22', eye:'#c060ff',eyeW:'#efd4ff', trait:'tail' },
+  BOREAS:{ gi:'#cdd8e2',giD:'#93a2b0',giL:'#e6eef5',giH:'#ffffff', hood:'#a8bcc8',hoodD:'#6f8391',hoodL:'#d2e0ea', belt:'#5aa8cc',beltD:'#3a7a99',beltL:'#8ad4ee', wrap:'#8fa3b2',wrapD:'#5e7181',boot:'#4a5a68', eye:'#66e0ff',eyeW:'#e6feff', trait:'fur' },
+  APOLLO:{ gi:'#a8101c',giD:'#6e0a12',giL:'#c8242f',giH:'#e8404a', hood:'#8a0c16',hoodD:'#560810',hoodL:'#b0202a', belt:'#e07a1a',beltD:'#a85410',beltL:'#ffa542', wrap:'#7a1a14',wrapD:'#4a0d0a',boot:'#3a0a0e', eye:'#ff5a20',eyeW:'#ffd0a0', trait:'scarf' },
+  BECK:  { gi:'#1c3f7a',giD:'#122a52',giL:'#2a58a0',giH:'#3a70c0', hood:'#16345f',hoodD:'#0d2040',hoodL:'#24487e', belt:'#2fc4a8',beltD:'#1c8a76',beltL:'#5fe8cc', wrap:'#1a3a68',wrapD:'#0e2242',boot:'#0d1b36', eye:'#33e0ff',eyeW:'#d0f8ff', trait:'cape' },
+  CLAY:  { gi:'#5b3a1c',giD:'#3a2410',giL:'#7a5230',giH:'#96683f', hood:'#4a2f16',hoodD:'#2e1c0c',hoodL:'#66451f', belt:'#c9962e',beltD:'#96701f',beltL:'#e8bd58', wrap:'#4a3a20',wrapD:'#2a2010',boot:'#241a0e', eye:'#ffcc33',eyeW:'#fff0b0', trait:'pads' },
+};
+const NS_SKIN='#f1c39c', NS_SKIN_D='#c99a72', NS_GOLD='#e8c14a', NS_GOLD_L='#fff0a8', NS_GOLD_D='#a8862a';
+function ninjaSkinParts(N){
+  const c={T:N.gi,t:N.giD,U:N.giL,u:N.giH,H:N.hood,D:N.hoodD,I:N.hoodL,Y:N.belt,y:N.beltD,Z:N.beltL,V:N.wrap,v:N.wrapD,X:N.boot,K:NS_SKIN,k:NS_SKIN_D,E:N.eye,e:N.eyeW,Q:NS_GOLD,q:NS_GOLD_L,o:NS_GOLD_D,A:N.gi,a:N.giL,G:N.boot};
+  /* head 8×9 at [8,2]: hood with a light top edge and a dark back edge, gold plate, brows, the eye slit, the mask's chin */
+  const head=['.IIIIII.','IHqQQqHD','IHHoQHHD','IHHHHHHD','HDDKKDDH','KeEKKeEK','KEEKKEEK','kkkkkkkk','.DDDDDD.'];
+  /* torso 10×9 at [7,10]: collar, lapel running down to the right, the strap across, studs, belt + knot */
+  let torso=['UUUUUUUUUU','TTTUuTTTTT','TVTTUuTTTT','TTVVTUuTTT','TTTQVVUuTT','TTTTTQVUuT','ZZZZZZZZZZ','YYYYZZZYYY','yyyyYYYyyy'];
+  const pad=(rows)=>{ rows[0]='ZZZZ'+rows[0].slice(4); rows[1]='VVVV'+rows[1].slice(4); rows[2]='VVVV'+rows[2].slice(4); };
+  if(N.trait==='pads'){ pad(torso); torso[0]=torso[0].slice(0,6)+'ZZZZ'; torso[1]=torso[1].slice(0,6)+'VVVV'; torso[2]=torso[2].slice(0,6)+'VVVV'; torso[3]=torso[3].slice(0,6)+'VVVV'; }   /* two thick leather pads */
+  else if(N.trait==='fur'){ torso[0]='uuIuuIuuIu'; torso[1]='IIuIIuIIuI'; }                                                                                                          /* high fur collar */
+  else pad(torso);                                                                                                                                                                   /* one shoulder pad */
+  if(N.trait==='pads'||N.trait==='cape'){ torso[6]='yyyyZZZyyy'; torso[7]='YYYYZQQZYY'; torso[8]='yyyyYYYYyy'; }                                                                       /* double belt with a big buckle */
+  /* legs 4×8 at [8,19]/[12,19]: trousers, two rows of wraps, boots */
+  const leg=['UTTt','UTTt','UTTt','vVVV','vVVV','vvvv','XXXX','XXXX'];
+  /* arms 3×8: sleeve, wraps, hand. APOLLO's sleeves are rolled up */
+  const arm=N.trait==='scarf'?['aAA','aAA','aAA','VVv','VVv','VVv','VVv','GGG']:['aAA','aAA','aAA','aAA','aAA','VVv','VVv','GGG'];
+  /* the back: the mask's knot and tail (long for SHADE), a short cape for BECK, a scarf for APOLLO — the cape slot sways with the animation */
+  const extras=[{g:['HH','DH'],pos:[6,5],front:false}];
+  let cape=null, noCape=true;
+  if(N.trait==='tail') { cape=['..D','..D','.DD','.D.','DD.','D..','D..','.D.','.D.']; noCape=false; }
+  else extras.push({g:['.D','.D','D.'],pos:[5,7],front:false});
+  if(N.trait==='cape') { cape=['UUUU','UUUU','UUUt','tttt','tttt','ttt.','ttt.','tt..','tt..']; noCape=false; }
+  if(N.trait==='scarf'){ cape=['.....ZZ','....ZZY','...ZYY.','..YYY..','.YYy...','YYy....','Yy.....','y......','y......']; noCape=false; }
+  return {c,head,torso,leg,arm,extras,cape,noCape,eyeOff:[[1,5],[5,5]],eyeW:2};
 }
+for(const ch of CHARS){ const N=NINJA_SKIN[ch.name]; if(!N) continue; const P=ninjaSkinParts(N);
+  ch.c=Object.assign({},ch.c,P.c); ch.head=P.head; ch.torso=P.torso; ch.leg=P.leg; ch.arm=P.arm; ch.extras=P.extras; ch.eyeOff=P.eyeOff; ch.eyeW=P.eyeW; ch.hair=[[]]; delete ch.hood; delete ch.headOff;
+  if(P.cape){ ch.cape=P.cape; ch.noCape=false; } else { ch.noCape=true; delete ch.cape; } }
+
 /* ===== ABILITY ICONS — 16x16 pixel grids, imported verbatim from ability-icons.html (letter = palette color, '.' = transparent, 'E' = blinking accent) ===== */
 const ICONS=[
 { name:'CLAY', ability:'חומת סלע', glow:'#e0b96a',
