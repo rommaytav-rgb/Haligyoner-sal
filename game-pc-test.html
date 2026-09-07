@@ -3977,10 +3977,10 @@ AI.skel=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.abCd
 AI.askel=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.abCd-=dt; const sees=commonSees(e,p);
   if(a.state==='idle'){ wander(e,dt,90,.3); if(d<320&&sees&&(G.chasers<8||e.summoned)){ a.state='chase'; a.t=0; G.chasers++; floatText(e.x,e.y-52,'!','#4dfa42',true); } return; }
   if(a.state==='chase'){ if(!e.summoned&&(d>600||!sees||dist(e,a.home)>760||outOfBiome(e))){ goHome(e); return; } spreadAngle(e,dt); const ring=e.r+p.r+18, tx=p.x+Math.cos(a.angle)*ring, ty=p.y+Math.sin(a.angle)*ring; moveToward(e,d>ring+60?p.x:tx,d>ring+60?p.y:ty,dt,1); faceTo(e,p);
-    if(e.abCd<=0&&d>3*TILE_PX&&d<360&&!inSafeZone(p.x,p.y)){ a.state='slam'; a.t=2.6; a.hitDone=false; e.vx=e.vy=0; a.aim=e.face; telegraph(e,{s:'line',a:a.aim,l:w3px(60),w:22},.78); }   /* axe to the ground: from 3 tiles out, every ~8 s */
+    if(e.abCd<=0&&d>3*TILE_PX&&d<360&&!inSafeZone(p.x,p.y)){ a.state='slam'; a.t=2.6; a.hitDone=false; e.vx=e.vy=0; a.aim=e.face; a.tele=null; }   /* no red line: the raised axe is the warning, the green trail on the ground is exactly where it hurts */   /* axe to the ground: from 3 tiles out, every ~8 s */
     else if(d<e.d.range+12&&a.atkT<=0){ a.state='swing'; a.t=1.3; a.hitDone=false; e.vx*=.2; e.vy*=.2; } }
   else if(a.state==='swing'){ e.vx*=.5; e.vy*=.5; if(a.t>.85) faceTo(e,p); const k=1-a.t/1.3; if(!a.hitDone&&k>=.5){ a.hitDone=true; shake(4); SFX.hit(); noise(.12,.18); if(inArc(p,e.x,e.y,e.face,e.d.range+22,.9)&&p.jumpT<=0) damage(p,tierDmg(e,'basic'),e,{kb:280}); } if(a.t<=0){ a.state='chase'; a.atkT=e.d.atk; } }
-  else if(a.state==='slam'){ e.vx=e.vy=0; const q=1-a.t/2.6; if(q<.3){ faceTo(e,p); a.aim=e.face; if(a.tele) a.tele.a=a.aim; } else a.tele=null;
+  else if(a.state==='slam'){ e.vx=e.vy=0; const q=1-a.t/2.6; if(q<.3){ faceTo(e,p); a.aim=e.face; } a.tele=null;
     if(!a.hitDone&&q>=.42){ a.hitDone=true; shake(10); vibrate(90); noise(.22,.3); tone(60,.35,'sine',.35,-30); const dmg=tierDmg(e,'heavy'); if(inCircle(p,e.x,e.y,e.r+p.r+34)&&p.jumpT<=0) damage(p,dmg,e,{kb:360}); G.ring={x:e.x,y:e.y+6,r:0,max:70,t:0,col:'#4dfa42'}; G.groundFx.push({kind:'w3trail',vec:true,x:e.x+Math.cos(a.aim)*16,y:e.y+Math.sin(a.aim)*16,r:0,ang:a.aim,len:w3px(60),t:1.4,t0:1.4,dmg,hit:new Set()}); burst(e.x+Math.cos(a.aim)*20,e.y+6,['#4dfa42','#b6ffae','#2e3835'],20,220,.6,3,-40,true); }
     if(a.t<=0){ a.state='chase'; e.abCd=8; a.atkT=1; } } };
 /* the scorch trail hurts what stands in its line while it races forward */
