@@ -4705,7 +4705,7 @@ return {U,VW,VH,CX,CY,SUMMON,BRAZ,PILLARS,OOZE,arenaFloor,arenaWalls,arenaProps,
    WORLD 3 — the Skeleton Witch (boss 1: constant poison bolts, dark waves, Raise the Dead with empowered minions),
    the Trader (Chi ↔ gold, 3 trades per direction per day), the village portal, the underworld's boss lairs.
    ===================================================================== */
-const WITCH={boltRate:[1.4,.5],boltSpd:[480,660],charge:.4,waves:[4,5],waveGap:2.8,waveSpd:230,waveMax:700,waveR0:80,raiseTele:1.0,raiseR:150,empower:8,raiseCd:[16,10],raiseMax:2,wavesCd:[6,4.5]};
+const WITCH={boltRate:[1.4,.5],boltSpd:[300,400],charge:.5,waves:[4,5],waveGap:2.8,waveSpd:230,waveMax:700,waveR0:80,raiseTele:1.0,raiseR:150,empower:8,raiseCd:[16,10],raiseMax:2,wavesCd:[6,4.5]};
 const TRADE={sell:900,buy:1500,cap:3};
 function witchMinionsAlive(){ return G.enemies.filter(m=>m.alive&&m.witchMinion).length; }
 function witchOrb(e){ const face=Math.cos(e.face)>=0?1:-1; return {x:e.x+face*42,y:e.y+e.r*.9-110}; }
