@@ -818,7 +818,7 @@ function ninjaSkinParts(N){
 for(const ch of CHARS){ const N=NINJA_SKIN[ch.name]; if(!N) continue; const P=ninjaSkinParts(N);
   ch.c=Object.assign({},ch.c,P.c); ch.head=P.head; ch.torso=P.torso; ch.leg=P.leg; ch.arm=P.arm; ch.extras=P.extras; ch.eyeOff=P.eyeOff; ch.eyeW=P.eyeW; ch.hair=[[]]; delete ch.hood; delete ch.headOff;
   if(P.cape){ ch.cape=P.cape; ch.noCape=false; } else { ch.noCape=true; delete ch.cape; }
-  if(ch.name==='APOLLO'||ch.name==='BECK') ch.weapon={rest:[],restPos:[0,0],strike:[],strikePos:[0,0]}; }   /* the fire and water ninjas carry no weapon: their element is the weapon */
+  ch.weapon={rest:[],restPos:[0,0],strike:[],strikePos:[0,0]}; }   /* no ninja carries a weapon: the element is the weapon */
 
 /* ===== ABILITY ICONS — 16x16 pixel grids, imported verbatim from ability-icons.html (letter = palette color, '.' = transparent, 'E' = blinking accent) ===== */
 const ICONS=[
