@@ -3922,7 +3922,7 @@ function w3WorldFx(c,ox,oy,vw,vh,t){ const W=WORLD, A=v=>v/PIX, vis=(x,y,m)=>x>o
   /* the bar: the arena pillars, the ground-slam trails; the dark frame once the fight is on */
   for(const f of G.groundFx){ if(f.kind==='w3pillar'){ const x=u(f.x), y=u(f.y), k=1-f.t/f.t0; for(let i=0;i<Math.round(20);i++){ const a=i/20*6.28; P3(x+Math.cos(a)*9,y+Math.sin(a)*9*.42,i%2?U.glowL:U.glow); } const h=Math.min(1,k*2)*34; for(let j=0;j<h;j++){ const w=Math.max(1,4-Math.floor(j/10)); R3(x-w/2,y-2-j,w,1,j%3===0?U.glowW:U.glowL,.5+.5*(1-k)); } for(let i=0;i<6;i++){ const qq=(t*1.2+i*.17)%1; P3(x-4+i*1.6,y-qq*30,U.glowW,1-qq); } }
     else if(f.kind==='w3trail'){ const x=u(f.x), y=u(f.y), q=Math.min(1,(f.t0-f.t)/.5), len=q*f.len/W3U, ca=Math.cos(f.ang), sa=Math.sin(f.ang), fade=Math.min(1,f.t/.6); if(q<.22){ const rr=4+q*40; for(let i=0;i<Math.round(rr*2.6);i++){ const aa=i/Math.round(rr*2.6)*6.28; P3(x+Math.cos(aa)*rr,y+Math.sin(aa)*rr*.35,q<.1?U.glowW:U.glow); } }
-      for(let i=0;i<len;i++){ const px2=x+ca*i, py2=y+sa*i*.75, wob=Math.sin(i*.4+t*6)*1.2, h=Math.max(1,4-Math.floor(i/20)); for(let j=0;j<h;j++) P3(px2+sa*(wob-j)*.3,py2-j+wob*.5,j===0?U.glowW:(j<2?U.glowL:U.glow),fade); if(i%7===0) P3(px2,py2+2,'#0d1210'); } } }
+      for(let i=0;i<len;i++){ const px2=x+ca*i, py2=y+sa*i, wob=Math.sin(i*.4+t*6)*1.2, h=Math.max(1,4-Math.floor(i/20)); for(let j=0;j<h;j++) P3(px2+sa*(wob-j)*.3,py2-j+wob*.5,j===0?U.glowW:(j<2?U.glowL:U.glow),fade); if(i%7===0) P3(px2,py2+2,'#0d1210'); } } }
   W3S=1;
 }
 function w3Foreground(c,ox,oy,vw,vh,p,t){}
@@ -3981,11 +3981,11 @@ AI.askel=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.abC
     else if(d<e.d.range+12&&a.atkT<=0){ a.state='swing'; a.t=1.3; a.hitDone=false; e.vx*=.2; e.vy*=.2; } }
   else if(a.state==='swing'){ e.vx*=.5; e.vy*=.5; if(a.t>.85) faceTo(e,p); const k=1-a.t/1.3; if(!a.hitDone&&k>=.5){ a.hitDone=true; shake(4); SFX.hit(); noise(.12,.18); if(inArc(p,e.x,e.y,e.face,e.d.range+22,.9)&&p.jumpT<=0) damage(p,tierDmg(e,'basic'),e,{kb:280}); } if(a.t<=0){ a.state='chase'; a.atkT=e.d.atk; } }
   else if(a.state==='slam'){ e.vx=e.vy=0; const q=1-a.t/2.6; if(q<.3){ faceTo(e,p); a.aim=e.face; if(a.tele) a.tele.a=a.aim; } else a.tele=null;
-    if(!a.hitDone&&q>=.42){ a.hitDone=true; shake(10); vibrate(90); noise(.22,.3); tone(60,.35,'sine',.35,-30); const dmg=tierDmg(e,'heavy'); if(inCircle(p,e.x,e.y,e.r+p.r+34)&&p.jumpT<=0) damage(p,dmg,e,{kb:360}); G.ring={x:e.x,y:e.y+6,r:0,max:70,t:0,col:'#4dfa42'}; G.groundFx.push({kind:'w3trail',vec:true,x:e.x+Math.cos(a.aim)*16,y:e.y+Math.sin(a.aim)*8,r:0,ang:a.aim,len:w3px(60),t:1.4,t0:1.4,dmg,hit:new Set()}); burst(e.x+Math.cos(a.aim)*20,e.y+6,['#4dfa42','#b6ffae','#2e3835'],20,220,.6,3,-40,true); }
+    if(!a.hitDone&&q>=.42){ a.hitDone=true; shake(10); vibrate(90); noise(.22,.3); tone(60,.35,'sine',.35,-30); const dmg=tierDmg(e,'heavy'); if(inCircle(p,e.x,e.y,e.r+p.r+34)&&p.jumpT<=0) damage(p,dmg,e,{kb:360}); G.ring={x:e.x,y:e.y+6,r:0,max:70,t:0,col:'#4dfa42'}; G.groundFx.push({kind:'w3trail',vec:true,x:e.x+Math.cos(a.aim)*16,y:e.y+Math.sin(a.aim)*16,r:0,ang:a.aim,len:w3px(60),t:1.4,t0:1.4,dmg,hit:new Set()}); burst(e.x+Math.cos(a.aim)*20,e.y+6,['#4dfa42','#b6ffae','#2e3835'],20,220,.6,3,-40,true); }
     if(a.t<=0){ a.state='chase'; e.abCd=8; a.atkT=1; } } };
 /* the scorch trail hurts what stands in its line while it races forward */
-function w3TrailUpdate(dt){ const p=G.player; for(const f of G.groundFx){ if(f.kind!=='w3trail') continue; const q=Math.min(1,(f.t0-f.t)/.5), len=q*f.len, ca=Math.cos(f.ang), sa=Math.sin(f.ang); const test=(e)=>{ const dx=e.x-f.x, dy=(e.y-f.y)/.75, s=clamp((dx*ca+dy*sa)/Math.max(1,len),0,1)*len, px2=f.x+ca*s, py2=f.y+sa*s*.75; return Math.hypot(e.x-px2,(e.y-py2)/.75)<24+e.r*.5&&s<=len; };
-    if(p&&p.alive&&!f.hit.has(p)&&p.jumpT<=0&&f.t>f.t0-.55&&test(p)){ f.hit.add(p); damage(p,f.dmg,{kind:'hazard',x:p.x,y:p.y},{sure:true,ranged:true,haz:true,kb:200,color:'#4dfa42'}); } } }
+function w3TrailUpdate(dt){ const p=G.player; for(const f of G.groundFx){ if(f.kind!=='w3trail') continue; const q=Math.min(1,(f.t0-f.t)/.5), len=q*f.len, ca=Math.cos(f.ang), sa=Math.sin(f.ang); const test=(e)=>{ const dx=e.x-f.x, dy=e.y-f.y, s=clamp((dx*ca+dy*sa)/Math.max(1,len),0,1)*len, px2=f.x+ca*s, py2=f.y+sa*s; return Math.hypot(e.x-px2,e.y-py2)<26+e.r*.5&&s<=len; };
+    if(p&&p.alive&&!f.hit.has(p)&&p.jumpT<=0&&test(p)){ f.hit.add(p); damage(p,f.dmg,{kind:'hazard',x:p.x,y:p.y},{sure:true,ranged:true,haz:true,kb:200,color:'#4dfa42'}); } } }
 /* =====================================================================
    WORLD 3 — the Skeleton Witch (boss 1) and the Trader, imported as is from traderwitchworld3.html.
    R/P draw into the current rig canvas at 1 unit = 1 px (W3S=1) or the map scale; emit feeds the game's particles.
@@ -4706,7 +4706,7 @@ return {U,VW,VH,CX,CY,SUMMON,BRAZ,PILLARS,OOZE,arenaFloor,arenaWalls,arenaProps,
    WORLD 3 — the Skeleton Witch (boss 1: constant poison bolts, dark waves, Raise the Dead with empowered minions),
    the Trader (Chi ↔ gold, 3 trades per direction per day), the village portal, the underworld's boss lairs.
    ===================================================================== */
-const WITCH={boltRate:[1.4,.5],boltSpd:[300,400],charge:.5,waves:[4,5],waveGap:2.8,waveSpd:230,waveMax:700,waveR0:80,raiseTele:1.0,raiseR:150,empower:8,raiseCd:[16,10],raiseMax:2,wavesCd:[6,4.5]};
+const WITCH={boltRate:[1.4,.5],boltSpd:[300,400],charge:.5,waves:[4,5],waveGap:2.8,waveSpd:230,waveMax:700,waveR0:80,raiseTele:1.0,raiseR:150,empower:8,raiseCd:[16,10],raiseMax:2,wavesCd:[10,7]};
 const TRADE={sell:900,buy:1500,cap:3};
 function witchMinionsAlive(){ return G.enemies.filter(m=>m.alive&&m.witchMinion).length; }
 function witchOrb(e){ const face=Math.cos(e.face)>=0?1:-1; return {x:e.x+face*42,y:e.y+e.r*.9-110}; }
@@ -4721,7 +4721,7 @@ AI.witch=function(e,p,dt){ const a=e.ai, d=dist(e,p), ph=a.phase2?1:0; a.t-=dt; 
   /* the constant bolt: 0.4 s of charge at the orb, then a shot at where the ninja stands */
   if(p.alive&&!safe&&d<1100&&a.state!=='raise'){ a.boltT=(a.boltT===undefined?.8:a.boltT)-dt; if(!(a.chg>0)&&a.boltT<=0){ a.chg=WITCH.charge; } if(a.chg>0){ a.chg-=dt; if(a.chg<=0){ a.chg=0; witchBolt(e,p); a.boltT=WITCH.boltRate[ph]; } } } else a.chg=0;
   if(a.state==='chase'){ if(b2Home(e,p,dt)) return; faceTo(e,p);
-    if(safe||d>1000){ e.vx*=.9; e.vy*=.9; } else if(d>380){ moveToward(e,p.x,p.y,dt,1.05); } else {   /* never backs away: closes in when far, otherwise drifts sideways and keeps shooting */ a.strafe=a.strafe||1; if(a.t<=0){ a.strafe=-a.strafe; a.t=rnd(1.2,2.4); } const an=Math.atan2(p.y-e.y,p.x-e.x)+a.strafe*Math.PI/2; moveToward(e,e.x+Math.cos(an)*60,e.y+Math.sin(an)*60,dt,.55); }   /* an artillery piece: keeps its distance, drifts sideways */
+    if(safe||d>1000){ e.vx*=.9; e.vy*=.9; } else if(d>380){ moveToward(e,p.x,p.y,dt,1.05); } else {   /* never backs away: closes in when far, otherwise drifts sideways and keeps shooting */ a.strafe=a.strafe||1; if(a.t<=0){ a.strafe=-a.strafe; a.t=rnd(1.2,2.4); } const an=Math.atan2(p.y-e.y,p.x-e.x)+a.strafe*Math.PI/2; moveToward(e,e.x+Math.cos(an)*80,e.y+Math.sin(an)*80,dt,.75); }   /* an artillery piece: keeps its distance, drifts sideways */
     if(p.alive&&!safe&&d<900){ if(a.raiseCd<=0&&witchMinionsAlive()<2&&(a.raises||0)<WITCH.raiseMax){ a.raises=(a.raises||0)+1; a.state='raise'; a.st=0; e.vx=e.vy=0; a.tele=null; telegraph(e,{s:'circ',r:WITCH.raiseR},WITCH.raiseTele); a.raiseDone=false; }
       else if(e.abCd<=0&&d<760){ a.state='waves'; a.st=0; e.vx=e.vy=0; a.n=WITCH.waves[ph]; a.slam=false; telegraph(e,{s:'circ',r:100},.9); floatText(e.x,e.y-120,'DARK WAVES','#8fe89a'); } } }
   else if(a.state==='waves'){ e.vx=e.vy=0; faceTo(e,p); const T=a.st; if(!a.slam&&T>=1.23){ a.slam=true; a.tele=null; shake(12); vibrate(120); noise(.22,.3); tone(60,.35,'sine',.35,-30); const gx=e.x+(Math.cos(e.face)>=0?1:-1)*42, gy=e.y+e.r*.9; burst(gx,gy,['#3fae52','#8fe89a','#0e3a1c'],28,240,.7,4,-20,true); const dmg=tierDmg(e,'heavy'); for(let i=0;i<a.n;i++) proj({type:'ring',poison:true,x:gx,y:gy,r:WITCH.waveR0,life:12,spd:WITCH.waveSpd,max:WITCH.waveMax,delay:i*WITCH.waveGap,owner:e,dmg,hit:[]}); }
