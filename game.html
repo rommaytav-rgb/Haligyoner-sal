@@ -2335,7 +2335,7 @@ Object.assign(tileFns,m2Tiles); Object.assign(EDGE,M2EDGE);
 /* =====================================================================
    ENTITIES + COMBAT — player, attacks, abilities, projectiles, particles
    ===================================================================== */
-const G={state:'MENU',time:0,hitstop:0,player:null,enemies:[],projs:[],parts:[],floats:[],coins:[],spawners:[],chests:[],chis:[],gems:[],groundFx:[],kills:0,boss:null,bossPlan:null,banner:null,announce:null,shake:0,fps:0,frames:0,fpsT:0,map:null,mapT:0,swampT:0,fullMap:false,arrowTarget:null,hintT:0,npcCd:0,charsFrom:'MENU',camZoom:1,levelFx:null,slowmo:0,hudGold:0,plv:1,bossRollT:0,lastBossDeath:-999,bossMark:null};
+const G={worst:0,hitch:0,worstShown:0,hitchShown:0,state:'MENU',time:0,hitstop:0,player:null,enemies:[],projs:[],parts:[],floats:[],coins:[],spawners:[],chests:[],chis:[],gems:[],groundFx:[],kills:0,boss:null,bossPlan:null,banner:null,announce:null,shake:0,fps:0,frames:0,fpsT:0,map:null,mapT:0,swampT:0,fullMap:false,arrowTarget:null,hintT:0,npcCd:0,charsFrom:'MENU',camZoom:1,levelFx:null,slowmo:0,hudGold:0,plv:1,bossRollT:0,lastBossDeath:-999,bossMark:null};
 const CAM={x:0,y:0,sx:0,sy:0};
 function shake(v){ if(SAVE.settings.shake) G.shake=Math.max(G.shake,v); }
 function hitstop(ms){ G.hitstop=Math.max(G.hitstop,ms/1000); }
@@ -5569,7 +5569,7 @@ function drawHUD(c,p){
   // banner / announce
   if(G.banner){ const b=G.banner, k=b.t>2?1-(b.t-2)/.4:b.t<.4?b.t/.4:1; c.save(); c.translate(SW/2,SH*.3); c.scale(1+(1-k)*.4,1+(1-k)*.4); c.globalAlpha=clamp(k,0,1); c.font='900 42px Arial'; c.textAlign='center'; c.lineWidth=8; c.strokeStyle='rgba(0,0,0,.7)'; c.strokeText(b.text,0,0); c.fillStyle='#fde68a'; c.fillText(b.text,0,0); if(b.sub){ c.font='900 16px Arial'; c.strokeText(b.sub,0,26); c.fillStyle='#fca5a5'; c.fillText(b.sub,0,26); } c.restore(); }
   if(G.announce){ c.font='900 22px Arial'; c.textAlign='center'; c.lineWidth=6; c.strokeStyle='rgba(0,0,0,.7)'; c.strokeText(G.announce.text,SW/2,SH*.3); c.fillStyle='#fecaca'; c.fillText(G.announce.text,SW/2,SH*.3); }
-  if(SAVE.settings.fps&&!DEBUG.hitbox){ c.font='700 12px monospace'; c.textAlign='left'; c.fillStyle='#4ade80'; c.fillText('FPS '+G.fps,12,SH-12); }
+  if(SAVE.settings.fps&&!DEBUG.hitbox){ c.font='700 12px monospace'; c.textAlign='left'; c.fillStyle=G.hitchShown?'#fca5a5':'#4ade80'; c.fillText('FPS '+G.fps+'   worst '+G.worstShown+'ms   hitches '+G.hitchShown,12,SH-12); }
   if(DEBUG.hitbox){ c.font='700 12px monospace'; c.textAlign='left'; c.fillStyle='#4ade80'; c.fillText('FPS '+G.fps+'  enemies '+G.enemies.filter(e=>e.alive).length+'  parts '+G.parts.filter(a=>a.alive).length,12,SH-12); }
 }
 function stickUI(c,s,x,y,R,col){ c.save(); c.globalAlpha=s?.55:.28; c.fillStyle='rgba(0,0,0,.35)'; c.beginPath(); c.arc(x,y,R,0,TAU); c.fill(); c.strokeStyle='rgba(255,255,255,.7)'; c.lineWidth=2; c.stroke(); const kx=x+(s?s.dx*R:0), ky=y+(s?s.dy*R:0); c.globalAlpha=s?.9:.45; c.fillStyle=col||'rgba(255,255,255,.85)'; c.beginPath(); c.arc(kx,ky,R*.42,0,TAU); c.fill(); c.restore(); }
@@ -6034,7 +6034,7 @@ function camUpdate(dt,p){
 const STEP=1/60; let last=0, acc=0;
 function update(dt){ G.time+=dt; SAVE.playTime=(SAVE.playTime||0)+dt; const p=G.player; playerUpdate(p,dt); if(NET.host){ netHostUpdate(dt); if(!p.alive){ p.respawnT=(p.respawnT||4)-dt; if(p.respawnT<=0) respawn(); } } for(const q of G.projs) if(q.alive) projUpdate(q,dt,netTarget(q,p)); worldUpdate(dt); fxUpdate(dt); gemsUpdate(dt); gemTrailUpdate(p,dt); camUpdate(dt,p); }
 function frame(now){
-  requestAnimationFrame(frame); const raw=Math.min(.1,(now-last)/1000)||0; last=now; G.frames++; G.fpsT+=raw; if(G.fpsT>=1){ G.fps=G.frames; G.frames=0; G.fpsT-=1; }
+  requestAnimationFrame(frame); const raw=Math.min(.1,(now-last)/1000)||0; const rawMs=now-last; last=now; G.frames++; G.fpsT+=raw; if(rawMs>G.worst) G.worst=rawMs; if(rawMs>33) G.hitch++; if(G.fpsT>=1){ G.fps=G.frames; G.frames=0; G.fpsT-=1; G.worstShown=Math.round(G.worst); G.hitchShown=G.hitch; G.worst=0; G.hitch=0; }   /* a stutter is a single long frame: the average hides it, so show the worst one too */
   if(G.state==='PLAYING'&&NET.guest&&NET.on){ netGuestFrame(raw); musicTick(raw); if(G.hintT>0){ G.hintT-=raw; if(G.hintT<=0) $('hint').style.display='none'; } }
   else if(G.state==='PLAYING'){ pollInput(); let ts=1; if(G.hitstop>0){ G.hitstop-=raw; ts=.06; } if(G.slowmo>0){ G.slowmo-=raw; ts=Math.min(ts,.5); }   // key drop: brief slow motion
     if(G.levelFx){ const f=G.levelFx; f.t+=raw; $('hint').style.visibility='hidden'; if(f.t>=f.dur) $('hint').style.visibility=''; if(!f.short){ ts=f.t<.3?.15:f.t<f.dur-.4?0:Math.min(ts,(f.t-(f.dur-.4))/.4); } if(f.t>=f.dur) G.levelFx=null; }   // level-up: freeze frame, pause, fade back in (shortened during a boss fight)
