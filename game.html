@@ -226,7 +226,6 @@
   .ti{width:12px;height:12px;vertical-align:-2px;display:inline-block} .coinic{width:12px;height:12px;image-rendering:pixelated;vertical-align:-1px} .chiorb{display:inline-block;width:11px;height:11px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#fff,#7fd8f8 40%,#0ea5e9 75%);box-shadow:0 0 6px #38bdf8;vertical-align:-1px}
   .rwic{width:calc(22px*var(--u));height:calc(22px*var(--u));min-width:14px;min-height:14px;image-rendering:pixelated;vertical-align:middle}
   .roomcode{font-family:monospace;font-weight:900;font-size:max(24px,calc(44px*var(--u)));letter-spacing:.3em;color:var(--gold);text-shadow:0 3px 0 #000;margin:2px 0}
-  #coopMaps{display:flex;flex-direction:column;gap:calc(6px*var(--u))} #coopMaps .btn{width:100%}
   .msg{background:linear-gradient(180deg,#5a1818,#2a0c0c);border:2px solid #ff5c5c;padding:8px 14px;border-radius:12px;font-size:max(10px,calc(12px*var(--u)));font-weight:800;color:#ffd8d2;display:none;text-align:center}
   /* ===== settings toggles ===== */
   .tog{display:flex;justify-content:space-between;align-items:center;min-height:calc(44px*var(--u));padding:calc(4px*var(--u)) calc(12px*var(--u));border-radius:calc(12px*var(--u));background:linear-gradient(180deg,#1a2144,#121736);border:1px solid #2c3560;border-bottom-color:#0f1430;font-size:max(10.5px,calc(13px*var(--u)));font-weight:800;color:var(--text)}
@@ -236,8 +235,36 @@
   .sw:after{content:'';position:absolute;top:2px;left:2px;width:calc(100% * .46);aspect-ratio:1;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 2px 3px rgba(0,0,0,.4)}
   .sw.on:after{left:calc(100% - 100% * .46 - 2px)}
   #dbg{display:none;flex-wrap:wrap;justify-content:center;gap:6px} .ver{color:#4b5275;font-size:max(9px,calc(10px*var(--u)));text-align:center;cursor:pointer;font-weight:800;letter-spacing:.1em}
-  /* ===== loading ===== */
-  #splash{z-index:60;transition:opacity .6s ease;background:#05070f}#splash.out{opacity:0;pointer-events:none}
+  /* ===== full-screen grids: maps, boss stages, co-op ===== */
+  .mgrid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:calc(14px*var(--u));align-items:stretch}
+  .mcard{display:flex;flex-direction:column;min-height:0;overflow:hidden;cursor:pointer;transition:transform .08s,filter .15s;border-color:#3ddc84}
+  .mcard:active{transform:translateY(3px)} .mcard:hover{filter:brightness(1.06)}
+  .mcard .thumb{width:100%;height:50%;min-height:0;object-fit:cover;image-rendering:auto;display:block;border-bottom:2px solid var(--line);background:#120f22}
+  .mcard .locked-thumb{display:grid;place-items:center;color:#5a67a8;font-weight:900;letter-spacing:.16em;font-size:max(11px,calc(14px*var(--u)))}
+  .mcard .mb{padding:calc(8px*var(--u)) calc(12px*var(--u));display:flex;flex-direction:column;gap:calc(3px*var(--u));min-height:0;flex:1}
+  .mcard .mn{font-size:max(12px,calc(16px*var(--u)));font-weight:900;letter-spacing:.06em} .mcard .ml{color:var(--label)}
+  .mcard .md{font-size:max(9.5px,calc(11px*var(--u)));font-weight:600;color:var(--text);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical} .mcard .mbz{font-size:max(9.5px,calc(11px*var(--u)));font-weight:800;color:var(--gold);margin-top:auto;padding-top:4px}
+  .mcard .btn{margin:0 calc(12px*var(--u)) calc(10px*var(--u));flex:none}
+  .mcard.locked{border-color:#3a4574;filter:saturate(.4);cursor:default} .mcard.locked:active{transform:none}
+  .bgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:calc(12px*var(--u));align-content:center;flex:1;min-height:0;padding-bottom:4px}
+  .bcard{display:flex;flex-direction:column;align-items:center;text-align:center;gap:calc(4px*var(--u));padding:calc(8px*var(--u)) calc(10px*var(--u)) calc(10px*var(--u));border-color:#7a2a2a;cursor:pointer;transition:transform .08s,filter .15s;position:relative;overflow:hidden}
+  .bcard:active{transform:translateY(3px)} .bcard:hover{filter:brightness(1.06)}
+  .bcard canvas{width:calc(72px*var(--u));height:calc(72px*var(--u));min-width:44px;min-height:44px;image-rendering:pixelated;filter:drop-shadow(0 4px 6px rgba(0,0,0,.6))}
+  .bcard .bs{font-size:max(8.5px,calc(9.5px*var(--u)));font-weight:800;letter-spacing:.16em;color:#ff9a8c;text-transform:uppercase}
+  .bcard .bn{font-size:max(11px,calc(13.5px*var(--u)));font-weight:900;letter-spacing:.04em;line-height:1.1} .bcard .bd2{font-size:max(9px,calc(10.5px*var(--u)));font-weight:700;color:var(--text);line-height:1.35} .bcard .bd2 b{color:var(--gold)}
+  .bcard .btn{margin-top:auto;width:100%} .bcard.locked{filter:grayscale(.6);opacity:.55;cursor:default} .bcard.locked:active{transform:none} .bcard.soon{border-style:dashed;border-color:#3a4574;opacity:.6;cursor:default}
+  .bcard .ok{position:absolute;top:calc(6px*var(--u));right:calc(8px*var(--u));font-size:max(8px,calc(9.5px*var(--u)));font-weight:900;letter-spacing:.1em;color:#04321a;background:linear-gradient(180deg,#8dfab5,#3ddc84);border-radius:99px;padding:2px 7px}
+  .cgrid2{display:flex;flex-direction:column;gap:calc(12px*var(--u));min-height:0}
+  #coopPick .mode{flex:1;min-height:calc(110px*var(--u))}
+  /* ===== loading: the same living background, the ninja parade on its glow ring ===== */
+  #splash{z-index:60;transition:opacity .6s ease;background:transparent}
+  #splash .center{gap:calc(6px*var(--u))}
+  .orbrow{display:flex;gap:calc(12px*var(--u));margin-bottom:calc(4px*var(--u))}
+  .orb{width:calc(18px*var(--u));height:calc(18px*var(--u));min-width:11px;min-height:11px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff 0,var(--c) 30%,color-mix(in srgb,var(--c) 40%,#000) 100%);box-shadow:0 0 14px var(--c);animation:bob 2.4s ease-in-out infinite}
+  .orb:nth-child(2){animation-delay:.3s}.orb:nth-child(3){animation-delay:.6s}.orb:nth-child(4){animation-delay:.9s}.orb:nth-child(5){animation-delay:1.2s}.orb:nth-child(6){animation-delay:1.5s}
+  @keyframes bob{50%{transform:translateY(-5px)}}
+  .logo.big b{animation:tglow 3s ease-in-out infinite} @keyframes tglow{50%{filter:drop-shadow(0 3px 0 #6b4200) drop-shadow(0 0 26px rgba(255,210,74,.7))}}
+  .tap{font-size:max(9.5px,calc(11px*var(--u)));font-weight:800;letter-spacing:.2em;color:var(--label);text-transform:uppercase}#splash.out{opacity:0;pointer-events:none}
   #splashNinja{image-rendering:pixelated;filter:drop-shadow(0 6px 0 rgba(0,0,0,.45));height:calc(190px*var(--u));width:auto;position:relative;z-index:1}
   .lbar{width:min(74vw,calc(480px*var(--u)))}
   .ltxt{font-weight:900;letter-spacing:.2em;font-size:max(9.5px,calc(11px*var(--u)));color:#7dd3fc;min-height:1.4em;text-transform:uppercase}.ltxt.blink{color:#ffd24a;animation:blink 1s steps(2) infinite}
@@ -264,7 +291,8 @@
 <!-- ================= LOADING ================= -->
 <div id="splash" class="ov on">
   <div class="center">
-    <div class="logo big"><b>ELEMENTAL NINJAS</b></div>
+    <div class="orbrow"><i class="orb" style="--c:#a855f7"></i><i class="orb" style="--c:#7dd3fc"></i><i class="orb" style="--c:#fb923c"></i><i class="orb" style="--c:#22d3ee"></i><i class="orb" style="--c:#d9a34a"></i><i class="orb" style="--c:#facc15"></i></div>
+    <div class="logo big"><b>ELEMENTAL NINJAS</b></div><div class="t-label" style="letter-spacing:.3em">Open-world pixel action</div>
     <div style="position:relative;display:grid;place-items:center;margin-top:calc(6px*var(--u))"><div class="ring" style="--g:#7dd3fc;bottom:calc(-8px*var(--u))"></div><canvas id="splashNinja" width="240" height="120"></canvas></div>
     <div class="bar thick lbar"><i id="splashBar" style="width:0"></i></div>
     <div class="ltxt" id="splashTxt">LOADING…</div>
@@ -328,10 +356,10 @@
 </div>
 
 <!-- ================= MAP SELECT ================= -->
-<div id="ovMaps" class="ov"><div class="center"><div class="panel"><div class="ph"><div class="t-title">CHOOSE A MAP</div><div class="x" id="bMapBack">✕</div></div><div class="pb"><div class="list" id="mapList"></div><div class="msg" id="mapMsg"></div></div></div></div></div>
+<div id="ovMaps" class="ov"><div class="top"><div><div class="t-title">CHOOSE A MAP</div><div class="t-label" style="margin-top:2px">Where do you fight today?</div></div><div class="x" id="bMapBack">✕</div></div><div class="mgrid" id="mapList"></div><div class="msg" id="mapMsg"></div></div>
 
 <!-- ================= BOSS FIGHT ================= -->
-<div id="ovBossList" class="ov"><div class="center"><div class="panel"><div class="ph"><div><div class="t-title" style="color:#ff9a8c">BOSS FIGHT</div><div class="t-label" style="margin-top:3px;letter-spacing:.1em">One attempt per run · rewards on a kill only · kills here do not count toward character quests</div></div><div class="x" id="bBossBack">✕</div></div><div class="pb"><div class="list" id="bfList"></div></div></div></div></div>
+<div id="ovBossList" class="ov"><div class="top"><div><div class="t-title" style="color:#ff9a8c">BOSS FIGHT</div><div class="t-label" style="margin-top:2px">One attempt per run · rewards on a kill only · kills here do not count toward character quests</div></div><div class="x" id="bBossBack">✕</div></div><div class="bgrid scroll" id="bfList"></div></div>
 <div id="ovBossPre" class="ov"><div class="center"><div class="panel">
   <div class="ph"><div class="grow"><div class="t-title" id="bfPreTitle">STAGE</div><div class="t-label" id="bfPreSub" style="margin-top:3px;letter-spacing:.1em"></div></div><div class="x" id="bBossPreBack">✕</div></div>
   <div class="pb" style="flex-direction:row;gap:calc(18px*var(--u));align-items:stretch">
@@ -381,12 +409,13 @@
 <div id="ovTrade" class="ov"><div class="center"><div class="panel w"><div class="ph"><div class="t-title" style="color:var(--gold)">THE TRADER</div><div class="t-h" id="tradeBal" style="margin-left:auto;white-space:nowrap"></div><div class="x" id="bTradeBack">✕</div></div><div class="pb"><div class="shopkeep">"Chi for gold, gold for Chi. The spread is my cut, ninja — three trades each way a day."</div><div class="eqlist" id="tradeList"></div></div></div></div></div>
 <div id="ovEquip" class="ov"><div class="center"><div class="panel w"><div class="ph"><div class="t-title" style="color:#9fdcff" id="equipTitle">EQUIPMENT</div><div class="x" id="bEquipBack">✕</div></div><div class="pb"><div class="dnote">One slot per ninja. Once worn, an item is locked on that ninja until a different item replaces it. Each ninja needs its own copy.</div><div class="eqlist" id="equipList"></div></div></div></div></div>
 <div id="ovGems" class="ov"><div class="center"><div class="panel w"><div class="ph"><div class="t-title" style="color:#d4b4ff" id="gemTitle">GEMS</div><div class="x" id="bGemsBack">✕</div></div><div class="pb"><div class="dnote" id="gemNote"></div><div class="eqlist" id="gemList"></div></div></div></div></div>
-<div id="ovCoop" class="ov"><div class="center"><div class="panel w"><div class="ph"><div class="t-title" style="color:#9fdcff">CO-OP</div><div class="x" id="bCoopBack">✕</div></div>
-  <div class="pb"><div class="dnote" id="coopStatus"></div>
-    <div class="rowbtns" id="coopPick"><div class="btn green" id="bCoopCreate">CREATE ROOM<span class="sh"><i></i></span></div><div class="btn blue" id="bCoopJoinOpen">JOIN ROOM</div></div>
-    <div id="coopCodeBox" style="display:none;text-align:center"><div class="t-label">Room code</div><div class="roomcode" id="coopCode"></div><div class="dnote">Tell your friend this code. Both phones need internet.</div></div>
-    <div id="coopJoinBox" style="display:none;text-align:center"><input class="nin" id="coopCodeIn" maxlength="5" autocomplete="off" spellcheck="false" placeholder="ROOM CODE" style="max-width:260px;text-transform:uppercase"><div class="rowbtns" style="margin-top:8px"><div class="btn green" id="bCoopJoin">JOIN<span class="sh"><i></i></span></div></div></div>
-    <div id="coopMaps"></div></div></div></div></div>
+<div id="ovCoop" class="ov"><div class="top"><div><div class="t-title" style="color:#9fdcff">CO-OP</div><div class="t-label" style="margin-top:2px" id="coopStatus"></div></div><div class="x" id="bCoopBack">✕</div></div>
+  <div class="cgrid2 fill">
+    <div class="rowbtns fill" id="coopPick" style="align-items:stretch"><div class="mode m-coop" id="bCoopCreate"><div class="glow"></div><canvas class="mic" data-ic="coop"></canvas><div class="grow"><div class="mt">CREATE ROOM</div><div class="ms">get a code, send it to a friend</div></div></div><div class="mode m-daily" id="bCoopJoinOpen" style="background:linear-gradient(180deg,#1b4a33,#0e2a1c);border-color:#3ddc84;border-bottom-color:#12703c"><div class="glow" style="background:radial-gradient(circle,rgba(61,220,132,.35),transparent 65%)"></div><canvas class="mic" data-ic="star"></canvas><div class="grow"><div class="mt">JOIN ROOM</div><div class="ms">enter a friend's code</div></div></div></div>
+    <div class="card fill" id="coopCodeBox" style="display:none"><div class="hd"><span class="t-label">Room code</span></div><div class="bd center"><div class="roomcode" id="coopCode"></div><div class="dnote">Tell your friend this code. Both phones need internet.</div></div></div>
+    <div class="card fill" id="coopJoinBox" style="display:none"><div class="hd"><span class="t-label">Join a room</span></div><div class="bd center"><input class="nin" id="coopCodeIn" maxlength="5" autocomplete="off" spellcheck="false" placeholder="ROOM CODE" style="max-width:320px;text-transform:uppercase"><div class="btn green" id="bCoopJoin">JOIN<span class="sh"><i></i></span></div></div></div>
+    <div class="mgrid" id="coopMaps"></div>
+  </div></div>
 <div id="gemFlash"></div><div id="toast"></div>
 <div id="gemPanel"><canvas id="gemPanelCv" width="120" height="120"></canvas><div id="gemPanelRar"></div><div id="gemPanelTxt"></div><div id="gemPanelSub"></div></div>
 <script>
@@ -1676,7 +1705,7 @@ function netOnMsg(m){ if(!m||!m.t) return;
   else if(m.t==='ev'&&NET.guest){ for(const e of m.list) netApplyEv(e); }
   else if(m.t==='leave'){ netEnd(NET.host?'Your friend left':'The host ended the session'); } }
 function netMapAllowed(def){ const both=Math.min(playerLevel(),NET.peerPlv||1); return !def.locked&&(def.plv||1)<=both; }
-function netBuildMaps(){ const el=$('coopMaps'); if(!el) return; el.innerHTML=''; for(const m of MAPS){ if(m.locked) continue; const ok=netMapAllowed(m); const d=document.createElement('div'); d.className='btn sm '+(ok?'primary':'dis'); d.textContent=m.name+(ok?'':' · needs player level '+m.plv+' for both'); if(ok) d.onclick=()=>{ netSend({t:'map',id:m.id}); netStatus('Starting '+m.name+'…'); }; el.appendChild(d); } }
+function netBuildMaps(){ const el=$('coopMaps'); if(!el) return; el.innerHTML=''; for(const m of MAPS){ if(m.locked) continue; const ok=netMapAllowed(m); const d=document.createElement('div'); d.className='card mcard'+(ok?'':' locked'); d.innerHTML=`<div class="mb"><div class="mn">${m.name}</div><div class="md">${m.desc}</div><div class="mbz">${ok?'Open to both of you':'Needs player level '+m.plv+' for both'}</div></div><div class="btn ${ok?'green':'grey dis'}">${ok?'PLAY TOGETHER':'LOCKED'}</div>`; if(ok) d.onclick=()=>{ netSend({t:'map',id:m.id}); netStatus('Starting '+m.name+'…'); }; el.appendChild(d); } }
 /* ---- the host ---- */
 function netHostStart(def){ enterMap(def); netMakeP2(); setState('PLAYING'); netSend({t:'start',id:def.id}); }
 function netMakeP2(){ const n=NET.peerNinja||{name:'SHADE',lv:1}; const p=makePlayer(CH[n.name]?n.name:'SHADE'); p.net=true; p.lv=n.lv||1; if(n.hp) p.maxHp=p.hp=n.hp; if(n.dmg) p.dmg=n.dmg; p.coat=!!n.coat; p.label=NET.peerName; p.x=WORLD.playerSpawn.x+40; p.y=WORLD.playerSpawn.y+10; G.p2=p; return p; }
@@ -6337,7 +6366,7 @@ function splashSpin(c,t,cx,by){ t=Math.max(0,t); const n=Math.floor(t/SP_T), k=t
     requestAnimationFrame(step); };
   requestAnimationFrame(step);
   const start=()=>{ if(SPLASH.started||!SPLASH.on) return; audioUnlock(); SPLASH.started=true; SPLASH.startAt=performance.now(); txt.classList.remove('blink'); SFX.ui(); };
-  const go=()=>{ if(!SPLASH.on) return; SPLASH.on=false; el.classList.add('out'); SFX.levelup(); setTimeout(()=>{ el.classList.remove('on'); if(!nameValid(playerName())){ G.nameFrom='MENU'; setState('NAME'); } },650); };
+  const go=()=>{ if(!SPLASH.on) return; SPLASH.on=false; el.classList.add('out'); SFX.levelup(); setTimeout(()=>{ el.classList.remove('on'); if(OVS[G.state]) $(OVS[G.state]).classList.add('on'); if(G.state==='MENU') $('profCard').classList.add('on'); if(!nameValid(playerName())){ G.nameFrom='MENU'; setState('NAME'); } },650); };
   for(const ev of ['touchend','click','pointerup']) el.addEventListener(ev,start); addEventListener('keydown',e=>{ if(SPLASH.on) start(); });
 })();
 
@@ -6448,21 +6477,21 @@ function buildCharsScreen(n,anim){ const ch=CH[n], lv=SAVE.levels[n]||1, gh=gemM
   const uk=$('bUnlockNow'); if(uk) uk.onclick=()=>{ const tile=strip.querySelector(`[data-name="${n}"]`); unlockNinja(n,tile||po); };
   uiPaintIcons(UIK.t,true);
   if(anim){ po.classList.add('upgrade-anim'); sparkle(po,()=>'#fde047',18); const l=document.createElement('div'); l.className='lvup'; l.textContent='POWER '+lv+'!'; po.appendChild(l); setTimeout(()=>{ po.classList.remove('upgrade-anim'); l.remove(); },1200); } }
-/* ---------- maps ---------- */
+/* ---------- maps: three big cards across the screen ---------- */
 function buildMapList(){ const el=$('mapList'); el.innerHTML=''; $('mapMsg').style.display='none';
   for(const m of MAPS){ if(m.plv&&playerLevel()>=m.plv) SAVE.maps[m.id]=true; const locked=m.locked||!SAVE.maps[m.id];
     if(!locked&&!MINIS[m.id]){ const gm=G.map, oa=G.w3area; G.map=m; if(m.id==='underworld') G.w3area='under'; buildWorld(7); MINIS[m.id]=WORLD.mini; G.map=gm; G.w3area=oa; }
-    const d=document.createElement('div'); d.className='brow '+(locked?'locked':'open');
-    if(locked) d.innerHTML=`<div class="thumb" style="width:calc(96px*var(--u));aspect-ratio:16/10;display:grid;place-items:center;color:#5a67a8;font-weight:900;letter-spacing:.14em;font-size:max(9px,calc(11px*var(--u)))">LOCKED</div><div class="grow"><div class="bt1">${m.name}</div><div class="bt2">${m.desc}<br>Bosses: <b>${m.bosses}</b> · ${m.locked?'Coming soon':'Opens at player level '+m.plv+' (you are '+playerLevel()+')'}</div></div><div class="stamp">LV ${m.plv||16}</div>`;
-    else { const mini=MINIS[m.id]; const cv2=document.createElement('canvas'); cv2.width=mini.width; cv2.height=mini.height; cv2.getContext('2d').drawImage(mini,0,0); cv2.className='thumb'; d.appendChild(cv2); d.insertAdjacentHTML('beforeend',`<div class="grow"><div class="bt1">${m.name} <span class="dim" style="font-size:.8em">· LEVELS ${m.lvl[0]}–${m.lvl[1]}</span></div><div class="bt2">${m.desc}<br>Bosses: <b>${m.bosses}</b>${m.id==='frost_ember'?' · Hidden areas <b>'+m2SecretsFound()+' / 7</b>':''}</div></div><div class="tag" style="color:#8dfab5">PLAY ›</div>`); d.onclick=()=>{ audioInit(); enterMap(m); setState('PLAYING'); }; }
+    const d=document.createElement('div'); d.className='card mcard'+(locked?' locked':'');
+    if(locked) d.innerHTML=`<div class="thumb locked-thumb">LOCKED</div><div class="mb"><div class="mn">${m.name} <span class="ml">· LV ${m.plv||16}</span></div><div class="md">${m.desc}</div><div class="mbz">${m.locked?'Coming soon':'Opens at player level '+m.plv+' · you are '+playerLevel()}</div></div><div class="btn grey dis">LOCKED</div>`;
+    else { const mini=MINIS[m.id]; const cv2=document.createElement('canvas'); cv2.width=mini.width; cv2.height=mini.height; cv2.getContext('2d').drawImage(mini,0,0); cv2.className='thumb'; d.appendChild(cv2); d.insertAdjacentHTML('beforeend',`<div class="mb"><div class="mn">${m.name} <span class="ml">· LEVELS ${m.lvl[0]}–${m.lvl[1]}</span></div><div class="md">${m.desc}</div><div class="mbz">Bosses: ${m.bosses}${m.id==='frost_ember'?' · Hidden areas '+m2SecretsFound()+' / 7':''}</div></div><div class="btn green">PLAY<span class="sh"><i></i></span></div>`); d.onclick=()=>{ audioInit(); enterMap(m); setState('PLAYING'); }; }
     el.appendChild(d); } }
 /* ---------- boss fight: list, pre-fight, victory, defeat ---------- */
 function buildBossList(){ const el=$('bfList'); el.innerHTML='';
   for(const st of BF_STAGES){ const prev=BF_STAGES[st.n-2], locked=!!prev&&!SAVE.bossFightCleared[prev.id], cleared=!!SAVE.bossFightCleared[st.id], best=SAVE.bossFightBestTime[st.id], tries=SAVE.bossFightAttempts[st.id]||0;
-    const d=document.createElement('div'); d.className='brow red'+(locked?' locked':''); d.appendChild(bossPortrait(st,96));
-    d.insertAdjacentHTML('beforeend',`<div class="grow"><div class="bt1">STAGE ${st.n} — ${EN[st.boss].name}${cleared?' <span class="ok">✔ CLEARED</span>':''}</div><div class="bt2">${st.name} · recommended LV ${st.lvl}${locked?' · clear stage '+(st.n-1)+' first':''}<br>${best?'Best time <b>'+fmtT(best)+'</b>':'No clear yet'} · ${tries} attempt${tries===1?'':'s'}</div></div><div class="tag">${locked?'LOCKED':'FIGHT ›'}</div>`);
+    const d=document.createElement('div'); d.className='card bcard'+(locked?' locked':''); d.appendChild(bossPortrait(st,96));
+    d.insertAdjacentHTML('beforeend',`${cleared?'<div class="ok">CLEARED</div>':''}<div class="bs">Stage ${st.n}</div><div class="bn">${EN[st.boss].name}</div><div class="bd2">${st.name} · LV ${st.lvl}<br>${best?'Best <b>'+fmtT(best)+'</b>':'No clear yet'} · ${tries} attempt${tries===1?'':'s'}</div><div class="btn ${locked?'grey dis':'red'} sm">${locked?'CLEAR STAGE '+(st.n-1):'FIGHT'}</div>`);
     if(!locked) d.onclick=()=>openBossPre(st); el.appendChild(d); }
-  el.insertAdjacentHTML('beforeend','<div class="brow soon"><div class="grow"><div class="bt1">COMING SOON</div><div class="bt2">More bosses will join the pit</div></div></div>'); }
+  el.insertAdjacentHTML('beforeend','<div class="card bcard soon"><div class="bs">Next</div><div class="bn">COMING SOON</div><div class="bd2">More bosses will join the pit</div></div>'); }
 function openBossPre(st){ BF_SEL=st; const n=SAVE.selected, lv=SAVE.levels[n]; const po=$('bfPrePortrait'); po.querySelectorAll('canvas').forEach(c=>c.remove()); const pc=bossPortrait(st,150); pc.style.cssText='width:100%;height:auto;image-rendering:pixelated;position:relative;z-index:1;filter:drop-shadow(0 10px 14px rgba(0,0,0,.6))'; po.appendChild(pc);
   $('bfPreTitle').textContent='STAGE '+st.n+' — '+EN[st.boss].name; $('bfPreSub').textContent=st.name+' · recommended LV '+st.lvl+' · your '+n+' is LV '+lv;
   const first=!SAVE.bossFightFirstClearClaimed[st.id], row=(ic,lab,v,cls)=>`<div class="row ${cls||''}">${icoHtml(ic)}${lab}<span class="v">${v}</span></div>`;
@@ -6481,7 +6510,7 @@ $('bSwitch').onclick=()=>{ if(!G.map||!G.player) return; setState('PLAYING'); op
 document.addEventListener('pointerdown',e=>{ const b=e.target.closest('.btn,.mode,.tile,.brow,.x,.back'); if(!b) return; b.classList.add('press'); const up=()=>{ b.classList.remove('press'); removeEventListener('pointerup',up); removeEventListener('pointercancel',up); }; addEventListener('pointerup',up); addEventListener('pointercancel',up); },{passive:true});
 uiPaintIcons(0,true);
 
-audioInit(); setState('MENU'); requestAnimationFrame(frame);
+audioInit(); setState('MENU'); $('ovMenu').classList.remove('on'); $('profCard').classList.remove('on'); requestAnimationFrame(frame);   /* the loading screen shows only the living background; the menu appears when it fades */
 </script>
 </body>
 </html>
