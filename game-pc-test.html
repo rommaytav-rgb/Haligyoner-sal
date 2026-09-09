@@ -42,7 +42,7 @@
   .pill{display:flex;align-items:center;gap:calc(7px*var(--u));height:calc(38px*var(--u));min-height:26px;padding:0 calc(12px*var(--u)) 0 calc(5px*var(--u));border-radius:999px;background:linear-gradient(180deg,#2a3358,#182042);border:2px solid #3f4c80;border-bottom-color:#161c38;box-shadow:0 3px 0 #0d1228,0 8px 16px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.12);white-space:nowrap}
   .pill canvas,.ico{display:block;image-rendering:pixelated;width:calc(26px*var(--u));height:calc(26px*var(--u));min-width:16px;min-height:16px}
   .pill .plus{width:calc(20px*var(--u));height:calc(20px*var(--u));min-width:14px;min-height:14px;border-radius:50%;background:linear-gradient(180deg,#6ff0a0,#25b566);color:#06301a;display:grid;place-items:center;font-weight:900;font-size:max(10px,calc(14px*var(--u)));box-shadow:0 2px 0 #12703c;cursor:pointer}
-  #profCard{position:fixed;right:calc(16px*var(--u));top:calc(12px*var(--u));z-index:12;display:none;align-items:center;gap:calc(8px*var(--u));height:calc(46px*var(--u));min-height:32px;padding:0 calc(12px*var(--u)) 0 calc(4px*var(--u));border-radius:calc(14px*var(--u));background:linear-gradient(180deg,#2a3358,#182042);border:2px solid #3f4c80;border-bottom-color:#161c38;box-shadow:0 3px 0 #0d1228,0 8px 16px rgba(0,0,0,.45);cursor:pointer;color:#fff;max-width:46vw}
+  #profCard{position:relative;margin-left:auto;display:none;align-items:center;gap:calc(8px*var(--u));height:calc(46px*var(--u));min-height:32px;padding:0 calc(12px*var(--u)) 0 calc(4px*var(--u));border-radius:calc(14px*var(--u));background:linear-gradient(180deg,#2a3358,#182042);border:2px solid #3f4c80;border-bottom-color:#161c38;box-shadow:0 3px 0 #0d1228,0 8px 16px rgba(0,0,0,.45);cursor:pointer;color:#fff;max-width:46vw}
   #profCard.on{display:flex} #profCard:active{transform:translateY(2px);box-shadow:0 1px 0 #0d1228}
   .pport{width:calc(36px*var(--u));height:calc(36px*var(--u));min-width:26px;min-height:26px;border-radius:calc(10px*var(--u));background:#120f22;border:2px solid var(--c,#a855f7);box-shadow:0 0 12px color-mix(in srgb,var(--c,#a855f7) 60%,transparent);overflow:hidden;flex:none;display:flex;align-items:flex-end;justify-content:center} .pport canvas{width:100%;height:118%;margin-bottom:-12%;image-rendering:pixelated}
   .pport.big{width:calc(72px*var(--u));height:calc(72px*var(--u));border-width:3px;border-radius:16px}
@@ -246,11 +246,11 @@
   .mgrid{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:calc(14px*var(--u));align-items:stretch}
   .mcard{display:flex;flex-direction:column;min-height:0;overflow:hidden;cursor:pointer;transition:transform .08s,filter .15s;border-color:#3ddc84}
   .mcard:active{transform:translateY(3px)} .mcard:hover{filter:brightness(1.06)}
-  .mcard .thumb{width:100%;height:50%;min-height:0;object-fit:cover;image-rendering:auto;display:block;border-bottom:2px solid var(--line);background:#120f22}
+  .mcard .thumb{width:100%;flex:0 1 40%;min-height:calc(56px*var(--u));object-fit:cover;image-rendering:auto;display:block;border-bottom:2px solid var(--line);background:#120f22}
   .mcard .locked-thumb{display:grid;place-items:center;color:#5a67a8;font-weight:900;letter-spacing:.16em;font-size:max(11px,calc(14px*var(--u)))}
-  .mcard .mb{padding:calc(8px*var(--u)) calc(12px*var(--u));display:flex;flex-direction:column;gap:calc(3px*var(--u));min-height:0;flex:1}
+  .mcard .mb{padding:calc(8px*var(--u)) calc(12px*var(--u));display:flex;flex-direction:column;gap:calc(3px*var(--u));min-height:0;flex:1 0 auto}
   .mcard .mn{font-size:max(12px,calc(16px*var(--u)));font-weight:900;letter-spacing:.06em} .mcard .ml{color:var(--label)}
-  .mcard .md{font-size:max(9.5px,calc(11px*var(--u)));font-weight:600;color:var(--text);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical} .mcard .mbz{font-size:max(9.5px,calc(11px*var(--u)));font-weight:800;color:var(--gold);margin-top:auto;padding-top:4px}
+  .mcard .md{font-size:max(9.5px,calc(11px*var(--u)));font-weight:600;color:var(--text);line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;flex:none} .mcard .mbz{font-size:max(9.5px,calc(11px*var(--u)));font-weight:800;color:var(--gold);margin-top:auto;padding-top:4px}
   .mcard .btn{margin:0 calc(12px*var(--u)) calc(10px*var(--u));flex:none}
   .mcard.locked{border-color:#3a4574;filter:saturate(.4);cursor:default} .mcard.locked:active{transform:none}
   .bgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:calc(12px*var(--u));align-content:center;flex:1;min-height:0;padding-bottom:4px}
@@ -322,7 +322,6 @@
     <div class="ltxt" id="splashTxt">LOADING…</div>
   </div>
 </div>
-<div id="profCard"></div>
 
 <!-- ================= NAME ================= -->
 <div id="ovName" class="ov"><div class="center"><div class="logo"><b>ELEMENTAL NINJAS</b></div>
@@ -333,7 +332,7 @@
 
 <!-- ================= MAIN MENU ================= -->
 <div id="ovMenu" class="ov">
-  <div class="top" id="menuTop"></div>
+  <div class="top"><div id="menuTop" style="display:flex;align-items:center;gap:calc(8px*var(--u))"></div><div id="profCard"></div></div>
   <div id="menuGrid">
     <div>
       <div class="mode m-boss" id="bBoss"><div class="glow"></div><canvas class="mic" data-ic="skull"></canvas><span class="rn">ᛟ</span><div class="grow"><div class="mt">BOSS FIGHT</div><div class="ms" id="msBoss">7 stages · one attempt each</div></div></div>
@@ -6136,8 +6135,8 @@ function arenaTick(raw){ const F=G.arena; if(!F||!F.over) return; F.overT+=raw;
   if(F.over==='win'&&F.overT>3.2&&!F.claimed){ F.claimed=true; bfGrantRewards(F); showBossWin(F); } }
 function arenaFail(quiet){ const F=G.arena; if(!F||F.over) return; F.over='fail'; F.overT=0; F.bossLeft=G.boss&&G.boss.alive?Math.round(G.boss.hp/G.boss.maxHp*100):0; F.chiSpent=F.startChi-(SAVE.chi||0); save(); if(quiet){ leaveArena(); setState('BOSSLIST'); } }
 function arenaWin(e){ const F=G.arena; if(!F||F.over) return; F.over='win'; F.overT=0; G.slowmo=1.1; e.deadT=3; gemDrop(e.x,e.y,gemRoll(gemTableBoss(F.stage.n))); for(const o of G.enemies) if(o!==e&&o.alive){ o.alive=false; o.deadT=1; deathFx(o); } for(const q of G.projs) if(q.alive&&q.owner&&q.owner.kind!=='player') q.alive=false; G.groundFx=G.groundFx.filter(f=>!(f.kind==='shell'||f.kind==='strip'||f.kind==='aimshell'||f.kind==='venom')); const p=G.player; if(p){ p.drag=null; p.status={}; }   /* the moment the boss dies the fight is won: adds, shots and shells vanish */ shake(14); vibrate(300); SFX.death(); burst(e.x,e.y-20,['#fde047','#ffffff','#c8a878'],90,300,1.6,6,150,true); }
-function bfGrantRewards(F){ const st=F.stage, id=st.id, first=!SAVE.bossFightFirstClearClaimed[id]; const r={chi:1,coins:st.coins,xp:st.xp,first};
-  SAVE.chi=(SAVE.chi||0)+1; SAVE.gold+=st.coins; gainXP(st.xp); dailyEvent('bf',st.id);
+function bfGrantRewards(F){ const st=F.stage, id=st.id, first=!SAVE.bossFightFirstClearClaimed[id]; const r={chi:first?1:0,coins:st.coins,xp:st.xp,first};   /* Chi comes with the first clear only; a repeat win pays gold and XP */
+  if(first) SAVE.chi=(SAVE.chi||0)+1; SAVE.gold+=st.coins; gainXP(st.xp); dailyEvent('bf',st.id);
   if(first){ SAVE.bossFightFirstClearClaimed[id]=true; SAVE.chi+=2; SAVE.keys=Math.min(3,(SAVE.keys||0)+1); r.bonusChi=2; r.bonusKey=(SAVE.keys<=3); }
   SAVE.bossFightCleared[id]=true; const t=Math.round(F.time*10)/10; if(!SAVE.bossFightBestTime[id]||t<SAVE.bossFightBestTime[id]){ SAVE.bossFightBestTime[id]=t; r.newBest=true; } save(); F.rewards=r; }
 const fmtT=t=>{ t=Math.max(0,t||0); const m=Math.floor(t/60), s=t-m*60; return m+':'+(s<10?'0':'')+s.toFixed(1); };
@@ -6532,14 +6531,14 @@ function buildBossList(){ const el=$('bfList'); el.innerHTML='';
 function openBossPre(st){ BF_SEL=st; const n=SAVE.selected, lv=SAVE.levels[n]; const po=$('bfPrePortrait'); po.querySelectorAll('canvas').forEach(c=>c.remove()); const pc=bossPortrait(st,150); pc.style.cssText='width:100%;height:auto;image-rendering:pixelated;position:relative;z-index:1;filter:drop-shadow(0 10px 14px rgba(0,0,0,.6))'; po.appendChild(pc);
   $('bfPreTitle').textContent='STAGE '+st.n+' — '+EN[st.boss].name; $('bfPreSub').textContent=st.name+' · recommended LV '+st.lvl+' · your '+n+' is LV '+lv;
   const first=!SAVE.bossFightFirstClearClaimed[st.id], row=(ic,lab,v,cls)=>`<div class="row ${cls||''}">${icoHtml(ic)}${lab}<span class="v">${v}</span></div>`;
-  $('bfPreChi').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:calc(6px*var(--u))">${row('chi','Chi','+1')}${row('xp','XP','+'+st.xp)}${row('gold','Gold','+'+fmtN(st.coins))}</div>${first?`<div class="row hi" style="margin-top:calc(6px*var(--u))">First clear<span class="v" style="color:#d4b4ff">+2 ${icoHtml('chi')} &nbsp; +1 ${icoHtml('key')}</span></div>`:''}<div class="row" style="margin-top:calc(6px*var(--u))">You bring<span class="v">${SAVE.chi||0} ${icoHtml('chi')}</span><span class="dim" style="font-size:.85em;margin-left:8px">Chi spent in a failed attempt is gone</span></div><div class="stars" style="margin-top:calc(6px*var(--u))">${bossStarsLine(st)}</div>`;
+  $('bfPreChi').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:calc(6px*var(--u))">${first?row('chi','Chi','+1'):row('chi','Chi','<span class="dim" style="font-size:.8em">first clear only</span>')}${row('xp','XP','+'+st.xp)}${row('gold','Gold','+'+fmtN(st.coins))}</div>${first?`<div class="row hi" style="margin-top:calc(6px*var(--u))">First clear<span class="v" style="color:#d4b4ff">+2 ${icoHtml('chi')} &nbsp; +1 ${icoHtml('key')}</span></div>`:''}<div class="row" style="margin-top:calc(6px*var(--u))">You bring<span class="v">${SAVE.chi||0} ${icoHtml('chi')}</span><span class="dim" style="font-size:.85em;margin-left:8px">Chi spent in a failed attempt is gone</span></div><div class="stars" style="margin-top:calc(6px*var(--u))">${bossStarsLine(st)}</div>`;
   setState('BOSSPRE'); uiPaintIcons(UIK.t,true); }
 function showBossFail(){ const L=G.lastFail; if(!L) return setState('BOSSLIST'); $('bfFailBoss').textContent=EN[L.stage.boss].name+' · '+L.stage.name;
   const row=(lab,v,ic)=>`<div class="row">${ic?icoHtml(ic):''}${lab}<span class="v" style="color:#fff">${v}</span></div>`;
   $('bfFailStats').innerHTML=row('Boss health left',L.bossLeft+'%')+row('Time',fmtT(L.time))+(L.chiSpent>0?row('Chi spent',L.chiSpent,'chi'):'')+row('Your Chi',SAVE.chi||0,'chi'); setState('BOSSFAIL'); uiPaintIcons(UIK.t,true); }
 function showBossWin(F){ const r=F.rewards, st=F.stage; $('bfWinTime').innerHTML='TIME '+fmtT(F.time)+(r.newBest?' &nbsp;<span class="grn">NEW BEST!</span>':' &nbsp;<span class="dim">best '+fmtT(SAVE.bossFightBestTime[st.id])+'</span>');
   const row=(ic,lab,v,cls)=>`<div class="row ${cls||''}">${icoHtml(ic)}${lab}<span class="v">${v}</span></div>`;
-  $('bfWinRewards').innerHTML=row('chi','Chi','+1')+row('xp','XP','+'+r.xp)+row('gold','Gold','+'+fmtN(r.coins))+(r.first?`<div class="row hi">First clear<span class="v" style="color:#d4b4ff">+2 ${icoHtml('chi')} &nbsp; +1 ${icoHtml('key')}</span></div>`:''); setState('BOSSWIN'); uiPaintIcons(UIK.t,true); }
+  $('bfWinRewards').innerHTML=(r.chi?row('chi','Chi','+'+r.chi):'')+row('xp','XP','+'+r.xp)+row('gold','Gold','+'+fmtN(r.coins))+(r.first?`<div class="row hi">First clear<span class="v" style="color:#d4b4ff">+2 ${icoHtml('chi')} &nbsp; +1 ${icoHtml('key')}</span></div>`:''); setState('BOSSWIN'); uiPaintIcons(UIK.t,true); }
 /* ---------- settings ---------- */
 function buildSettings(){ document.querySelectorAll('.sw').forEach(s=>s.classList.toggle('on',!!SAVE.settings[s.dataset.k])); $('dbg').style.display=DEBUG.on?'flex':'none'; const nm=$('setName'); if(nm) nm.textContent=(playerName()||'NINJA')+'  ›'; }
 $('bSwitch').onclick=()=>{ if(!G.map||!G.player) return; setState('PLAYING'); openCharsFromGame(); };
