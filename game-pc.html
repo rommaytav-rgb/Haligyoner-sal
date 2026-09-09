@@ -1457,7 +1457,7 @@ function dailyEvent(kind,type,amt){ if(!SAVE.daily) dailyCheck(); if(WORLD.arena
   for(const m of SAVE.daily.list){ if(m.done) continue; let ok=false;
     if(m.k==='kill') ok=kind==='kill'&&m.t===type; else if(m.k==='kills') ok=kind==='kill'; else if(m.k==='boss') ok=kind==='boss'&&(!m.t||m.t===type); else if(m.k==='bf') ok=kind==='bf'&&(!m.t||m.t===type); else if(m.k==='bfall') ok=kind==='bf'; else ok=m.k===kind;
     if(!ok) continue;
-    m.p=Math.min(m.n,m.p+(amt||1)); hit=true; if(m.p>=m.n){ m.done=true; SAVE.gold+=m.gold; gainXP(m.xp); const p=G.player; if(p&&p.alive) toast('ok','Mission complete','+'+m.gold+' gold · +'+m.xp+' XP'); G.banner={text:'MISSION COMPLETE',sub:dailyDesc(m)+'  ·  +'+m.gold+' GOLD  +'+m.xp+' XP',t:3.2}; SFX.key(); G.hudGold=3; } }
+    m.p=Math.min(m.n,m.p+(amt||1)); hit=true; if(m.p>=m.n){ m.done=true; SAVE.gold+=m.gold; const p=G.player; if(p&&p.alive){ floatText(p.x,p.y-96,'MISSION COMPLETE  +'+m.gold+' GOLD','#fde047',true,true); gainXP(m.xp,p.x,p.y-118); } else gainXP(m.xp); SFX.key(); G.hudGold=3; } }
   if(hit&&kind!=='gold') save(); }
 function dailyDoneCount(){ dailyCheck(); return SAVE.daily.list.filter(m=>m.done).length; }
 function dailyResetText(){ const now=new Date(), mid=new Date(now); mid.setHours(24,0,0,0); const s=Math.max(0,(mid-now)/1000|0), h=Math.floor(s/3600), mi=Math.floor(s%3600/60); return (h>0?h+'h ':'')+mi+'m'; }
@@ -2260,13 +2260,13 @@ function m2InIce(x,y){ return m2Biome(x,y)==='ice'; }
 function m2BlizzardOn(e){ const H=G.haz; return !!(H&&WORLD.frost&&H.bliz.active>0&&m2InIce(e.x,e.y)&&!(e.kind==='player'&&(e.name==='BOREAS'||(e.net?!!e.coat:hasEffect(e.name,'blizzardImmune'))))); }   /* BOREAS by nature, anyone in a Frost Coat */
 function m2HazUpdate(dt){ const H=G.haz, p=G.player; if(!H||!p) return; const E=M2.ERUPT, B=M2.BLIZ;
   // zone banners
-  const z=m2Biome(p.x,p.y); if(z!=='seam'&&z!==H.zone){ if(H.zone!==null){ G.banner={text:z==='ice'?'FROST SIDE':'EMBER SIDE',sub:z==='ice'?'BLIZZARDS SLOW EVERYONE BUT BOREAS':'LAVA BOMBS FALL DURING ERUPTIONS',t:2.2}; H.flash=.35; SFX.ui(); } H.zone=z; }
+  const z=m2Biome(p.x,p.y); if(z!=='seam'&&z!==H.zone){ if(H.zone!==null){ G.banner={text:z==='ice'?'FROST SIDE':'EMBER SIDE',sub:z==='ice'?'BLIZZARDS SLOW EVERYONE BUT BOREAS':'LAVA BOMBS FALL DURING ERUPTIONS',t:2.2,haz:z==='ice'?'storm':'lava'}; H.flash=.35; SFX.ui(); } H.zone=z; }
   if(H.flash>0) H.flash-=dt;
   // timers run only outside the village, never during a boss, never within 20 s of a boss spawn
   const bossNear=(G.boss&&G.boss.alive)||G.announce||(G.time-H.lastBossSpawn<20); const run=!inVillage(p.x,p.y)&&!bossNear&&p.alive;
-  for(const [k,C] of [['erupt',E],['bliz',B]]){ const S=H[k]; if(S.active>0){ S.active-=dt; if(S.active<=0){ S.active=0; S.next=C.period; S.warned=false; if(k==='erupt') H.eruptEnd=G.time; G.banner={text:k==='erupt'?'THE MOUNTAIN SETTLES':'THE STORM PASSES',t:2.2}; } continue; }
-    if(!run) continue; S.next-=dt; if(!S.warned&&S.next<=C.warn){ S.warned=true; G.banner={text:k==='erupt'?'THE MOUNTAIN WAKES…':'A STORM IS COMING…',sub:k==='erupt'?'LAVA BOMBS ON THE EMBER SIDE IN 10 S':'THE FROST SIDE SLOWS IN 10 S',t:2.6}; if(k==='erupt') SFX.roar(); else SFX.swell(); }
-    if(S.next<=0){ S.active=C.dur; G.banner={text:k==='erupt'?'ERUPTION!':'BLIZZARD!',sub:k==='erupt'?'STAY OFF THE EMBER SIDE':'BOREAS FEELS NOTHING',t:2.4}; shake(k==='erupt'?12:4); } }
+  for(const [k,C] of [['erupt',E],['bliz',B]]){ const S=H[k]; if(S.active>0){ S.active-=dt; if(S.active<=0){ S.active=0; S.next=C.period; S.warned=false; if(k==='erupt') H.eruptEnd=G.time; G.banner={text:k==='erupt'?'THE MOUNTAIN SETTLES':'THE STORM PASSES',t:2.2,haz:k==='erupt'?'lava':'storm'}; } continue; }
+    if(!run) continue; S.next-=dt; if(!S.warned&&S.next<=C.warn){ S.warned=true; G.banner={text:k==='erupt'?'THE MOUNTAIN WAKES…':'A STORM IS COMING…',sub:k==='erupt'?'LAVA BOMBS ON THE EMBER SIDE IN 10 S':'THE FROST SIDE SLOWS IN 10 S',t:2.6,haz:k==='erupt'?'lava':'storm'}; if(k==='erupt') SFX.roar(); else SFX.swell(); }
+    if(S.next<=0){ S.active=C.dur; G.banner={text:k==='erupt'?'ERUPTION!':'BLIZZARD!',sub:k==='erupt'?'STAY OFF THE EMBER SIDE':'BOREAS FEELS NOTHING',t:2.4,haz:k==='erupt'?'lava':'storm'}; shake(k==='erupt'?12:4); } }
   // eruption: rumble + bombs in the ember half around the camera
   if(H.erupt.active>0){ if(Math.random()<.3) shake(1.5); H.bombT-=dt; if(H.bombT<=0){ H.bombT=1.2; for(let tries=0;tries<12;tries++){ const x=CAM.x+rnd(-SW/ZOOM*.6,SW/ZOOM*.6), y=CAM.y+rnd(-SH/ZOOM*.6,SH/ZOOM*.6); if(m2Biome(x,y)!=='lava'||!inLand(x,y)||Math.hypot(x-p.x,y-p.y)<70||inSecretCave(x,y)) continue; H.bombs.push({x,y,t:0}); break; } } }
   for(let i=H.bombs.length-1;i>=0;i--){ const b=H.bombs[i]; b.t+=dt; if(b.t>=.8&&!b.hit){ b.hit=true; m2BombImpact(b); } if(b.t>1.1) H.bombs.splice(i,1); }
@@ -2274,7 +2274,7 @@ function m2HazUpdate(dt){ const H=G.haz, p=G.player; if(!H||!p) return; const E=
   for(let i=H.burns.length-1;i>=0;i--){ const b=H.burns[i]; b.t-=dt; b.tick-=dt; if(b.tick<=0){ b.tick=.5; if(p.alive&&Math.hypot(p.x-b.x,p.y-b.y)<b.r+p.r*.5&&p.jumpT<=0) damage(p,hazardDmg('lavaPool',p)*HAZARD.lavaPool.tick,{kind:'hazard',x:b.x,y:b.y},{sure:true,ranged:true}); for(const e of G.enemies) if(e.alive&&!e.boss&&Math.hypot(e.x-b.x,e.y-b.y)<b.r+e.r*.5) damage(e,HAZARD.lavaPool.enemy*HAZARD.lavaPool.tick,null,{silent:true,color:'#fb923c',noKb:true}); } if(b.t<=0) H.burns.splice(i,1); }
   if(H.erupt.active>0&&m2Biome(p.x,p.y)==='lava'&&Math.random()<.15) part(CAM.x+rnd(-400,400),CAM.y+250,rnd(-20,20),rnd(-120,-60),LP.ember,1.2,2,-30,true);
   // secrets: discovery
-  for(const s of M2.secrets){ const key=M2.id+'_'+s.n; if(!SAVE.secrets[key]&&Math.hypot(p.x-s.x,p.y-s.y)<s.r*.7){ SAVE.secrets[key]=true; gainXP(150,p.x,p.y-70,'  HIDDEN AREA'); save(); G.banner={text:'HIDDEN AREA',sub:s.name+' · '+m2SecretsFound()+' / 7  ·  +150 XP',t:2.8}; SFX.key(); explore(s.x,s.y); burst(p.x,p.y-10,['#ffffff','#fde047','#7fd4ff'],20,160,.9,3,-40,true); if(m2SecretsFound()>=7&&!SAVE.secretsBonus[M2.id]){ SAVE.secretsBonus[M2.id]=true; SAVE.chi=(SAVE.chi||0)+2; SAVE.keys=(SAVE.keys||0)+1; toast('ok','All secrets found','+2 Chi · +1 key','chi'); save(); } } }
+  for(const s of M2.secrets){ const key=M2.id+'_'+s.n; if(!SAVE.secrets[key]&&Math.hypot(p.x-s.x,p.y-s.y)<s.r*.7){ SAVE.secrets[key]=true; gainXP(150,p.x,p.y-70); floatText(p.x,p.y-94,'HIDDEN AREA  '+m2SecretsFound()+' / 7','#ffffff',true,true); save(); SFX.key(); explore(s.x,s.y); burst(p.x,p.y-10,['#ffffff','#fde047','#7fd4ff'],20,160,.9,3,-40,true); if(m2SecretsFound()>=7&&!SAVE.secretsBonus[M2.id]){ SAVE.secretsBonus[M2.id]=true; SAVE.chi=(SAVE.chi||0)+2; SAVE.keys=(SAVE.keys||0)+1; floatText(p.x,p.y-118,'ALL SECRETS FOUND  +2 CHI  +1 KEY','#7fd8f8',true,true); save(); } } }
 }
 function inSecretCave(x,y){ return M2.secrets.some(s=>(s.kind==='lavacave'||s.kind==='icecave')&&Math.hypot(x-s.x,y-s.y)<s.r); }
 function m2SecretsFound(){ let n=0; for(const s of M2.secrets) if(SAVE.secrets[M2.id+'_'+s.n]) n++; return n; }
@@ -2365,12 +2365,12 @@ function enemyDie(e){
   e.alive=false; G.kills++; let n=rndi(e.d.coins[0],e.d.coins[1]), gold=rndi(e.d.gold[0],e.d.gold[1]); if(e.summoned){ n=Math.ceil(n/2); gold=Math.ceil(gold/2); }   // boss adds drop half
   const per=Math.ceil(gold/n); for(let i=0;i<n;i++) G.coins.push({x:e.x,y:e.y,vx:rnd(-120,120),vy:rnd(-220,-80),v:per,t:0,fly:false,z:0});
   if(e.boss&&WORLD.arena){ if(G.boss===e) G.boss=null; arenaWin(e); return; }   // Boss Fight: separate rewards, nothing counts toward the open world
-  if(e.boss){ e.deadT=3.2; if(e.type==='witch'||e.type==='guard') witchMinionsDie(); burst(e.x,e.y-10,['#c8a878','#8a6a4a','#fde047','#ffffff'],80,260,1.4,6,200,true); shake(16); vibrate(300); SFX.death(); const bxp=e.d.xpBoss||XP_BOSS; toast('gold','Boss defeated','+'+bxp+' XP · '+e.d.name,'xp'); if(G.boss===e) G.boss=null; G.lastBossDeath=G.time; G.bossMark=null; SAVE.bosses[e.type]=(SAVE.bosses[e.type]||0)+1; if(G.map&&G.map.id==='underworld') SAVE.w3kills=(SAVE.w3kills||0)+1; dailyEvent('boss',e.type); netEv({k:'boss',type:e.type,xp:bxp}); gemDrop(e.x,e.y,gemRoll(gemTableBoss(bossGemTier(e.type)))); gainXP(bxp); dropChi(e.x,e.y,2); keyDrop(e.x,e.y); checkUnlocks(); checkLevelUp(); }
+  if(e.boss){ e.deadT=3.2; if(e.type==='witch'||e.type==='guard') witchMinionsDie(); burst(e.x,e.y-10,['#c8a878','#8a6a4a','#fde047','#ffffff'],80,260,1.4,6,200,true); shake(16); vibrate(300); SFX.death(); const bxp=e.d.xpBoss||XP_BOSS;  if(G.boss===e) G.boss=null; G.lastBossDeath=G.time; G.bossMark=null; SAVE.bosses[e.type]=(SAVE.bosses[e.type]||0)+1; if(G.map&&G.map.id==='underworld') SAVE.w3kills=(SAVE.w3kills||0)+1; dailyEvent('boss',e.type); netEv({k:'boss',type:e.type,xp:bxp}); gemDrop(e.x,e.y,gemRoll(gemTableBoss(bossGemTier(e.type)))); gainXP(bxp,e.x,e.y-96); dropChi(e.x,e.y,2); keyDrop(e.x,e.y); checkUnlocks(); checkLevelUp(); }
   else { deathFx(e); e.deadT=1.4; if(e.spawner) e.spawner.alive--; if(e.type==='imp'&&G.haz) G.haz.burns.push({x:e.x,y:e.y+4,r:24,t:2,tick:.5}); SAVE.kills++; if(G.map&&G.map.id==='underworld') SAVE.w3kills=(SAVE.w3kills||0)+1; SAVE.killsBy=SAVE.killsBy||{}; SAVE.killsBy[e.type]=(SAVE.killsBy[e.type]||0)+1; dailyEvent('kill',e.type); netEv({k:'kill',type:e.type,xp:e.d.xp||XP_KILL}); if(!e.summoned&&!WORLD.arena) gemDrop(e.x,e.y,gemRoll(gemTableCommon(gemTier()))); if(!e.summoned&&(Math.random()<.005||DEBUG.forceChi)) dropChi(e.x,e.y,1); { const p=G.player; if(p&&p.name==='SHADE'&&spinning(p)&&e.spinHitT===G.time&&Math.random()<.25) G.coins.push({x:e.x,y:e.y,vx:rnd(-80,80),vy:-120,v:5,t:0,fly:false,z:0}); } gainXP(e.d.xp||XP_KILL,e.x,e.y-44); if(!e.summoned){ SAVE.pity=(SAVE.pity||0)+1; if(Math.random()<.02||SAVE.pity>=80) keyDrop(e.x,e.y); } checkUnlocks(); checkLevelUp(); if(!SAVE.hints.kill){ SAVE.hints.kill=true; G.arrowTarget=null; showHint('Try your ability ✦'); } }
   save();
 }
 /* Chi key: 2% from any common enemy, always from a boss, pity after 80 kills; capped at 3 */
-function keyDrop(x,y){ SAVE.pity=0; if((SAVE.keys||0)>=3){ toast('warn','Key bag full','3 of 3 Chi keys — use one on a Chi chest','key'); return; } SAVE.keys=(SAVE.keys||0)+1; burst(x,y-14,['#fde047','#ffffff','#f59e0b'],40,240,1,5,120,true); floatText(x,y-76,'🔑 CHI KEY!','#fde047',true,true); SFX.key(); vibrate(60); G.slowmo=.4; const p=G.player; if(p){ for(let i=0;i<10;i++) part(x,y-10,rnd(-40,40),rnd(-60,-20),'#fde047',.6,4,0,true); } }
+function keyDrop(x,y){ SAVE.pity=0; if((SAVE.keys||0)>=3){ floatText(x,y-76,'KEY BAG FULL  3 / 3','#fca5a5',true); return; } SAVE.keys=(SAVE.keys||0)+1; burst(x,y-14,['#fde047','#ffffff','#f59e0b'],40,240,1,5,120,true); floatText(x,y-76,'CHI KEY!','#fde047',true,true); SFX.key(); vibrate(60); G.slowmo=.4; const p=G.player; if(p){ for(let i=0;i<10;i++) part(x,y-10,rnd(-40,40),rnd(-60,-20),'#fde047',.6,4,0,true); } }
 /* character levels come from XP now (progress.js: gainXP / charLevelUp); the account level is a banner + coins */
 /* per-enemy death: cap pops / mask cracks and beetles scatter / hat spins off (+3% golden key) */
 function deathFx(e){
@@ -2378,15 +2378,15 @@ function deathFx(e){
   else if((e.d.base||e.type)==='priest'){ burst(e.x,e.y-16,['#2f6b52','#8ab08a','#c8202a'],12,150,.6,4,300); for(let i=0;i<8;i++){ const a=Math.random()*TAU; const b=part(e.x,e.y+4,Math.cos(a)*rnd(60,140),Math.sin(a)*rnd(30,70),i%3?'#1c1c22':'#8a1a1a',rnd(.8,1.4),3,0); if(b) b.beetle=true; } SFX.crit(); }
   else if(e.type==='golem'){ burst(e.x,e.y-10,['#3a3038','#ff5a10','#ffb020'],16,160,.8,4,400); shake(4); noise(.2,.2); }
   else if(e.type==='wolf'){ burst(e.x,e.y-10,['#bfeaff','#ffffff','#7fb8d8'],18,170,.7,3,300); tone(900,.25,'sine',.12,-300); }
-  else if(e.type==='pirate'){ const hat=part(e.x,e.y-34,rnd(-40,40),-240,'#5e3d22',1.1,8,650); if(hat) hat.hat=true; burst(e.x,e.y-8,['#c9a24a','#8ab0a0','#f2ede0'],12,150,.8,4,300); if(Math.random()<.03){ SAVE.gold+=180; gainXP(40); toast('gold','Golden key!','A golden chest opens: +180 gold · +40 XP','key'); burst(e.x,e.y-20,['#fde047','#ffffff'],24,180,.9,4,250,true); SFX.levelup(); } }
+  else if(e.type==='pirate'){ const hat=part(e.x,e.y-34,rnd(-40,40),-240,'#5e3d22',1.1,8,650); if(hat) hat.hat=true; burst(e.x,e.y-8,['#c9a24a','#8ab0a0','#f2ede0'],12,150,.8,4,300); if(Math.random()<.03){ SAVE.gold+=180; floatText(e.x,e.y-72,'GOLDEN KEY  +180 GOLD','#fde047',true,true); gainXP(40,e.x,e.y-94); burst(e.x,e.y-20,['#fde047','#ffffff'],24,180,.9,4,250,true); SFX.levelup(); } }
 }
 function playerDie(p){ p=p||G.player; p.alive=false; p.deadT=1; SFX.death(); shake(10); vibrate(400); burst(p.x,p.y-8,[p.ch.color,p.ch.glow,'#ffffff'],40,200,1.1,5,150,true); if(NET.on){ p.respawnT=4; if(p.net) netEv({k:'died'}); return; }   /* co-op: no death screen, the ninja respawns in the village after 4 s */ if(WORLD.arena){ arenaFail(); return; } const lost=Math.floor(SAVE.gold*.1); SAVE.gold-=lost; G.lostGold=lost; save(); }
 function openChest(c){
   c.open=true; dailyEvent('chest'); SFX.levelup(); burst(c.x,c.y-6,['#fde047','#ffffff','#e0a020'],26,180,.9,4,250,true); const p=G.player;
-  if(c.kind==='normal'){ const n=rndi(20,60); SAVE.chests[c.id]=true; SAVE.gold+=n; gainXP(40); toast('gold','+'+n+' gold','Chest opened · +40 XP','gold'); }
-  else if(c.kind==='golden'){ SAVE.golden[c.id]=new Date().toDateString(); const n=rndi(150,250); SAVE.gold+=n; gainXP(40); toast('gold','+'+n+' gold','Golden chest · +40 XP','gold'); }
-  else if(c.kind==='chi'){ SAVE.keys--; dailyEvent('chichest'); SAVE.chiChests[c.id]=SAVE.playTime; SFX.chestOpen(); burst(c.x,c.y-10,['#22d3ee','#3b82f6','#ffffff'],36,220,1,4,120,true); toast('epic','Chi chest','+3 Chi','chi'); for(let i=0;i<3;i++){ const a=Math.atan2(p.y-c.y,p.x-c.x)+(i-1)*1.1, vh=250+i*25, air=2*vh/520, tx=p.x+Math.cos(a)*44, ty=p.y+Math.sin(a)*30; G.chis.push({x:c.x,y:c.y-6,vx:(tx-c.x)/air,vy:(ty-c.y)/air,h:12,vh,t:-i*.4,landed:false,fly:false,chest:true}); } }   // lid bursts, three orbs arc out and are collected one by one
-  else { SAVE.secret[c.id]=true; SAVE.gold+=300; gainXP(150); toast('gold','Secret chest!','+300 gold · +150 XP','gold'); }
+  if(c.kind==='normal'){ const n=rndi(20,60); SAVE.chests[c.id]=true; SAVE.gold+=n; floatText(c.x,c.y-46,'+'+n+' GOLD','#fde047',true); gainXP(40,c.x,c.y-68); }
+  else if(c.kind==='golden'){ SAVE.golden[c.id]=new Date().toDateString(); const n=rndi(150,250); SAVE.gold+=n; floatText(c.x,c.y-46,'+'+n+' GOLD','#fde047',true,true); gainXP(40,c.x,c.y-68); }
+  else if(c.kind==='chi'){ SAVE.keys--; dailyEvent('chichest'); SAVE.chiChests[c.id]=SAVE.playTime; SFX.chestOpen(); burst(c.x,c.y-10,['#22d3ee','#3b82f6','#ffffff'],36,220,1,4,120,true); for(let i=0;i<3;i++){ const a=Math.atan2(p.y-c.y,p.x-c.x)+(i-1)*1.1, vh=250+i*25, air=2*vh/520, tx=p.x+Math.cos(a)*44, ty=p.y+Math.sin(a)*30; G.chis.push({x:c.x,y:c.y-6,vx:(tx-c.x)/air,vy:(ty-c.y)/air,h:12,vh,t:-i*.4,landed:false,fly:false,chest:true}); } }   // lid bursts, three orbs arc out and are collected one by one
+  else { SAVE.secret[c.id]=true; SAVE.gold+=300; floatText(c.x,c.y-46,'SECRET CHEST  +300 GOLD','#fde047',true,true); gainXP(150,c.x,c.y-68); }
   save();
 }
 
@@ -2425,7 +2425,7 @@ function playerUpdate(p,dt){
   // coins pickup
   for(let i=G.coins.length-1;i>=0;i--){ const c=G.coins[i]; c.t+=dt; if(!c.fly){ c.x+=c.vx*dt; c.y+=c.vy*dt; c.vy+=600*dt; c.vx*=Math.pow(.05,dt); if(c.t>.14) c.fly=true; } else { const q=(G.p2&&G.p2.alive&&Math.hypot(G.p2.x-c.x,G.p2.y-c.y)<Math.hypot(p.x-c.x,p.y-c.y))?G.p2:p;   /* co-op: the coin flies to the nearer player; the gold reaches both */
       const dx=q.x-c.x, dy=q.y-8-c.y, d=Math.hypot(dx,dy)||1; { const s=Math.min(d,(420+c.t*1100)*dt); c.x+=dx/d*s; c.y+=dy/d*s; } if(d<10){ G.coins.splice(i,1); SAVE.gold+=c.v; dailyEvent('gold',null,c.v); SFX.coin(); part(q.x,q.y-20,0,-40,'#fde047',.4,4,0,true); } } }
-  for(const c of G.chests){ const d=Math.hypot(c.x-p.x,c.y-p.y); if(c.kind==='chi'){ c.rattle=Math.max(0,(c.rattle||0)-dt); if(c.open){ const left=1800-(SAVE.playTime-(SAVE.chiChests[c.id]||0)); if(left<=0){ c.open=false; burst(c.x,c.y-6,['#22d3ee','#ffffff'],14,120,.7,3,0,true); } else if(d<70&&(c.msgT||0)<=0){ c.msgT=1; showHint('Chi chest refills in '+Math.floor(left/60)+':'+String(Math.floor(left%60)).padStart(2,'0')); } c.msgT=(c.msgT||0)-dt; continue; }
+  for(const c of G.chests){ const d=Math.hypot(c.x-p.x,c.y-p.y); if(c.kind==='chi'){ c.rattle=Math.max(0,(c.rattle||0)-dt); if(c.open){ const left=1800-(SAVE.playTime-(SAVE.chiChests[c.id]||0)); if(left<=0){ c.open=false; burst(c.x,c.y-6,['#22d3ee','#ffffff'],14,120,.7,3,0,true); } else if(d<70&&(c.msgT||0)<=0){ c.msgT=1.6; floatText(c.x,c.y-40,'REFILLS IN '+Math.floor(left/60)+':'+String(Math.floor(left%60)).padStart(2,'0'),'#7fd8f8'); } c.msgT=(c.msgT||0)-dt; continue; }
       if(d<40){ if((SAVE.keys||0)>0) openChest(c); else if((c.msgT||0)<=0){ c.msgT=2.5; c.rattle=.5; showHint('You need a Chi key — enemies drop them'); SFX.rattle(); } c.msgT=(c.msgT||0)-dt; } }
     else if(!c.open&&d<40) openChest(c); }
   explore(p.x,p.y);
@@ -2722,7 +2722,7 @@ function enterMap(def){ fx2Reset(); b2Reset();
   // rare boss on entry (short timer) or guaranteed after time on the map / in the swamp
   G.bossRollT=0; G.lastBossDeath=-999; G.bossMark=null; G.plv=playerLevel();
   G.arrowTarget=null;   // no guide arrow
-  explore(p.x,p.y); G.banner={text:def.name.toUpperCase(),sub:'LEVELS '+def.lvl[0]+'–'+def.lvl[1],t:2.6};
+  explore(p.x,p.y); G.banner={text:def.name.toUpperCase(),sub:'PLAYER LEVEL '+(def.plv||1),t:2.6};
   if(isVeteran()) SAVE.hints.attack=true; showHint(SAVE.hints.attack?null:'Drag the right stick to aim, release to fire');
   if(WORLD.w3) w3Init();
 }
@@ -3986,7 +3986,7 @@ function w3Zoom(){ if(!WORLD.w3||WORLD.w3==='under') return null; return clamp(M
 function w3CamClamp(){ const z=ZOOM_BASE*(G.camZoom||1), aw=SW/z, ah=SH/z; CAM.x=aw>=WORLD.w?WORLD.w/2:clamp(CAM.x,aw/2,WORLD.w-aw/2); CAM.y=ah>=WORLD.h?WORLD.h/2:clamp(CAM.y,ah/2,WORLD.h-ah/2); }
 function w3Go(area){ G.w3from=WORLD.w3; G.w3area=area; enterMap(G.map); }
 function w3Init(){ const W=WORLD, a=W.w3; SAVE.w3=SAVE.w3||{barCleared:false}; G.w3t=0; G.w3circ=0; G.w3armed=false; G.tradeNear=false;
-  G.banner={text:a==='surface'?'THE GRAVEYARD':a==='bar'?'THE BAR':'THE UNDERWORLD',sub:a==='surface'?'SOMETHING LEADS DOWN':a==='bar'?(SAVE.w3.barCleared?'THE WAY DOWN IS OPEN':'A GATE, NOT A HUB'):'LEVELS 19–30',t:2.6};
+  G.banner={text:a==='surface'?'THE GRAVEYARD':a==='bar'?'THE BAR':'THE UNDERWORLD',sub:a==='surface'?'SOMETHING LEADS DOWN':a==='bar'?(SAVE.w3.barCleared?'THE WAY DOWN IS OPEN':'A GATE, NOT A HUB'):'PLAYER LEVEL 16',t:2.6};
   if(a==='bar'){ G.w3bar={state:SAVE.w3.barCleared?'done':'keeper',t:0}; if(!SAVE.w3.barCleared){ const e=makeEnemy('keeper',w3px(W3.keeper.x+9),w3px(W3.keeper.y+18)); e.spawnT=0; e.ai.state='idle'; e.face=Math.PI/2; } }
   else G.w3bar=null; }
 function w3Update(dt){ const W=WORLD, p=G.player; if(!p||!p.alive) return; G.w3t=(G.w3t||0)+dt;
@@ -5603,7 +5603,7 @@ function chiUpdate(p,dt){
   for(let i=G.chis.length-1;i>=0;i--){ const c=G.chis[i]; c.t+=dt;
     if(!c.landed){ c.x+=c.vx*dt; c.y+=c.vy*dt; c.h+=c.vh*dt; c.vh-=520*dt; if(c.h<=0){ c.h=0; c.landed=true; const o={x:c.x,y:c.y,r:8}; collide(o); c.x=o.x; c.y=o.y; } continue; }
     const d=Math.hypot(p.x-c.x,p.y-c.y); if(!c.fly&&(d<TILE_PX*2||c.chest)&&p.alive&&c.t>0) c.fly=true;
-    if(c.fly){ const dx=p.x-c.x, dy=p.y-8-c.y, dd=Math.hypot(dx,dy)||1, s=Math.min(dd,(260+c.t*300)*dt); c.x+=dx/dd*s; c.y+=dy/dd*s; if(dd<8){ G.chis.splice(i,1); SAVE.chi=(SAVE.chi||0)+1; save(); SFX.chiPick(); toast('info','+1 Chi','','chi'); burst(p.x,p.y-14,['#7fd8f8','#bff0ff'],10,90,.5,3,0,true); } }
+    if(c.fly){ const dx=p.x-c.x, dy=p.y-8-c.y, dd=Math.hypot(dx,dy)||1, s=Math.min(dd,(260+c.t*300)*dt); c.x+=dx/dd*s; c.y+=dy/dd*s; if(dd<8){ G.chis.splice(i,1); SAVE.chi=(SAVE.chi||0)+1; save(); SFX.chiPick(); floatText(p.x,p.y-52,'+1 CHI','#7fd8f8',true); burst(p.x,p.y-14,['#7fd8f8','#bff0ff'],10,90,.5,3,0,true); } }
   }
 }
 function drawChis(c){ if(!G.chis.length) return; c.save(); c.scale(PIX,PIX); g=c; for(const ch of G.chis) chiOrb(ch.x/PIX|0,(ch.y-ch.h)/PIX|0,G.time+ch.x*.01); c.restore(); }
@@ -5958,7 +5958,7 @@ function drawHUD(c,p){
     c.fillStyle='#4ade80'; c.beginPath(); c.arc(mx+mw/2,my+mh/2,3.5,0,TAU); c.fill(); c.restore(); c.strokeStyle='rgba(255,255,255,.25)'; c.lineWidth=1; roundRect(c,mx,my,mw,mh,7); c.stroke(); }
   if(WORLD.frost&&!arena) m2DrawHazardsHUD(c,p); if(WORLD.w3&&!arena) w3HUD(c,p);
   // banner / announce
-  if(false&&G.banner){ const b=G.banner, k=b.t>2?1-(b.t-2)/.4:b.t<.4?b.t/.4:1; c.save(); c.translate(SW/2,SH*.3); c.scale(1+(1-k)*.4,1+(1-k)*.4); c.globalAlpha=clamp(k,0,1); c.font='900 42px Arial'; c.textAlign='center'; c.lineWidth=8; c.strokeStyle='rgba(0,0,0,.7)'; c.strokeText(b.text,0,0); c.fillStyle='#fde68a'; c.fillText(b.text,0,0); if(b.sub){ c.font='900 16px Arial'; c.strokeText(b.sub,0,26); c.fillStyle='#fca5a5'; c.fillText(b.sub,0,26); } c.restore(); }
+  if(G.banner&&G.banner.haz){ const b=G.banner, k=b.t>2?1-(b.t-2)/.4:b.t<.4?b.t/.4:1, lava=b.haz==='lava', H=Math.round(34*UK), sy=Math.round(26*UK); c.save(); c.translate(SW/2,SH*.29); c.scale(1+(1-k)*.35,1+(1-k)*.35); c.globalAlpha=clamp(k,0,1); c.textAlign='center'; c.lineJoin='round'; c.shadowColor=lava?'rgba(255,40,20,.95)':'rgba(120,200,255,.95)'; c.shadowBlur=18*UK; c.font='900 '+H+'px Arial'; c.lineWidth=7; c.strokeStyle=lava?'rgba(60,0,0,.85)':'rgba(0,30,70,.85)'; c.strokeText(b.text,0,0); c.fillStyle=lava?'#ff3b2a':'#eefaff'; c.fillText(b.text,0,0); if(b.sub){ c.font='900 '+Math.round(14*UK)+'px Arial'; c.lineWidth=5; c.strokeText(b.sub,0,sy); c.fillStyle=lava?'#ffb3a3':'#8fdcff'; c.fillText(b.sub,0,sy); } c.restore(); }   /* hazard captions: red for lava, white-blue for the storm; everything else goes through the toast rail */
   if(G.announce){ c.font='900 22px Arial'; c.textAlign='center'; c.lineWidth=6; c.strokeStyle='rgba(0,0,0,.7)'; c.strokeText(G.announce.text,SW/2,SH*.3); c.fillStyle='#fecaca'; c.fillText(G.announce.text,SW/2,SH*.3); }
   if(SAVE.settings.fps&&!DEBUG.hitbox){ c.font='700 12px monospace'; c.textAlign='left'; c.fillStyle=G.hitchShown?'#fca5a5':'#4ade80'; c.fillText('FPS '+G.fps+'   worst '+G.worstShown+'ms   hitches '+G.hitchShown,12,SH-12); }
   if(DEBUG.hitbox){ c.font='700 12px monospace'; c.textAlign='left'; c.fillStyle='#4ade80'; c.fillText('FPS '+G.fps+'  enemies '+G.enemies.filter(e=>e.alive).length+'  parts '+G.parts.filter(a=>a.alive).length,12,SH-12); }
@@ -6461,7 +6461,7 @@ function toast(kind,title,sub,icon){ if(!title) return; const box=$('toasts'); i
 function showHint(t){ if(!t) return; if(WORLD.arena) return; toast('info',t); }
 function showToast(msg){ toast('info',msg); }
 /* the in-game banners (map names, boss arrivals, phase two) now arrive as the epic toast */
-function uiTick(){ const b=G.banner; const key=b?b.text+'|'+(b.sub||''):''; if(key&&key!==UIK.lastBanner){ UIK.lastBanner=key; toast('epic',b.text,b.sub||''); } if(!key) UIK.lastBanner=''; }
+function uiTick(){ const b=G.banner&&!G.banner.haz?G.banner:null; const key=b?b.text+'|'+(b.sub||''):''; if(key&&key!==UIK.lastBanner){ UIK.lastBanner=key; toast('epic',b.text,b.sub||''); } if(!key) UIK.lastBanner=''; }
 const fmtN=n=>Math.round(n).toLocaleString('en-US');
 /* ---------- the profile card (top-right on the menu, map select and characters) ---------- */
 function profileCardRefresh(){ const el=$('profCard'); if(!el) return; const n=SAVE.selected, ch=CH[n], plv=playerLevel(), lo=plv>1?XP_NEED(plv-1):0, hi=XP_NEED(plv), cur=(SAVE.xpTotal||0)-lo, need=hi-lo;
@@ -6519,7 +6519,7 @@ function buildMapList(){ const el=$('mapList'); el.innerHTML=''; $('mapMsg').sty
     if(!locked&&!MINIS[m.id]){ const gm=G.map, oa=G.w3area; G.map=m; if(m.id==='underworld') G.w3area='under'; buildWorld(7); MINIS[m.id]=WORLD.mini; G.map=gm; G.w3area=oa; }
     const d=document.createElement('div'); d.className='card mcard'+(locked?' locked':'');
     if(locked) d.innerHTML=`<div class="thumb locked-thumb">LOCKED</div><div class="mb"><div class="mn">${m.name} <span class="ml">· LV ${m.plv||16}</span></div><div class="md">${m.desc}</div><div class="mbz">${m.locked?'Coming soon':'Opens at player level '+m.plv+' · you are '+playerLevel()}</div></div><div class="btn grey dis">LOCKED</div>`;
-    else { const mini=MINIS[m.id]; const cv2=document.createElement('canvas'); cv2.width=mini.width; cv2.height=mini.height; cv2.getContext('2d').drawImage(mini,0,0); cv2.className='thumb'; d.appendChild(cv2); d.insertAdjacentHTML('beforeend',`<div class="mb"><div class="mn">${m.name} <span class="ml">· LEVELS ${m.lvl[0]}–${m.lvl[1]}</span></div><div class="md">${m.desc}</div><div class="mbz">Bosses: ${m.bosses}${m.id==='frost_ember'?' · Hidden areas '+m2SecretsFound()+' / 7':''}</div></div><div class="btn green">PLAY<span class="sh"><i></i></span></div>`); d.onclick=()=>{ audioInit(); enterMap(m); setState('PLAYING'); }; }
+    else { const mini=MINIS[m.id]; const cv2=document.createElement('canvas'); cv2.width=mini.width; cv2.height=mini.height; cv2.getContext('2d').drawImage(mini,0,0); cv2.className='thumb'; d.appendChild(cv2); d.insertAdjacentHTML('beforeend',`<div class="mb"><div class="mn">${m.name} <span class="ml">· Player level ${m.plv||1}</span></div><div class="md">${m.desc}</div><div class="mbz">Bosses: ${m.bosses}${m.id==='frost_ember'?' · Hidden areas '+m2SecretsFound()+' / 7':''}</div></div><div class="btn green">PLAY<span class="sh"><i></i></span></div>`); d.onclick=()=>{ audioInit(); enterMap(m); setState('PLAYING'); }; }
     el.appendChild(d); } }
 /* ---------- boss fight: list, pre-fight, victory, defeat ---------- */
 const BOSS_LORE={hippo:"The river's old tyrant. It sleeps under the mud of the pit and comes up like a landslide. Nothing on Bone Shore has ever pushed it back.",
