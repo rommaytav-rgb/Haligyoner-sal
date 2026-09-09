@@ -150,8 +150,15 @@
   #menuGrid>div{display:flex;flex-direction:column;gap:calc(10px*var(--u));min-height:0;min-width:0}
   .bt{display:flex;padding:calc(5px*var(--u)) 0;border-bottom:1px solid #222a52;font-size:max(10px,calc(12px*var(--u)));font-weight:800;gap:8px} .bt:last-child{border-bottom:none} .bt span:last-child{margin-left:auto;color:var(--gold)} .bt .dim{color:#5a67a8}
   #menuActions{display:flex;gap:calc(12px*var(--u));align-items:center;flex:none}
-  #menuActions .btn.side{width:calc(150px*var(--u));min-width:84px;height:calc(58px*var(--u));font-size:max(10px,calc(13px*var(--u)))}
-  #menuActions .btn.play{flex:1;height:calc(58px*var(--u))}
+  #menuActions{justify-content:center}
+  #menuActions .btn.side{width:calc(150px*var(--u));min-width:84px;height:calc(48px*var(--u));font-size:max(10px,calc(12px*var(--u)))}
+  #menuActions .btn.play{flex:1 1 auto;max-width:calc(520px*var(--u));height:calc(50px*var(--u));font-size:max(14px,calc(20px*var(--u)));letter-spacing:.32em;background:linear-gradient(180deg,#7ef0a8 0%,#31c976 42%,#1e9450 100%);box-shadow:0 6px 0 #0f5a33,0 0 24px rgba(61,220,132,.28),0 12px 22px rgba(0,0,0,.5),inset 0 3px 0 rgba(255,255,255,.5)}
+  .tagline{display:flex;flex-direction:column;align-items:center;gap:calc(4px*var(--u));flex:none}
+  .tagline .t-label{letter-spacing:.34em;font-size:max(8px,calc(9.5px*var(--u)))}
+  .mode::after{content:'';position:absolute;inset:0;background:linear-gradient(115deg,transparent 42%,rgba(255,255,255,.06) 50%,transparent 58%);pointer-events:none}
+  .mode .rn{position:absolute;right:calc(10px*var(--u));bottom:calc(-8px*var(--u));font-size:calc(58px*var(--u));opacity:.09;font-family:'Segoe UI Symbol','Noto Sans Runic',sans-serif;pointer-events:none;color:#fff}
+  .card{position:relative} .card>.hd::after{content:'ᛝ';margin-left:auto;opacity:.22;font-family:'Segoe UI Symbol','Noto Sans Runic',sans-serif;font-size:max(10px,calc(13px*var(--u)));color:#9fb0e0}
+  .hero .aurap{bottom:24%;z-index:0}
   /* ===== characters screen ===== */
   #charsGrid{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:calc(14px*var(--u));min-height:0}
   .strip{display:flex;gap:calc(6px*var(--u));padding:calc(8px*var(--u)) calc(10px*var(--u));overflow-x:auto;overflow-y:hidden;scrollbar-width:none;flex:none}
@@ -254,6 +261,23 @@
   .bcard .bn{font-size:max(11px,calc(13.5px*var(--u)));font-weight:900;letter-spacing:.04em;line-height:1.1} .bcard .bd2{font-size:max(9px,calc(10.5px*var(--u)));font-weight:700;color:var(--text);line-height:1.35} .bcard .bd2 b{color:var(--gold)}
   .bcard .btn{margin-top:auto;width:100%} .bcard.locked{filter:grayscale(.6);opacity:.55;cursor:default} .bcard.locked:active{transform:none} .bcard.soon{border-style:dashed;border-color:#3a4574;opacity:.6;cursor:default}
   .bcard .ok{position:absolute;top:calc(6px*var(--u));right:calc(8px*var(--u));font-size:max(8px,calc(9.5px*var(--u)));font-weight:900;letter-spacing:.1em;color:#04321a;background:linear-gradient(180deg,#8dfab5,#3ddc84);border-radius:99px;padding:2px 7px}
+  .swipe{margin-left:auto;font-size:max(9px,calc(11px*var(--u)));font-weight:900;letter-spacing:.2em;color:var(--label);animation:swipe 1.8s ease-in-out infinite;padding-right:calc(8px*var(--u))} @keyframes swipe{50%{transform:translateX(5px);opacity:.6}}
+  .swipe+.x{margin-left:0}
+  .bscroll{display:flex;gap:calc(14px*var(--u));overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;touch-action:pan-x;flex:1;min-height:0;padding:calc(4px*var(--u)) calc(2px*var(--u)) calc(8px*var(--u));scrollbar-width:none;-webkit-overflow-scrolling:touch} .bscroll::-webkit-scrollbar{display:none}
+  .bx{flex:0 0 calc(292px*var(--u));min-width:190px;scroll-snap-align:start;display:flex;flex-direction:column;position:relative;overflow:hidden;cursor:pointer;transition:transform .08s,filter .15s;border-color:color-mix(in srgb,var(--g) 55%,#3a4574)}
+  .bx:active{transform:translateY(3px)} .bx:hover{filter:brightness(1.06)}
+  .bx .art{position:relative;height:44%;min-height:0;display:flex;align-items:flex-end;justify-content:center;background:radial-gradient(ellipse at 50% 80%,color-mix(in srgb,var(--g) 32%,transparent),transparent 70%),linear-gradient(180deg,#1a2144,#141a3a);border-bottom:2px solid var(--line)}
+  .bx .art canvas{height:82%;width:auto;image-rendering:pixelated;position:relative;z-index:1;filter:drop-shadow(0 8px 10px rgba(0,0,0,.65))}
+  .bx .art .ring{bottom:calc(4px*var(--u));width:70%;height:calc(28px*var(--u))}
+  .bx .art .rn{position:absolute;left:calc(10px*var(--u));top:calc(4px*var(--u));font-size:calc(52px*var(--u));opacity:.09;color:#fff;font-family:'Segoe UI Symbol','Noto Sans Runic',sans-serif;pointer-events:none}
+  .bx .st{position:absolute;left:calc(10px*var(--u));top:calc(8px*var(--u));font-size:max(8.5px,calc(9.5px*var(--u)));font-weight:900;letter-spacing:.18em;color:var(--g);text-transform:uppercase;background:rgba(5,7,15,.55);padding:3px 8px;border-radius:99px;border:1px solid color-mix(in srgb,var(--g) 50%,transparent);z-index:2}
+  .bx .ok{position:absolute;right:calc(8px*var(--u));top:calc(8px*var(--u));font-size:max(8px,calc(9.5px*var(--u)));font-weight:900;letter-spacing:.1em;color:#04321a;background:linear-gradient(180deg,#8dfab5,#3ddc84);border-radius:99px;padding:3px 8px;z-index:2}
+  .bx .bb{padding:calc(8px*var(--u)) calc(12px*var(--u)) calc(10px*var(--u));display:flex;flex-direction:column;gap:calc(4px*var(--u));flex:1;min-height:0}
+  .bx .bn{font-size:max(12.5px,calc(16px*var(--u)));font-weight:900;letter-spacing:.06em;line-height:1.1} .bx .ba{font-size:max(8.5px,calc(9.5px*var(--u)));font-weight:800;letter-spacing:.16em;color:var(--label);text-transform:uppercase}
+  .bx .lore{font-size:max(9.5px,calc(11px*var(--u)));font-weight:600;color:var(--text);line-height:1.45;font-style:italic;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical}
+  .bx .stat{display:flex;gap:calc(10px*var(--u));font-size:max(9px,calc(10.5px*var(--u)));font-weight:800;color:var(--label);margin-top:auto;flex-wrap:wrap} .bx .stat b{color:var(--gold)}
+  .bx .btn{margin:0 calc(12px*var(--u)) calc(10px*var(--u));flex:none}
+  .bx.locked{filter:grayscale(.7);opacity:.6;cursor:default} .bx.locked:active{transform:none} .bx.soon{border-style:dashed;opacity:.55;cursor:default}
   .cgrid2{display:flex;flex-direction:column;gap:calc(12px*var(--u));min-height:0}
   #coopPick .mode{flex:1;min-height:calc(110px*var(--u))}
   /* ===== loading: the same living background, the ninja parade on its glow ring ===== */
@@ -312,12 +336,13 @@
   <div class="top" id="menuTop"></div>
   <div id="menuGrid">
     <div>
-      <div class="mode m-boss" id="bBoss"><div class="glow"></div><canvas class="mic" data-ic="skull"></canvas><div class="grow"><div class="mt">BOSS FIGHT</div><div class="ms" id="msBoss">7 stages · one attempt each</div></div></div>
-      <div class="mode m-coop" id="bCoop"><div class="glow"></div><canvas class="mic" data-ic="coop"></canvas><div class="grow"><div class="mt">CO-OP</div><div class="ms">play with a friend</div></div></div>
-      <div class="mode m-daily" id="bDaily"><div class="glow"></div><canvas class="mic" data-ic="star"></canvas><div class="grow"><div class="mt">DAILY MISSIONS</div><div class="ms" id="msDaily">0 / 3 complete</div></div><div class="badge" id="dailyBadge">!</div></div>
+      <div class="mode m-boss" id="bBoss"><div class="glow"></div><canvas class="mic" data-ic="skull"></canvas><span class="rn">ᛟ</span><div class="grow"><div class="mt">BOSS FIGHT</div><div class="ms" id="msBoss">7 stages · one attempt each</div></div></div>
+      <div class="mode m-coop" id="bCoop"><div class="glow"></div><canvas class="mic" data-ic="coop"></canvas><span class="rn">ᚹ</span><div class="grow"><div class="mt">CO-OP</div><div class="ms">play with a friend</div></div></div>
+      <div class="mode m-daily" id="bDaily"><div class="glow"></div><canvas class="mic" data-ic="star"></canvas><span class="rn">ᛞ</span><div class="grow"><div class="mt">DAILY MISSIONS</div><div class="ms" id="msDaily">0 / 3 complete</div></div><div class="badge" id="dailyBadge">!</div></div>
     </div>
     <div style="position:relative">
       <div class="logo"><b>ELEMENTAL NINJAS</b></div>
+      <div class="tagline"><div class="orbrow" style="margin:0"><i class="orb" style="--c:#a855f7"></i><i class="orb" style="--c:#7dd3fc"></i><i class="orb" style="--c:#fb923c"></i><i class="orb" style="--c:#22d3ee"></i><i class="orb" style="--c:#d9a34a"></i><i class="orb" style="--c:#facc15"></i></div><div class="t-label">Six elements · one shore</div></div>
       <div class="hero" id="bChars"><div class="ring"></div><canvas id="heroCv"></canvas>
         <div class="htag"><b id="heroName">SHADE</b><span id="heroRole">BALANCED · LV 1</span><em>TAP TO CHANGE OR UPGRADE</em></div></div>
     </div>
@@ -359,7 +384,7 @@
 <div id="ovMaps" class="ov"><div class="top"><div><div class="t-title">CHOOSE A MAP</div><div class="t-label" style="margin-top:2px">Where do you fight today?</div></div><div class="x" id="bMapBack">✕</div></div><div class="mgrid" id="mapList"></div><div class="msg" id="mapMsg"></div></div>
 
 <!-- ================= BOSS FIGHT ================= -->
-<div id="ovBossList" class="ov"><div class="top"><div><div class="t-title" style="color:#ff9a8c">BOSS FIGHT</div><div class="t-label" style="margin-top:2px">One attempt per run · rewards on a kill only · kills here do not count toward character quests</div></div><div class="x" id="bBossBack">✕</div></div><div class="bgrid scroll" id="bfList"></div></div>
+<div id="ovBossList" class="ov"><div class="top"><div><div class="t-title" style="color:#ff9a8c">BOSS FIGHT</div><div class="t-label" style="margin-top:2px">One attempt per run · rewards on a kill only · kills here do not count toward character quests</div></div><div class="swipe">‹ swipe ›</div><div class="x" id="bBossBack">✕</div></div><div class="bscroll" id="bfList"></div></div>
 <div id="ovBossPre" class="ov"><div class="center"><div class="panel">
   <div class="ph"><div class="grow"><div class="t-title" id="bfPreTitle">STAGE</div><div class="t-label" id="bfPreSub" style="margin-top:3px;letter-spacing:.1em"></div></div><div class="x" id="bBossPreBack">✕</div></div>
   <div class="pb" style="flex-direction:row;gap:calc(18px*var(--u));align-items:stretch">
@@ -6412,7 +6437,8 @@ function icoHtml(k,cls){ return `<canvas class="ico ${cls||''}" data-ic="${k}"><
 function uiBgFrame(t){ const cv=$('uibg'), W=innerWidth, H=innerHeight; if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; } const c=cv.getContext('2d');
   const gr=c.createLinearGradient(0,0,0,H); gr.addColorStop(0,'#141a3a'); gr.addColorStop(.55,'#0a0d22'); gr.addColorStop(1,'#05070f'); c.fillStyle=gr; c.fillRect(0,0,W,H);
   c.strokeStyle='rgba(120,140,220,.06)'; c.lineWidth=1; c.beginPath(); const gs=Math.max(36,Math.round(48*Math.min(W/1280,H/720)+24)); for(let x=(t*6)%gs;x<W;x+=gs){ c.moveTo(x,0); c.lineTo(x,H); } for(let y=0;y<H;y+=gs){ c.moveTo(0,y); c.lineTo(W,y); } c.stroke();
-  for(const o of UIK.orbs){ const x=((o.x+Math.sin(t*o.s*3+o.ph)*.06)%1+1)%1*W, y=((o.y-t*o.s*.08+Math.cos(t*o.s*2+o.ph)*.04)%1+1)%1*H, r=o.r*Math.min(W,H)*1.6; const g2=c.createRadialGradient(x,y,0,x,y,r); g2.addColorStop(0,hexA(o.col,.22)); g2.addColorStop(1,hexA(o.col,0)); c.fillStyle=g2; c.fillRect(x-r,y-r,r*2,r*2); }
+  for(const o of UIK.orbs){ const x=((o.x+Math.sin(t*o.s*3+o.ph)*.06)%1+1)%1*W, y=((o.y-t*o.s*.08+Math.cos(t*o.s*2+o.ph)*.04)%1+1)%1*H, r=o.r*Math.min(W,H)*1.6; const g2=c.createRadialGradient(x,y,0,x,y,r); g2.addColorStop(0,hexA(o.col,.3)); g2.addColorStop(1,hexA(o.col,0)); c.fillStyle=g2; c.fillRect(x-r,y-r,r*2,r*2); }
+  for(let i=0;i<40;i++){ const sx=((i*97)%100)/100*W, sy=((i*61)%100)/100*H, tw=.5+.5*Math.sin(t*(1.5+i%5*.4)+i); c.fillStyle='rgba(255,255,255,'+(.12+.5*tw)+')'; c.fillRect(sx,sy,1.5,1.5); }   /* twinkling points */
   c.textAlign='center'; for(const r of UIK.runes){ const y=((r.y-t*r.v)%1+1)%1*H; c.globalAlpha=r.a; c.fillStyle='#9fb0e0'; c.font='700 '+Math.round(14*r.s*Math.max(.7,Math.min(W/1280,1.2)))+'px "Segoe UI Symbol","Noto Sans Runic",sans-serif'; c.fillText(r.c,r.x*W,y); } c.globalAlpha=1;
   const vg=c.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75); vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.6)'); c.fillStyle=vg; c.fillRect(0,0,W,H); }
 /* ---------- the loop: only while a screen is up ---------- */
@@ -6441,7 +6467,7 @@ const WORLD_BOSSES={bone_shore:['hippo','croc','lord'],frost_ember:['titan','yet
 function worldProgress(m){ const B=WORLD_BOSSES[m.id]||[]; let done=0, total=B.length*2; for(const b of B){ if((SAVE.bosses[b]||0)>0) done++; if(SAVE.bossFightCleared[b]) done++; } return {done,total,pct:total?done/total:0}; }
 function menuRefresh(){ const top=$('menuTop'); if(!top) return; top.innerHTML=`<div class="pill">${icoHtml('gold')}<b class="t-num outline">${fmtN(SAVE.gold)}</b><span class="plus" data-go="MAP_SELECT">+</span></div><div class="pill">${icoHtml('chi')}<b class="t-num outline">${SAVE.chi||0}</b><span class="plus" data-go="MAP_SELECT">+</span></div><div class="pill">${icoHtml('key')}<b class="t-num outline">${SAVE.keys||0}</b></div>`;
   top.querySelectorAll('.plus').forEach(b=>b.onclick=ev=>{ ev.stopPropagation(); setState(b.dataset.go); });
-  const ch=CH[SAVE.selected]; $('heroName').textContent=SAVE.selected; $('heroRole').textContent=ch.role+' · LV '+(SAVE.levels[SAVE.selected]||1); $('ovMenu').style.setProperty('--g',ch.color);
+  const ch=CH[SAVE.selected]; $('heroName').textContent=SAVE.selected; $('heroRole').textContent=ch.role+' · LV '+(SAVE.levels[SAVE.selected]||1); $('ovMenu').style.setProperty('--g',ch.color); const hero=$('bChars'); hero.style.setProperty('--aura',ch.color); hero.querySelectorAll('.aurap').forEach(e=>e.remove()); for(let i=0;i<5;i++){ const p=document.createElement('i'); p.className='aurap'; p.style.left=(30+i*10+Math.random()*8)+'%'; p.style.animationDelay=(i*.7)+'s'; p.style.animationDuration=(3+Math.random()*1.5)+'s'; hero.appendChild(p); }   /* element motes rise around the ninja in his colour */
   const cleared=BF_STAGES.filter(s=>SAVE.bossFightCleared[s.id]).length; $('msBoss').textContent=BF_STAGES.length+' stages · '+cleared+' cleared';
   dailyMenuBadge();
   let cur=MAPS[0]; for(const m of MAPS){ if(m.plv&&playerLevel()>=m.plv) SAVE.maps[m.id]=true; if(!m.locked&&SAVE.maps[m.id]) cur=m; }
@@ -6487,12 +6513,22 @@ function buildMapList(){ const el=$('mapList'); el.innerHTML=''; $('mapMsg').sty
     else { const mini=MINIS[m.id]; const cv2=document.createElement('canvas'); cv2.width=mini.width; cv2.height=mini.height; cv2.getContext('2d').drawImage(mini,0,0); cv2.className='thumb'; d.appendChild(cv2); d.insertAdjacentHTML('beforeend',`<div class="mb"><div class="mn">${m.name} <span class="ml">· LEVELS ${m.lvl[0]}–${m.lvl[1]}</span></div><div class="md">${m.desc}</div><div class="mbz">Bosses: ${m.bosses}${m.id==='frost_ember'?' · Hidden areas '+m2SecretsFound()+' / 7':''}</div></div><div class="btn green">PLAY<span class="sh"><i></i></span></div>`); d.onclick=()=>{ audioInit(); enterMap(m); setState('PLAYING'); }; }
     el.appendChild(d); } }
 /* ---------- boss fight: list, pre-fight, victory, defeat ---------- */
+const BOSS_LORE={hippo:"The river's old tyrant. It sleeps under the mud of the pit and comes up like a landslide. Nothing on Bone Shore has ever pushed it back.",
+  croc:"It knows every trick the swamp taught it: dive, vanish, and break the planks under your feet. The decks still standing are the ones it has not reached yet.",
+  lord:"Captain of the black sail. Hooks, cannon and a crew that answers his whistle. When the tide rushes in, the pier is his.",
+  titan:"Stone that walks and bleeds fire. It calls golems down from the mountain and paints the caldera with lava. There is no second chance on the wrong tile.",
+  yeti:"The howl over the snow. Ice spikes, frozen breath and a leap that shakes the whole hollow. Its blizzard slows everyone not born of frost.",
+  witch:"She raises what the underworld buried. Poison bolts, dark waves, and servants that burn green. Cut them down fast, or fight them all at once.",
+  guard:"The last warden of the underworld, carved from living crystal. A sweeping axe, diamond lasers and four arms that drag you into reach. The crystal does not break."};
+const BOSS_COL={hippo:'#c8a878',croc:'#7aa050',lord:'#b57bff',titan:'#ff7a1a',yeti:'#9fdcff',witch:'#4dfa42',guard:'#a8ffb8'}, BOSS_RUNE={hippo:'ᚢ',croc:'ᛊ',lord:'ᚱ',titan:'ᚦ',yeti:'ᛁ',witch:'ᛗ',guard:'ᛞ'};
 function buildBossList(){ const el=$('bfList'); el.innerHTML='';
-  for(const st of BF_STAGES){ const prev=BF_STAGES[st.n-2], locked=!!prev&&!SAVE.bossFightCleared[prev.id], cleared=!!SAVE.bossFightCleared[st.id], best=SAVE.bossFightBestTime[st.id], tries=SAVE.bossFightAttempts[st.id]||0;
-    const d=document.createElement('div'); d.className='card bcard'+(locked?' locked':''); d.appendChild(bossPortrait(st,96));
-    d.insertAdjacentHTML('beforeend',`${cleared?'<div class="ok">CLEARED</div>':''}<div class="bs">Stage ${st.n}</div><div class="bn">${EN[st.boss].name}</div><div class="bd2">${st.name} · LV ${st.lvl}<br>${best?'Best <b>'+fmtT(best)+'</b>':'No clear yet'} · ${tries} attempt${tries===1?'':'s'}</div><div class="btn ${locked?'grey dis':'red'} sm">${locked?'CLEAR STAGE '+(st.n-1):'FIGHT'}</div>`);
+  for(const st of BF_STAGES){ const prev=BF_STAGES[st.n-2], locked=!!prev&&!SAVE.bossFightCleared[prev.id], cleared=!!SAVE.bossFightCleared[st.id], best=SAVE.bossFightBestTime[st.id], tries=SAVE.bossFightAttempts[st.id]||0, col=BOSS_COL[st.boss]||'#ff9a8c';
+    const d=document.createElement('div'); d.className='card bx'+(locked?' locked':''); d.style.setProperty('--g',col);
+    const art=document.createElement('div'); art.className='art'; art.innerHTML=`<span class="rn">${BOSS_RUNE[st.boss]||'ᚠ'}</span><div class="ring"></div><div class="st">Stage ${st.n}</div>${cleared?'<div class="ok">CLEARED</div>':''}`; art.appendChild(bossPortrait(st,128)); d.appendChild(art);
+    d.insertAdjacentHTML('beforeend',`<div class="bb"><div class="bn">${EN[st.boss].name}</div><div class="ba">${st.name} · recommended LV ${st.lvl}</div><div class="lore">${BOSS_LORE[st.boss]||''}</div><div class="stat"><span>Best <b>${best?fmtT(best):'—'}</b></span><span><b>${tries}</b> attempt${tries===1?'':'s'}</span></div></div><div class="btn ${locked?'grey dis':'red'}">${locked?'CLEAR STAGE '+(st.n-1)+' FIRST':'FIGHT'}${locked?'':'<span class="sh"><i></i></span>'}</div>`);
     if(!locked) d.onclick=()=>openBossPre(st); el.appendChild(d); }
-  el.insertAdjacentHTML('beforeend','<div class="card bcard soon"><div class="bs">Next</div><div class="bn">COMING SOON</div><div class="bd2">More bosses will join the pit</div></div>'); }
+  el.insertAdjacentHTML('beforeend','<div class="card bx soon" style="--g:#5a67a8"><div class="art"><span class="rn">ᚠ</span><div class="st">Next</div></div><div class="bb"><div class="bn">COMING SOON</div><div class="ba">More bosses will join the pit</div><div class="lore">Something stirs beyond the crystal vault…</div></div></div>');
+  const cur=BF_STAGES.find(s=>!SAVE.bossFightCleared[s.id])||BF_STAGES[BF_STAGES.length-1]; const i=BF_STAGES.indexOf(cur); if(i>1) setTimeout(()=>{ el.scrollLeft=(el.children[i].offsetLeft-el.children[0].offsetLeft)-20; },30);   /* opens on the next stage to beat */ }
 function openBossPre(st){ BF_SEL=st; const n=SAVE.selected, lv=SAVE.levels[n]; const po=$('bfPrePortrait'); po.querySelectorAll('canvas').forEach(c=>c.remove()); const pc=bossPortrait(st,150); pc.style.cssText='width:100%;height:auto;image-rendering:pixelated;position:relative;z-index:1;filter:drop-shadow(0 10px 14px rgba(0,0,0,.6))'; po.appendChild(pc);
   $('bfPreTitle').textContent='STAGE '+st.n+' — '+EN[st.boss].name; $('bfPreSub').textContent=st.name+' · recommended LV '+st.lvl+' · your '+n+' is LV '+lv;
   const first=!SAVE.bossFightFirstClearClaimed[st.id], row=(ic,lab,v,cls)=>`<div class="row ${cls||''}">${icoHtml(ic)}${lab}<span class="v">${v}</span></div>`;
