@@ -102,7 +102,7 @@
   .badge{position:absolute;top:calc(6px*var(--u));right:calc(8px*var(--u));min-width:calc(22px*var(--u));height:calc(22px*var(--u));min-height:16px;border-radius:99px;background:#ff4d4d;border:3px solid #0a0d1c;font-size:max(9px,calc(11px*var(--u)));font-weight:900;display:none;place-items:center;padding:0 5px;box-shadow:0 3px 6px rgba(0,0,0,.5)} .badge.on{display:grid}
   /* ===== the hero (menu centre) ===== */
   .hero{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;cursor:pointer;min-height:0}
-  .hero canvas{image-rendering:pixelated;filter:drop-shadow(0 12px 18px rgba(0,0,0,.65));height:66%;width:auto;max-height:100%;position:relative;z-index:1}
+  .hero canvas{image-rendering:pixelated;filter:drop-shadow(0 12px 18px rgba(0,0,0,.65));height:78%;width:auto;max-height:100%;position:relative;z-index:1}
   .ring{position:absolute;left:50%;transform:translateX(-50%);width:calc(260px*var(--u));height:calc(70px*var(--u));border-radius:50%;pointer-events:none}
   .ring::before{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(ellipse,color-mix(in srgb,var(--g,#a855f7) 45%,transparent),transparent 68%)}
   .ring::after{content:'';position:absolute;left:12%;right:12%;top:38%;bottom:38%;border-radius:50%;border:2px solid color-mix(in srgb,var(--g,#a855f7) 65%,transparent);box-shadow:0 0 18px color-mix(in srgb,var(--g,#a855f7) 50%,transparent)}
@@ -170,7 +170,7 @@
   .tile.ready{border-color:#ffd24a;box-shadow:0 0 14px rgba(255,210,74,.6),0 3px 0 #0b0f24;animation:readyPulse 1.1s ease-in-out infinite}
   @keyframes readyPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
   .bportrait{flex:1;position:relative;display:flex;align-items:flex-end;justify-content:center;min-height:0}
-  .bportrait canvas.big{height:86%;width:auto;image-rendering:pixelated;filter:drop-shadow(0 10px 12px rgba(0,0,0,.6));position:relative;z-index:1}
+  .bportrait canvas.big{height:96%;width:auto;image-rendering:pixelated;filter:drop-shadow(0 10px 12px rgba(0,0,0,.6));position:relative;z-index:1}
   .bportrait .ring{bottom:calc(6px*var(--u))}
   .bportrait.aura canvas.big{filter:drop-shadow(0 10px 10px rgba(0,0,0,.6)) drop-shadow(0 0 7px var(--aura));animation:aurapulse 2.6s ease-in-out infinite}
   @keyframes aurapulse{0%,100%{filter:drop-shadow(0 10px 10px rgba(0,0,0,.6)) drop-shadow(0 0 5px var(--aura))}50%{filter:drop-shadow(0 10px 10px rgba(0,0,0,.6)) drop-shadow(0 0 12px var(--aura))}}
@@ -193,7 +193,7 @@
   .srow .abslot{background:#111827}
   .cost{display:flex;justify-content:center;gap:calc(14px*var(--u));margin-top:calc(6px*var(--u));font-size:max(10.5px,calc(13px*var(--u)));font-weight:900;color:var(--gold);align-items:center;flex-wrap:wrap} .cost span{display:flex;align-items:center;gap:5px} .cost .need{color:#ff9a8c;font-size:.85em}
   .bquest{border-radius:calc(12px*var(--u));padding:calc(10px*var(--u)) calc(12px*var(--u));background:linear-gradient(180deg,#1a2144,#121736);border:1px solid #2c3560;font-size:max(10px,calc(12px*var(--u)));font-weight:700;color:var(--text);line-height:1.4}
-  .bquest b{color:var(--gold)} .bquest .qr{color:#9fc0ff;margin-top:3px} .bquest .bar{margin:6px 0}
+  .bquest b{color:var(--gold)} .bquest.big{border-color:color-mix(in srgb,var(--c) 55%,#3a4574);border-bottom-width:3px} .bquest .qt{font-size:max(11px,calc(13px*var(--u)));font-weight:800;color:#fff;margin-top:3px;line-height:1.35} .qrow{display:flex;align-items:center;gap:8px;padding:calc(3px*var(--u)) 0;border-top:1px solid #222a52;font-size:max(10px,calc(12px*var(--u)))} .qrow b{margin-left:auto;color:var(--gold)} .qrow .qk{width:1.2em;color:#5a67a8;font-weight:900} .qrow.done .qk{color:#8dfab5} .qrow.done b{color:#8dfab5} .srow.preview{opacity:.55} .srow.preview .arrow{display:none} .bquest .qr{color:#9fc0ff;margin-top:3px} .bquest .bar{margin:6px 0}
   .questbar{height:6px;background:#0c1130;border-radius:99px;overflow:hidden;margin-top:3px} .questbar i{display:block;height:100%;background:var(--c,#3ef07a)}
   .spk{position:absolute;width:6px;height:6px;border-radius:50%;background:var(--c,#fde047);box-shadow:0 0 8px var(--c,#fde047);pointer-events:none;animation:spk .9s ease-out forwards;z-index:5}
   @keyframes spk{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
@@ -1231,7 +1231,7 @@ const SFX={
   bell:()=>{ for(let i=0;i<3;i++){ tone(880,.5,'sine',.16,-40,i*.7); tone(1320,.3,'sine',.06,0,i*.7); } },   /* the ship's bell */
   hit:()=>{tone(200,.08,'square',.12,-120);noise(.05,.1);}, crit:()=>{tone(320,.12,'square',.16,-200);noise(.08,.15);}, block:()=>{tone(900,.06,'triangle',.18,-300);},
   shoot:()=>tone(620,.1,'sine',.1,260), coin:()=>{tone(1300,.06,'square',.08);tone(1900,.09,'square',.08,0,.06);}, hurt:()=>tone(150,.15,'sawtooth',.18,-80),
-  ui:()=>{ tone(880,.05,'sine',.035,120); },   /* a very gentle menu tap */
+  ui:()=>{ tone(880,.05,'sine',.035,120); },pick:()=>{ tone(520,.06,'square',.06,260); tone(1040,.09,'sine',.05,0,.05); },   /* a very gentle menu tap */
   swoosh:()=>{ tone(440,.16,'sine',.025,180); tone(660,.14,'sine',.012,120,.06); },   /* screen change: a soft tonal sweep, no noise burst */   /* screen change */
   dash:()=>noise(.12,.1), levelup:()=>[523,659,784,1046].forEach((f,i)=>tone(f,.18,'square',.12,0,i*.08)), death:()=>{tone(300,.5,'sawtooth',.2,-250);noise(.3,.15);},
   key:()=>[784,988,1175,1568,2093].forEach((f,i)=>tone(f,.22,'triangle',.14,0,i*.07)), boom:()=>{tone(55,.6,'sine',.5,-30);noise(.35,.3);}, rattle:()=>{tone(300,.05,'square',.1);tone(240,.05,'square',.1,0,.08);}, chestOpen:()=>{tone(660,.2,'triangle',.15,400);noise(.15,.12);},
@@ -1345,7 +1345,7 @@ function buildProfile(){ const el=$('profBody'); const plv=playerLevel(), lo=plv
   const bt=SAVE.bossFightBestTime||{}; h+=`<div class="pbox"><div class="psec">BOSS FIGHT BEST TIMES</div>${BF_STAGES.map(s=>`<div>${s.name}: <b>${bt[s.id]?bt[s.id].toFixed(1)+'s':'—'}</b></div>`).join('')}</div></div>`;
   el.innerHTML=h; el.querySelector('.pport').appendChild(charCanvas(CH[SAVE.selected],false,3,88,104,.97)); uiPaintIcons(UIK.t,true); }
 /* ---- save defaults for older saves ---- */
-function migrateSave(){ SAVE.player=SAVE.player||{name:''}; if(!SAVE.shakeDefaultOff){ SAVE.shakeDefaultOff=1; SAVE.settings.shake=false; }   /* screen shake is off by default now; turning it back on in Settings sticks */ SAVE.w3=SAVE.w3||{barCleared:false}; SAVE.levels.VOLT=SAVE.levels.VOLT||1; SAVE.bosses=SAVE.bosses||{}; SAVE.bosses.witch=SAVE.bosses.witch||0; SAVE.bosses.guard=SAVE.bosses.guard||0; SAVE.w3kills=SAVE.w3kills||0; SAVE.trade=SAVE.trade||{day:'',sold:0,bought:0}; for(const n of ORDER) SAVE.levels[n]=Math.min(MAX_LV,Math.max(1,SAVE.levels[n]||1)); }
+function migrateSave(){ SAVE.player=SAVE.player||{name:''}; if(SAVE.player.name==='Romaso34'&&!SAVE.owner26){ SAVE.owner26=1; for(const n of ORDER){ SAVE.unlocked[n]=true; SAVE.levels[n]=Math.max(SAVE.levels[n]||1,26); } if(SAVE.ready) delete SAVE.ready.VOLT; }   /* the author's own save: the whole roster open at 26, applied once */ if(!SAVE.shakeDefaultOff){ SAVE.shakeDefaultOff=1; SAVE.settings.shake=false; }   /* screen shake is off by default now; turning it back on in Settings sticks */ SAVE.w3=SAVE.w3||{barCleared:false}; SAVE.levels.VOLT=SAVE.levels.VOLT||1; SAVE.bosses=SAVE.bosses||{}; SAVE.bosses.witch=SAVE.bosses.witch||0; SAVE.bosses.guard=SAVE.bosses.guard||0; SAVE.w3kills=SAVE.w3kills||0; SAVE.trade=SAVE.trade||{day:'',sold:0,bought:0}; for(const n of ORDER) SAVE.levels[n]=Math.min(MAX_LV,Math.max(1,SAVE.levels[n]||1)); }
 migrateSave(); gemInit();
 /* test builds only: a preset save so a boss can be tried right away (TEST_PRESET is set by the build, absent in the real game) */
 if(typeof TEST_PRESET!=='undefined'&&TEST_PRESET){ const T=TEST_PRESET; for(const n in T.levels||{}){ SAVE.unlocked[n]=true; SAVE.levels[n]=Math.max(SAVE.levels[n]||1,T.levels[n]); } if(T.selected) SAVE.selected=T.selected; for(const id of T.cleared||[]) SAVE.bossFightCleared[id]=true; for(const m of T.maps||[]) SAVE.maps[m]=true; if(T.xpTotal) SAVE.xpTotal=Math.max(SAVE.xpTotal||0,T.xpTotal); if(T.chi) SAVE.chi=Math.max(SAVE.chi||0,T.chi); if(T.gold) SAVE.gold=Math.max(SAVE.gold||0,T.gold); if(T.name&&!SAVE.player.name) SAVE.player.name=T.name; }
@@ -6442,8 +6442,8 @@ function uiBgFrame(t){ const cv=$('uibg'), W=innerWidth, H=innerHeight; if(cv.wi
 /* ---------- the loop: only while a screen is up ---------- */
 function uiLoop(now){ if(!UIK.on) return; requestAnimationFrame(uiLoop); const t=now/1000, dt=Math.min(.1,t-(UIK.last||t)); UIK.last=t; UIK.t=t; if(G.state==='PLAYING'&&!SPLASH.on){ UIK.on=false; $('uibg').classList.remove('on'); return; }
   uiBgFrame(t); UIK.iconT+=dt; if(UIK.iconT>.08){ UIK.iconT=0; uiPaintIcons(t); }
-  if(G.state==='MENU') uiHero($('heroCv'),CH[SAVE.selected],t,4);
-  if(G.state==='CHARACTERS'&&VIEW) uiHero($('charCv'),CH[VIEW],t,4,!SAVE.unlocked[VIEW]); }
+  if(G.state==='MENU') uiHero($('heroCv'),CH[SAVE.selected],t,5);
+  if(G.state==='CHARACTERS'&&VIEW) uiHero($('charCv'),CH[VIEW],t,5,!SAVE.unlocked[VIEW]); }
 function uiState(s){ const bg=$('uibg'); if(s==='PLAYING'){ UIK.on=false; bg.classList.remove('on'); return; } bg.classList.add('on'); if(!UIK.on){ UIK.on=true; UIK.last=0; requestAnimationFrame(uiLoop); } if(s==='MENU') menuRefresh(); if(s==='SETTINGS') $('setName').textContent=(playerName()||'NINJA')+'  ›'; }
 function uiHero(cv,ch,t,s,locked){ if(!cv) return; const w=Math.round(34*s), h=Math.round(46*s); if(cv.width!==w||cv.height!==h){ cv.width=w; cv.height=h; } const c=cv.getContext('2d'); c.clearRect(0,0,w,h); drawSprite(c,CHARS[ch.sprite],'idle',t*.9,1,s,w/2,h-4*s,locked?'rgba(0,0,0,.85)':null); }
 /* ---------- toasts: one component for every message; five variants; three at once; the same title is not repeated within four seconds ---------- */
@@ -6478,11 +6478,14 @@ function dailyMenuBadge(){ const n=dailyDoneCount(); const ms=$('msDaily'), bd=$
 function bossStarsLine(st){ const S=statsFor(st.boss), B=ninjaAvg(st.lvl), exp=S.hp/(B.dps*.55); return [[5,.4],[4,.6],[3,.85],[2,1.2]].map(([n,k])=>`<span>${'★'.repeat(n)} ${fmtT(exp*k)}</span>`).join(''); }
 function buildCards(){ if(!VIEW||!CH[VIEW]) VIEW=SAVE.selected; buildCharsScreen(VIEW); }
 function showCharDetail(n,anim){ VIEW=n; CVIEW='detail'; buildCharsScreen(n,anim); }
+/* the unlock quest as its own card: the text, one bar, every condition on its own line with a check mark */
+function questCardHtml(n,ch,q,ready){ const parts=q.progress().split(' · ').map(p=>{ const m=p.match(/^(.*?)\s(\d+)\/(\d+)$/); if(!m) return `<div class="qrow"><span>${p}</span></div>`; const done=+m[2]>=+m[3]; return `<div class="qrow ${done?'done':''}"><span class="qk">${done?'✔':'○'}</span><span>${m[1]}</span><b>${m[2]} / ${m[3]}</b></div>`; }).join('');
+  return `<div class="bquest big" style="--c:${ch.color}"><div class="t-label" style="color:${ch.color}">Unlock quest${ready?' · complete':''}</div><div class="qt">${q.text}</div><div class="bar"><i style="width:${Math.round(q.pct()*100)}%;background:${ch.color}"></i></div>${parts}<div class="qr">${q.remaining()}</div></div><div class="t-label" style="margin-top:calc(4px*var(--u))">Stats at level 1</div>`; }
 function buildCharsScreen(n,anim){ const ch=CH[n], lv=SAVE.levels[n]||1, gh=gemMult(n,'hp'), ga=gemMult(n,'atk'), m=LV_MULT(lv)*gh, m2=LV_MULT(lv+1)*gh, dm=LV_DMG(lv)*ga, dm2=LV_DMG(lv+1)*ga, un=!!SAVE.unlocked[n], sel=SAVE.selected===n, q=QUESTS[n], cost=LEVEL_COST(lv+1), can=un&&lv<MAX_LV&&SAVE.gold>=cost, ready=!un&&!!(SAVE.ready&&SAVE.ready[n]);
   $('goldChars').textContent=fmtN(SAVE.gold); $('chiChars').textContent=SAVE.chi||0; $('charsTitle').textContent='NINJAS '+ORDER.filter(x=>SAVE.unlocked[x]).length+' / '+ORDER.length; $('charsCount').textContent=''; $('bCharsPlay').textContent=G.charsFrom==='GAME'?'BACK TO GAME':'CHOOSE MAP'; $('bSelectTop').style.display='none';
   const strip=$('cgrid'); strip.innerHTML=''; for(const k of ORDER){ const c2=CH[k], u2=!!SAVE.unlocked[k], r2=!u2&&!!(SAVE.ready&&SAVE.ready[k]); const d=document.createElement('div'); d.className='tile'+(k===n?' cur':'')+(SAVE.selected===k?' sel':'')+(u2?'':' locked')+(r2?' ready':''); d.style.setProperty('--c',c2.color); d.dataset.name=k; d.appendChild(charCanvas(c2,!u2,2,56,60,.98)); d.insertAdjacentHTML('beforeend',`<div class="chk">✔</div>${u2?'':`<div class="lk">${r2?'UNLOCK':'LOCKED'}</div>`}`);
-    d.onclick=()=>{ if(r2){ unlockNinja(k,d); return; } VIEW=k; if(u2){ SAVE.selected=k; save(); } buildCharsScreen(k); SFX.ui&&SFX.ui(); }; strip.appendChild(d); }
-  const po=$('charPortrait'); po.style.setProperty('--c',ch.color); $('charRing').style.setProperty('--g',ch.color); $('charName').textContent=n; $('charRole').textContent=ch.role+(un?' · LV '+lv:' · LOCKED'); uiHero($('charCv'),ch,UIK.t,4,!un);
+    d.onclick=()=>{ if(r2){ unlockNinja(k,d); return; } if(k!==VIEW) SFX.pick(); VIEW=k; if(u2){ SAVE.selected=k; save(); } buildCharsScreen(k); }; strip.appendChild(d); }
+  const po=$('charPortrait'); po.style.setProperty('--c',ch.color); $('charRing').style.setProperty('--g',ch.color); $('charName').textContent=n; $('charRole').textContent=ch.role+(un?' · LV '+lv:' · LOCKED'); uiHero($('charCv'),ch,UIK.t,5,!un);
   $('charGemLine').textContent=''; $('charSlots').innerHTML=un?equipSlotHtml(n):''; if(un){ equipSlotWire(n); gemSlotsWire(n); } else gemAura(po,null);
   $('charSelectRow').innerHTML=un?`<div class="btn ${sel?'grey':'blue'} sm" id="bSelectChar" ${sel?'style="pointer-events:none"':''}>${sel?'✔ SELECTED':'SELECT'}</div>`:'';
   const sb=$('bSelectChar'); if(sb&&!sel) sb.onclick=()=>{ SAVE.selected=n; save(); SFX.ui&&SFX.ui(); buildCharsScreen(n); };
@@ -6490,14 +6493,15 @@ function buildCharsScreen(n,anim){ const ch=CH[n], lv=SAVE.levels[n]||1, gh=gemM
   const gain=(a,b)=>un&&lv<MAX_LV?`<span class="gain">+${fmtN(b-a)}</span>`:'', arrow=un&&lv<MAX_LV?'<div class="arrow">↑</div>':'';
   const srow=(sq,lab,val,ar)=>`<div class="srow">${sq}<div><div class="lab">${lab}</div><div class="val">${val}</div></div>${ar}</div>`;
   const SP=SPIN[n], sup=ABILITY_MULT[n];
-  $('statList').innerHTML=srow('<div class="sq" style="background:linear-gradient(180deg,#6ff0a0,#25b566);color:#04321a">♥</div>','Health',`<span class="${gh>1?'gemv':''}">${fmtN(ch.hp*m)}</span>${gain(ch.hp*m,ch.hp*m2)}`,arrow)
+  $('statList').innerHTML=(un?'':questCardHtml(n,ch,q,ready))+srow('<div class="sq" style="background:linear-gradient(180deg,#6ff0a0,#25b566);color:#04321a">♥</div>','Health',`<span class="${gh>1?'gemv':''}">${fmtN(ch.hp*m)}</span>${gain(ch.hp*m,ch.hp*m2)}`,arrow)
     +srow('<div class="sq" style="background:linear-gradient(180deg,#ff9a8c,#c62828);color:#fff">✦</div>','Attack',`<span class="${ga>1?'gemv':''}">${fmtN(ch.dmg*dm)}</span>${gain(ch.dmg*dm,ch.dmg*dm2)}`,arrow)
     +srow('<div class="sq abslot" style="border:1px solid '+ch.color+'"></div>','Super',`${ch.skill.name} <small>${ch.skill.cd}s</small>${sup?` · <span class="${ga>1?'gemv':''}">${fmtN(ch.dmg*dm*sup)} dmg</span>${gain(ch.dmg*dm*sup,ch.dmg*dm2*sup)}`:' · <small>freeze 2.5s</small>'}`,sup?arrow:'')
     +srow(`<div class="sq" style="background:radial-gradient(circle at 50% 45%,${SP.core},${SP.ring[0]} 45%,${SP.ring[1]} 80%);color:#fff">◎</div>`,'Spinjitzu',`<span class="${ga>1?'gemv':''}">${fmtN(spinTotal(n,dm))} dmg</span> <small>over ${SP.dur}s</small>${gain(spinTotal(n,dm),spinTotal(n,dm2))}`,arrow);
   $('statList').querySelector('.abslot').appendChild(abilityIconCanvas(n,'width:80%;height:80%'));
+  $('statList').querySelectorAll('.srow').forEach(r=>{ if(!un) r.classList.add('preview'); });
   const act=$('charAction');
   if(un) act.innerHTML=lv>=MAX_LV?`<div class="btn grey wide dis">MAX POWER</div>`:`<div class="btn green wide ${can?'':'dis'}" id="bUpgradeNow" style="height:calc(54px*var(--u));font-size:max(13px,calc(18px*var(--u)))">UPGRADE TO LV ${lv+1}${can?'<span class="sh"><i></i></span>':''}</div><div class="cost"><span>${icoHtml('gold')}${fmtN(cost)}</span>${SAVE.gold<cost?`<span class="need">you have ${fmtN(SAVE.gold)}</span>`:''}</div>`;
-  else act.innerHTML=`<div class="bquest"><b>QUEST</b> · ${q.text}<div class="bar"><i style="width:${Math.round(q.pct()*100)}%;background:${ch.color}"></i></div><div>${q.progress()}</div><div class="qr">${q.remaining()}</div></div>${ready?`<div class="btn green wide" id="bUnlockNow" style="margin-top:calc(8px*var(--u))">UNLOCK ${n}<span class="sh"><i></i></span></div>`:''}`;
+  else act.innerHTML=ready?`<div class="btn green wide" id="bUnlockNow" style="height:calc(54px*var(--u));font-size:max(13px,calc(18px*var(--u)))">UNLOCK ${n}<span class="sh"><i></i></span></div>`:`<div class="btn grey wide dis">LOCKED · ${Math.round(q.pct()*100)}% OF THE QUEST</div>`;
   const ub=$('bUpgradeNow'); if(ub) ub.onclick=()=>{ if(buyLevel(n)){ SFX.levelup(); buildCharsScreen(n,true); } };
   const uk=$('bUnlockNow'); if(uk) uk.onclick=()=>{ const tile=strip.querySelector(`[data-name="${n}"]`); unlockNinja(n,tile||po); };
   uiPaintIcons(UIK.t,true);
@@ -6530,7 +6534,7 @@ function buildBossList(){ const el=$('bfList'); el.innerHTML='';
 function openBossPre(st){ BF_SEL=st; const n=SAVE.selected, lv=SAVE.levels[n]; const po=$('bfPrePortrait'); po.querySelectorAll('canvas').forEach(c=>c.remove()); const pc=bossPortrait(st,150); pc.style.cssText='width:100%;height:auto;image-rendering:pixelated;position:relative;z-index:1;filter:drop-shadow(0 10px 14px rgba(0,0,0,.6))'; po.appendChild(pc);
   $('bfPreTitle').textContent='STAGE '+st.n+' — '+EN[st.boss].name; $('bfPreSub').textContent=st.name+' · recommended LV '+st.lvl+' · your '+n+' is LV '+lv;
   const first=!SAVE.bossFightFirstClearClaimed[st.id], row=(ic,lab,v,cls)=>`<div class="row ${cls||''}">${icoHtml(ic)}${lab}<span class="v">${v}</span></div>`;
-  $('bfPreChi').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:calc(6px*var(--u))">${first?row('chi','Chi','+1'):row('chi','Chi','<span class="dim" style="font-size:.8em">first clear only</span>')}${row('xp','XP','+'+st.xp)}${row('gold','Gold','+'+fmtN(st.coins))}</div>${first?`<div class="row hi" style="margin-top:calc(6px*var(--u))">First clear<span class="v" style="color:#d4b4ff">+2 ${icoHtml('chi')} &nbsp; +1 ${icoHtml('key')}</span></div>`:''}<div class="row" style="margin-top:calc(6px*var(--u))">You bring<span class="v">${SAVE.chi||0} ${icoHtml('chi')}</span><span class="dim" style="font-size:.85em;margin-left:8px">Chi spent in a failed attempt is gone</span></div><div class="stars" style="margin-top:calc(6px*var(--u))">${bossStarsLine(st)}</div>`;
+  $('bfPreChi').innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:calc(6px*var(--u))">${first?row('chi','Chi','+1'):row('chi','Chi','<span class="dim" style="font-size:.8em">first clear only</span>')}${row('xp','XP','+'+st.xp)}${row('gold','Gold','+'+fmtN(st.coins))}</div>${first?`<div class="row hi" style="margin-top:calc(6px*var(--u))">First clear<span class="v" style="color:#d4b4ff">+2 ${icoHtml('chi')} &nbsp; +1 ${icoHtml('key')}</span></div>`:''}<div class="row" style="margin-top:calc(6px*var(--u))">You bring<span class="v">${SAVE.chi||0} ${icoHtml('chi')}</span><span class="dim" style="font-size:.85em;margin-left:8px">Chi spent in a failed attempt is gone</span></div>`;
   setState('BOSSPRE'); uiPaintIcons(UIK.t,true); }
 function showBossFail(){ const L=G.lastFail; if(!L) return setState('BOSSLIST'); $('bfFailBoss').textContent=EN[L.stage.boss].name+' · '+L.stage.name;
   const row=(lab,v,ic)=>`<div class="row">${ic?icoHtml(ic):''}${lab}<span class="v" style="color:#fff">${v}</span></div>`;
