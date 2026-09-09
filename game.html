@@ -6427,7 +6427,7 @@ addEventListener('resize',uiFit); uiFit();
 /* ---------- icons: gold = COIN_IMG, Chi = the game's orb, XP / key = rewardIcon's paths, gem = the gem drawing; three mode glyphs ---------- */
 function uiDrawIcon(c,k,s,t){ c.clearRect(0,0,s,s); c.imageSmoothingEnabled=false;
   if(k==='gold'){ if(COIN_IMG.complete&&COIN_IMG.naturalWidth) c.drawImage(COIN_IMG,1,1,s-2,s-2); }
-  else if(k==='chi'){ const cx=s/2, cy=s/2, r=s*.34, p=.9+.1*Math.sin((t||0)*4); c.save(); c.imageSmoothingEnabled=true; c.shadowColor='rgba(56,189,248,.95)'; c.shadowBlur=s*.2; const rg=c.createRadialGradient(cx-r*.3,cy-r*.35,r*.08,cx,cy,r); rg.addColorStop(0,'#ffffff'); rg.addColorStop(.32,'#7fd8f8'); rg.addColorStop(.78,'#0ea5e9'); rg.addColorStop(1,'#0b5f96'); c.fillStyle=rg; c.globalAlpha=p; c.beginPath(); c.arc(cx,cy,r,0,TAU); c.fill(); c.globalAlpha=1; c.shadowBlur=0; c.fillStyle='rgba(255,255,255,.85)'; c.beginPath(); c.arc(cx-r*.38,cy-r*.42,r*.2,0,TAU); c.fill(); c.restore(); }   /* the round blue Chi orb, same drawing at every size */
+  else if(k==='chi'){ c.save(); c.scale(s/16,s/16); const og=g; g=c; chiOrb(8,5,t||.2); g=og; c.restore(); }   /* the game's own pixel Chi orb, never a drawn circle */
   else if(k==='xp'||k==='key'){ c.drawImage(rewardIcon(k,22),0,0,22,22,0,0,s,s); }
   else if(k==='gem'){ c.save(); c.scale(s/24,s/24); drawGem(c,1,GEM_RAR[3]||GEM_RAR[GEM_RAR.length-1],t||.3,0,0,'atk',false); c.restore(); } }
 function uiModeIcon(c,k,s){ const u=s/22; c.clearRect(0,0,s,s); c.save(); c.scale(u,u); const R=(x,y,w,h,col)=>{ c.fillStyle=col; c.fillRect(x,y,w,h); };
