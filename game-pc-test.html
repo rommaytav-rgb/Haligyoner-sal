@@ -56,6 +56,7 @@
   .back:active{transform:translateY(2px);box-shadow:0 1px 0 #0d1228}
   /* ===== the one button: five colours, a bottom shadow that collapses on press, a top inset highlight, an optional sweep ===== */
   .btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:calc(16px*var(--u));font-family:inherit;font-weight:900;letter-spacing:.16em;color:#fff;cursor:pointer;transition:transform .07s,box-shadow .07s,filter .15s;text-shadow:0 2px 0 rgba(0,0,0,.4);padding:0 calc(20px*var(--u));height:calc(50px*var(--u));min-height:34px;font-size:max(11px,calc(15px*var(--u)));white-space:nowrap;overflow:hidden;user-select:none}
+  .btn,.mode,.tile,.bx,.mcard,.x,.back,.slot,.sw,.plus,.hero{touch-action:manipulation}
   .btn:active,.btn.press{transform:translateY(4px)} .btn:hover{filter:brightness(1.06)}
   .btn .sh{position:absolute;inset:0;border-radius:inherit;overflow:hidden;pointer-events:none}
   .btn .sh i{position:absolute;top:-40%;width:44px;height:180%;background:rgba(255,255,255,.3);transform:rotate(20deg);animation:sweep 3.6s infinite}
@@ -103,7 +104,7 @@
   /* ===== the hero (menu centre) ===== */
   .hero{position:relative;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;cursor:pointer;min-height:0}
   .hero canvas{image-rendering:pixelated;filter:drop-shadow(0 12px 18px rgba(0,0,0,.65));height:100%;width:auto;max-height:100%;position:relative;z-index:1}
-  .ring{position:absolute;left:50%;transform:translateX(-50%);width:calc(260px*var(--u));height:calc(70px*var(--u));border-radius:50%;pointer-events:none}
+  .ring{pointer-events:none;position:absolute;left:50%;transform:translateX(-50%);width:calc(260px*var(--u));height:calc(70px*var(--u));border-radius:50%;pointer-events:none}
   .ring::before{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(ellipse,color-mix(in srgb,var(--g,#a855f7) 45%,transparent),transparent 68%)}
   .ring::after{content:'';position:absolute;left:12%;right:12%;top:38%;bottom:38%;border-radius:50%;border:2px solid color-mix(in srgb,var(--g,#a855f7) 65%,transparent);box-shadow:0 0 18px color-mix(in srgb,var(--g,#a855f7) 50%,transparent)}
   .hero .ring{bottom:calc(54px*var(--u))}
@@ -161,7 +162,7 @@
   .hero .aurap{bottom:24%;z-index:0}
   /* ===== characters screen ===== */
   #charsGrid{flex:1;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:calc(14px*var(--u));min-height:0}
-  .strip{display:flex;gap:calc(6px*var(--u));padding:calc(8px*var(--u)) calc(10px*var(--u));overflow-x:auto;overflow-y:hidden;scrollbar-width:none;flex:none}
+  .strip{position:relative;z-index:2;display:flex;gap:calc(6px*var(--u));padding:calc(8px*var(--u)) calc(10px*var(--u));overflow-x:auto;overflow-y:hidden;scrollbar-width:none;flex:none}
   .tile{position:relative;width:calc(58px*var(--u));height:calc(64px*var(--u));min-width:40px;min-height:44px;border-radius:calc(12px*var(--u));flex:0 0 auto;cursor:pointer;display:grid;place-items:center;background:linear-gradient(180deg,#1a2144,#121736);border:2px solid #2f3a66;box-shadow:0 3px 0 #0b0f24;transition:transform .08s}
   .tile:active{transform:translateY(2px)} .tile canvas{width:88%;height:auto;image-rendering:pixelated}
   .tile.cur{border-color:var(--c);box-shadow:0 0 14px color-mix(in srgb,var(--c) 55%,transparent),0 3px 0 #0b0f24}
@@ -170,7 +171,7 @@
   .tile.ready{border-color:#ffd24a;box-shadow:0 0 14px rgba(255,210,74,.6),0 3px 0 #0b0f24;animation:readyPulse 1.1s ease-in-out infinite}
   @keyframes readyPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.35)}}
   .bportrait{flex:1;position:relative;display:flex;align-items:flex-end;justify-content:center;min-height:0;overflow:visible}
-  .bportrait canvas.big{height:118%;margin-top:-18%;width:auto;image-rendering:pixelated;filter:drop-shadow(0 10px 12px rgba(0,0,0,.6));position:relative;z-index:1}
+  .bportrait canvas.big{pointer-events:none;height:118%;margin-top:-18%;width:auto;image-rendering:pixelated;filter:drop-shadow(0 10px 12px rgba(0,0,0,.6));position:relative;z-index:1}
   .bportrait .ring{bottom:calc(6px*var(--u))}
   .bportrait.aura canvas.big{filter:drop-shadow(0 10px 10px rgba(0,0,0,.6)) drop-shadow(0 0 7px var(--aura));animation:aurapulse 2.6s ease-in-out infinite}
   @keyframes aurapulse{0%,100%{filter:drop-shadow(0 10px 10px rgba(0,0,0,.6)) drop-shadow(0 0 5px var(--aura))}50%{filter:drop-shadow(0 10px 10px rgba(0,0,0,.6)) drop-shadow(0 0 12px var(--aura))}}
@@ -451,7 +452,7 @@
 <script>
 'use strict';
 const PLATFORM='pc';
-const TEST_PRESET={levels:{SHADE:26,BOREAS:26,APOLLO:26,BECK:26,CLAY:26,VOLT:26},selected:'SHADE',cleared:['hippo','croc','lord','titan','yeti','witch','guard'],maps:['bone_shore','frost_ember','underworld'],xpTotal:300*16*17,chi:20,gold:50000,name:'Tester'};
+const TEST_PRESET={levels:{SHADE:9,BOREAS:9,APOLLO:9,BECK:9,CLAY:9,VOLT:9},stamp:'lv9',selected:'SHADE',cleared:['hippo','croc','lord','titan','yeti','witch','guard'],maps:['bone_shore','frost_ember','underworld'],xpTotal:300*16*17,chi:20,gold:50000,name:'Tester'};
 /* =====================================================================
    SPRITE MODELS — copied VERBATIM from ninjas-pixel.html / ninjas-pixel6.html (identical). NEVER MODIFY.
    ===================================================================== */
@@ -1218,7 +1219,7 @@ function roundRect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x
    SAVE
    ===================================================================== */
 const SAVE_KEY='elemental_ninjas_world_v3';
-const DEFAULT_SAVE=()=>({gold:0,levels:{SHADE:1,BOREAS:1,APOLLO:1,BECK:1,CLAY:1,VOLT:1},unlocked:{SHADE:true},selected:'SHADE',kills:0,w3kills:0,xp:0,xpTotal:0,chi:0,keys:0,pity:0,playTime:0,chiChests:{},bossFightCleared:{},bossFightBestTime:{},bossFightAttempts:{},bossFightFirstClearClaimed:{},bossFightStars:{},chests:{},golden:{},secret:{},bosses:{hippo:0,croc:0,lord:0,titan:0,yeti:0},killsBy:{},ready:{},secrets:{},secretsBonus:{},maps:{bone_shore:true},hints:{},settings:{sound:true,vibrate:true,music:true,dmgNums:true,shake:false},player:{name:''},daily:null,equipment:{owned:[],next:1},equipped:{},gems:{owned:[],next:1,found:{}},gemSlots:{}});
+const DEFAULT_SAVE=()=>({gold:0,levels:{SHADE:1,BOREAS:1,APOLLO:1,BECK:1,CLAY:1,VOLT:1},unlocked:{SHADE:true},selected:'SHADE',kills:0,w3kills:0,presetStamp:'',shakeDefaultOff:0,shopGems:null,trade:null,w3:null,xp:0,xpTotal:0,chi:0,keys:0,pity:0,playTime:0,chiChests:{},bossFightCleared:{},bossFightBestTime:{},bossFightAttempts:{},bossFightFirstClearClaimed:{},bossFightStars:{},chests:{},golden:{},secret:{},bosses:{hippo:0,croc:0,lord:0,titan:0,yeti:0},killsBy:{},ready:{},secrets:{},secretsBonus:{},maps:{bone_shore:true},hints:{},settings:{sound:true,vibrate:true,music:true,dmgNums:true,shake:false},player:{name:''},daily:null,equipment:{owned:[],next:1},equipped:{},gems:{owned:[],next:1,found:{}},gemSlots:{}});
 let SAVE=DEFAULT_SAVE();
 /* a returning player: skips the tutorial hints and starts with the map already revealed */
 function isVeteran(){ return (SAVE.kills||0)>=15||(SAVE.playTime||0)>240||Object.values(SAVE.bosses||{}).some(v=>v>0); }
@@ -1352,10 +1353,10 @@ function buildProfile(){ const el=$('profBody'); const plv=playerLevel(), lo=plv
   const bt=SAVE.bossFightBestTime||{}; h+=`<div class="pbox"><div class="psec">BOSS FIGHT BEST TIMES</div>${BF_STAGES.map(s=>`<div>${s.name}: <b>${bt[s.id]?bt[s.id].toFixed(1)+'s':'—'}</b></div>`).join('')}</div></div>`;
   el.innerHTML=h; el.querySelector('.pport').appendChild(charCanvas(CH[SAVE.selected],false,3,88,104,.97)); uiPaintIcons(UIK.t,true); }
 /* ---- save defaults for older saves ---- */
-function migrateSave(){ SAVE.player=SAVE.player||{name:''}; if(SAVE.player.name==='Romaso34'&&!SAVE.owner26){ SAVE.owner26=1; for(const n of ORDER){ SAVE.unlocked[n]=true; SAVE.levels[n]=Math.max(SAVE.levels[n]||1,26); } if(SAVE.ready) delete SAVE.ready.VOLT; }   /* the author's own save: the whole roster open at 26, applied once */ if(!SAVE.shakeDefaultOff){ SAVE.shakeDefaultOff=1; SAVE.settings.shake=false; }   /* screen shake is off by default now; turning it back on in Settings sticks */ SAVE.w3=SAVE.w3||{barCleared:false}; SAVE.levels.VOLT=SAVE.levels.VOLT||1; SAVE.bosses=SAVE.bosses||{}; SAVE.bosses.witch=SAVE.bosses.witch||0; SAVE.bosses.guard=SAVE.bosses.guard||0; SAVE.w3kills=SAVE.w3kills||0; SAVE.trade=SAVE.trade||{day:'',sold:0,bought:0}; for(const n of ORDER) SAVE.levels[n]=Math.min(MAX_LV,Math.max(1,SAVE.levels[n]||1)); }
+function migrateSave(){ SAVE.player=SAVE.player||{name:''}; if(!SAVE.shakeDefaultOff){ SAVE.shakeDefaultOff=1; SAVE.settings.shake=false; }   /* screen shake is off by default now; turning it back on in Settings sticks */ SAVE.w3=SAVE.w3||{barCleared:false}; SAVE.levels.VOLT=SAVE.levels.VOLT||1; SAVE.bosses=SAVE.bosses||{}; SAVE.bosses.witch=SAVE.bosses.witch||0; SAVE.bosses.guard=SAVE.bosses.guard||0; SAVE.w3kills=SAVE.w3kills||0; SAVE.trade=SAVE.trade||{day:'',sold:0,bought:0}; for(const n of ORDER) SAVE.levels[n]=Math.min(MAX_LV,Math.max(1,SAVE.levels[n]||1)); }
 migrateSave(); gemInit();
 /* test builds only: a preset save so a boss can be tried right away (TEST_PRESET is set by the build, absent in the real game) */
-if(typeof TEST_PRESET!=='undefined'&&TEST_PRESET){ const T=TEST_PRESET; for(const n in T.levels||{}){ SAVE.unlocked[n]=true; SAVE.levels[n]=Math.max(SAVE.levels[n]||1,T.levels[n]); } if(T.selected) SAVE.selected=T.selected; for(const id of T.cleared||[]) SAVE.bossFightCleared[id]=true; for(const m of T.maps||[]) SAVE.maps[m]=true; if(T.xpTotal) SAVE.xpTotal=Math.max(SAVE.xpTotal||0,T.xpTotal); if(T.chi) SAVE.chi=Math.max(SAVE.chi||0,T.chi); if(T.gold) SAVE.gold=Math.max(SAVE.gold||0,T.gold); if(T.name&&!SAVE.player.name) SAVE.player.name=T.name; }
+if(typeof TEST_PRESET!=='undefined'&&TEST_PRESET){ const T=TEST_PRESET; const fresh=T.stamp&&SAVE.presetStamp!==T.stamp; if(fresh) SAVE.presetStamp=T.stamp; for(const n in T.levels||{}){ SAVE.unlocked[n]=true; SAVE.levels[n]=fresh?T.levels[n]:Math.max(SAVE.levels[n]||1,T.levels[n]); }   /* a new preset version sets the roster exactly once; after that you climb from there */ if(fresh&&SAVE.ready) delete SAVE.ready.VOLT; if(T.selected) SAVE.selected=T.selected; for(const id of T.cleared||[]) SAVE.bossFightCleared[id]=true; for(const m of T.maps||[]) SAVE.maps[m]=true; if(T.xpTotal) SAVE.xpTotal=Math.max(SAVE.xpTotal||0,T.xpTotal); if(T.chi) SAVE.chi=Math.max(SAVE.chi||0,T.chi); if(T.gold) SAVE.gold=Math.max(SAVE.gold||0,T.gold); if(T.name&&!SAVE.player.name) SAVE.player.name=T.name; }
 /* =====================================================================
    STAT SYSTEM — the only place creature numbers live.
    One class table for every enemy AND boss (a boss is just a class row), bases derived per world from the ninja
@@ -6439,16 +6440,16 @@ function uiPaintIcons(t,all){ document.querySelectorAll(all?'canvas.ico':'.ov.on
   document.querySelectorAll('canvas.mic').forEach(cv=>{ if(cv.dataset.done) return; cv.width=cv.height=44; uiModeIcon(cv.getContext('2d'),cv.dataset.ic,44); cv.dataset.done=1; }); }
 function icoHtml(k,cls){ return `<canvas class="ico ${cls||''}" data-ic="${k}"></canvas>`; }
 /* ---------- the background: gradient, drifting orbs, a faint grid, slow runes, a vignette — one continuous place under every screen ---------- */
-function uiBgFrame(t){ const cv=$('uibg'), W=innerWidth, H=innerHeight; if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; } const c=cv.getContext('2d');
+function uiBgFrame(t){ const cv=$('uibg'), W=Math.round(innerWidth/2), H=Math.round(innerHeight/2); if(cv.width!==W||cv.height!==H){ cv.width=W; cv.height=H; } const c=cv.getContext('2d');   /* half size, scaled up by CSS: soft light needs no more, and phones stay snappy */
   const gr=c.createLinearGradient(0,0,0,H); gr.addColorStop(0,'#141a3a'); gr.addColorStop(.55,'#0a0d22'); gr.addColorStop(1,'#05070f'); c.fillStyle=gr; c.fillRect(0,0,W,H);
-  c.strokeStyle='rgba(120,140,220,.06)'; c.lineWidth=1; c.beginPath(); const gs=Math.max(36,Math.round(48*Math.min(W/1280,H/720)+24)); for(let x=(t*6)%gs;x<W;x+=gs){ c.moveTo(x,0); c.lineTo(x,H); } for(let y=0;y<H;y+=gs){ c.moveTo(0,y); c.lineTo(W,y); } c.stroke();
+  c.strokeStyle='rgba(120,140,220,.06)'; c.lineWidth=1; c.beginPath(); const gs=Math.max(20,Math.round(24*Math.min(W/640,H/360)+12)); for(let x=(t*6)%gs;x<W;x+=gs){ c.moveTo(x,0); c.lineTo(x,H); } for(let y=0;y<H;y+=gs){ c.moveTo(0,y); c.lineTo(W,y); } c.stroke();
   for(const o of UIK.orbs){ const x=((o.x+Math.sin(t*o.s*3+o.ph)*.06)%1+1)%1*W, y=((o.y-t*o.s*.08+Math.cos(t*o.s*2+o.ph)*.04)%1+1)%1*H, r=o.r*Math.min(W,H)*1.6; const g2=c.createRadialGradient(x,y,0,x,y,r); g2.addColorStop(0,hexA(o.col,.3)); g2.addColorStop(1,hexA(o.col,0)); c.fillStyle=g2; c.fillRect(x-r,y-r,r*2,r*2); }
   for(let i=0;i<40;i++){ const sx=((i*97)%100)/100*W, sy=((i*61)%100)/100*H, tw=.5+.5*Math.sin(t*(1.5+i%5*.4)+i); c.fillStyle='rgba(255,255,255,'+(.12+.5*tw)+')'; c.fillRect(sx,sy,1.5,1.5); }   /* twinkling points */
-  c.textAlign='center'; for(const r of UIK.runes){ const y=((r.y-t*r.v)%1+1)%1*H; c.globalAlpha=r.a; c.fillStyle='#9fb0e0'; c.font='700 '+Math.round(14*r.s*Math.max(.7,Math.min(W/1280,1.2)))+'px "Segoe UI Symbol","Noto Sans Runic",sans-serif'; c.fillText(r.c,r.x*W,y); } c.globalAlpha=1;
+  c.textAlign='center'; for(const r of UIK.runes){ const y=((r.y-t*r.v)%1+1)%1*H; c.globalAlpha=r.a; c.fillStyle='#9fb0e0'; c.font='700 '+Math.round(9*r.s*Math.max(.7,Math.min(W/640,1.2)))+'px "Segoe UI Symbol","Noto Sans Runic",sans-serif'; c.fillText(r.c,r.x*W,y); } c.globalAlpha=1;
   const vg=c.createRadialGradient(W/2,H/2,Math.min(W,H)*.35,W/2,H/2,Math.max(W,H)*.75); vg.addColorStop(0,'rgba(0,0,0,0)'); vg.addColorStop(1,'rgba(0,0,0,.6)'); c.fillStyle=vg; c.fillRect(0,0,W,H); }
 /* ---------- the loop: only while a screen is up ---------- */
 function uiLoop(now){ if(!UIK.on) return; requestAnimationFrame(uiLoop); const t=now/1000, dt=Math.min(.1,t-(UIK.last||t)); UIK.last=t; UIK.t=t; if(G.state==='PLAYING'&&!SPLASH.on){ UIK.on=false; $('uibg').classList.remove('on'); return; }
-  uiBgFrame(t); UIK.iconT+=dt; if(UIK.iconT>.08){ UIK.iconT=0; uiPaintIcons(t); }
+  UIK.bgT=(UIK.bgT||0)+dt; if(UIK.bgT>=1/30){ UIK.bgT=0; uiBgFrame(t); } UIK.iconT+=dt; if(UIK.iconT>.08){ UIK.iconT=0; uiPaintIcons(t); }
   if(G.state==='MENU') uiHero($('heroCv'),CH[SAVE.selected],t,5);
   if(G.state==='CHARACTERS'&&VIEW) uiHero($('charCv'),CH[VIEW],t,5,!SAVE.unlocked[VIEW]); }
 function uiState(s){ const bg=$('uibg'); if(s==='PLAYING'){ UIK.on=false; bg.classList.remove('on'); return; } bg.classList.add('on'); if(!UIK.on){ UIK.on=true; UIK.last=0; requestAnimationFrame(uiLoop); } if(s==='MENU') menuRefresh(); if(s==='SETTINGS') $('setName').textContent=(playerName()||'NINJA')+'  ›'; }
