@@ -4752,6 +4752,203 @@ function arenaFX(t,phase2){
 return {U,VW,VH,CX,CY,SUMMON,BRAZ,PILLARS,OOZE,arenaFloor,arenaWalls,arenaProps,arenaFX,summonCircle};
 })();
 /* =====================================================================
+   WORLD 3 — the Crystal Guardian's Boss Fight arena, imported as is from crystalarena.html
+   (40×30 reference tiles like the witch arena; one unit = W3AU world px; drawn through R3/P3 at W3S).
+   ===================================================================== */
+const CGAR=(()=>{
+const R=R3, P=P3, rnd=HR, TS=10, AW=40, AH=30, VW=AW*TS, VH=AH*TS;
+const U={
+  rock:'#1c2a1f', rockD:'#111b14', rockL:'#2a3d2e', rockH:'#3c5442',
+  soil:'#16211a', soilD:'#0c130f', soilL:'#22301f',
+  /* קריסטל ירוק */
+  cCore:'#a8ffb8', cMid:'#4dfa6a', cDeep:'#1f9a3a', cDark:'#0d5a1e', cEdge:'#e8ffe8',
+  ice:'#cfeeda',
+  bone:'#d8e0cc', boneD:'#a8b49c', boneS:'#6e7a66',
+  metal:'#2a3230', metalD:'#151b1a', metalL:'#4a5a54',
+  dark:'#050d07'
+};
+const CX=VW/2, CY=VH/2+8;
+
+/* ---------- אריחים ---------- */
+function tFloor(x,y,s){
+  R(x,y,TS,TS,U.soil);
+  for(let i=0;i<10;i++) P(x+rnd(s*3+i)*TS, y+rnd(s*7+i)*TS, rnd(i+s)>.5?U.soilL:U.soilD);
+  if(rnd(s*13)>.9) R(x+3,y+4,3,2,U.rockD);
+}
+function tCrystalFloor(x,y,s,t){
+  R(x,y,TS,TS,U.soilD);
+  for(let i=0;i<7;i++){ const gx=x+rnd(s*5+i)*TS, gy=y+rnd(s*9+i)*TS;
+    P(gx,gy, (i+Math.floor(t*2))%3===0?U.cMid:U.cDeep); }
+  if(rnd(s*11)>.7){ R(x+3,y+3,3,1,U.cDeep); R(x+4,y+4,1,3,U.cDeep); }
+}
+function tVein(x,y,s,t){
+  R(x,y,TS,TS,U.rockD);
+  for(let j=0;j<TS;j+=3){ const off=Math.sin((y+j)*.4+t*1.2+s)*2|0;
+    R(x+((off+5)%TS),y+j,3,2,U.cDark); P(x+((off+5)%TS),y+j,U.cDeep); }
+}
+
+/* ---------- אובייקטים ---------- */
+function shard(x,y,h,dir,t,seed){
+  for(let j=0;j<h;j++){
+    const w=Math.max(1,Math.round((1-j/h)*4));
+    const px=x+dir*Math.round(j*0.35);
+    R(px-w/2,y-j,w,1, j<h*.25?U.cEdge:(j<h*.6?U.cCore:U.cMid), .92);
+    P(px-w/2,y-j,U.cEdge,.5);
+  }
+}
+function cluster(x,y,size,t,seed){
+  R(x-size-2,y,size*2+5,3,'rgba(0,0,0,.3)');
+  const n=5+Math.round(size/4);
+  for(let i=0;i<n;i++){
+    const dx=Math.round((i-(n-1)/2)*(size/n*2.1));
+    const h=size-Math.abs(i-(n-1)/2)*3+((seed+i)%4);
+    shard(x+dx, y, Math.max(4,h), (i<n/2?-1:1), t, seed+i);
+  }
+  for(let i=0;i<12;i++){ const a=i/12*6.28;
+    P(x+Math.cos(a)*(size+5), y-size*.5+Math.sin(a)*(size+5), U.cMid, .2+Math.sin(t*3+seed)*.08); }
+  for(let i=0;i<3;i++){ const q=(t*.5+i*.33+seed*.1)%1;
+    P(x-4+i*4, y-size-q*10, U.cEdge, 1-q); }
+}
+function pillar(x,y,h,t,broken,seed){
+  R(x-3,y+h,12,3,'rgba(0,0,0,.32)');
+  for(let j=0;j<h;j+=4){
+    R(x,y+j,8,4,(j/4)%2?U.rock:U.rockL); R(x,y+j,8,1,U.rockH);
+    if(j%8===0) R(x+1,y+j+1,6,1,U.rockD);
+  }
+  // ורידי קריסטל בעמוד
+  for(let j=2;j<h;j+=6) R(x+2+((j/6)%2)*3, y+j, 2,3, U.cDeep, .8);
+  if(!broken){
+    R(x-2,y-5,12,5,U.rock); R(x-2,y-5,12,1,U.rockH);
+    shard(x+4,y-5,9,0,t,seed);
+  } else {
+    for(let i=0;i<3;i++) R(x+i*2, y-2-((i%2)*2), 3,2, U.rockD);
+    shard(x+2,y-1,5,-1,t,seed); shard(x+6,y-1,4,1,t,seed+2);
+  }
+}
+function brazier(x,y,t){
+  R(x-1,y+13,11,3,'rgba(0,0,0,.3)');
+  R(x,y+9,2,5,U.metalD); R(x+7,y+9,2,5,U.metalD); R(x+3,y+10,3,4,U.metalD);
+  R(x-1,y+4,11,6,U.metal); R(x-1,y+4,11,1,U.metalL);
+  R(x,y+3,9,1,U.metalD);
+  const f=Math.floor(t*8)%3, hh=[6,8,7][f];
+  for(let j=0;j<hh;j++){ const w=Math.max(1,4-Math.floor(j/2));
+    R(x+4-w/2, y+3-j, w,1, j<2?U.cEdge:(j<4?U.cCore:U.cMid)); }
+  for(let i=0;i<10;i++){ const a=i/10*6.28;
+    P(x+4+Math.cos(a)*10, y+2+Math.sin(a)*10, U.cMid, .2); }
+  for(let i=0;i<3;i++){ const q=(t*.9+i*.33)%1; P(x+4+Math.sin(t*3+i)*2, y-q*11, U.cCore, 1-q); }
+}
+function skullWall(x,y,t,lit){
+  R(x,y,7,6,U.bone); R(x,y,7,1,'#eef4e6');
+  R(x+1,y+2,2,2,lit?U.cMid:U.dark); R(x+4,y+2,2,2,lit?U.cMid:U.dark);
+  if(lit&&Math.sin(t*4+x)>0){ P(x+1,y+2,U.cEdge); P(x+4,y+2,U.cEdge); }
+  R(x+1,y+6,5,1,U.boneD);
+}
+function stalactite(x,y,h){
+  for(let j=0;j<h;j++){ const w=Math.max(1,Math.round((1-j/h)*6));
+    R(x-w/2,y+j,w,1, j<2?U.rockL:U.rock); }
+}
+function pool(x,y,r,t){
+  for(let i=0;i<Math.round(r*3.2);i++){ const a=i/Math.round(r*3.2)*6.28;
+    const wob=Math.sin(a*5+t*1.6)*1.1;
+    P(x+Math.cos(a)*(r+wob), y+Math.sin(a)*(r+wob)*.4, U.cCore, .9); }
+  for(let i=0;i<22;i++){ const a=rnd(i)*6.28, rr=rnd(i*3)*r*.85;
+    P(x+Math.cos(a)*rr, y+Math.sin(a)*rr*.4, rnd(i*7)>.6?U.cMid:U.cDeep); }
+  for(let i=0;i<4;i++){ const q=(t*.6+i*.25)%1; P(x-4+i*3, y-q*9, U.cCore, 1-q); }
+}
+function geode(x,y,t,seed){
+  // סלע פתוח עם קריסטלים בפנים — חוסם
+  R(x-2,y+12,18,3,'rgba(0,0,0,.3)');
+  for(let j=0;j<12;j++){ const w=14-Math.round(Math.abs(j-6)*.6);
+    R(x+(14-w)/2, y+j, w,1, j<2?U.rockH:(j<7?U.rockL:U.rock)); }
+  R(x+3,y+3,8,7,U.dark);
+  for(let i=0;i<5;i++) shard(x+4+i*1.7, y+10, 4+((seed+i)%4), (i<2?-1:1), t, seed+i);
+  for(let i=0;i<8;i++){ const a=i/8*6.28; P(x+7+Math.cos(a)*8, y+6+Math.sin(a)*8, U.cMid, .25); }
+}
+
+/* ================= פריסה סימטרית ================= */
+const CORNERS=[[-132,-76],[132,-76],[-132,76],[132,76]], SIDES=[[-146,0],[146,0]], ENDS=[[0,-104],[0,104]];
+const PILLARS=[[-172,-58],[172,-58],[-172,58],[172,58],[-92,-112],[92,-112],[-92,112],[92,112]];
+const BRAZ=[[-150,-104],[150,-104],[-150,104],[150,104]];
+const GEODES=[[-62,-92],[62,-92],[-62,92],[62,92]];
+const POOLS=[[-92,-38],[92,-38],[-92,38],[92,38]];
+const ANCHORS=[[0,-74],[0,74]];
+function floor(t){
+  for(let j=0;j<AH;j++) for(let i=0;i<AW;i++){
+    const x=i*TS, y=j*TS, s=i*7.3+j*3.1;
+    const d=Math.hypot(x+5-CX,(y+5-CY)*1.35);
+    if(d>108 && d<126) tVein(x,y,s,t);          // טבעת ורידי קריסטל
+    else if(d<108 && rnd(s*17)>.86) tCrystalFloor(x,y,s,t);
+    else tFloor(x,y,s);
+  }
+}
+function walls(t){
+  for(let i=0;i<AW;i++){
+    for(let j=0;j<2;j++){ const o=(j%2)*5;
+      R(i*TS+o,j*TS,9,10,(i+j)%4===0?U.rockL:U.rock); R(i*TS+o,j*TS,9,1,U.rockH); }
+    R(i*TS,(AH-1)*TS,10,10,(i%4===0)?U.rockL:U.rock); R(i*TS,(AH-1)*TS,10,1,U.rockH);
+  }
+  for(let j=2;j<AH-1;j++){
+    R(0,j*TS,10,10,(j%4===0)?U.rockL:U.rock); R(0,j*TS,10,1,U.rockH);
+    R((AW-1)*TS,j*TS,10,10,(j%4===0)?U.rockL:U.rock); R((AW-1)*TS,j*TS,10,1,U.rockH);
+  }
+  // נטיפים — מראה
+  for(let i=0;i<6;i++){ const off=26+i*32, h=4+((i*5)%7);
+    [CX-off,CX+off].forEach(function(x){ stalactite(x,20,h); }); }
+  stalactite(CX,20,6);
+  // קריסטלים שצומחים מהתקרה
+  for(let i=0;i<4;i++){ const off=52+i*42;
+    [CX-off,CX+off].forEach(function(x){
+      for(let j=0;j<7+((i*3)%4);j++){ const w=Math.max(1,Math.round((1-j/9)*4));
+        R(x-w/2, 20+j, w,1, j<2?U.cEdge:(j<5?U.cCore:U.cMid), .9); } }); }
+  // גולגולות בקיר — מראה
+  for(let i=0;i<3;i++){ const off=i*68;
+    if(off===0){ skullWall(CX-3,8,t,true); }
+    else { skullWall(CX-off-3,8,t,i%2===0); skullWall(CX+off-3,8,t,i%2===0); } }
+}
+function props(t){
+  // ---- טבעת הזירה ----
+  const rr=94;
+  for(let i=0;i<Math.round(rr*3.2);i++){ const a=i/Math.round(rr*3.2)*6.28;
+    P(CX+Math.cos(a)*rr, CY+Math.sin(a)*rr*.42, i%9===0?U.cEdge:(i%3===0?U.cCore:U.cDeep), .8); }
+  // טבעת פנימית דקה
+  for(let i=0;i<Math.round(rr*2.2);i++){ const a=i/Math.round(rr*2.2)*6.28-t*.15;
+    P(CX+Math.cos(a)*(rr*.55), CY+Math.sin(a)*(rr*.55)*.42, U.cDark, .55); }
+  // ---- אשכולות קריסטל גדולים בארבע הפינות (חוסמים) ----
+  CORNERS.forEach(function(d,i){ cluster(CX+d[0], CY+d[1], 20, t, i*7); });
+  // אשכולות בינוניים בארבעת הכיוונים
+  SIDES.forEach(function(d,i){ cluster(CX+d[0], CY+d[1], 15, t, 30+i*5); });
+  ENDS.forEach(function(d,i){ cluster(CX+d[0], CY+d[1], 13, t, 50+i*5); });
+  // ---- שמונה עמודים, מראה ----
+  PILLARS.forEach(function(d,i){ pillar(CX+d[0]-4, CY+d[1]-24, 24+((i*5)%8), t, i%3===0, i); });
+  // ---- ארבע קערות אש ----
+  BRAZ.forEach(function(d){ brazier(CX+d[0]-4, CY+d[1], t); });
+  // ---- גיאודות (חוסמות) ----
+  GEODES.forEach(function(d,i){ geode(CX+d[0]-7, CY+d[1], t, i*3); });
+  // ---- ארבע בריכות קריסטל (עבירות, מאטות) ----
+  POOLS.forEach(function(d){ pool(CX+d[0], CY+d[1], 15, t); });
+  // ---- שני קריסטלים גדולים במרכז הצפוני והדרומי — נקודות עוגן ----
+  cluster(CX, CY-74, 10, t, 80);
+  cluster(CX, CY+74, 10, t, 90);
+}
+function fx(t){
+  // ערפל ירוק
+  for(let i=0;i<70;i++){ const x=(i*23+t*5)%VW, y=(i*37+t*2)%VH;
+    R(x,y,8,2,U.cMid,.04); }
+  // ניצוצות עולים
+  for(let i=0;i<28;i++){ const q=(t*.3+i*.038)%1;
+    P((i*29)%VW, VH-q*VH, U.cCore, .4*(1-q)); }
+  // הבהוב אור מהקריסטלים על הרצפה
+  for(let i=0;i<14;i++){ const a=i/14*6.28, r=60+Math.sin(t*1.4+i)*8;
+    P(CX+Math.cos(a)*r, CY+Math.sin(a)*r*.42, U.cCore, .12); }
+}
+function vignette(){
+  for(let j=0;j<VH;j+=2) for(let i=0;i<VW;i+=2){
+    const d=Math.max(0,1-Math.hypot(i-CX,(j-CY)*1.2)/235);
+    if(d<.22&&(i+j)%4===0) P(i,j,'#000',.5); }
+}
+return {U,VW,VH,CX,CY,CORNERS,SIDES,ENDS,PILLARS,BRAZ,GEODES,POOLS,ANCHORS,floor,walls,props,fx,vignette};
+})();
+/* =====================================================================
    WORLD 3 — the Ghost, imported as is from ghostworld31.html (float, rush, hand strike, spots-you, death).
    Drawn through R3/P3 into the rig canvas at 1 unit = 1 px; the palette G here shadows nothing outside this scope.
    ===================================================================== */
@@ -4997,10 +5194,10 @@ function makeWitchArena(A,W,R){ const cols=A.cols, rows=A.rows, K=W3AR; W3AR_CRY
   K.PILLARS.forEach(([x,y],i)=>add(x+3.5,y+22+((i*5)%10)-3,4)); for(const [x,y] of K.BRAZ) add(x+4,y+9,5); for(const [x,y] of [[40,96],[352,96],[40,214],[352,214]]) add(x+6,y+7,6);
   [[110,52],[292,52],[110,254],[292,254]].forEach(([x,y])=>add(x,y-2,4)); add(K.CX-18,58,3); add(K.CX+18,58,3);   /* the two crystals in the middle stay decorative: the witch walks the centre */
   A.center={x:u(K.CX),y:u(K.CY)}; W.playerSpawn={x:u(K.CX),y:u(250)}; A.bossStart={x:u(K.CX),y:u(108)}; A.summon=K.SUMMON.map(([x,y])=>({x:u(x),y:u(y)})); }
-function w3ArenaPaint(c,ax,ay,aw,ah){ g=c; W3S=W3AU/PIX; W3_CEIL=true; const K=W3AR; R3(0,0,K.VW,K.VH,K.U.dark); K.arenaFloor(0); K.arenaWalls(0);
+function w3ArenaPaint(c,ax,ay,aw,ah){ g=c; W3S=W3AU/PIX; W3_CEIL=true; if(WORLD.arena.guard){ const K=CGAR; R3(0,0,K.VW,K.VH,K.U.dark); K.floor(0); K.walls(0); K.vignette(); W3S=1; W3_CEIL=false; return; } const K=W3AR; R3(0,0,K.VW,K.VH,K.U.dark); K.arenaFloor(0); K.arenaWalls(0);
   const VW=K.VW, VH=K.VH; for(let j=0;j<VH;j+=2) for(let i=0;i<VW;i+=2){ const d=Math.max(0,1-Math.hypot(i-K.CX,(j-K.CY)*1.2)/230); if(d<.22&&(i+j)%4===0) P3(i,j,'#000',.5); }   /* the vignette, once */
   W3S=1; W3_CEIL=false; }
-function w3ArenaFx(c,ox,oy,vw,vh,t){ const K=W3AR, b=G.boss, ph2=!!(b&&b.alive&&b.ai.phase2), raising=!!(b&&b.alive&&b.ai.state==='raise'); g=c; W3S=W3AU/PIX; W3_CEIL=true;
+function w3ArenaFx(c,ox,oy,vw,vh,t){ g=c; W3S=W3AU/PIX; W3_CEIL=true; if(WORLD.arena.guard){ CGAR.props(t); CGAR.fx(t); W3S=1; W3_CEIL=false; return; } const K=W3AR, b=G.boss, ph2=!!(b&&b.alive&&b.ai.phase2), raising=!!(b&&b.alive&&b.ai.state==='raise');
   K.arenaProps(t,ph2||raising);
   for(let i=0;i<70;i++){ const x=(i*23+t*5)%K.VW, y=(i*37+t*2)%K.VH; R3(x,y,8,2,ph2?K.U.glow:K.U.poiL,.045); }
   for(let i=0;i<26;i++){ const q=(t*.3+i*.04)%1; P3((i*31)%K.VW,K.VH-q*K.VH,K.U.glowL,.4*(1-q)); }
@@ -5388,7 +5585,14 @@ function guardUpdate(dt){ const p=G.player; for(const f of G.groundFx){ if(f.kin
     for(const pl of [p,G.p2]) if(pl&&pl.alive&&!f.hit.has(pl)&&pl.jumpT<=0&&on(pl.x,pl.y,pl.r)){ f.hit.add(pl); damage(pl,f.dmg,{kind:'hazard',x:pl.x,y:pl.y},{sure:true,ranged:true,haz:true,kb:220,color:GC.core}); }
     const A=WORLD.arena; if(A&&A.clusters) for(const cl of A.clusters) if(!f.hit.has(cl)&&on(cl.x,cl.y,20)){ f.hit.add(cl); burst(cl.x,cl.y-10,[GC.core,GC.edge,GC.mid],30,260,.8,4,80,true); shake(4); SFX.crit(); }   /* the crystal clusters shatter when the slam runs through them */ } }
 /* Boss Fight stage 7: the Witch's arena with two crystal clusters in place of the two side pillars */
-function makeGuardArena(A,W,R){ makeWitchArena(A,W,R); A.guard=true; W3AR_CRYSTAL=new Set([1,3]); const K=W3AR, u=v=>v*W3AU; A.clusters=[1,3].map(i=>({x:u(K.PILLARS[i][0]+3.5),y:u(K.PILLARS[i][1]+20)})); for(const cl of A.clusters) W.colliders.push({x:cl.x,y:cl.y+6,r:u(7)}); A.bossStart={x:u(K.CX),y:u(112)}; }
+function makeGuardArena(A,W,R){ const cols=A.cols, rows=A.rows, K=CGAR, u=v=>v*W3AU; W3AR_CRYSTAL=null; A.paint={wall:'rockwall',floor:'stone',shallow:'swampw'}; A.zone='under'; A.witch=true; A.guard=true;
+  for(let ty=0;ty<rows;ty++) for(let tx=0;tx<cols;tx++) A.set(tx,ty,(ty<2||ty>=rows-1||tx===0||tx>=cols-1)?'wall':'floor');
+  for(const [dx,dy] of K.POOLS){ const ox=K.CX+dx, oy=K.CY+dy; for(let j=-1;j<=1;j++) for(let k=-2;k<=2;k++){ if(Math.hypot(k*10,j*10*2.2)>16) continue; A.set(Math.floor((ox+k*10)*W3AU/32),Math.floor((oy+j*10)*W3AU/32),'shallow'); } }   /* crystal pools: passable, slow */
+  const add=(x,y,r)=>W.colliders.push({x:u(x),y:u(y),r:u(r)});
+  K.CORNERS.forEach(([dx,dy])=>add(K.CX+dx,K.CY+dy-3,10)); K.SIDES.forEach(([dx,dy])=>add(K.CX+dx,K.CY+dy-3,8)); K.ENDS.forEach(([dx,dy])=>add(K.CX+dx,K.CY+dy-3,7));
+  K.PILLARS.forEach(([dx,dy],i)=>add(K.CX+dx,K.CY+dy-2,4)); K.BRAZ.forEach(([dx,dy])=>add(K.CX+dx,K.CY+dy+9,5)); K.GEODES.forEach(([dx,dy])=>add(K.CX+dx,K.CY+dy+6,8)); K.ANCHORS.forEach(([dx,dy])=>add(K.CX+dx,K.CY+dy-3,6));
+  A.clusters=[...K.ANCHORS,...K.CORNERS].map(([dx,dy])=>({x:u(K.CX+dx),y:u(K.CY+dy-4)}));   /* the crystals the lasers shatter against */
+  A.center={x:u(K.CX),y:u(K.CY)}; W.playerSpawn={x:u(K.CX),y:u(252)}; A.bossStart={x:u(K.CX),y:u(K.CY-40)}; A.summon=[[-62,-40],[62,-40],[-62,40],[62,40]].map(([dx,dy])=>({x:u(K.CX+dx),y:u(K.CY+dy)})); }
 /* =====================================================================
    THE DAILY CAVE — a wave-survival dungeon in every world (from promptdailycave1.md)
    One cave per world; one clear a day across all worlds; a death locks the cave for 4 hours.
