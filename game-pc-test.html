@@ -2355,8 +2355,8 @@ function damage(e,amt,src,o){
   if(e.boss&&e.crashT>0) amt*=1.3;   // crashed into a boulder: takes extra damage while stunned
   amt=Math.round(amt); e.hp-=amt; e.flash=.09; if(e.boss) e.engaged=true;
   const heavy=o.big||o.crit||o.spin||(o.kb!==undefined&&o.kb>=250);   // the priest is too quick to be staggered by normal hits; Spinjitzu and knockback abilities do
-  if(!o.silent){ if(e.kind==='player'||(!e.boss&&((e.type!=='priest'&&!e.d.light)||heavy))) e.stagger=Math.max(e.stagger,.15); if(e.kind==='player'){ SFX.hurt(); shake(3); vibrate(30); } else (o.crit?SFX.crit:SFX.hit)(); }
-  if(src&&!o.noKb&&!(e.kind==='player'&&spinBusy(e))){ if(e.boss) e.flinch=.14; else { const d=Math.max(1,dist(src,e)), kb=o.kb!==undefined?o.kb:180; e.kbx+=(e.x-src.x)/d*kb; e.kby+=(e.y-src.y)/d*kb; if(e.kind==='player'&&kb>=200) e.kbT=.35; } }   // bosses are too heavy to push: they only flinch
+  const fromNinja=!!(src&&src.kind==='player'&&e.kind==='enemy'); if(!o.silent){ if(e.kind==='player'||(!e.boss&&!fromNinja&&((e.type!=='priest'&&!e.d.light)||heavy))||(fromNinja&&heavy&&(src.name==='BECK'||src.name==='CLAY')&&!e.boss&&!e.elite)) e.stagger=Math.max(e.stagger,.15); if(e.kind==='player'){ SFX.hurt(); shake(3); vibrate(30); } else (o.crit?SFX.crit:SFX.hit)(); }
+  if(src&&!o.noKb&&!(e.kind==='player'&&spinBusy(e))){ const d=Math.max(1,dist(src,e)); let kb=o.kb!==undefined?o.kb:180; if(fromNinja){ const bruiser=src.name==='BECK'||src.name==='CLAY'; kb*=bruiser?((e.boss||e.elite)?.08:.3):0; }   /* a ninja's blows do not move enemies; BECK and CLAY shove a little, and barely at all against elites and bosses */ if(e.boss){ e.flinch=.14; if(kb>0){ e.kbx+=(e.x-src.x)/d*kb; e.kby+=(e.y-src.y)/d*kb; } } else if(kb>0){ e.kbx+=(e.x-src.x)/d*kb; e.kby+=(e.y-src.y)/d*kb; if(e.kind==='player'&&kb>=200) e.kbT=.35; } }
   if(SAVE.settings.dmgNums&&(!o.silent||amt>=1)) floatText(e.x+rnd(-6,6),e.y-e.r-18,fmtK(amt),o.color||(e.kind==='player'?'#f87171':o.crit?'#fde047':'#ffffff'),o.big||o.crit,o.crit);
   if(e.kind==='enemy'&&!e.boss&&!o.silent&&!o.noHitstop){ hitstop(o.crit||o.big?60:40); shake(o.big||o.crit?5:1.3); }   // no hit-stop on bosses: flashes and numbers only
   if(e.hp<=0){ e.hp=0; e.kind==='player'?playerDie(e):enemyDie(e); }
@@ -2724,7 +2724,7 @@ function enterMap(def){ fx2Reset(); b2Reset();
   // rare boss on entry (short timer) or guaranteed after time on the map / in the swamp
   G.bossRollT=0; G.lastBossDeath=-999; G.bossMark=null; G.plv=playerLevel();
   G.arrowTarget=null;   // no guide arrow
-  explore(p.x,p.y); G.banner={text:def.name.toUpperCase(),sub:'PLAYER LEVEL '+(def.plv||1),t:2.6};
+  explore(p.x,p.y); G.banner={text:def.name.toUpperCase(),sub:'',t:2.4};
   if(isVeteran()) SAVE.hints.attack=true; showHint(SAVE.hints.attack?null:'Drag the right stick to aim, release to fire');
   if(WORLD.w3) w3Init();
 }
@@ -3988,7 +3988,7 @@ function w3Zoom(){ if(!WORLD.w3||WORLD.w3==='under') return null; return clamp(M
 function w3CamClamp(){ const z=ZOOM_BASE*(G.camZoom||1), aw=SW/z, ah=SH/z; CAM.x=aw>=WORLD.w?WORLD.w/2:clamp(CAM.x,aw/2,WORLD.w-aw/2); CAM.y=ah>=WORLD.h?WORLD.h/2:clamp(CAM.y,ah/2,WORLD.h-ah/2); }
 function w3Go(area){ G.w3from=WORLD.w3; G.w3area=area; enterMap(G.map); }
 function w3Init(){ const W=WORLD, a=W.w3; SAVE.w3=SAVE.w3||{barCleared:false}; G.w3t=0; G.w3circ=0; G.w3armed=false; G.tradeNear=false;
-  G.banner={text:a==='surface'?'THE GRAVEYARD':a==='bar'?'THE BAR':'THE UNDERWORLD',sub:a==='surface'?'SOMETHING LEADS DOWN':a==='bar'?(SAVE.w3.barCleared?'THE WAY DOWN IS OPEN':'A GATE, NOT A HUB'):'PLAYER LEVEL 16',t:2.6};
+  G.banner={text:a==='surface'?'THE GRAVEYARD':a==='bar'?'THE BAR':'THE UNDERWORLD',sub:a==='surface'?'SOMETHING LEADS DOWN':a==='bar'?(SAVE.w3.barCleared?'THE WAY DOWN IS OPEN':'A GATE, NOT A HUB'):'THE DEEP BELOW',t:2.6};
   if(a==='bar'){ G.w3bar={state:SAVE.w3.barCleared?'done':'keeper',t:0}; if(!SAVE.w3.barCleared){ const e=makeEnemy('keeper',w3px(W3.keeper.x+9),w3px(W3.keeper.y+18)); e.spawnT=0; e.ai.state='idle'; e.face=Math.PI/2; } }
   else G.w3bar=null; }
 function w3Update(dt){ const W=WORLD, p=G.player; if(!p||!p.alive) return; G.w3t=(G.w3t||0)+dt;
@@ -5397,7 +5397,7 @@ function makeGuardArena(A,W,R){ makeWitchArena(A,W,R); A.guard=true; W3AR_CRYSTA
    the chest at the end is the only reward. Art imported as is from cave-design.html and cave-elites.html.
    ===================================================================== */
 const CAVE={
-  RETRY:4*3600*1000, GAP:2.0, COLS:26, ROWS:17,
+  RETRY:4*3600*1000, GAP:2.0, COLS:36, ROWS:20,
   worlds:{
     1:{ name:'Forest', mapId:'bone_shore', floor:5, ceil:10, want:{x:330,y:1350}, tag:'MOSS HOLLOW', color:'#7ad86a',
         ground:'#3f6a32', groundD:'#2e5124', groundL:'#4f7d3d', rock:'#5a6a5a', rockD:'#3a473a', rockL:'#7a8a78', rockH:'#98a896',
@@ -5453,7 +5453,7 @@ function caveMsToMidnight(){ const now=new Date(), mid=new Date(now); mid.setHou
 function caveClock(ms){ const s=Math.max(0,Math.floor(ms/1000)), h=Math.floor(s/3600), m=Math.floor(s%3600/60), q=s%60; return h+':'+(m<10?'0':'')+m+':'+(q<10?'0':'')+q; }
 const CAVE_OPEN=(typeof TEST_PRESET!=='undefined')&&!!TEST_PRESET.caveAlways;   /* private test builds only: the cave never locks */
 function caveStatus(){ if(CAVE_OPEN) return {k:'ready'}; const S=caveSave(), day=new Date().toDateString(), now=Date.now(); if(S.clearedDay===day) return {k:'locked',left:caveMsToMidnight()}; if(S.failAt&&now-S.failAt<CAVE.RETRY) return {k:'retry',left:CAVE.RETRY-(now-S.failAt)}; return {k:'ready'}; }
-function caveSignText(){ const st=caveStatus(), d=caveToday(); return st.k==='ready'?'TODAY: '+d.tier.toUpperCase()+' · READY':st.k==='retry'?'RETRY IN '+caveClock(st.left):'NEXT CAVE IN '+caveClock(st.left); }
+function caveSignText(){ const st=caveStatus(), d=caveToday(); return st.k==='ready'?'THE CAVE IS OPEN':st.k==='retry'?'RETRY IN '+caveClock(st.left):'NEXT CAVE IN '+caveClock(st.left); }
 /* ---------- the day's roll: tier, elite and the exact enemy behind every class slot, the same for every player ---------- */
 let CAVE_DAY=null;
 function caveToday(){ const day=new Date().toDateString(); if(CAVE_DAY&&CAVE_DAY.day===day) return CAVE_DAY; const R=dailySeed(day+'|cave'); let x=R(), tier='hard'; for(const [k,w] of CAVE.weights){ if(x<w){ tier=k; break; } x-=w; } const elite=ELITES[Math.floor(R()*ELITES.length)].key, picks={}; for(const w of [1,2,3]){ picks[w]={}; for(const cls of ['weak','normal','strong','fast']){ const pool=CAVE.pools[w][cls]; picks[w][cls]=pool[Math.floor(R()*pool.length)]; } } CAVE_DAY={day,tier,elite,picks}; return CAVE_DAY; }
@@ -5542,7 +5542,7 @@ function makeCaveArena(w){ const cols=CAVE.COLS, rows=CAVE.ROWS, W=emptyWorld(co
     W};
   W.arena=A; W.explored=new Uint8Array(Math.ceil(W.w/W.FOG)*Math.ceil(W.h/W.FOG)).fill(1); W.ex=Math.ceil(W.w/W.FOG); W.ey=Math.ceil(W.h/W.FOG);
   A.center={x:cols/2*AT,y:(2+(rows-3)/2)*AT+8}; A.bossStart={x:A.center.x,y:A.center.y-AT*2}; W.playerSpawn={x:A.center.x,y:(rows-3)*AT};
-  const SX=AT*9.5, SY=AT*3.2; A.spawns=[[A.center.x-SX,A.center.y-SY],[A.center.x+SX,A.center.y-SY],[A.center.x-SX,A.center.y+SY],[A.center.x+SX,A.center.y+SY]];
+  const SX=(cols-2)*AT/2-AT*4, SY=(rows-3)*AT/2-AT*3; A.spawns=[[A.center.x-SX,A.center.y-SY],[A.center.x+SX,A.center.y-SY],[A.center.x-SX,A.center.y+SY],[A.center.x+SX,A.center.y+SY]];
   W.cgrid.clear(); return W; }
 /* the floor and walls (cave-design.html · ground() + arena(), mirrored around the centre; drawn per chunk) */
 function cavePaint(c,ax,ay,aw,ah){ g=c; const W=WORLD, A=W.arena, w=CAVE.worlds[A.cave], world=A.cave, art=caveArt(c), {R,P}=art, vis=(x,y,m)=>x>ax-m&&x<ax+aw+m&&y>ay-m&&y<ay+ah+m;
@@ -5550,28 +5550,28 @@ function cavePaint(c,ax,ay,aw,ah){ g=c; const W=WORLD, A=W.arena, w=CAVE.worlds[
   for(let ty=ty0;ty<=ty1;ty++) for(let tx=tx0;tx<=tx1;tx++){ const k=A.grid[ty*A.cols+tx], x=tx*TS, y=ty*TS, s=tx*7.3+ty*3.1;
     if(k==='floor'){ R(x,y,TS,TS,w.ground); for(let q=0;q<12;q++) P(x+hsh(s*3+q)*TS,y+hsh(s*7+q)*TS,hsh(q+s)>.5?w.groundL:w.groundD); const eL=tx===1, eR=tx===A.cols-2, eT=ty===2, eB=ty===A.rows-2; if(eL||eR||eT||eB){ R(x,y,TS,TS,'rgba(0,0,0,.28)'); if(eL){ R(x,y,2,TS,w.wallL); R(x+2,y,3,TS,'rgba(0,0,0,.25)'); } if(eR){ R(x+TS-2,y,2,TS,w.wallL); R(x+TS-5,y,3,TS,'rgba(0,0,0,.25)'); } if(eT){ R(x,y,TS,2,w.rockH); R(x,y+2,TS,4,'rgba(0,0,0,.3)'); } if(eB){ R(x,y+TS-2,TS,2,w.wallL); } } }
     else { const o=(ty%2)*5; R(x,y,TS,TS,w.wallD); for(let bx=-o;bx<TS;bx+=9){ R(x+bx+1,y+1,8,TS-2,(tx*3+ty*7)%5===0?w.wallL:w.wall); R(x+bx+1,y+1,8,1,w.wallL); } if(ty===1) R(x,y+TS-2,TS,2,w.rockH); if(ty===A.rows-1) R(x,y,TS,1,w.wallL); if(tx===0) R(x+TS-1,y,1,TS,w.rockH); if(tx===A.cols-1) R(x,y,1,TS,w.rockH); } }
-  const cx=A.center.x/PIX, cy=A.center.y/PIX, top=2*TS, rr=184;
-  for(let i=0;i<6;i++){ const off=24+i*44, h=5+((i*5)%8); [cx-off,cx+off].forEach(x=>{ if(!vis(x,top,20)) return; for(let j=0;j<h;j++){ const ww=Math.max(1,Math.round((1-j/h)*6)); R(x-ww/2,top+j,ww,1,j<2?w.rockL:w.rock); } }); }
+  const cx=A.center.x/PIX, cy=A.center.y/PIX, top=2*TS, FW=(A.cols-2)*TS, FH=(A.rows-3)*TS, rr=Math.round(FW*.44);
+  for(let i=0;i<8;i++){ const off=24+i*Math.round(FW/16), h=5+((i*5)%8); [cx-off,cx+off].forEach(x=>{ if(!vis(x,top,20)) return; for(let j=0;j<h;j++){ const ww=Math.max(1,Math.round((1-j/h)*6)); R(x-ww/2,top+j,ww,1,j<2?w.rockL:w.rock); } }); }
   { const n=Math.round(rr*3.2); for(let i=0;i<n;i++){ const a=i/n*6.28, x=cx+Math.cos(a)*rr, y=cy+Math.sin(a)*rr*.42; if(vis(x,y,4)) P(x,y,i%9===0?w.accentL:(i%3===0?w.glow:w.accentD),.75); } }
-  const CX=187, CY=80;
+  const CX=Math.round(FW/2-30), CY=Math.round(FH/2-50);
   if(world===1){
     [[-CX,-CY],[CX,-CY],[-CX,CY],[CX,CY]].forEach((d,i)=>{ const x=cx+d[0]-6, y=cy+d[1]-4; if(!vis(x,y,20)) return; R(x,y,12,8,w.rockD); R(x,y,12,2,w.rockL); for(let q=0;q<6;q++) P(x+hsh(q+i)*12,y+hsh(q*3+i)*8,w.accent); });
-    for(let i=0;i<4;i++){ const off=40+i*54; [cx-off,cx+off].forEach(rx=>{ if(!vis(rx,top,20)) return; for(let j=0;j<10;j++) P(rx+Math.round(Math.sin(j*.8+i)*2),top+j,'#5a3a22'); }); }
-    [[-120,-90],[120,-90],[-140,16],[140,16],[0,92]].forEach(d=>{ const x=cx+d[0], y=cy+d[1]; if(!vis(x,y,10)) return; R(x,y,2,4,'#e8e0c8'); R(x-2,y-2,6,3,'#b03a34'); P(x-1,y-2,'#ffffff'); });
+    for(let i=0;i<4;i++){ const off=40+i*Math.round(FW/8); [cx-off,cx+off].forEach(rx=>{ if(!vis(rx,top,20)) return; for(let j=0;j<10;j++) P(rx+Math.round(Math.sin(j*.8+i)*2),top+j,'#5a3a22'); }); }
+    [[-Math.round(FW*.3),-Math.round(FH*.4)],[Math.round(FW*.3),-Math.round(FH*.4)],[-Math.round(FW*.36),16],[Math.round(FW*.36),16],[0,Math.round(FH*.42)]].forEach(d=>{ const x=cx+d[0], y=cy+d[1]; if(!vis(x,y,10)) return; R(x,y,2,4,'#e8e0c8'); R(x-2,y-2,6,3,'#b03a34'); P(x-1,y-2,'#ffffff'); });
   } else if(world===2){
     [[-CX,-CY],[CX,-CY],[-CX,CY],[CX,CY]].forEach((d,i)=>{ const x=cx+d[0], y=cy+d[1]; if(!vis(x,y,20)) return; for(let q=0;q<16;q++){ const ang=q/16*6.28; P(x+Math.cos(ang)*8,y+Math.sin(ang)*8*.42,w.glow); } for(let q=0;q<10;q++){ const ang=hsh(q+i)*6.28, r=hsh(q*3)*6; P(x+Math.cos(ang)*r,y+Math.sin(ang)*r*.42,w.accent); } });
-    for(let i=0;i<3;i++){ const off=36+i*72; [cx-off,cx+off].forEach(x=>{ if(!vis(x,top,20)) return; for(let j=0;j<8;j++) P(x,top+j*2,j%2?w.accent:w.glow,.9); }); }
+    for(let i=0;i<3;i++){ const off=36+i*Math.round(FW/5.5); [cx-off,cx+off].forEach(x=>{ if(!vis(x,top,20)) return; for(let j=0;j<8;j++) P(x,top+j*2,j%2?w.accent:w.glow,.9); }); }
   } else {
     [[-CX,-CY],[CX,-CY],[-CX,CY],[CX,CY]].forEach(d=>{ const x=cx+d[0], y=cy+d[1]+8; if(vis(x,y,20)) caveCrystal(art,w,x,y,12); });
-    [[-126],[0],[126]].forEach(d=>{ const x=cx+d[0]-3; if(!vis(x,top,12)) return; R(x,top,7,6,'#d8e0cc'); R(x+1,top+2,2,2,w.accent); R(x+4,top+2,2,2,w.accent); });
+    [[-Math.round(FW*.31)],[0],[Math.round(FW*.31)]].forEach(d=>{ const x=cx+d[0]-3; if(!vis(x,top,12)) return; R(x,top,7,6,'#d8e0cc'); R(x+1,top+2,2,2,w.accent); R(x+4,top+2,2,2,w.accent); });
   } }
 /* the living parts of the arena: torches, spawn circles, world particles, the elites' ground hazards, the chest */
 function caveFx(c,ox,oy,vw,vh,t){ const W=WORLD, A=W.arena, F=G.arena, w=CAVE.worlds[A.cave], world=A.cave, art=caveArt(c), {R,P}=art, vis=(x,y,m)=>x>ox-m&&x<ox+vw+m&&y>oy-m&&y<oy+vh+m, u=v=>v/PIX, live=G.state==='PLAYING';
-  const cx=u(A.center.x), cy=u(A.center.y);
+  const cx=u(A.center.x), cy=u(A.center.y), FW=(A.cols-2)*TS, FH=(A.rows-3)*TS;
   for(const [sx,sy] of A.spawns){ const px=u(sx), py=u(sy); if(!vis(sx,sy,60)) continue; for(let i=0;i<20;i++){ const a=i/20*6.28+t*.8; P(px+Math.cos(a)*10,py+Math.sin(a)*10*.42,w.glow,.5); } R(px-2,py-2,5,4,w.accentD,.6); }
-  const TX=cx-200, TX2=cx+200; [[TX,cy-112],[TX2,cy-112],[TX,cy+52],[TX2,cy+52]].forEach(([x,y])=>{ if(vis(x*PIX,y*PIX,40)) caveTorch(art,w,x-3,y,t); });
-  if(world===1){ for(let i=0;i<10;i++){ const q=(t*.3+i*.1)%1, x=cx-180+((i*37)%360), y=cy-100+((i*53)%200)-q*30+Math.sin(t*2+i)*3; if(vis(x*PIX,y*PIX,10)) P(x,y,w.glow,(1-q)*.8); } }
-  else if(world===2){ for(let i=0;i<16;i++){ const q=(t*.7+i*.06)%1, x=cx-200+((i*43)%400), y=cy+120-q*220; if(vis(x*PIX,y*PIX,10)) P(x,y,q<.5?w.glow:w.accent,1-q); } }
+  const TX=cx-(FW/2+8), TX2=cx+(FW/2+8); [[TX,cy-Math.round(FH*.41)],[TX2,cy-Math.round(FH*.41)],[TX,cy+Math.round(FH*.19)],[TX2,cy+Math.round(FH*.19)]].forEach(([x,y])=>{ if(vis(x*PIX,y*PIX,40)) caveTorch(art,w,x-3,y,t); });
+  if(world===1){ for(let i=0;i<14;i++){ const q=(t*.3+i*.1)%1, x=cx-FW/2+20+((i*37)%(FW-40)), y=cy-FH/2+20+((i*53)%(FH-40))-q*30+Math.sin(t*2+i)*3; if(vis(x*PIX,y*PIX,10)) P(x,y,w.glow,(1-q)*.8); } }
+  else if(world===2){ for(let i=0;i<20;i++){ const q=(t*.7+i*.06)%1, x=cx-FW/2+10+((i*43)%(FW-20)), y=cy+FH/2-q*FH; if(vis(x*PIX,y*PIX,10)) P(x,y,q<.5?w.glow:w.accent,1-q); } }
   else { for(let i=0;i<40;i++){ const x=((i*23+t*5)%(A.cols*TS)), y=40+((i*29)%(A.rows*TS-60)); if(vis(x*PIX,y*PIX,10)) R(x,y,6,2,w.accent,.05); } }
   if(!F) return;
   /* the elites' ground hazards: expanding rings with one gap, falling rocks, stone spikes */
@@ -5580,7 +5580,7 @@ function caveFx(c,ox,oy,vw,vh,t){ const W=WORLD, A=W.arena, F=G.arena, w=CAVE.wo
   for(const s of F.spikes){ const x=u(s.x), y=u(s.y), q=clamp(s.t/.3,0,1), hh=Math.round(Math.min(10,q*16)*(s.life>.3?1:s.life/.3)); for(let j=0;j<hh;j++){ const ww=Math.max(1,Math.round((1-j/hh)*4)); R(x-ww/2,y-j,ww,1,j<hh*.3?w.accentL:w.rockL); } }
   /* the chest: a dark stone reliquary on a small dais at the exact centre, the same size as every other chest */
   if(F.over==='win'){ const p=F.overT, chestAt=.6, openAt=1.6, GOLD=GOLD_C, ease=clamp((p-openAt)/.5,0,1), lid=1-Math.pow(1-ease,3);
-    R(cx-220,cy-140,440,280,'#000',Math.min(.38,p*.5));
+    R(cx-FW/2-20,cy-FH/2-40,FW+40,FH+80,'#000',Math.min(.38,p*.5));
     for(let j=0;j<60;j++){ const ww=3+j*.5; R(cx-ww/2,cy-66+j,ww,1,w.glow,.10*(j/60)*Math.min(1,p/.6)); }
     if(p>=chestAt){ for(let i=0;i<Math.round(22*3.2);i++){ const a=i/Math.round(22*3.2)*6.28; P(cx+Math.cos(a)*22,cy+10+Math.sin(a)*22*.38,w.accentD,.7); } R(cx-15,cy+12,30,3,'rgba(0,0,0,.45)');
       const bw=26, bh=14; R(cx-bw/2-1,cy-2,bw+2,bh+1,'#0a0d14'); R(cx-bw/2,cy-1,bw,bh,'#1c2136'); R(cx-bw/2,cy-1,bw,2,'#2c3350'); R(cx-bw/2,cy+bh-3,bw,2,'#12162a'); for(let i=0;i<3;i++) R(cx-bw/2+2+i*8,cy+2,6,4,i%2?'#222840':'#1c2136');
@@ -5595,7 +5595,7 @@ function caveFx(c,ox,oy,vw,vh,t){ const W=WORLD, A=W.arena, F=G.arena, w=CAVE.wo
           else if(it[0]==='chi'){ const og=g; g=c; chiOrb(ix,iy-5,t); g=og; }
           else { CAVE.xpIc=CAVE.xpIc||rewardIcon('xp',22); c.drawImage(CAVE.xpIc,0,0,22,22,ix-6,iy-8,12,12); } }); } } } }
 function caveFloor(){ const W=WORLD, A=W.arena; return {x0:AT,y0:2*AT,x1:(A.cols-1)*AT,y1:(A.rows-1)*AT}; }
-function caveZoom(){ const f=caveFloor(); return clamp(Math.max(SW/ZOOM_BASE/(f.x1-f.x0),SH/ZOOM_BASE/(f.y1-f.y0)),.8,2.4); }   /* the floor fills the screen: nothing beyond the walls is ever in view */
+function caveZoom(){ return 1; }   /* the same camera distance as the open world; the room is simply big enough that the view never leaves the floor */
 function caveCamClamp(){ const f=caveFloor(), z=ZOOM_BASE*(G.camZoom||1), aw=SW/z, ah=SH/z, fw=f.x1-f.x0, fh=f.y1-f.y0; CAM.x=aw>=fw?(f.x0+f.x1)/2:clamp(CAM.x,f.x0+aw/2,f.x1-aw/2); CAM.y=ah>=fh?(f.y0+f.y1)/2:clamp(CAM.y,f.y0+ah/2,f.y1-ah/2); }
 /* ---------- entering, the run, leaving ---------- */
 function enterCave(w){ if(WORLD.arena) WORLD=WORLD_CUR; b2Reset(); const day=caveToday(), D=CAVE.worlds[w], tier=day.tier, lvl=caveLevel(w,tier);
@@ -5604,7 +5604,7 @@ function enterCave(w){ if(WORLD.arena) WORLD=WORLD_CUR; b2Reset(); const day=cav
   const p=makePlayer(SAVE.selected); p.x=W.playerSpawn.x; p.y=W.playerSpawn.y; p.face=-Math.PI/2; G.player=p; CAM.x=W.arena.center.x; CAM.y=W.arena.center.y;
   { const S=W.CS; for(let cy=0;cy*S<W.h;cy++) for(let cx=0;cx*S<W.w;cx++) getChunk(cx,cy); }
   G.arena={cave:true,w,day,tier,lvl,eliteLv:lvl+2,phase:'intro',t:0,time:0,over:null,overT:0,startChi:SAVE.chi||0,wave:0,rings:[],rocks:[],spikes:[],healed:false,elite:null,stage:{id:'cave',name:D.tag,n:w,boss:'none'},card:null,tapAt:0};
-  showHint(null); setState('PLAYING'); SFX.drum(0); SFX.drum(.5); G.banner={text:D.tag,sub:'TODAY: '+tier.toUpperCase()+'  ·  LEVEL '+lvl+'  ·  THE WAY BACK IS SHUT',t:2.4,col:D.color}; }
+  showHint(null); setState('PLAYING'); SFX.drum(0); SFX.drum(.5); G.banner={text:D.tag,sub:'THE WAY BACK IS SHUT',t:2.4,col:D.color}; }
 function caveSpawn(type,x,y,lv,elite){ const A=WORLD.arena, e=makeEnemy(type,x,y), S=caveStats(type,lv); e.hp=e.maxHp=S.hp; e.dmg=S.dmg; e.noLoot=true; e.summoned=true; e.biome=null; e.leash=99999; e.arena=true; e.engaged=true; e.lair={x:A.center.x,y:A.center.y}; caveAggro(e); e.ai.atkT=rnd(.8,1.4); e.spawnT=.7; e.face=Math.atan2(A.center.y-y,A.center.x-x); e.cave=true;
   if(elite){ e.elite=true; e.abCd=5.5; e.ai.atkT=1.2; e.ai.ult=0; G.boss=e; } collide(e); return e; }
 function caveStartWave(n){ const F=G.arena, A=WORLD.arena, day=F.day; F.wave=n; F.phase='card'; F.t=0; F.spawned=false; F.card={n,elite:n===6,t:0}; SFX.drum(0); }
@@ -5638,7 +5638,7 @@ function caveLeave(kind){ const F=G.arena, w=F.w, D=CAVE.worlds[w]; leaveArena()
 addEventListener('pointerdown',()=>{ const F=G.arena; if(F&&F.cave) F.tapAt=performance.now(); },{capture:true,passive:true});
 /* ---------- HUD + overlay: the wave card, the progress strip, the chest text ---------- */
 function caveHUD(c,p,bw){ const F=G.arena, D=CAVE.worlds[F.w], txt=F.wave===0?'THE CAVE':F.wave===6?'FINAL · ELITE':'WAVE '+F.wave+' / 5';
-  c.save(); c.font='800 11px Arial'; const tw=c.measureText(D.tag+' · '+F.tier.toUpperCase()+' · '+txt).width+24; c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,bw+20,40,tw,22,11); c.fill(); c.textAlign='left'; c.fillStyle=D.color; c.fillText(D.tag,bw+32,55); const w1=c.measureText(D.tag).width; c.fillStyle='#9fb0e0'; c.fillText(' · '+F.tier.toUpperCase()+' · ',bw+32+w1,55); const w2=c.measureText(' · '+F.tier.toUpperCase()+' · ').width; c.fillStyle='#fff'; c.fillText(txt,bw+32+w1+w2,55); c.restore(); }
+  c.save(); c.font='800 11px Arial'; const tw=c.measureText(D.tag+' · '+txt).width+24; c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,bw+20,40,tw,22,11); c.fill(); c.textAlign='left'; c.fillStyle=D.color; c.fillText(D.tag,bw+32,55); const w1=c.measureText(D.tag).width; c.fillStyle='#9fb0e0'; c.fillText(' · ',bw+32+w1,55); const w2=c.measureText(' · ').width; c.fillStyle='#fff'; c.fillText(txt,bw+32+w1+w2,55); c.restore(); }
 function caveOverlay(c){ const F=G.arena, D=CAVE.worlds[F.w], t=G.time; c.save(); c.textAlign='center';
   if(F.card&&!F.over){ const q=F.t/2.3; let sc=q<.12?q/.12:(q<.8?1:1-(q-.8)/.2); sc=1-Math.pow(1-clamp(sc,0,1),3); if(sc>.02){ c.fillStyle='rgba(0,0,0,'+(.45*Math.min(1,sc))+')'; c.fillRect(0,0,SW,SH);
       const cw0=Math.min(SW*.62,480), ch0=cw0*54/160, cw=cw0*sc, ch=ch0*sc, cx=SW/2, cy=SH*.36, u=cw0/160;
@@ -5652,7 +5652,7 @@ function caveOverlay(c){ const F=G.arena, D=CAVE.worlds[F.w], t=G.time; c.save()
       c.fillStyle='#0a0d14'; c.fillRect(x-r-1,y-r-1,r*2+2,r*2+2); c.fillStyle=done?D.accent:(now?GOLD_C:(elite?'#3a2a10':'#2a3150')); c.fillRect(x-r,y-r,r*2,r*2); if(elite){ c.fillStyle=GOLD_L; c.fillRect(x-1,y-1,2,2); }
       if(now){ for(let q=0;q<8;q++){ const a=q/8*6.28+t*3; c.fillStyle=GOLD_C; c.globalAlpha=.6; c.fillRect(x+Math.cos(a)*(r+4),y+Math.sin(a)*(r+4),2,2); } c.globalAlpha=1; } }
     c.fillStyle='#9fb0e0'; c.font='bold '+Math.round(7*UK)+'px monospace'; c.fillText('WAVE 1 · 2 · 3 · 4 · 5 · ELITE',SW/2,y-Math.round(9*UK)); }
-  if(F.over==='win'&&F.overT>2.2){ const k=clamp((F.overT-2.2)/.5,0,1), r=F.rewards; c.globalAlpha=k; c.lineWidth=6; c.strokeStyle='rgba(0,0,0,.75)'; c.font='900 '+Math.round(30*UK)+'px Arial'; c.strokeText('CAVE CLEARED',SW/2,SH*.22); c.fillStyle='#ffffff'; c.fillText('CAVE CLEARED',SW/2,SH*.22); c.font='800 '+Math.round(12*UK)+'px Arial'; c.lineWidth=4; c.strokeText('TODAY: '+F.tier.toUpperCase()+'  ·  LEVEL '+F.lvl,SW/2,SH*.22+22*UK); c.fillStyle=D.color; c.fillText('TODAY: '+F.tier.toUpperCase()+'  ·  LEVEL '+F.lvl,SW/2,SH*.22+22*UK);
+  if(F.over==='win'&&F.overT>2.2){ const k=clamp((F.overT-2.2)/.5,0,1), r=F.rewards; c.globalAlpha=k; c.lineWidth=6; c.strokeStyle='rgba(0,0,0,.75)'; c.font='900 '+Math.round(30*UK)+'px Arial'; c.strokeText('CAVE CLEARED',SW/2,SH*.22); c.fillStyle='#ffffff'; c.fillText('CAVE CLEARED',SW/2,SH*.22); c.font='800 '+Math.round(12*UK)+'px Arial'; c.lineWidth=4; c.strokeText(D.tag,SW/2,SH*.22+22*UK); c.fillStyle=D.color; c.fillText(D.tag,SW/2,SH*.22+22*UK);
     if(r){ const line='+'+fmtN(r.gold)+' GOLD   +'+r.chi+' CHI   +'+fmtN(r.xp)+' XP'+(r.gems.length?'   +'+r.gems.map(x=>x.toUpperCase()+' GEM').join(' +'):''); c.font='900 '+Math.round(13*UK)+'px Arial'; c.lineWidth=5; c.strokeText(line,SW/2,SH*.72); c.fillStyle=GOLD_L; c.fillText(line,SW/2,SH*.72); }
     c.font='800 '+Math.round(10*UK)+'px Arial'; c.lineWidth=4; const nx='NEXT CAVE IN '+caveClock(caveMsToMidnight())+'  ·  A NEW CAVE EVERY DAY AT MIDNIGHT'+(F.overT>3.2?'   ·   TAP TO LEAVE':''); c.strokeText(nx,SW/2,SH*.72+20*UK); c.fillStyle='#9fb0e0'; c.fillText(nx,SW/2,SH*.72+20*UK); c.globalAlpha=1; }
   if(F.over==='fail'){ const k=Math.min(1,F.overT/.6); c.fillStyle='rgba(60,20,20,'+(.55*k)+')'; c.fillRect(0,0,SW,SH); c.globalAlpha=k; c.font='900 '+Math.round(40*UK)+'px Arial'; c.lineWidth=8; c.strokeStyle='rgba(0,0,0,.8)'; c.strokeText('THE CAVE TAKES YOU',SW/2,SH*.42); c.fillStyle='#ef4444'; c.fillText('THE CAVE TAKES YOU',SW/2,SH*.42); c.font='800 '+Math.round(13*UK)+'px Arial'; c.lineWidth=4; const l1='WAVE '+Math.min(5,F.wave)+(F.wave===6?' · THE ELITE':'')+'  ·  THE CAVE SHUTS FOR 4 HOURS', l2='RETRY IN 4:00:00   ·   A NEW CAVE EVERY DAY AT MIDNIGHT'; c.strokeText(l1,SW/2,SH*.42+26*UK); c.fillStyle='#fca5a5'; c.fillText(l1,SW/2,SH*.42+26*UK); c.font='800 '+Math.round(11*UK)+'px Arial'; c.strokeText(l2,SW/2,SH*.42+46*UK); c.fillStyle='#e2e8f0'; c.fillText(l2,SW/2,SH*.42+46*UK); c.globalAlpha=1; }
@@ -5754,15 +5754,18 @@ function drawEliteEnemy(c,e,t){ const E=ELITE_BY[e.type], B=E.build, face=Math.c
   c.save(); if(e.spawnT>0) c.globalAlpha=Math.max(0,1-e.spawnT/.7); const fl=e.flinch>0?Math.sin(G.time*70)*2:0; c.translate(e.x+fl,e.y+e.r*.6); c.scale(ELITE_S*face,ELITE_S); c.imageSmoothingEnabled=false; c.drawImage(ELITE_C,-(ox+20),-(oy+20)); c.restore(); }
 function drawEliteDead(c,e){ const E=ELITE_BY[e.type], B=E.build, face=Math.cos(e.face)>=0?1:-1, k=clamp(1-e.deadT/1.4,0,1); c.save(); c.translate(e.x,e.y+e.r*.6); c.scale(ELITE_S*face,ELITE_S); c.translate(-62,-(52+26)); eliteDeathDraw(caveArt(c),E,k*2.4); c.restore(); }
 /* ---------- elite AI: a readable basic, a committed ultimate every ~9 s with a 0.8 s telegraph ---------- */
-const ELITE_ULT_CD={reaper:8,lancer:8,breaker:10,bulwark:9,warden:9};
+const ELITE_ULT_CD={reaper:6,lancer:6,breaker:8,bulwark:7,warden:7};
 function eliteAI(e,p,dt){ const a=e.ai, d=dist(e,p), K=e.type, F=G.arena, A=WORLD.arena; a.t-=dt; a.atkT-=dt; e.abCd-=dt; if(a.basicT!==undefined) a.basicT+=dt; if(a.ultT!==undefined) a.ultT+=dt;
   const dmgB=Math.round(tierDmg(e,'basic')), dmgH=Math.round(tierDmg(e,'heavy')), dmgU=Math.round(tierDmg(e,'ultimate'));
   if(a.state==='idle') a.state='chase';
-  if(a.state==='chase'){ if(d>e.d.range*.8) moveToward(e,p.x,p.y,dt,1); else { e.vx*=.8; e.vy*=.8; } faceTo(e,p); a.basicT=undefined; a.ultT=undefined;
+  if(a.state==='chase'){ if(d>e.d.range*.8) moveToward(e,p.x,p.y,dt,1.3); else { e.vx*=.8; e.vy*=.8; } faceTo(e,p); a.basicT=undefined; a.ultT=undefined; a.farT=d>e.d.range*1.1?(a.farT||0)+dt:0;
+    if(a.farT>1.5&&p.alive&&d<720&&e.abCd>1){ a.state='lungeTele'; a.t=.45; a.aim=e.face; a.lungeD=d+40; e.vx=e.vy=0; a.farT=0; a.hitPass=false; telegraph(e,{s:'line',a:a.aim,l:a.lungeD,w:30},.45); SFX.swell(); return; }   /* kept at arm's length for 1.5 s: he lunges the whole distance */
     if(e.abCd<=0&&p.alive&&d<560){ a.state='ultPrep'; a.t=.8; a.ultT=0; a.aim=e.face; e.vx=e.vy=0; a.ultDone=false; a.hits=[];
       if(K==='reaper') telegraph(e,{s:'circ',r:110},.8); else if(K==='lancer') telegraph(e,{s:'circ',r:260},.8); else if(K==='breaker') telegraph(e,{s:'circ',r:140},.8); else if(K==='bulwark'){ let L=60; while(L<1200&&A.passable(e.x+Math.cos(a.aim)*L,e.y+Math.sin(a.aim)*L,e)) L+=16; a.laneL=L; telegraph(e,{s:'line',a:a.aim,l:L,w:56},.8); } else telegraph(e,{s:'circ',r:230},.8); SFX.swell(); return; }
     if(d<e.d.range&&a.atkT<=0&&p.alive){ a.state='basicTele'; a.t=.5; a.basicT=0; a.aim=e.face; e.vx=e.vy=0; a.hitDone=false; a.hit2=false;
       if(K==='reaper') telegraph(e,{s:'circ',r:e.d.range+12},.5); else if(K==='lancer') telegraph(e,{s:'line',a:a.aim,l:250,w:22},.5); else if(K==='breaker') telegraph(e,{s:'circ',r:78,ox:Math.cos(a.aim)*60,oy:Math.sin(a.aim)*30},.6); else if(K==='bulwark') telegraph(e,{s:'line',a:a.aim,l:96,w:40},.5); else telegraph(e,{s:'cone',a:a.aim,l:e.d.range+10,w:1.25},.6); } return; }
+  if(a.state==='lungeTele'){ e.vx=e.vy=0; if(a.t<=0){ a.tele=null; a.state='lunge'; a.t=Math.max(.2,a.lungeD/(e.spd*6)); a.lungeSp=e.spd*6; } return; }
+  if(a.state==='lunge'){ e.vx=Math.cos(a.aim)*a.lungeSp; e.vy=Math.sin(a.aim)*a.lungeSp; e.face=a.aim; if(!a.hitPass&&p.alive&&inLine(p,e.x,e.y,a.aim,60,34)&&p.jumpT<=0){ a.hitPass=true; damage(p,dmgB,e,{kb:200}); SFX.hit(); } if(a.t<=0||wallAhead(e,a.aim)){ a.state='chase'; e.vx=e.vy=0; a.atkT=.5; } return; }
   if(a.state==='basicTele'){ e.vx=e.vy=0; if(a.t<=0){ a.tele=null; a.state='basicHit'; a.t=.55; SFX.hit(); shake(3);
       if(K==='reaper'){ if(inArc(p,e.x,e.y,a.aim,e.d.range+12,3.2)&&p.jumpT<=0) damage(p,dmgB,e,{kb:140}); a.t2=.3; }
       else if(K==='lancer'){ if(inLine(p,e.x,e.y,a.aim,250,22)&&p.jumpT<=0) damage(p,dmgB,e,{kb:200,ranged:true}); }
@@ -6355,7 +6358,7 @@ function drawHUD(c,p){
     c.fillStyle='#4ade80'; c.beginPath(); c.arc(mx+mw/2,my+mh/2,3.5,0,TAU); c.fill(); c.restore(); c.strokeStyle='rgba(255,255,255,.25)'; c.lineWidth=1; roundRect(c,mx,my,mw,mh,7); c.stroke(); }
   if(WORLD.frost&&!arena) m2DrawHazardsHUD(c,p); if(WORLD.w3&&!arena) w3HUD(c,p);
   // banner / announce
-  if(G.banner&&G.banner.haz){ const b=G.banner, k=b.t>2?1-(b.t-2)/.4:b.t<.4?b.t/.4:1, lava=b.haz==='lava', H=Math.round(34*UK), sy=Math.round(26*UK); c.save(); c.translate(SW/2,SH*.29); c.scale(1+(1-k)*.35,1+(1-k)*.35); c.globalAlpha=clamp(k,0,1); c.textAlign='center'; c.lineJoin='round'; c.shadowColor=lava?'rgba(255,40,20,.95)':'rgba(120,200,255,.95)'; c.shadowBlur=18*UK; c.font='900 '+H+'px Arial'; c.lineWidth=7; c.strokeStyle=lava?'rgba(60,0,0,.85)':'rgba(0,30,70,.85)'; c.strokeText(b.text,0,0); c.fillStyle=lava?'#ff3b2a':'#eefaff'; c.fillText(b.text,0,0); if(b.sub){ c.font='900 '+Math.round(14*UK)+'px Arial'; c.lineWidth=5; c.strokeText(b.sub,0,sy); c.fillStyle=lava?'#ffb3a3':'#8fdcff'; c.fillText(b.sub,0,sy); } c.restore(); }   /* hazard captions: red for lava, white-blue for the storm; everything else goes through the toast rail */
+  if(G.banner){ const b=G.banner, k=b.t>2?1-(b.t-2)/.4:b.t<.4?b.t/.4:1, haz=b.haz, lava=haz==='lava', H=Math.round((haz?34:30)*UK), sy=Math.round(24*UK); c.save(); c.translate(SW/2,SH*.29); c.scale(1+(1-k)*.35,1+(1-k)*.35); c.globalAlpha=clamp(k,0,1); c.textAlign='center'; c.lineJoin='round'; if(haz){ c.shadowColor=lava?'rgba(255,40,20,.95)':'rgba(120,200,255,.95)'; c.shadowBlur=18*UK; } c.font='900 '+H+'px Arial'; c.lineWidth=haz?7:6; c.strokeStyle=lava?'rgba(60,0,0,.85)':haz?'rgba(0,30,70,.85)':'rgba(0,0,0,.8)'; c.strokeText(b.text,0,0); c.fillStyle=lava?'#ff3b2a':haz?'#eefaff':(b.col||'#ffffff'); c.fillText(b.text,0,0); if(b.sub){ c.font='800 '+Math.round(13*UK)+'px Arial'; c.lineWidth=4; c.strokeText(b.sub,0,sy); c.fillStyle=lava?'#ffb3a3':haz?'#8fdcff':'#d6dcee'; c.fillText(b.sub,0,sy); } c.restore(); }   /* captions on the canvas: red for lava, white-blue for the storm, plain white for everything else; never a toast */
   if(G.announce){ c.font='900 22px Arial'; c.textAlign='center'; c.lineWidth=6; c.strokeStyle='rgba(0,0,0,.7)'; c.strokeText(G.announce.text,SW/2,SH*.3); c.fillStyle='#fecaca'; c.fillText(G.announce.text,SW/2,SH*.3); }
   if(SAVE.settings.fps&&!DEBUG.hitbox){ c.font='700 12px monospace'; c.textAlign='left'; c.fillStyle=G.hitchShown?'#fca5a5':'#4ade80'; c.fillText('FPS '+G.fps+'   worst '+G.worstShown+'ms   hitches '+G.hitchShown,12,SH-12); }
   if(DEBUG.hitbox){ c.font='700 12px monospace'; c.textAlign='left'; c.fillStyle='#4ade80'; c.fillText('FPS '+G.fps+'  enemies '+G.enemies.filter(e=>e.alive).length+'  parts '+G.parts.filter(a=>a.alive).length,12,SH-12); }
@@ -6859,7 +6862,7 @@ function toast(kind,title,sub,icon){ if(!title) return; const box=$('toasts'); i
 function showHint(t){ if(!t) return; if(WORLD.arena) return; toast('info',t); }
 function showToast(msg){ toast('info',msg); }
 /* the in-game banners (map names, boss arrivals, phase two) now arrive as the epic toast */
-function uiTick(){ const b=G.banner&&!G.banner.haz?G.banner:null; const key=b?b.text+'|'+(b.sub||''):''; if(key&&key!==UIK.lastBanner){ UIK.lastBanner=key; toast('epic',b.text,b.sub||''); } if(!key) UIK.lastBanner=''; }
+function uiTick(){ }   /* banners are drawn on the canvas as captions (p6), never as toasts */
 const fmtN=n=>Math.round(n).toLocaleString('en-US');
 /* ---------- the profile card (top-right on the menu, map select and characters) ---------- */
 function profileCardRefresh(){ const el=$('profCard'); if(!el) return; const n=SAVE.selected, ch=CH[n], plv=playerLevel(), lo=plv>1?XP_NEED(plv-1):0, hi=XP_NEED(plv), cur=(SAVE.xpTotal||0)-lo, need=hi-lo;
