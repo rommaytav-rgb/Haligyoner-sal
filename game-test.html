@@ -6162,7 +6162,85 @@ function entry(x,y,t,scale){ const W=72*scale, pulse=.5+.5*Math.sin(t*2.4);
     for(let i=0;i<n;i++){ const a=i/n*6.28+(ring%2?-t*.6:t*.6);
       P(x+W/2+Math.cos(a)*rr, y+6+Math.sin(a)*rr*.42, ring===0?G.goldW:(ring===1?G.goldL:G.gold), .35+pulse*.45); } }
 }
-return {G,shine,pillarS,brazierG,statueG,lotusPool,torii,house,steps,cloud,temple,entry};
+
+/* ---------- more of the world (same palette, same pixel rules) ---------- */
+/* a blossom tree: pale trunk, three tiers of pink-white canopy, petals drifting down */
+function sakura(x,y,t,seed){
+  R(x-8,y+1,17,3,'rgba(0,0,0,.18)');
+  R(x-1,y-9,3,10,'#9a8a7a'); P(x-1,y-9,'#b8a898'); R(x-4,y-6,3,1,'#9a8a7a'); R(x+2,y-8,3,1,'#9a8a7a');
+  R(x-10,y-15,21,7,'#f4b8d0'); R(x-9,y-17,19,3,'#f8c8dc'); R(x-11,y-13,23,3,'#e8a0bc');
+  R(x-8,y-21,17,5,'#f8c8dc'); R(x-7,y-22,15,2,'#ffd8e8');
+  R(x-5,y-25,11,4,'#ffd8e8'); R(x-4,y-26,9,2,'#fff0f6');
+  for(let i=0;i<7;i++){ const px=x-9+rnd(seed*3+i)*19|0, py=y-24+rnd(seed*7+i)*11|0; P(px,py,rnd(seed+i)>.5?'#ffffff':'#fff0f6'); }
+  for(let i=0;i<3;i++){ const q=(t*.25+i*.33+rnd(seed*5+i))%1; P(x-8+((i*7+seed*3)%17)+Math.sin(t*2+i+seed)*2, y-20+q*24, i%2?'#ffd8e8':'#fff0f6', 1-q); }
+}
+/* a stone lantern with a small flame */
+function lantern(x,y,t,seed){
+  R(x-3,y+7,7,2,'rgba(0,0,0,.2)'); R(x-3,y+5,7,2,G.stD); R(x-3,y+5,7,1,G.st);
+  R(x-1,y-2,3,7,G.st); P(x-1,y-2,G.stL);
+  R(x-4,y-8,9,6,G.stL); R(x-4,y-8,9,1,'#ffffff'); R(x-4,y-3,9,1,G.stD);
+  R(x-2,y-7,5,4,'#3a3628'); const f=Math.floor(t*6+seed)%2; R(x-1+f,y-6,2,2,G.goldL); P(x,y-6,'#ffffff');
+  R(x-5,y-10,11,2,G.stD); R(x-3,y-12,7,2,G.st); R(x-3,y-12,7,1,G.stL); P(x,y-13,G.gold);
+  for(let i=0;i<6;i++){ const a=i/6*6.28; P(x+Math.cos(a)*6, y-5+Math.sin(a)*4, G.goldL, .18); }
+}
+/* a small shrine: two swept gold roofs, a dark door, a hanging bell */
+function shrine(x,y,t,seed){
+  R(x-13,y+3,27,3,'rgba(0,0,0,.2)'); R(x-13,y+1,27,3,G.st); R(x-13,y+1,27,1,G.stL);
+  R(x-9,y-11,19,12,G.st); R(x-9,y-11,19,1,G.stL); for(let i=0;i<3;i++) R(x-9+i*6+3,y-11,1,12,G.stD,.45);
+  R(x-3,y-8,7,9,G.goldS); R(x-2,y-7,5,8,'#3a3628');
+  for(let j=0;j<4;j++) R(x-13+j*2, y-12-j, 27-j*4, 1, j<1?G.goldW:(j<2?G.goldL:G.gold)); R(x-14,y-12,29,2,G.gold); R(x-14,y-12,29,1,G.goldL); R(x-15,y-13,2,2,G.gold); R(x+14,y-13,2,2,G.gold);
+  R(x-6,y-19,13,4,G.st); R(x-6,y-19,13,1,G.stL); R(x-2,y-18,5,2,G.goldS);
+  for(let j=0;j<3;j++) R(x-9+j*2, y-20-j, 19-j*4, 1, j<1?G.goldW:G.gold); R(x-10,y-20,21,2,G.gold); R(x-10,y-20,21,1,G.goldL); R(x-11,y-21,2,2,G.gold); R(x+10,y-21,2,2,G.gold);
+  for(let j=0;j<4;j++){ const w=Math.max(1,3-j); R(x-w/2+1,y-23-j,w,1,j<2?G.goldW:'#ffffff'); }
+  const sw=Math.round(Math.sin(t*1.5+seed)*1.2); R(x-1+sw,y-9,3,1,G.goldD); R(x-2+sw,y-8,5,2,G.gold); P(x+sw,y-6,G.goldS); shine(x,y-23,t,seed);
+}
+/* a gold bell on a wooden frame, swinging */
+function bell(x,y,t,seed){
+  R(x-7,y+1,16,2,'rgba(0,0,0,.2)'); R(x-7,y-15,2,16,'#7a5a3a'); R(x+5,y-15,2,16,'#7a5a3a'); R(x-8,y-16,17,2,'#9a7a5a'); R(x-8,y-16,17,1,'#b89a7a');
+  const sw=Math.round(Math.sin(t*1.5+seed)*1.5); R(x-1+sw,y-14,3,1,G.goldD); R(x-2+sw,y-13,5,7,G.gold); R(x-2+sw,y-13,1,7,G.goldL); R(x-3+sw,y-6,7,2,G.goldD); P(x+sw,y-4,G.goldS); shine(x+sw,y-11,t,seed);
+}
+/* the village fountain: a stone basin, a column, water rising and falling */
+function fountain(x,y,t){
+  for(let i=0;i<30;i++){ const a=i/30*6.28; P(x+Math.cos(a)*10, y+Math.sin(a)*10*.45, G.st); P(x+Math.cos(a)*9, y+1+Math.sin(a)*9*.45, G.stL, .7); }
+  for(let i=0;i<24;i++){ const a=rnd(i)*6.28, rr=rnd(i*3)*7; P(x+Math.cos(a)*rr, y+Math.sin(a)*rr*.45, rnd(i*7)>.5?G.wat:G.watL); }
+  R(x-1,y-9,3,9,G.st); P(x-1,y-9,G.stL); R(x-4,y-11,9,2,G.stL); R(x-4,y-10,9,1,G.stD); P(x,y-12,G.gold);
+  for(let i=0;i<6;i++){ const q=(t*.9+i/6)%1, dx=(i-2.5)*2.2*q; P(x+dx, y-12-Math.sin(q*3.14)*7+q*10, q<.5?'#ffffff':G.watL, 1-q*.6); }
+  for(let i=0;i<8;i++){ const a=t*.7+i*.8; P(x+Math.cos(a)*6, y+Math.sin(a)*6*.45, G.watL, .6); }
+}
+/* the village well */
+function well(x,y,t){
+  R(x-5,y+3,11,2,'rgba(0,0,0,.2)'); R(x-4,y-1,9,4,G.stD); R(x-4,y-2,9,1,G.st); for(let i=0;i<3;i++) P(x-3+i*3,y,G.stS);
+  R(x-4,y-10,1,8,'#7a5a3a'); R(x+4,y-10,1,8,'#7a5a3a'); R(x-6,y-12,13,2,'#c85a4a'); R(x-5,y-13,11,1,'#d87a6a');
+  R(x,y-10,1,4,'#4a3a2a'); R(x-1,y-6,3,2,'#7a5a3a');
+}
+/* a round moon gate of white stone: walk through the hole */
+function moongate(x,y,t){
+  R(x-13,y+1,27,3,'rgba(0,0,0,.2)');
+  for(let i=0;i<48;i++){ const a=i/48*6.28, px=x+Math.cos(a)*12, py=y-12+Math.sin(a)*12; R(px-1,py-1,3,3,G.st); }
+  for(let i=0;i<48;i++){ const a=i/48*6.28, px=x+Math.cos(a)*12, py=y-12+Math.sin(a)*12; P(px,py-1,a>3.3&&a<6.1?G.stL:G.stD); }
+  R(x-14,y-2,5,4,G.st); R(x+10,y-2,5,4,G.st); R(x-14,y-2,5,1,G.stL); R(x+10,y-2,5,1,G.stL);
+  R(x-2,y-26,5,2,G.gold); R(x-1,y-27,3,1,G.goldL); shine(x,y-27,t,5);
+}
+/* a string of prayer flags between two posts, waving */
+function flags(x,y,t){
+  R(x,y-16,2,17,'#9a7a5a'); R(x+30,y-16,2,17,'#9a7a5a'); P(x,y-17,G.gold); P(x+31,y-17,G.gold);
+  const cols=[G.gold,'#ffffff',G.goldL,G.watL,G.gold];
+  for(let i=0;i<30;i++){ const sag=Math.sin(i/30*3.14)*3, wave=Math.sin(t*4+i*.5)*1.2; P(x+1+i, y-16+sag, '#9a7a5a');
+    if(i%6===1) for(let k=0;k<4;k++) R(x+1+i+k, y-15+sag+Math.round(wave*(k/3)), 1, 4-(k>2?1:0), cols[(i/6|0)%5]); }
+}
+/* a fallen column and its capital */
+function ruin(x,y,t,seed){
+  R(x-1,y+5,24,2,'rgba(0,0,0,.18)'); R(x,y,22,6,G.st); R(x,y,22,1,G.stL); R(x,y+5,22,1,G.stD); for(let i=0;i<22;i+=5) R(x+i,y,1,6,G.stD,.5);
+  R(x+24+(seed%3),y+1,5,5,G.st); R(x+24+(seed%3),y+1,5,1,G.stL); R(x+25+(seed%3),y-1,3,2,G.gold);
+  for(let i=0;i<5;i++) P(x-3+rnd(seed+i)*30, y+7+rnd(seed*3+i)*4, G.stD);
+}
+/* a garden rock */
+function rock(x,y){ R(x-3,y+3,8,2,'rgba(0,0,0,.18)'); R(x-3,y-2,7,5,'#c8c4b8'); R(x-2,y-4,5,2,'#dcd8cc'); R(x-2,y-4,5,1,'#ece8dc'); R(x-3,y+2,7,1,'#a8a498'); P(x+3,y-1,'#a8a498'); }
+/* koi circling a pool */
+function koi(x,y,r,t,n){ for(let k=0;k<n;k++){ const a=t*.4+k*2.1, px=x+Math.cos(a)*r*.55, py=y+Math.sin(a)*r*.22; const d=Math.cos(a)>0?1:-1; R(px-1,py,3,1,k%2?'#f08040':'#ffffff'); P(px+d*2,py,k%2?'#ffffff':'#f08040'); P(px-d*2,py,k%2?'#f08040':'#e05030',.8); } }
+/* a butterfly, wings alternating */
+function butterfly(x,y,t,seed){ const px=x+Math.sin(t*.7+seed)*10, py=y+Math.cos(t*1.1+seed*2)*5, f=Math.floor(t*10+seed)%2; if(f){ P(px-1,py,'#fff0f6'); P(px+1,py,'#fff0f6'); } else { P(px-1,py-1,'#ffd8e8'); P(px+1,py-1,'#ffd8e8'); } P(px,py,'#8a6a5a'); }
+return {G,shine,pillarS,brazierG,statueG,lotusPool,torii,house,steps,cloud,temple,entry,sakura,lantern,shrine,bell,fountain,well,moongate,flags,ruin,rock,koi,butterfly};
 })();
 
 /* ---------- the map (reference units; ×W4U → world px) ---------- */
@@ -6171,10 +6249,15 @@ const W4={ id:'golden_temple', w:3200, h:2000, border:40,              /* the cl
   plaza:{x0:540,y0:290,x1:652,y1:330},                                  /* white stone under the temple's foot and its steps */
   houses:[[64,262],[124,250],[76,376],[134,388]],                        /* the village of tiled roofs, to the west */
   village:{x:105,y:320,r:120},
-  paths:[[[52,330],[200,318],[330,342],[470,326],[596,326]],[[596,326],[596,312]],[[200,318],[212,232],[300,178]],[[596,332],[640,398],[712,428]]],
-  pillars:[[150,292,20,false],[220,292,25,true],[290,292,24,false],[360,292,23,false],[250,372,22,false],[400,372,21,false],[560,130,22,false],[600,130,20,true]],   /* x, y, height, broken */
-  statues:[[88,150],[330,138],[418,428],[704,176]],
-  pools:[[206,192,16],[470,442,14],[706,412,13],[520,160,15]],
+  paths:[[[52,330],[200,318],[330,342],[470,326],[596,326]],[[596,326],[596,312]],[[200,318],[196,236],[300,178]],[[596,332],[640,380],[720,380]],[[300,178],[312,150]]],
+  stream:{pts:[[236,40],[244,110],[232,168],[238,215],[222,270],[214,320],[226,380],[210,464]],hw:7}, lake:{x:232,y:190,r:28},   /* soft blue water from the clouds to a lake and on south; the paths cross it on plank bridges */
+  square:{x0:88,y0:306,x1:126,y1:342}, garden:{x0:600,y0:396,x1:690,y1:446},   /* the village square (white stone) and the raked zen garden */
+  sakura:[[70,180],[96,196],[170,166],[352,96],[520,110],[560,70],[620,90],[690,120],[740,200],[730,330],[700,450],[440,448],[380,440],[60,440],[300,400],[110,448],[500,250],[160,440],[400,60],[270,60],[740,90],[540,448]],
+  lanterns:[100,260,320,400,440,540,130,300,380,520],   /* along the main road: the first five north of it, the rest south */
+  shrines:[[312,120],[150,440]], moongate:[300,180], bells:[[128,352],[516,310]], fountain:[107,322], well:[152,268], flags:[[84,294],[480,300],[130,428]], ruins:[[596,60],[640,74]], rocks:[[628,412],[662,432],[684,408]], torii2:[606,346],
+  pillars:[[150,292,20,false],[176,292,25,true],[290,292,24,false],[360,292,23,false],[250,372,22,false],[400,372,21,false],[560,130,22,false],[600,130,20,true]],   /* x, y, height, broken */
+  statues:[[88,150],[270,128],[356,128],[418,428],[704,176]],
+  pools:[[470,442,14],[740,290,12],[520,160,15]],
   torii:[454,302],
   spawn:{x:150,y:334} };
 const w4u=v=>v*W4U;
@@ -6197,29 +6280,47 @@ function buildWorld4(){ const T=W4.temple, w=W4.w, h=W4.h, K=W4ART;
   W4.pillars.forEach(([x,y,h,broken],i)=>{ prop('pillar',x,y,{h,broken,seed:i}); add(x+4,y+h,5); });
   W4.statues.forEach(([x,y],i)=>{ prop('statue',x,y,{seed:i+1}); add(x+5,y+20,6); });
   W4.pools.forEach(([x,y,r])=>prop('pool',x,y,{r}));
-  { const [x,y]=W4.torii; prop('torii',x,y); add(x+4,y+25,3); add(x+26,y+25,3); }
+  { const [x,y]=W4.torii; prop('torii',x,y); add(x+4,y+25,3); add(x+26,y+25,3); } { const [x,y]=W4.torii2; prop('torii',x,y); add(x+4,y+25,3); add(x+26,y+25,3); }
+  W4.sakura.forEach(([x,y],i)=>{ prop('sakura',x,y,{seed:i+1}); add(x,y-2,3); });
+  { const road=W4.paths[0], py=x=>{ for(let i=0;i<road.length-1;i++){ const a=road[i], b=road[i+1]; if(x>=a[0]&&x<=b[0]) return lerp(a[1],b[1],(x-a[0])/(b[0]-a[0]))+Math.sin(x*.6)*3; } return road[0][1]; };
+    W4.lanterns.forEach((x,i)=>{ const y=py(x)+(i<5?-14:14); prop('lantern',x,y,{seed:i}); add(x,y+4,2.5); }); }
+  W4.shrines.forEach(([x,y],i)=>{ prop('shrine',x,y,{seed:i}); rect(x-13,y-12,x+14,y+2); });
+  { const [x,y]=W4.moongate; prop('moongate',x,y); add(x-12,y-2,3); add(x+12,y-2,3); add(x-9,y-9,2.5); add(x+9,y-9,2.5); }
+  W4.bells.forEach(([x,y],i)=>{ prop('bell',x,y,{seed:i}); add(x-6,y-2,2); add(x+6,y-2,2); });
+  { const [x,y]=W4.fountain; prop('fountain',x,y); add(x,y-1,8); } { const [x,y]=W4.well; prop('well',x,y); add(x,y,4.5); }
+  W4.flags.forEach(([x,y])=>{ prop('flags',x,y); add(x+1,y-1,1.5); add(x+31,y-1,1.5); });
+  W4.ruins.forEach(([x,y],i)=>{ prop('ruin',x,y,{seed:i+3}); rect(x-1,y-1,x+22,y+6); add(x+26,y+3,3); });
+  W4.rocks.forEach(([x,y])=>{ prop('rock',x,y); add(x,y,3.5); });
+  { const L=W4.lake; prop('koi',L.x,L.y,{r:L.r,n:3}); } W4.pools.forEach(([x,y,r])=>prop('koi',x,y,{r,n:2}));
+  [[80,200],[540,448],[420,448],[700,130],[300,60]].forEach(([x,y],i)=>prop('butterfly',x,y,{seed:i*1.7}));
   /* the temple: three pillars and a brazier on each side of the steps; the building itself blocks, the doorway stays open ground */
   for(let i=0;i<3;i++){ prop('pillar',T.x-14,T.y-6-i*28,{h:24,seed:i+9}); add(T.x-10,T.y+18-i*28,5); prop('pillar',T.x+84,T.y-6-i*28,{h:24,seed:i+20}); add(T.x+88,T.y+18-i*28,5); }
   prop('brazier',T.x-10,T.y+8); add(T.x-6,T.y+20,4); prop('brazier',T.x+82,T.y+8); add(T.x+86,T.y+20,4);
   rect(T.x-6,T.y-120,T.x+78,T.y-5);
   W.temple={x:w4u(T.x),y:w4u(T.y),scale:T.scale,near:false};
-  W.landmarks=[{x:w4u(T.x+36),y:w4u(T.y-40),name:'The Golden Temple',icon:''},{x:W.w4village.x,y:W.w4village.y,name:'The White Village',icon:''}];
+  W.landmarks=[{x:w4u(T.x+36),y:w4u(T.y-40),name:'The Golden Temple',icon:''},{x:W.w4village.x,y:W.w4village.y,name:'The White Village',icon:''},{x:w4u(312),y:w4u(108),name:'The Moon Shrine',icon:''},{x:w4u(645),y:w4u(421),name:'The Zen Garden',icon:''},{x:w4u(W4.lake.x),y:w4u(W4.lake.y),name:'The Lotus Lake',icon:''}];
   W.cgrid.clear(); for(const o of W.colliders){ const k=Math.floor(o.x/W.CG)+','+Math.floor(o.y/W.CG); let a=W.cgrid.get(k); if(!a){ a=[]; W.cgrid.set(k,a); } a.push(o); }
   W.ex=Math.ceil(W.w/W.FOG); W.ey=Math.ceil(W.h/W.FOG); W.explored=new Uint8Array(W.ex*W.ey);
   return W;
 }
 /* ---------- tiles ---------- */
-function w4KindAt(wx,wy){ const W=WORLD, L=W.land; if(wx<L.x0||wy<L.y0||wx>L.x1||wy>L.y1) return 'cloud'; const P=W4.plaza; if(wx>=w4u(P.x0)&&wx<w4u(P.x1)&&wy>=w4u(P.y0)&&wy<w4u(P.y1)) return 'stone4'; if(onPath(wx,wy)) return 'path4'; return 'pure'; }
-const W4EDGE={pure:'#a8b498',path4:'#bfb69e',stone4:'#b8b2a0',cloud:'#dff2fa'};
+function w4InRect(wx,wy,Q){ return wx>=w4u(Q.x0)&&wx<w4u(Q.x1)&&wy>=w4u(Q.y0)&&wy<w4u(Q.y1); }
+function w4InWater(wx,wy){ const L=W4.lake, ux=wx/W4U, uy=wy/W4U; if(((ux-L.x)/L.r)**2+((uy-L.y)/(L.r*.6))**2<1) return true; const S=W4.stream, p=S.pts; for(let i=0;i<p.length-1;i++){ const [ax,ay]=p[i], [bx,by]=p[i+1], dx=bx-ax, dy=by-ay, k=clamp(((ux-ax)*dx+(uy-ay)*dy)/(dx*dx+dy*dy),0,1); if(Math.hypot(ux-ax-dx*k,uy-ay-dy*k)<S.hw) return true; } return false; }
+function w4KindAt(wx,wy){ const W=WORLD, L=W.land; if(wx<L.x0||wy<L.y0||wx>L.x1||wy>L.y1) return 'cloud'; if(w4InRect(wx,wy,W4.plaza)||w4InRect(wx,wy,W4.square)) return 'stone4'; if(w4InRect(wx,wy,W4.garden)) return 'gravel4'; const water=w4InWater(wx,wy), path=onPath(wx,wy); if(water) return path?'bridge4':'water4'; return path?'path4':'pure'; }
+const W4EDGE={pure:'#a8b498',path4:'#bfb69e',stone4:'#b8b2a0',cloud:'#dff2fa',water4:'#b8dce8',gravel4:'#d8d4c8'};
 function w4Zone(x,y){ return 'pure'; }
-function w4Terrain(x,y){ return onPath(x,y)?1.15:1; }
+function w4Terrain(x,y){ const k=w4KindAt(x,y); return k==='water4'?.75:(k==='path4'||k==='bridge4'||k==='stone4')?1.15:1; }   /* wading is slow; roads, bridges and stone are quick */
 const w4rnd=s=>{s=Math.sin(s*127.1)*43758.5453;return s-Math.floor(s);};
 /* one 16-px tile in the reference's ground style: a flat base, eight speckles, now and then a leaf */
 function w4Tile(x,y,s,kind){ const K=W4ART.G; let base=K.gr, a=K.grL, b=K.grD;
   if(kind==='path4'){ base=K.path; a='#ece6d4'; b=K.pathD; } else if(kind==='cloud'){ base=K.watL; a='#ffffff'; b=K.wat; }
   else if(kind==='stone4'){ const tx=x/TS|0, ty=y/TS|0; rect(x,y,TS,TS,(tx+ty)%2?K.st:K.stL); rect(x,y,TS,1,'#d4d0c4'); rect(x,y,1,TS,'#d4d0c4'); return; }
+  else if(kind==='water4'){ rect(x,y,TS,TS,K.wat); for(let q=0;q<6;q++) px(x+w4rnd(s*3+q)*TS, y+w4rnd(s*7+q)*TS, w4rnd(q+s)>.5?K.watL:K.watD); rect(x+(w4rnd(s*9)*10|0),y+(w4rnd(s*5)*14|0),4,1,'#ffffff'); return; }
+  else if(kind==='bridge4'){ rect(x,y,TS,TS,'#c8a878'); for(let j=0;j<TS;j+=4) rect(x,y+j,TS,1,'#a88858'); rect(x,y,1,TS,'#e8d8b8'); rect(x+TS-1,y,1,TS,'#8a6a48'); return; }
+  else if(kind==='gravel4'){ rect(x,y,TS,TS,'#e8e4d8'); for(let j=1;j<TS;j+=4) rect(x,y+j,TS,1,'#d4d0c4'); for(let q=0;q<3;q++) px(x+w4rnd(s*3+q)*TS, y+w4rnd(s*7+q)*TS,'#f4f0e8'); return; }
   rect(x,y,TS,TS,base); for(let q=0;q<8;q++) px(x+w4rnd(s*3+q)*TS, y+w4rnd(s*7+q)*TS, w4rnd(q+s)>.5?a:b);
   if(kind==='pure'&&w4rnd(s*17)>.9){ rect(x+5,y+8,3,5,K.lfD); rect(x+3,y+5,6,3,K.lf); }
+  if(kind==='pure'&&Math.sin(x*.021)+Math.cos(y*.017)>.85&&w4rnd(s*23)>.55){ for(let q=0;q<3;q++){ const fx=x+(w4rnd(s*29+q)*13|0), fy=y+(w4rnd(s*31+q)*12|0); px(fx,fy+2,K.lfD); px(fx,fy,q%2?'#ffd8e8':'#ffffff'); px(fx+1,fy,q%2?'#ffffff':'#ffd8e8'); } }   /* blossom patches in drifts */
   if(kind==='cloud'&&w4rnd(s*11)>.75){ const cx=x+w4rnd(s*5)*10|0, cy=y+w4rnd(s*13)*10|0; rect(cx,cy+2,10,3,'#ffffff'); rect(cx+2,cy,6,2,'#ffffff'); rect(cx+1,cy+5,8,1,K.wat); } }
 /* ---------- painting (the static layer: tiles, then every prop at t=0 so chunks and the minimap carry them) ---------- */
 function w4PaintAll(c,ax,ay,aw,ah){ g=c; const W=WORLD, vis=(x,y,m)=>x>ax-m&&x<ax+aw+m&&y>ay-m&&y<ay+ah+m;
@@ -6232,7 +6333,9 @@ function w4PaintAll(c,ax,ay,aw,ah){ g=c; const W=WORLD, vis=(x,y,m)=>x>ax-m&&x<a
 /* the props, in reference units (static parts and the flames/shine share one drawing; the static layer passes t=0) */
 function w4Props(c,ox,oy,vw,vh,t,stat){ const W=WORLD, K=W4ART, vis=(x,y,m)=>x>ox-m&&x<ox+vw+m&&y>oy-m&&y<oy+vh+m, T=W.temple;
   for(const q of W.props){ if(!vis(q.x,q.y,200)) continue; const x=q.ux, y=q.uy;
-    if(q.k==='house') K.house([x,y],t,q.i); else if(q.k==='pillar') K.pillarS(x,y,q.h,t,q.seed,q.broken); else if(q.k==='statue') K.statueG(x,y,t,q.seed); else if(q.k==='pool') K.lotusPool(x,y,q.r,t); else if(q.k==='torii') K.torii(x,y,t); else if(q.k==='brazier') K.brazierG(x,y,t); }
+    if(q.k==='house') K.house([x,y],t,q.i); else if(q.k==='pillar') K.pillarS(x,y,q.h,t,q.seed,q.broken); else if(q.k==='statue') K.statueG(x,y,t,q.seed); else if(q.k==='pool') K.lotusPool(x,y,q.r,t); else if(q.k==='torii') K.torii(x,y,t); else if(q.k==='brazier') K.brazierG(x,y,t);
+    else if(q.k==='sakura') K.sakura(x,y,t,q.seed); else if(q.k==='lantern') K.lantern(x,y,t,q.seed); else if(q.k==='shrine') K.shrine(x,y,t,q.seed); else if(q.k==='bell') K.bell(x,y,t,q.seed); else if(q.k==='fountain') K.fountain(x,y,t); else if(q.k==='well') K.well(x,y,t); else if(q.k==='moongate') K.moongate(x,y,t); else if(q.k==='flags') K.flags(x,y,t); else if(q.k==='ruin') K.ruin(x,y,t,q.seed); else if(q.k==='rock') K.rock(x,y);
+    else if(!stat){ if(q.k==='koi') K.koi(x,y,q.r,t,q.n); else if(q.k==='butterfly') K.butterfly(x,y,t,q.seed); } }
   if(T&&vis(T.x,T.y,600)){ const tx=T.x/W4U, ty=T.y/W4U; K.steps(tx,ty); if(stat) K.temple(tx,ty,0,T.scale,0); else K.entry(tx,ty,t,T.scale); } }
 function w4WorldFx(c,ox,oy,vw,vh,t){ const W=WORLD, K=W4ART, A=v=>v/PIX, live=G.state==='PLAYING';
   w4Props(c,ox,oy,vw,vh,t,false);
