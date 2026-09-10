@@ -5665,7 +5665,9 @@ function caveClock(ms){ const s=Math.max(0,Math.floor(ms/1000)), h=Math.floor(s/
 const CAVE_OPEN=(typeof TEST_PRESET!=='undefined')&&!!TEST_PRESET.caveAlways;   /* private test builds only: the cave never locks */
 function caveChestLeft(){ if(CAVE_OPEN) return true; return caveSave().clearedDay!==new Date().toDateString(); }   /* one chest a day across all three caves; the caves themselves never lock */
 function caveStatus(){ return {k:'ready',chest:caveChestLeft(),left:caveMsToMidnight()}; }
-function caveSignText(){ const st=caveStatus(); return st.chest?'THE CAVE IS OPEN':'CHEST TAKEN TODAY · NEW CAVE IN '+caveClock(st.left); }
+function caveStateText(){ return caveStatus().chest?'CHEST READY':'CHEST TAKEN TODAY'; }
+function caveTimerText(){ return 'NEW CAVE IN '+caveClock(caveMsToMidnight()); }
+function caveSignText(){ return caveStateText()+' · '+caveTimerText(); }
 /* ---------- the day's roll: tier, elite and the exact enemy behind every class slot, the same for every player ---------- */
 let CAVE_DAY=null;
 function caveToday(){ const day=new Date().toDateString(); if(CAVE_DAY&&CAVE_DAY.day===day) return CAVE_DAY; const R=dailySeed(day+'|cave'); let x=R(), tier='hard'; for(const [k,w] of CAVE.weights){ if(x<w){ tier=k; break; } x-=w; } const elite=ELITES[Math.floor(R()*ELITES.length)].key, picks={}; for(const w of [1,2,3]){ picks[w]={}; for(const cls of ['weak','normal','strong','fast']){ const pool=CAVE.pools[w][cls]; picks[w][cls]=pool[Math.floor(R()*pool.length)]; } } CAVE_DAY={day,tier,elite,picks}; return CAVE_DAY; }
@@ -5734,9 +5736,9 @@ function drawCaveEntrance(c,cv,t){ const w=CAVE.worlds[cv.w], world=cv.w; c.save
   caveTorch(A,w,cx-pw/2-14,base-ph-4,t); caveTorch(A,w,cx+pw/2+10,base-ph-4,t);
   const st=caveStatus(), pulse=st.chest?.5+.5*Math.sin(t*2.4):.25;
   for(let ring=0;ring<3;ring++){ const rr=14-ring*4, n=Math.round(rr*3.2); for(let i=0;i<n;i++){ const a=i/n*6.28+(ring%2?-t*.6:t*.6); P(cx+Math.cos(a)*rr,base+14+Math.sin(a)*rr*.42,ring===0?w.accentL:(ring===1?w.glow:w.accentD),.35+pulse*.45); } }
-  R(cx-40,base-ph-28,80,14,'#0a0d14',.9); R(cx-40,base-ph-28,80,1,w.accent); R(cx-40,base-ph-15,80,1,w.accentD);
+  R(cx-44,base-ph-35,88,21,'#0a0d14',.9); R(cx-44,base-ph-35,88,1,w.accent); R(cx-44,base-ph-15,88,1,w.accentD);
   c.restore();
-  c.save(); c.textAlign='center'; c.font='900 11px Arial'; c.fillStyle=w.color; c.fillText(w.tag,cv.x,cv.y-(ph+19)*PIX+1); c.font='800 8px Arial'; c.fillStyle=st.chest?'#8dfab5':'#7f8cc0'; c.fillText(caveSignText(),cv.x,cv.y-(ph+13.5)*PIX+3); c.restore(); }
+  c.save(); c.textAlign='center'; c.font='900 11px Arial'; c.fillStyle=w.color; c.fillText(w.tag,cv.x,cv.y-(ph+26)*PIX+1); c.font='800 8px Arial'; c.fillStyle=st.chest?'#8dfab5':'#fca5a5'; c.fillText(caveStateText(),cv.x,cv.y-(ph+20)*PIX+3); c.fillStyle='#e2e8f0'; c.fillText(caveTimerText(),cv.x,cv.y-(ph+14.5)*PIX+3); c.restore(); }   /* the sign: name, the chest's state, and the countdown to the next cave, always ticking */
 function drawCaveMapIcon(c,x,y,s,col){ c.save(); c.fillStyle='#0a0d14'; roundRect(c,x-s,y-s,s*2,s*2,s*.5); c.fill(); c.strokeStyle=col; c.lineWidth=1; c.stroke(); c.fillStyle=col; c.beginPath(); c.arc(x,y+s*.3,s*.55,Math.PI,0); c.lineTo(x+s*.55,y+s*.85); c.lineTo(x-s*.55,y+s*.85); c.closePath(); c.fill(); c.restore(); }
 /* walking into the entrance circle */
 function caveWorldUpdate(dt){ const W=WORLD, cv=W.cave; if(!cv||W.arena||NET.guest||G.mapT<1||G.state!=='PLAYING') return; const p=[G.player,G.p2].find(q=>q&&q.alive&&Math.hypot(q.x-cv.x,(q.y-(cv.y+14*PIX))/.5)<=cv.r); if(!p){ cv.near=false; return; } if(cv.near) return; cv.near=true;   /* in co-op either ninja can walk in; both go together */
