@@ -5736,9 +5736,9 @@ function drawCaveEntrance(c,cv,t){ const w=CAVE.worlds[cv.w], world=cv.w; c.save
   caveTorch(A,w,cx-pw/2-14,base-ph-4,t); caveTorch(A,w,cx+pw/2+10,base-ph-4,t);
   const st=caveStatus(), pulse=st.chest?.5+.5*Math.sin(t*2.4):.25;
   for(let ring=0;ring<3;ring++){ const rr=14-ring*4, n=Math.round(rr*3.2); for(let i=0;i<n;i++){ const a=i/n*6.28+(ring%2?-t*.6:t*.6); P(cx+Math.cos(a)*rr,base+14+Math.sin(a)*rr*.42,ring===0?w.accentL:(ring===1?w.glow:w.accentD),.35+pulse*.45); } }
-  R(cx-62,base-ph-46,124,31,'#0a0d14',.9); R(cx-62,base-ph-46,124,1,w.accent); R(cx-62,base-ph-16,124,1,w.accentD);
+  R(cx-50,base-ph-39,100,24,'#0a0d14',.9); R(cx-50,base-ph-39,100,1,w.accent); R(cx-50,base-ph-16,100,1,w.accentD);
   c.restore();
-  c.save(); c.textAlign='center'; c.lineJoin='round'; c.font='900 16px Arial'; c.fillStyle=w.color; c.fillText(w.tag,cv.x,cv.y-(ph+35)*PIX+2); c.font='800 11px Arial'; c.fillStyle=st.chest?'#8dfab5':'#fca5a5'; c.fillText(caveStateText(),cv.x,cv.y-(ph+26.5)*PIX+3); c.fillStyle='#e2e8f0'; c.fillText(caveTimerText(),cv.x,cv.y-(ph+18.5)*PIX+3); c.restore(); }   /* the sign: name, the chest's state, and the countdown to the next cave, always ticking */
+  c.save(); c.textAlign='center'; c.lineJoin='round'; c.font='900 12.5px Arial'; c.fillStyle=w.color; c.fillText(w.tag,cv.x,cv.y-(ph+30)*PIX+2); c.font='800 9px Arial'; c.fillStyle=st.chest?'#8dfab5':'#fca5a5'; c.fillText(caveStateText(),cv.x,cv.y-(ph+23)*PIX+3); c.fillStyle='#e2e8f0'; c.fillText(caveTimerText(),cv.x,cv.y-(ph+17)*PIX+3); c.restore(); }   /* the sign: name, the chest's state, and the countdown to the next cave, always ticking */
 function drawCaveMapIcon(c,x,y,s,col){ c.save(); c.fillStyle='#0a0d14'; roundRect(c,x-s,y-s,s*2,s*2,s*.5); c.fill(); c.strokeStyle=col; c.lineWidth=1; c.stroke(); c.fillStyle=col; c.beginPath(); c.arc(x,y+s*.3,s*.55,Math.PI,0); c.lineTo(x+s*.55,y+s*.85); c.lineTo(x-s*.55,y+s*.85); c.closePath(); c.fill(); c.restore(); }
 /* walking into the entrance circle */
 function caveWorldUpdate(dt){ const W=WORLD, cv=W.cave; if(!cv||W.arena||NET.guest||G.mapT<1||G.state!=='PLAYING') return; const p=[G.player,G.p2].find(q=>q&&q.alive&&Math.hypot(q.x-cv.x,(q.y-(cv.y+14*PIX))/.5)<=cv.r); if(!p){ cv.near=false; return; } if(cv.near) return; cv.near=true;   /* in co-op either ninja can walk in; both go together */
