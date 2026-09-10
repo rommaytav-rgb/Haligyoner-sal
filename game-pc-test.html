@@ -5548,7 +5548,7 @@ function makeCaveArena(w){ const cols=CAVE.COLS, rows=CAVE.ROWS, W=emptyWorld(co
 function cavePaint(c,ax,ay,aw,ah){ g=c; const W=WORLD, A=W.arena, w=CAVE.worlds[A.cave], world=A.cave, art=caveArt(c), {R,P}=art, vis=(x,y,m)=>x>ax-m&&x<ax+aw+m&&y>ay-m&&y<ay+ah+m;
   const tx0=Math.max(0,Math.floor(ax/TS)-1), ty0=Math.max(0,Math.floor(ay/TS)-1), tx1=Math.min(A.cols-1,Math.ceil((ax+aw)/TS)+1), ty1=Math.min(A.rows-1,Math.ceil((ay+ah)/TS)+1);
   for(let ty=ty0;ty<=ty1;ty++) for(let tx=tx0;tx<=tx1;tx++){ const k=A.grid[ty*A.cols+tx], x=tx*TS, y=ty*TS, s=tx*7.3+ty*3.1;
-    if(k==='floor'){ R(x,y,TS,TS,w.ground); for(let q=0;q<12;q++) P(x+hsh(s*3+q)*TS,y+hsh(s*7+q)*TS,hsh(q+s)>.5?w.groundL:w.groundD); }
+    if(k==='floor'){ R(x,y,TS,TS,w.ground); for(let q=0;q<12;q++) P(x+hsh(s*3+q)*TS,y+hsh(s*7+q)*TS,hsh(q+s)>.5?w.groundL:w.groundD); const eL=tx===1, eR=tx===A.cols-2, eT=ty===2, eB=ty===A.rows-2; if(eL||eR||eT||eB){ R(x,y,TS,TS,'rgba(0,0,0,.28)'); if(eL){ R(x,y,2,TS,w.wallL); R(x+2,y,3,TS,'rgba(0,0,0,.25)'); } if(eR){ R(x+TS-2,y,2,TS,w.wallL); R(x+TS-5,y,3,TS,'rgba(0,0,0,.25)'); } if(eT){ R(x,y,TS,2,w.rockH); R(x,y+2,TS,4,'rgba(0,0,0,.3)'); } if(eB){ R(x,y+TS-2,TS,2,w.wallL); } } }
     else { const o=(ty%2)*5; R(x,y,TS,TS,w.wallD); for(let bx=-o;bx<TS;bx+=9){ R(x+bx+1,y+1,8,TS-2,(tx*3+ty*7)%5===0?w.wallL:w.wall); R(x+bx+1,y+1,8,1,w.wallL); } if(ty===1) R(x,y+TS-2,TS,2,w.rockH); if(ty===A.rows-1) R(x,y,TS,1,w.wallL); if(tx===0) R(x+TS-1,y,1,TS,w.rockH); if(tx===A.cols-1) R(x,y,1,TS,w.rockH); } }
   const cx=A.center.x/PIX, cy=A.center.y/PIX, top=2*TS, rr=184;
   for(let i=0;i<6;i++){ const off=24+i*44, h=5+((i*5)%8); [cx-off,cx+off].forEach(x=>{ if(!vis(x,top,20)) return; for(let j=0;j<h;j++){ const ww=Math.max(1,Math.round((1-j/h)*6)); R(x-ww/2,top+j,ww,1,j<2?w.rockL:w.rock); } }); }
@@ -5594,7 +5594,9 @@ function caveFx(c,ox,oy,vw,vh,t){ const W=WORLD, A=W.arena, F=G.arena, w=CAVE.wo
           if(it[0]==='gold'){ if(COIN_IMG.complete&&COIN_IMG.naturalWidth) c.drawImage(COIN_IMG,ix-5,iy-5,10,10); else { R(ix-3,iy-3,6,6,GOLD_D); R(ix-2,iy-2,4,4,GOLD); } }
           else if(it[0]==='chi'){ const og=g; g=c; chiOrb(ix,iy-5,t); g=og; }
           else { CAVE.xpIc=CAVE.xpIc||rewardIcon('xp',22); c.drawImage(CAVE.xpIc,0,0,22,22,ix-6,iy-8,12,12); } }); } } } }
-function caveZoom(){ const W=WORLD; return clamp(Math.max(SW/ZOOM_BASE/(W.w-AT*1.5),SH/ZOOM_BASE/(W.h-AT*1.5)),.8,2.2); }   /* fill the screen with the room: the floor plus a wall band, the camera scrolls inside */
+function caveFloor(){ const W=WORLD, A=W.arena; return {x0:AT,y0:2*AT,x1:(A.cols-1)*AT,y1:(A.rows-1)*AT}; }
+function caveZoom(){ const f=caveFloor(); return clamp(Math.max(SW/ZOOM_BASE/(f.x1-f.x0),SH/ZOOM_BASE/(f.y1-f.y0)),.8,2.4); }   /* the floor fills the screen: nothing beyond the walls is ever in view */
+function caveCamClamp(){ const f=caveFloor(), z=ZOOM_BASE*(G.camZoom||1), aw=SW/z, ah=SH/z, fw=f.x1-f.x0, fh=f.y1-f.y0; CAM.x=aw>=fw?(f.x0+f.x1)/2:clamp(CAM.x,f.x0+aw/2,f.x1-aw/2); CAM.y=ah>=fh?(f.y0+f.y1)/2:clamp(CAM.y,f.y0+ah/2,f.y1-ah/2); }
 /* ---------- entering, the run, leaving ---------- */
 function enterCave(w){ if(WORLD.arena) WORLD=WORLD_CUR; b2Reset(); const day=caveToday(), D=CAVE.worlds[w], tier=day.tier, lvl=caveLevel(w,tier);
   const W=makeCaveArena(w); WORLD=W; G.map={id:'cave_'+w,name:D.tag,lvl:[lvl,lvl+2],tier:0,plv:lvl};
@@ -6757,7 +6759,7 @@ function camUpdate(dt,p){
   const vw=SW/ZOOM_BASE, vh=SH/ZOOM_BASE; CAM.x=clamp(CAM.x,vw/2-40,WORLD.w-vw/2+40); CAM.y=clamp(CAM.y,vh/2-40,WORLD.h-vh/2+40);
   if(G.shake>0){ G.shake=Math.max(0,G.shake-dt*26); CAM.sx=(Math.random()*2-1)*G.shake/ZOOM_BASE; CAM.sy=(Math.random()*2-1)*G.shake/ZOOM_BASE; } else CAM.sx=CAM.sy=0;
   G.zoomPulse=lerp(G.zoomPulse||1,1,1-Math.pow(.02,dt));
-  if(WORLD.arena){ const F=G.arena; G.camZoom=lerp(G.camZoom||1,(F&&F.cave)?caveZoom():.8,1-Math.pow(.1,dt)); if(F&&F.phase==='intro'&&G.boss){ CAM.x=lerp(CAM.x,G.boss.x,1-Math.pow(.02,dt)); CAM.y=lerp(CAM.y,G.boss.y-20,1-Math.pow(.02,dt)); } const z=ZOOM_BASE*(G.camZoom||1), aw=SW/z, ah=SH/z; CAM.x=aw>=WORLD.w?WORLD.w/2:clamp(CAM.x,aw/2,WORLD.w-aw/2); CAM.y=ah>=WORLD.h?WORLD.h/2:clamp(CAM.y,ah/2,WORLD.h-ah/2); return; }   // never look past the arena walls
+  if(WORLD.arena){ const F=G.arena; G.camZoom=lerp(G.camZoom||1,(F&&F.cave)?caveZoom():.8,1-Math.pow(.1,dt)); if(F&&F.phase==='intro'&&G.boss){ CAM.x=lerp(CAM.x,G.boss.x,1-Math.pow(.02,dt)); CAM.y=lerp(CAM.y,G.boss.y-20,1-Math.pow(.02,dt)); } if(F&&F.cave){ caveCamClamp(); return; } const z=ZOOM_BASE*(G.camZoom||1), aw=SW/z, ah=SH/z; CAM.x=aw>=WORLD.w?WORLD.w/2:clamp(CAM.x,aw/2,WORLD.w-aw/2); CAM.y=ah>=WORLD.h?WORLD.h/2:clamp(CAM.y,ah/2,WORLD.h-ah/2); return; }   // never look past the arena walls
   const wz=WORLD.w3?w3Zoom():null; G.camZoom=lerp(G.camZoom||1,wz||((G.boss&&G.boss.alive&&dist(G.boss,p)<1000)?.86:1),1-Math.pow(.1,dt)); if(wz) w3CamClamp();   // pull back a little so the whole boss fits; World 3's small areas are seen whole
 }
 const STEP=1/60; let last=0, acc=0;
