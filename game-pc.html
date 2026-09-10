@@ -2588,7 +2588,7 @@ const AI={
     if(e.hp<e.maxHp*.2&&!a.retreated&&a.state!=='retreat'&&Math.random()<.5){ a.retreated=true; a.state='retreat'; a.t=1.5; }
     if(a.state==='idle'){ wander(e,dt,110); if(d<240&&sees&&(G.chasers<5||e.summoned)){ a.state='chase'; a.t=0; G.chasers++; floatText(e.x,e.y-40,'!','#ef4444',true); e.kvy-=120; } }
     else if(a.state==='chase'){
-      if(d>430||!sees||dist(e,a.home)>650||outOfBiome(e)){ goHome(e); return; }   // lost interest or reached the biome border: walk back
+      if(!e.summoned&&(d>430||!sees||dist(e,a.home)>650||outOfBiome(e))){ goHome(e); return; }   // lost interest or reached the biome border: walk back
       spreadAngle(e,dt); const ring=e.r+p.r+14, tx=p.x+Math.cos(a.angle)*ring, ty=p.y+Math.sin(a.angle)*ring;
       moveToward(e,d>ring+60?p.x:tx,d>ring+60?p.y:ty,dt,1); faceTo(e,p);
       if(d<e.d.range+10&&a.atkT<=0){ a.state='tele'; a.t=.3; e.animT=0; e.vx*=.3; e.vy*=.3; }
@@ -2600,7 +2600,7 @@ const AI={
   priest(e,p,dt){
     const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.dodgeCd-=dt; const sees=commonSees(e,p), low=e.hp<e.maxHp*.35, spd=low?1.2:1;
     if(a.state==='idle'){ wander(e,dt,90,.5); if(d<300&&sees&&(G.chasers<6||e.summoned)){ a.state='circle'; a.t=rnd(.6,1.4); a.dir=Math.random()<.5?1:-1; G.chasers++; floatText(e.x,e.y-40,'!','#ef4444',true); e.kvy-=140; } return; }
-    if(!sees||d>560||dist(e,a.home)>760||outOfBiome(e)){ goHome(e); return; }
+    if(!e.summoned&&(!sees||d>560||dist(e,a.home)>760||outOfBiome(e))){ goHome(e); return; }
     faceTo(e,p);
     if(a.state==='circle'){ const R=150; a.angle+=a.dir*dt*1.7; moveToward(e,p.x+Math.cos(a.angle)*R,p.y+Math.sin(a.angle)*R,dt,spd*.95); const charging=(p.spin&&p.spin.state==='FLASH')||!!p.queued;   // interrupts: a charging player gets attacked first
       if(a.t<=0||charging||(low&&a.t<.5)){ a.state='dart'; a.t=1.2; } }
@@ -2613,7 +2613,7 @@ const AI={
     const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; a.gunT=(a.gunT===undefined?rnd(1.5,3):a.gunT)-dt; const sees=commonSees(e,p), limp=(Math.floor(e.animT*3)%2)?1.3:.6;
     if(a.state==='idle'){ wander(e,dt,70,.4*limp); if(d<280&&sees&&(G.chasers<6||e.summoned)){ a.state='chase'; a.t=0; G.chasers++; floatText(e.x,e.y-40,'!','#ef4444',true); } }
     else if(a.state==='chase'){
-      if(d>520||!sees||dist(e,a.home)>700||outOfBiome(e)){ goHome(e); return; }
+      if(!e.summoned&&(d>520||!sees||dist(e,a.home)>700||outOfBiome(e))){ goHome(e); return; }
       spreadAngle(e,dt); const ring=e.r+p.r+16, tx=p.x+Math.cos(a.angle)*ring, ty=p.y+Math.sin(a.angle)*ring; moveToward(e,d>ring+60?p.x:tx,d>ring+60?p.y:ty,dt,limp); faceTo(e,p);
       if(a.gunT<=0&&d>90&&d<420){ a.state='aim'; a.t=.6; e.vx=e.vy=0; e.holdAnim=true; e.animT=.05; }   // raises the gun (0.6 s telegraph)
       else if(d<e.d.range+8&&a.atkT<=0){ a.state='tele'; a.t=.35; e.animT=0; e.vx*=.3; e.vy*=.3; }
@@ -3163,7 +3163,7 @@ AI.imp=function(e,p,dt){ const a=e.ai; a.t-=dt; a.atkT-=dt;
   const d=dist(e,p);
   if(a.state==='claw'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='chase'; a.atkT=e.d.atk; a.tele=null; if(p.alive&&inArc(p,e.x,e.y,e.face,e.d.range+16,1.2)&&p.jumpT<=0){ damage(p,e.dmg,e,{kb:140}); addStatus(p,'burn',3,{dps:tierDmg(e,'dot')*(p.name==='APOLLO'?.5:1)}); burst(p.x,p.y-10,[LIP.hot,LIP.glassL,LIP.white],10,120,.5,3,-40,true); } } return; }
   /* lava creatures: they never leave the lava side. If the ninja steps off it (or the imp drifts off), the imp turns back to its birthplace and prowls there */
-  if(m2Biome(e.x,e.y)!=='lava'){ moveToward(e,a.home.x,a.home.y,dt,1); e.face=Math.atan2(a.home.y-e.y,a.home.x-e.x); return; }
+  if(WORLD.frost&&m2Biome(e.x,e.y)!=='lava'){ moveToward(e,a.home.x,a.home.y,dt,1); e.face=Math.atan2(a.home.y-e.y,a.home.x-e.x); return; }
   if(!p.alive||inSafeZone(p.x,p.y)||p.hidden||m2Biome(p.x,p.y)!=='lava'){ wander(e,dt,90,.7); return; }
   moveToward(e,p.x,p.y,dt,1); faceTo(e,p); if(Math.random()<.35) part(e.x+rnd(-6,6),e.y+10,rnd(-10,10),rnd(-40,-15),Math.random()<.5?LIP.hot:LIP.ember,.4,2,-30,true);
   if(d<e.d.range+8&&a.atkT<=0){ a.state='claw'; a.t=.2; telegraph(e,{s:'line',a:e.face,l:44,w:16},.2); } };
@@ -3171,7 +3171,7 @@ AI.imp=function(e,p,dt){ const a=e.ai; a.t-=dt; a.atkT-=dt;
 function foxAlert(e,depth){ const a=e.ai; if(a.state!=='idle') return; a.state='circle'; a.dir=Math.random()<.5?1:-1; a.t=0; G.chasers++; floatText(e.x,e.y-40,'!','#7fe8ff',true); e.kvy-=100;
   if((depth||0)<1) for(const o of G.enemies) if(o!==e&&o.alive&&o.type==='fox'&&o.ai.state==='idle'&&dist(o,e)<8*TS*PIX) foxAlert(o,1); }   /* the pair: a fox within 8 tiles joins at once */
 const FOX_EDGE_X=760;   /* the Ice Fox lives only at the far edge of the frost side: past this line it turns back to its den */
-function foxOut(x,y){ return x>FOX_EDGE_X||m2Biome(x,y)!=='ice'; }
+function foxOut(x,y){ if(!WORLD.frost) return false; return x>FOX_EDGE_X||m2Biome(x,y)!=='ice'; }
 AI.fox=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; e.abCd-=dt; e.dodgeCd-=dt; const sees=commonSees(e,p);
   if(a.state==='idle'){ wander(e,dt,110,.5); if(foxOut(e.x,e.y)&&!a.moving){ a.moving=true; a.tx=a.home.x; a.ty=a.home.y; a.t=3; } if(d<340&&sees&&!foxOut(p.x,p.y)&&(G.chasers<8||e.summoned)) foxAlert(e); return; }
   if(a.state==='circle'){ if(!e.summoned&&(d>660||!sees||dist(e,a.home)>820||foxOut(e.x,e.y)||foxOut(p.x,p.y))){ goHome(e); return; }
@@ -5396,7 +5396,7 @@ function makeGuardArena(A,W,R){ makeWitchArena(A,W,R); A.guard=true; W3AR_CRYSTA
    the chest at the end is the only reward. Art imported as is from cave-design.html and cave-elites.html.
    ===================================================================== */
 const CAVE={
-  RETRY:4*3600*1000, GAP:2.0, HEAL:.3, COLS:26, ROWS:17,
+  RETRY:4*3600*1000, GAP:2.0, COLS:26, ROWS:17,
   worlds:{
     1:{ name:'Forest', mapId:'bone_shore', floor:5, ceil:10, want:{x:330,y:1350}, tag:'MOSS HOLLOW', color:'#7ad86a',
         ground:'#3f6a32', groundD:'#2e5124', groundL:'#4f7d3d', rock:'#5a6a5a', rockD:'#3a473a', rockL:'#7a8a78', rockH:'#98a896',
@@ -5596,19 +5596,21 @@ function enterCave(w){ if(WORLD.arena) WORLD=WORLD_CUR; b2Reset(); const day=cav
   { const S=W.CS; for(let cy=0;cy*S<W.h;cy++) for(let cx=0;cx*S<W.w;cx++) getChunk(cx,cy); }
   G.arena={cave:true,w,day,tier,lvl,eliteLv:lvl+2,phase:'intro',t:0,time:0,over:null,overT:0,startChi:SAVE.chi||0,wave:0,rings:[],rocks:[],spikes:[],healed:false,elite:null,stage:{id:'cave',name:D.tag,n:w,boss:'none'},card:null,tapAt:0};
   showHint(null); setState('PLAYING'); SFX.drum(0); SFX.drum(.5); G.banner={text:D.tag,sub:'TODAY: '+tier.toUpperCase()+'  ·  LEVEL '+lvl+'  ·  THE WAY BACK IS SHUT',t:2.4,col:D.color}; }
-function caveSpawn(type,x,y,lv,elite){ const A=WORLD.arena, e=makeEnemy(type,x,y), S=caveStats(type,lv); e.hp=e.maxHp=S.hp; e.dmg=S.dmg; e.noLoot=true; e.summoned=true; e.biome=null; e.leash=99999; e.arena=true; e.engaged=true; e.lair={x:A.center.x,y:A.center.y}; e.ai.state='chase'; e.ai.t=0; e.ai.atkT=rnd(.8,1.4); e.spawnT=.7; e.face=Math.atan2(A.center.y-y,A.center.x-x); e.cave=true;
+function caveSpawn(type,x,y,lv,elite){ const A=WORLD.arena, e=makeEnemy(type,x,y), S=caveStats(type,lv); e.hp=e.maxHp=S.hp; e.dmg=S.dmg; e.noLoot=true; e.summoned=true; e.biome=null; e.leash=99999; e.arena=true; e.engaged=true; e.lair={x:A.center.x,y:A.center.y}; caveAggro(e); e.ai.atkT=rnd(.8,1.4); e.spawnT=.7; e.face=Math.atan2(A.center.y-y,A.center.x-x); e.cave=true;
   if(elite){ e.elite=true; e.abCd=5.5; e.ai.atkT=1.2; e.ai.ult=0; G.boss=e; } collide(e); return e; }
 function caveStartWave(n){ const F=G.arena, A=WORLD.arena, day=F.day; F.wave=n; F.phase='card'; F.t=0; F.spawned=false; F.card={n,elite:n===6,t:0}; SFX.drum(0); }
 function caveSpawnWave(){ const F=G.arena, A=WORLD.arena, day=F.day; if(F.spawned) return; F.spawned=true;
   if(F.wave===6){ const e=caveSpawn(day.elite,A.bossStart.x,A.bossStart.y,F.eliteLv,true); F.elite=e; shake(8); SFX.roar(); return; }
   const list=CAVE.comp[F.tier][F.wave-1]; let i=0; for(const [cls,k] of list) for(let q=0;q<k;q++){ const [sx,sy]=A.spawns[i%4]; const t=day.picks[F.w][cls]; caveSpawn(t,sx+rnd(-18,18),sy+rnd(-10,10),F.lvl,false); i++; } }
+function caveAggro(e){ const a=e.ai; a.calm=0; a.moving=false; a.t=rnd(.4,1.2); if(e.type==='priest'||e.type==='fox'){ a.state='circle'; a.dir=Math.random()<.5?1:-1; } else a.state='chase'; }   /* the priest and the fox open by circling; everyone else charges */
 function caveAliveCount(){ let n=0; for(const e of G.enemies) if(e.alive) n++; return n; }
 function caveUpdate(dt){ const F=G.arena, p=G.player; if(F.over) return; F.t+=dt; F.time+=dt;
   if(F.phase==='intro'){ if(F.t>=1.8) caveStartWave(1); }
   else if(F.phase==='card'){ if(F.t>=.9) caveSpawnWave(); if(F.t>=2.3){ F.phase='fight'; F.t=0; F.card=null; if(F.wave===6&&F.elite) floatText(F.elite.x,F.elite.y-90,ELITE_BY[F.day.elite].name,ELITE_BY[F.day.elite].glow,true,true); } }
   else if(F.phase==='fight'){ if(caveAliveCount()===0&&F.t>.5){ if(F.wave<5){ F.phase='gap'; F.t=0; } else if(F.wave===5){ F.phase='heal'; F.t=0; } else caveWin(); } }
   else if(F.phase==='gap'){ if(F.t>=CAVE.GAP) caveStartWave(F.wave+1); }
-  else if(F.phase==='heal'){ if(!F.healed){ F.healed=true; if(p&&p.alive){ const h=Math.round(p.maxHp*CAVE.HEAL); p.hp=Math.min(p.maxHp,p.hp+h); floatText(p.x,p.y-70,'+'+h+' HP  ·  A BREATH BEFORE THE ELITE','#4ade80',true); burst(p.x,p.y-10,['#4ade80','#bbf7d0','#ffffff'],24,160,.8,3,-40,true); SFX.levelup(); } } if(F.t>=1.6) caveStartWave(6); }
+  else if(F.phase==='heal'){ if(!F.healed){ F.healed=true; if(p&&p.alive){ floatText(p.x,p.y-70,'THE ELITE COMES  ·  NO HEALING IN THE CAVE','#fde68a',true); SFX.drum(0); } } if(F.t>=1.6) caveStartWave(6); }
+  for(const e of G.enemies) if(e.alive&&e.cave&&!e.elite&&e.spawnT<=0&&e.ai.state==='idle') caveAggro(e);   /* nobody stands in a corner: an idle creature is sent straight back at the ninja */
   /* ground hazards */
   for(let i=F.rings.length-1;i>=0;i--){ const r=F.rings[i]; r.r+=r.spd*dt; if(r.r>r.max){ F.rings.splice(i,1); continue; } if(p&&p.alive&&!r.hit&&p.jumpT<=0){ const dx=p.x-r.x, dy=(p.y-r.y)/.6, m=Math.hypot(dx,dy), an=Math.atan2(dy,dx); if(Math.abs(m-r.r)<14+p.r*.5&&Math.abs(angDiff(an,r.gap))>r.gapW){ r.hit=true; hazHit(p,r.dmg,r.x,r.y,260); } } }
   for(let i=F.rocks.length-1;i>=0;i--){ const k=F.rocks[i]; k.t+=dt; if(k.t>=k.dur){ F.rocks.splice(i,1); shake(6); burst(k.x,k.y,['#8a7a64','#463a2e','#e8e0c8'],14,180,.6,4,200); if(p&&p.alive&&Math.hypot(p.x-k.x,(p.y-k.y)/.6)<44+p.r*.5&&p.jumpT<=0) hazHit(p,k.dmg,k.x,k.y,220); } }
@@ -5623,13 +5625,13 @@ function caveTick(raw){ const F=G.arena; F.overT+=raw;
   if(F.over==='win'){ if(F.overT>=1.6) caveGrant(); if(F.overT>3.2&&F.tapAt>F.overStamp) caveLeave('win'); } }
 function caveAbandon(){ const S=caveSave(); S.failAt=Date.now(); save(); }   /* no leaving mid-run: quitting to the menu is a fall, the 4-hour timer starts */
 function caveLeave(kind){ const F=G.arena, w=F.w, D=CAVE.worlds[w]; leaveArena(); const def=MAPS.find(m=>m.id===D.mapId); if(w===3) G.w3area='under'; enterMap(def); setState('PLAYING');
-  if(kind==='fail') G.banner={text:'THE CAVE CLOSES',sub:'YOU FELL  ·  IT OPENS AGAIN IN 4 HOURS',t:3,col:'#fca5a5'}; else G.banner={text:'CAVE CLEARED',sub:D.tag+'  ·  NEXT CAVE AFTER THE DAILY RESET',t:3,col:D.color}; }
+  if(kind==='fail') G.banner={text:'THE CAVE CLOSES',sub:'YOU FELL  ·  RETRY IN 4:00:00  ·  A NEW CAVE AT MIDNIGHT',t:3.2,col:'#fca5a5'}; else G.banner={text:'CAVE CLEARED',sub:D.tag+'  ·  NEXT CAVE IN '+caveClock(caveMsToMidnight())+'  ·  A NEW CAVE AT MIDNIGHT',t:3.2,col:D.color}; }
 addEventListener('pointerdown',()=>{ const F=G.arena; if(F&&F.cave) F.tapAt=performance.now(); },{capture:true,passive:true});
 /* ---------- HUD + overlay: the wave card, the progress strip, the chest text ---------- */
 function caveHUD(c,p,bw){ const F=G.arena, D=CAVE.worlds[F.w], txt=F.wave===0?'THE CAVE':F.wave===6?'FINAL · ELITE':'WAVE '+F.wave+' / 5';
   c.save(); c.font='800 11px Arial'; const tw=c.measureText(D.tag+' · '+F.tier.toUpperCase()+' · '+txt).width+24; c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,bw+20,40,tw,22,11); c.fill(); c.textAlign='left'; c.fillStyle=D.color; c.fillText(D.tag,bw+32,55); const w1=c.measureText(D.tag).width; c.fillStyle='#9fb0e0'; c.fillText(' · '+F.tier.toUpperCase()+' · ',bw+32+w1,55); const w2=c.measureText(' · '+F.tier.toUpperCase()+' · ').width; c.fillStyle='#fff'; c.fillText(txt,bw+32+w1+w2,55); c.restore(); }
 function caveOverlay(c){ const F=G.arena, D=CAVE.worlds[F.w], t=G.time; c.save(); c.textAlign='center';
-  if(F.card){ const q=F.t/2.3; let sc=q<.12?q/.12:(q<.8?1:1-(q-.8)/.2); sc=1-Math.pow(1-clamp(sc,0,1),3); if(sc>.02){ c.fillStyle='rgba(0,0,0,'+(.45*Math.min(1,sc))+')'; c.fillRect(0,0,SW,SH);
+  if(F.card&&!F.over){ const q=F.t/2.3; let sc=q<.12?q/.12:(q<.8?1:1-(q-.8)/.2); sc=1-Math.pow(1-clamp(sc,0,1),3); if(sc>.02){ c.fillStyle='rgba(0,0,0,'+(.45*Math.min(1,sc))+')'; c.fillRect(0,0,SW,SH);
       const cw0=Math.min(SW*.62,480), ch0=cw0*54/160, cw=cw0*sc, ch=ch0*sc, cx=SW/2, cy=SH*.36, u=cw0/160;
       c.fillStyle='rgba(10,13,20,.96)'; c.fillRect(cx-cw/2,cy-ch/2,cw,ch); c.fillStyle=D.accent; c.fillRect(cx-cw/2,cy-ch/2,cw,3*u*sc); c.fillStyle=D.accentD; c.fillRect(cx-cw/2,cy+ch/2-3*u*sc,cw,3*u*sc); c.fillRect(cx-cw/2,cy-ch/2,3*u*sc,ch); c.fillRect(cx+cw/2-3*u*sc,cy-ch/2,3*u*sc,ch);
       c.fillStyle=GOLD_C; for(const [ax,ay] of [[cx-cw/2,cy-ch/2],[cx+cw/2-4*u,cy-ch/2],[cx-cw/2,cy+ch/2-4*u],[cx+cw/2-4*u,cy+ch/2-4*u]]) c.fillRect(ax,ay,4*u,4*u);
@@ -5643,8 +5645,8 @@ function caveOverlay(c){ const F=G.arena, D=CAVE.worlds[F.w], t=G.time; c.save()
     c.fillStyle='#9fb0e0'; c.font='bold '+Math.round(7*UK)+'px monospace'; c.fillText('WAVE 1 · 2 · 3 · 4 · 5 · ELITE',SW/2,y-Math.round(9*UK)); }
   if(F.over==='win'&&F.overT>2.2){ const k=clamp((F.overT-2.2)/.5,0,1), r=F.rewards; c.globalAlpha=k; c.lineWidth=6; c.strokeStyle='rgba(0,0,0,.75)'; c.font='900 '+Math.round(30*UK)+'px Arial'; c.strokeText('CAVE CLEARED',SW/2,SH*.22); c.fillStyle='#ffffff'; c.fillText('CAVE CLEARED',SW/2,SH*.22); c.font='800 '+Math.round(12*UK)+'px Arial'; c.lineWidth=4; c.strokeText('TODAY: '+F.tier.toUpperCase()+'  ·  LEVEL '+F.lvl,SW/2,SH*.22+22*UK); c.fillStyle=D.color; c.fillText('TODAY: '+F.tier.toUpperCase()+'  ·  LEVEL '+F.lvl,SW/2,SH*.22+22*UK);
     if(r){ const line='+'+fmtN(r.gold)+' GOLD   +'+r.chi+' CHI   +'+fmtN(r.xp)+' XP'+(r.gems.length?'   +'+r.gems.map(x=>x.toUpperCase()+' GEM').join(' +'):''); c.font='900 '+Math.round(13*UK)+'px Arial'; c.lineWidth=5; c.strokeText(line,SW/2,SH*.72); c.fillStyle=GOLD_L; c.fillText(line,SW/2,SH*.72); }
-    c.font='800 '+Math.round(10*UK)+'px Arial'; c.lineWidth=4; const nx='NEXT CAVE IN '+caveClock(caveMsToMidnight())+(F.overT>3.2?'   ·   TAP TO LEAVE':''); c.strokeText(nx,SW/2,SH*.72+20*UK); c.fillStyle='#9fb0e0'; c.fillText(nx,SW/2,SH*.72+20*UK); c.globalAlpha=1; }
-  if(F.over==='fail'){ const k=Math.min(1,F.overT/.6); c.fillStyle='rgba(60,20,20,'+(.55*k)+')'; c.fillRect(0,0,SW,SH); c.globalAlpha=k; c.font='900 '+Math.round(40*UK)+'px Arial'; c.lineWidth=8; c.strokeStyle='rgba(0,0,0,.8)'; c.strokeText('THE CAVE TAKES YOU',SW/2,SH*.42); c.fillStyle='#ef4444'; c.fillText('THE CAVE TAKES YOU',SW/2,SH*.42); c.font='800 '+Math.round(13*UK)+'px Arial'; c.lineWidth=4; c.strokeText('WAVE '+Math.min(5,F.wave)+(F.wave===6?' · THE ELITE':'')+'  ·  RETRY IN 4 HOURS',SW/2,SH*.42+26*UK); c.fillStyle='#fca5a5'; c.fillText('WAVE '+Math.min(5,F.wave)+(F.wave===6?' · THE ELITE':'')+'  ·  RETRY IN 4 HOURS',SW/2,SH*.42+26*UK); c.globalAlpha=1; }
+    c.font='800 '+Math.round(10*UK)+'px Arial'; c.lineWidth=4; const nx='NEXT CAVE IN '+caveClock(caveMsToMidnight())+'  ·  A NEW CAVE EVERY DAY AT MIDNIGHT'+(F.overT>3.2?'   ·   TAP TO LEAVE':''); c.strokeText(nx,SW/2,SH*.72+20*UK); c.fillStyle='#9fb0e0'; c.fillText(nx,SW/2,SH*.72+20*UK); c.globalAlpha=1; }
+  if(F.over==='fail'){ const k=Math.min(1,F.overT/.6); c.fillStyle='rgba(60,20,20,'+(.55*k)+')'; c.fillRect(0,0,SW,SH); c.globalAlpha=k; c.font='900 '+Math.round(40*UK)+'px Arial'; c.lineWidth=8; c.strokeStyle='rgba(0,0,0,.8)'; c.strokeText('THE CAVE TAKES YOU',SW/2,SH*.42); c.fillStyle='#ef4444'; c.fillText('THE CAVE TAKES YOU',SW/2,SH*.42); c.font='800 '+Math.round(13*UK)+'px Arial'; c.lineWidth=4; const l1='WAVE '+Math.min(5,F.wave)+(F.wave===6?' · THE ELITE':'')+'  ·  THE CAVE SHUTS FOR 4 HOURS', l2='RETRY IN 4:00:00   ·   A NEW CAVE EVERY DAY AT MIDNIGHT'; c.strokeText(l1,SW/2,SH*.42+26*UK); c.fillStyle='#fca5a5'; c.fillText(l1,SW/2,SH*.42+26*UK); c.font='800 '+Math.round(11*UK)+'px Arial'; c.strokeText(l2,SW/2,SH*.42+46*UK); c.fillStyle='#e2e8f0'; c.fillText(l2,SW/2,SH*.42+46*UK); c.globalAlpha=1; }
   c.restore(); }
 /* ---------- the elites: five bodies, five weapons (cave-elites.html, as is) ---------- */
 function eliteBody(A,e,x,y,anim,t,lean){ const {R,P}=A; const S_=e.build;
@@ -6906,7 +6908,7 @@ function buildMapList(){ const el=$('mapList'); el.innerHTML=''; $('mapMsg').sty
     if(!locked&&!MINIS[m.id]){ const gm=G.map, oa=G.w3area; G.map=m; if(m.id==='underworld') G.w3area='under'; buildWorld(7); MINIS[m.id]=WORLD.mini; G.map=gm; G.w3area=oa; }
     const d=document.createElement('div'); d.className='card mcard'+(locked?' locked':'');
     if(locked) d.innerHTML=`<div class="thumb locked-thumb">LOCKED</div><div class="mb"><div class="mn">${m.name} <span class="ml">· LV ${m.plv||16}</span></div><div class="md">${m.desc}</div><div class="mbz">${m.locked?'Coming soon':'Opens at player level '+m.plv+' · you are '+playerLevel()}</div></div><div class="btn grey dis">LOCKED</div>`;
-    else { const mini=MINIS[m.id]; const cv2=document.createElement('canvas'); cv2.width=mini.width; cv2.height=mini.height; cv2.getContext('2d').drawImage(mini,0,0); cv2.className='thumb'; d.appendChild(cv2); d.insertAdjacentHTML('beforeend',`<div class="mb"><div class="mn">${m.name} <span class="ml">· Player level ${m.plv||1}</span></div><div class="md">${m.desc}</div><div class="mbz">Bosses: ${m.bosses}${m.id==='frost_ember'?' · Hidden areas '+m2SecretsFound()+' / 7':''}</div></div><div class="btn green">PLAY<span class="sh"><i></i></span></div>`); d.onclick=()=>{ audioInit(); enterMap(m); setState('PLAYING'); }; }
+    else { const mini=MINIS[m.id]; const cv2=document.createElement('canvas'); cv2.width=mini.width; cv2.height=mini.height; cv2.getContext('2d').drawImage(mini,0,0); cv2.className='thumb'; d.appendChild(cv2); d.insertAdjacentHTML('beforeend',`<div class="mb"><div class="mn">${m.name} <span class="ml">· Player level ${m.plv||1}</span></div><div class="md">${m.desc}</div><div class="mbz">Bosses: ${m.bosses}${m.id==='frost_ember'?' · Hidden areas '+m2SecretsFound()+' / 7':''}<br>Daily cave: ${CAVE.worlds[MAPS.indexOf(m)+1].tag} · ${caveSignText()}</div></div><div class="btn green">PLAY<span class="sh"><i></i></span></div>`); d.onclick=()=>{ audioInit(); enterMap(m); setState('PLAYING'); }; }
     el.appendChild(d); } }
 /* ---------- boss fight: list, pre-fight, victory, defeat ---------- */
 const BOSS_LORE={hippo:"The river's old tyrant. It sleeps under the mud of the pit and comes up like a landslide. Nothing on Bone Shore has ever pushed it back.",
