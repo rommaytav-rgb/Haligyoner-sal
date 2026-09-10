@@ -452,7 +452,7 @@
 <script>
 'use strict';
 const PLATFORM='phone';
-const TEST_PRESET={levels:{SHADE:9,BOREAS:9,APOLLO:9,BECK:9,CLAY:9,VOLT:9},stamp:'lv9',selected:'SHADE',cleared:['hippo','croc','lord','titan','yeti','witch','guard'],maps:['bone_shore','frost_ember','underworld'],xpTotal:300*16*17,chi:20,gold:50000,name:'Tester'};
+const TEST_PRESET={levels:{SHADE:9,BOREAS:9,APOLLO:9,BECK:9,CLAY:9,VOLT:9},stamp:'lv9',selected:'SHADE',cleared:['hippo','croc','lord','titan','yeti','witch','guard'],maps:['bone_shore','frost_ember','underworld'],xpTotal:300*16*17,chi:20,gold:50000,name:'Tester',caveAlways:true};
 /* =====================================================================
    SPRITE MODELS — copied VERBATIM from ninjas-pixel.html / ninjas-pixel6.html (identical). NEVER MODIFY.
    ===================================================================== */
@@ -5451,7 +5451,8 @@ for(const el of ELITES){ EN[el.key]={cls:'elite',world:1,mods:[el.mod],spd:el.mo
 function caveSave(){ if(!SAVE.cave||typeof SAVE.cave!=='object') SAVE.cave={clearedDay:'',failAt:0}; return SAVE.cave; }
 function caveMsToMidnight(){ const now=new Date(), mid=new Date(now); mid.setHours(24,0,0,0); return Math.max(0,mid-now); }
 function caveClock(ms){ const s=Math.max(0,Math.floor(ms/1000)), h=Math.floor(s/3600), m=Math.floor(s%3600/60), q=s%60; return h+':'+(m<10?'0':'')+m+':'+(q<10?'0':'')+q; }
-function caveStatus(){ const S=caveSave(), day=new Date().toDateString(), now=Date.now(); if(S.clearedDay===day) return {k:'locked',left:caveMsToMidnight()}; if(S.failAt&&now-S.failAt<CAVE.RETRY) return {k:'retry',left:CAVE.RETRY-(now-S.failAt)}; return {k:'ready'}; }
+const CAVE_OPEN=(typeof TEST_PRESET!=='undefined')&&!!TEST_PRESET.caveAlways;   /* private test builds only: the cave never locks */
+function caveStatus(){ if(CAVE_OPEN) return {k:'ready'}; const S=caveSave(), day=new Date().toDateString(), now=Date.now(); if(S.clearedDay===day) return {k:'locked',left:caveMsToMidnight()}; if(S.failAt&&now-S.failAt<CAVE.RETRY) return {k:'retry',left:CAVE.RETRY-(now-S.failAt)}; return {k:'ready'}; }
 function caveSignText(){ const st=caveStatus(), d=caveToday(); return st.k==='ready'?'TODAY: '+d.tier.toUpperCase()+' · READY':st.k==='retry'?'RETRY IN '+caveClock(st.left):'NEXT CAVE IN '+caveClock(st.left); }
 /* ---------- the day's roll: tier, elite and the exact enemy behind every class slot, the same for every player ---------- */
 let CAVE_DAY=null;
