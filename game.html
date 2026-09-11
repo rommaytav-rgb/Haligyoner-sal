@@ -2568,11 +2568,11 @@ function voltChain(p,first,dmg){ voltSpark(first.x,first.y-10,6); const hit=[fir
     voltBolt(cur.x,cur.y-14,best.x,best.y-14,5-i*1.4,VOLT_CHAIN.life); damage(best,dmg*VOLT_CHAIN.fall[i],p,{kb:40,basic:true}); voltSpark(best.x,best.y-10,6); hit.push(best); cur=best; } }
 function voltFire(p,ang,dmg,third){ const ch=p.ch, X=p.x+Math.cos(ang)*8, Y=p.y-4+Math.sin(ang)*8; SFX.shoot();
   proj({x:X,y:Y,vx:Math.cos(ang)*620,vy:Math.sin(ang)*620,life:ch.range/620,r:15,vr:8,volt:true,col:VOLT_B,glow:VOLT_C,owner:p,dmg,big:third,basic:true,onHit:e=>voltChain(p,e,dmg)}); }
-/* Lightning Run: always exactly three strikes — nearest first, then nearest to where he is; fewer than three in range and the closest common enemy takes the spare strikes (a boss or an elite never takes more than one).
+/* Lightning Run: always exactly three strikes — nearest first, then nearest to where he is; fewer than three in range and the spare strikes hit the air (no enemy is ever struck twice).
    Hidden and invulnerable for the whole second, ends exactly where it started, facing the last strike. */
 ABILITY.VOLT=function(p){ const pool=liveEnemies().filter(e=>Math.hypot(e.x-p.x,e.y-p.y)<=VOLT_RUN.range), seq=[]; let cur=p;
   for(let i=0;i<3;i++){ let best=null,bd=1e9; for(const e of pool){ if(seq.includes(e)) continue; const d=Math.hypot(e.x-cur.x,e.y-cur.y); if(d<bd){ bd=d; best=e; } }
-    if(!best){ best=seq.find(e=>!e.boss&&!e.elite)||null; if(!best&&seq.length){ const a=p.face+i*2.1; best={x:cur.x+Math.cos(a)*150,y:cur.y+Math.sin(a)*150,air:true}; } }   /* the spare strikes go to a common enemy; a boss or an elite is struck once, the rest hit the air */
+    if(!best&&seq.length){ const a=p.face+i*2.1; best={x:cur.x+Math.cos(a)*150,y:cur.y+Math.sin(a)*150,air:true}; }   /* every enemy is struck at most once: with fewer than three in range the spare strikes hit the air */
     if(!best) break; seq.push(best); cur=best; }
   if(!seq.length) for(let i=0;i<3;i++){ const a=p.face+i*2.1; seq.push({x:p.x+Math.cos(a)*150,y:p.y+Math.sin(a)*150,air:true}); }   /* nobody in range: he still runs the triangle */
   p.voltRun={t:0,seq,home:{x:p.x,y:p.y},last:{x:p.x,y:p.y},done:0}; p.hidden=true; p.inv=Math.max(p.inv,VOLT_RUN.dur+.2); p.vx=p.vy=0;
