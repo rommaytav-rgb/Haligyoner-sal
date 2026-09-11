@@ -2573,20 +2573,19 @@ function voltFire(p,ang,dmg,third){ const ch=p.ch, X=p.x+Math.cos(ang)*8, Y=p.y-
    Hidden and invulnerable for the whole second, ends exactly where it started, facing the last strike. */
 ABILITY.VOLT=function(p){ const pool=liveEnemies().filter(e=>Math.hypot(e.x-p.x,e.y-p.y)<=VOLT_RUN.range), seq=[]; let cur=p;
   for(let i=0;i<3;i++){ let best=null,bd=1e9; for(const e of pool){ if(seq.includes(e)) continue; const d=Math.hypot(e.x-cur.x,e.y-cur.y); if(d<bd){ bd=d; best=e; } }
-    if(!best&&seq.length){ const a=p.face+i*2.1; best={x:cur.x+Math.cos(a)*150,y:cur.y+Math.sin(a)*150,air:true}; }   /* every enemy is struck at most once: with fewer than three in range the spare strikes hit the air */
-    if(!best) break; seq.push(best); cur=best; }
-  if(!seq.length) for(let i=0;i<3;i++){ const a=p.face+i*2.1; seq.push({x:p.x+Math.cos(a)*150,y:p.y+Math.sin(a)*150,air:true}); }   /* nobody in range: he still runs the triangle */
-  p.voltRun={t:0,seq,home:{x:p.x,y:p.y},last:{x:p.x,y:p.y},done:0}; p.hidden=true; p.inv=Math.max(p.inv,VOLT_RUN.dur+.2); p.vx=p.vy=0;
+    if(!best) break; seq.push(best); cur=best; }   /* every enemy is struck at most once, and only enemies are struck: with fewer than three in range the run is shorter */
+  const n=seq.length, L=VOLT_RUN.legs, dur=n?L[n]+.3:.45;   /* the way back comes right after the last strike; nobody in range: a flash and he is back at once */
+  p.voltRun={t:0,seq,n,dur,home:{x:p.x,y:p.y},last:{x:p.x,y:p.y},done:0}; p.hidden=true; p.inv=Math.max(p.inv,VOLT_RUN.dur+.2); p.vx=p.vy=0;
   p.flash=.1; for(let i=0;i<8;i++){ const a=i/8*TAU; part(p.x,p.y-14,Math.cos(a)*260,Math.sin(a)*260,VOLT_C,.35,4,0,true); } floatText(p.x,p.y-50,'LIGHTNING RUN',VOLT_C,true); };
-function voltRunStep(p,dt){ const R=p.voltRun; R.t+=dt; const T=R.t, L=VOLT_RUN.legs;
-  while(R.done<3&&T>=L[R.done]){ const i=R.done, tgt=R.seq[i], from=R.last, to={x:tgt.x,y:tgt.y};
+function voltRunStep(p,dt){ const R=p.voltRun; R.t+=dt; const T=R.t, L=VOLT_RUN.legs, n=R.n===undefined?3:R.n, dur=R.dur||VOLT_RUN.dur;
+  while(R.done<n&&T>=L[R.done]){ const i=R.done, tgt=R.seq[i], from=R.last, to={x:tgt.x,y:tgt.y};
     voltBolt(from.x,from.y-16,to.x,to.y-16,6,VOLT_RUN.trail); p.x=to.x; p.y=to.y; collide(p); p.face=Math.atan2(to.y-from.y,to.x-from.x);
     (G.voltGhosts||(G.voltGhosts=[])).push({x:p.x,y:p.y,face:Math.cos(p.face)>=0?1:-1,sprite:p.ch.sprite,t:.25,t0:.25});
-    if(!tgt.air&&tgt.alive) damage(tgt,p.dmg*VOLT_RUN.mult,p,{kb:200,big:true,color:VOLT_C}); voltSpark(to.x,to.y-12,10); SFX.hit(); if(i===2) shake(2);
+    if(!tgt.air&&tgt.alive) damage(tgt,p.dmg*VOLT_RUN.mult,p,{kb:200,big:true,color:VOLT_C}); voltSpark(to.x,to.y-12,10); SFX.hit(); if(i===n-1) shake(2);
     R.last={x:p.x,y:p.y}; R.done++; }
-  if(R.done>=3&&T>=L[3]&&!R.back){ R.back=true; voltBolt(R.last.x,R.last.y-16,R.home.x,R.home.y-16,4,VOLT_RUN.trail); p.x=R.home.x; p.y=R.home.y; collide(p); }
-  if(T>=VOLT_RUN.dur*.85&&p.hidden){ p.hidden=false; p.x=R.home.x; p.y=R.home.y; collide(p); G.ring={x:p.x,y:p.y,r:0,max:90,t:0,col:VOLT_B}; for(let i=0;i<16;i++){ const a=i/16*TAU; part(p.x,p.y-12,Math.cos(a)*220,Math.sin(a)*220,i%2?VOLT_C:VOLT_B,.4,4,0,true); } }
-  if(T>=VOLT_RUN.dur) p.voltRun=null; }
+  if(R.done>=n&&T>=L[n]&&!R.back){ R.back=true; voltBolt(R.last.x,R.last.y-16,R.home.x,R.home.y-16,4,VOLT_RUN.trail); p.x=R.home.x; p.y=R.home.y; collide(p); }
+  if(T>=dur-.15&&p.hidden){ p.hidden=false; p.x=R.home.x; p.y=R.home.y; collide(p); G.ring={x:p.x,y:p.y,r:0,max:90,t:0,col:VOLT_B}; for(let i=0;i<16;i++){ const a=i/16*TAU; part(p.x,p.y-12,Math.cos(a)*220,Math.sin(a)*220,i%2?VOLT_C:VOLT_B,.4,4,0,true); } }
+  if(T>=dur) p.voltRun=null; }
 /* =====================================================================
    ENEMIES — open world: biome spawners (mushroom clusters / insect nests / pirate wrecks),
    three common enemies locked to their biome, rare bosses at lairs with a second phase
