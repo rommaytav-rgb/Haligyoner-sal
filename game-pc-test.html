@@ -7570,7 +7570,7 @@ function drawW4Rings(c){ for(const q of G.projs){ if(!q.alive||q.type!=='ring'||
 /* =====================================================================
    WORLD 4 — THE GOLDEN TEMPLE: the ten-floor climb, and the two creatures that live only inside it.
    The Hammer King (elite: twin hammer smash, the triple leap with 1.5 s of hauling the hammers out) and the Serpent Lord
-   (boss 2: axe sweep, venom orbs, the burrow strike ×3, the hunting axe at 55% of the ninja's speed plus one gold wave (the hippo's kind, jumped),
+   (boss 2: axe sweep, venom orbs, the burrow strike ×3, the hunting axe at 55% of the ninja's speed plus four gold waves (the hippo's kind and spacing, jumped),
    two summons of Gold Serpents, phase 2). Art imported as is from world1hammerking.html and world4serpentlord.html; the
    gold ring is the witch's ringPx verbatim in gold. Every creature inside is the same World 4 class-table row, read against
    deriveBase(26 + rank) — nothing is stored. Floors: 26 × 17 tiles, strictly symmetrical. Spinjitzu is free inside.
@@ -8156,7 +8156,7 @@ AI.hammerking=function(e,p,dt){ const a=e.ai, d=dist(e,p); a.t-=dt; a.atkT-=dt; 
 };
 
 /* ===================== the Serpent Lord in the game ===================== */
-const SL={sweepTele:.5,sweepHit:.65,sweepDur:1.3,venomDur:1.2,venomAt:.5,venomCd:5,burrowDive:.8,burrowTravel:1.4,burrowSurface:.5,burrowRecover:1.5,burrows:3,burrowCd:14,huntWind:1.4,ringAt:1.2,ringGap:2.6,rings:1,huntLen:7.5,huntCd:18,axeK:.55,ringR0:26,ringMax:470,ringT:2.2,surfaceR:96};
+const SL={sweepTele:.5,sweepHit:.65,sweepDur:1.3,venomDur:1.2,venomAt:.5,venomCd:5,burrowDive:.8,burrowTravel:1.4,burrowSurface:.5,burrowRecover:1.5,burrows:3,burrowCd:14,huntWind:1.4,ringAt:1.2,ringGap:1.2,rings:4,huntLen:8.5,huntCd:18,axeK:.55,ringR0:26,ringMax:470,ringT:2.2,surfaceR:96};
 function drawSerpentLord(c,e,t){ const a=e.ai, s=e.d.scale, face=Math.cos(e.face)>=0?1:-1, tt=t+(e.animT||0); let anim='idle', tArg=tt, sunk=0, hide=false;
   if(a.state==='sweep'){ anim='axe'; tArg=Math.min(1.79,a.st/SL.sweepDur*1.8); } else if(a.state==='venom'){ anim='venom'; tArg=Math.min(1.99,a.st/SL.venomDur*2); } else if(a.state==='hunt'){ anim='hunt'; tArg=Math.min(10.99,a.st); hide=!!a.axe; } else if(a.state==='summon'){ anim='summon'; tArg=Math.min(3.39,a.st); } else if(a.state==='burrow'){ const T=a.st-a.dive*(SL.burrowDive+SL.burrowTravel+SL.burrowSurface+SL.burrowRecover); if(T<SL.burrowDive) sunk=T/SL.burrowDive; else if(T<SL.burrowDive+SL.burrowTravel) sunk=1; else if(T<SL.burrowDive+SL.burrowTravel+SL.burrowSurface) sunk=1-(T-SL.burrowDive-SL.burrowTravel)/SL.burrowSurface; }
   if(a.state==='hunt'&&a.axe) hide=true;
@@ -8202,7 +8202,7 @@ AI.serpentlord=function(e,p,dt){ const a=e.ai, d=dist(e,p), rt=a.phase2?1.2:1, P
   else if(a.state==='hunt'){ e.vx*=.7; e.vy*=.7; faceTo(e,p); const T=a.st;
     if(T<SL.huntWind){ if(Math.random()<.8){ const an=Math.random()*TAU, rr=rnd(60,150); part(e.x+Math.cos(an)*rr,e.y+e.r*.9+Math.sin(an)*rr*.5,-Math.cos(an)*rr*1.6,-Math.sin(an)*rr*.8,Math.random()<.5?'#e8cc72':'#96782c',.5,3,0,false); } }
     else { if(!a.axe){ const face=Math.cos(e.face)>=0?1:-1; a.axe={x:e.x+face*30,y:e.y+e.r*.9-50,vx:0,vy:0,st:'out',d:999,hitT:.6}; SFX.shot&&SFX.shot(); burst(a.axe.x,a.axe.y,['#ffeeb0','#e8cc72'],10,150,.4,3,0,true); }
-      const nth=a.ringsFired; if(nth<SL.rings&&T>=SL.huntWind+SL.ringAt+nth*SL.ringGap){ lordRing(e,P2,nth*2.1); a.ringsFired++; }   /* one gold wave, the hippo's kind: jump it while the axe keeps you moving */
+      const nth=a.ringsFired; if(nth<SL.rings&&T>=SL.huntWind+SL.ringAt+nth*SL.ringGap){ lordRing(e,P2,nth*2.1); a.ringsFired++; }   /* four gold waves at the hippo's spacing: jump each while the axe keeps you moving */
       if(T>=SL.huntWind+SL.huntLen){ if(a.axe) a.axe.st='back'; a.state='chase'; a.huntCd=SL.huntCd; a.recover=.5; } } }
   else if(a.state==='summon'){ e.vx*=.6; e.vy*=.6; faceTo(e,p); if(!a.sumDone&&a.st>=1.1){ a.sumDone=true; lordSummon(e,a.phase2?5:3); } if(a.st>=3.4){ a.state='chase'; a.recover=.4; } }
 };
