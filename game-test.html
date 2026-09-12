@@ -2918,9 +2918,9 @@ const RIG_C=document.createElement('canvas'), RIG_X=RIG_C.getContext('2d');
 /* the rig cache: pixel-by-pixel rigs are the dearest thing on screen, so a creature is rasterized at most RIG_FPS times a second (or at once when its pose, tint or size changes) into its own small canvas and blitted from there between refreshes. Callers name the creature and its pose with rigCache(e,key) right before rigBlit. */
 const RIG_CACHE={e:null,key:''}, RIG_FPS=20;
 function rigCache(e,key){ RIG_CACHE.e=e; RIG_CACHE.key=key; }
-function rigCached(w,h,draw,tint){ const ce=RIG_CACHE.e; if(!ce) return null; RIG_CACHE.e=null; const key=RIG_CACHE.key+'|'+w+'x'+h+'|'+(tint||''), now=performance.now(); let cv=ce.rigCv; if(!cv||cv.width!==w||cv.height!==h){ cv=ce.rigCv=document.createElement('canvas'); cv.width=w; cv.height=h; ce.rigKey=''; ce.rigAt=-1e9; }
-  if(ce.rigKey!==key||now-ce.rigAt>=1000/RIG_FPS){ const x2=cv.getContext('2d'); x2.setTransform(1,0,0,1,0,0); x2.globalCompositeOperation='source-over'; x2.clearRect(0,0,w,h); const og=g; g=x2; draw(); g=og; if(tint){ x2.globalCompositeOperation='source-atop'; x2.fillStyle=tint; x2.fillRect(0,0,w,h); x2.globalCompositeOperation='source-over'; } ce.rigKey=key; ce.rigAt=now; } return cv; }
-function rigBlit(c,w,h,draw,tint,x,y,sx,sy,ox,oy){ const ce=RIG_CACHE.e, cv=rigCached(w,h,draw,tint); if(cv){ ce.rigXf=[x,y,sx,sy,ox,oy]; c.save(); c.translate(x,y); c.scale(sx,sy); c.imageSmoothingEnabled=false; c.drawImage(cv,ox,oy); c.restore(); return; }
+function rigCached(w,h,draw,tint){ const ce=RIG_CACHE.e; if(!ce) return null; RIG_CACHE.e=null; const gk=ce.goldK||0, key=RIG_CACHE.key+'|'+w+'x'+h+'|'+(tint||'')+'|'+gk.toFixed(2), now=performance.now(); let cv=ce.rigCv; if(!cv||cv.width!==w||cv.height!==h){ cv=ce.rigCv=document.createElement('canvas'); cv.width=w; cv.height=h; ce.rigKey=''; ce.rigAt=-1e9; }
+  if(ce.rigKey!==key||now-ce.rigAt>=1000/RIG_FPS){ const x2=cv.getContext('2d'); x2.setTransform(1,0,0,1,0,0); x2.globalCompositeOperation='source-over'; x2.clearRect(0,0,w,h); const og=g; g=x2; draw(); g=og; if(gk>0) rigGolden(x2,w,h,gk); if(tint){ x2.globalCompositeOperation='source-atop'; x2.fillStyle=tint; x2.fillRect(0,0,w,h); x2.globalCompositeOperation='source-over'; } ce.rigKey=key; ce.rigAt=now; } return cv; }
+function rigBlit(c,w,h,draw,tint,x,y,sx,sy,ox,oy){ const cv=rigCached(w,h,draw,tint); if(cv){ c.save(); c.translate(x,y); c.scale(sx,sy); c.imageSmoothingEnabled=false; c.drawImage(cv,ox,oy); c.restore(); return; }
   if(RIG_C.width!==w||RIG_C.height!==h){ RIG_C.width=w; RIG_C.height=h; } RIG_X.setTransform(1,0,0,1,0,0); RIG_X.globalCompositeOperation='source-over'; RIG_X.clearRect(0,0,w,h); const og=g; g=RIG_X; draw(); g=og; if(tint){ RIG_X.globalCompositeOperation='source-atop'; RIG_X.fillStyle=tint; RIG_X.fillRect(0,0,w,h); RIG_X.globalCompositeOperation='source-over'; } c.save(); c.translate(x,y); c.scale(sx,sy); c.imageSmoothingEnabled=false; c.drawImage(RIG_C,ox,oy); c.restore(); }
 function drawBossRig(c,e,t){ const face=Math.cos(e.face)>=0?1:-1, {anim,k,o}=bossRigOpts(e), s=e.d.scale; c.save(); if(e.spawnT>0){ c.globalAlpha=Math.max(0,1-e.spawnT/.6); } let lift=0; if(e.airborne) lift=300; else if(e.ai.state==='leapAir'){ const q=clamp(1-e.ai.t/(e.ai.leap?e.ai.leap.dur:1),0,1); lift=Math.sin(q*Math.PI)*260; }   /* the arc follows the real leap length (a fixed 1.0 s here drew him underground for the longer leap) */
   const fl=e.flinch>0?Math.sin(G.time*70)*3:0; rigCache(e,anim+'|'+(k>0?1:0)); rigBlit(c,104,94,()=>{ if(e.type==='titan') rigTitan(anim,t,k,o); else rigYeti(anim,t,k,o); },tintFor(e),e.x+fl,e.y+e.r*.9-lift,s*face,s,-46,-76); c.restore(); }
@@ -8635,19 +8635,13 @@ function chest(ti,cx,cy,sc,t,open){
 return {T,chest,bind(ctx,scale){ c=ctx; S=scale; }}; })();
 
 /* ===================================================================== the look of a rank: small marks on the temple's bosses and elites that grow with the rank ===================================================================== */
-/* variants: 4 stars on the health bar (approved, on); 7 the gold shines more with every rank; 8 they are painted more gold with every rank (both proposals, off until approved) */
+/* variants: 4 stars on the health bar (approved, on); 8 their black turns gold a little more with every rank, all gold by rank 11 (proposal, off until approved) */
 let TEMPLE_RANK_FX={4:true};
 function templeRankOf(e){ const F=G.arena; if(!F||!F.temple||!(e.boss||e.elite)||!e.alive) return 0; return e.rankView||F.rank||1; }
-function templeRankUnder(c,e,t){ const r=templeRankOf(e), V=TEMPLE_RANK_FX; e.rankTint=null; if(r<2) return;
-  if(V[8]) e.rankTint='rgba(232,193,74,'+Math.min(.72,(r-1)*.07).toFixed(2)+')'; }   /* painted more gold every rank: 7% per rank, solid gold by rank 11 */
-const RANK_OV=document.createElement('canvas'), RANK_OX=RANK_OV.getContext('2d');
-function templeRankOver(c,e,t){ const r=templeRankOf(e), V=TEMPLE_RANK_FX; if(r<2) return;
-  if(V[7]&&e.rigCv&&e.rigXf){ /* the shine: a diagonal band of light and sparkles, masked to the creature's own pixels, brighter with every rank */
-    const cv=e.rigCv, w=cv.width, h=cv.height, [x,y,sx,sy,ox,oy]=e.rigXf; if(RANK_OV.width!==w||RANK_OV.height!==h){ RANK_OV.width=w; RANK_OV.height=h; }
-    const X=RANK_OX; X.setTransform(1,0,0,1,0,0); X.globalCompositeOperation='source-over'; X.globalAlpha=1; X.clearRect(0,0,w,h); X.drawImage(cv,0,0); X.globalCompositeOperation='source-in';
-    const k=Math.min(1,(r-1)/9), band=((t*70)%(w+h*2))-h, bw=8+Math.round(k*14); X.fillStyle='rgba(255,255,255,'+(.3+k*.6).toFixed(2)+')'; for(let j=0;j<h;j+=2){ const bx=band-j*.6; X.fillRect(bx,j,bw,2); X.fillRect(bx-bw-8,j,Math.max(2,bw/2),2); }
-    const n=Math.round(4+k*26); X.fillStyle='#ffffff'; for(let i=0;i<n;i++){ const q=(t*.7+i*.137)%1, px=(i*37+Math.floor(t*3)*11)%w, py=(i*53+Math.floor(t*2)*7)%h; if(q<.55){ X.fillRect(px,py,2,2); X.fillRect(px-2,py,6,2); X.fillRect(px,py-2,2,6); } }
-    c.save(); c.translate(x,y); c.scale(sx,sy); c.imageSmoothingEnabled=false; c.drawImage(RANK_OV,ox,oy); c.restore(); } }
+function templeRankUnder(c,e,t){ const r=templeRankOf(e), V=TEMPLE_RANK_FX; e.goldK=0; if(r<2) return; if(V[8]) e.goldK=Math.min(1,(r-1)/10); }
+function templeRankOver(c,e,t){ }
+/* the goldening: every dark pixel of the cached rig is blended toward gold by goldK (0..1); light and gold pixels stay as they are */
+function rigGolden(x2,w,h,k){ const img=x2.getImageData(0,0,w,h), d=img.data; for(let i=0;i<d.length;i+=4){ if(d[i+3]<8) continue; const lum=(d[i]*.3+d[i+1]*.59+d[i+2]*.11); if(lum>=110) continue; const f=k*(1-lum/110); d[i]+=(232-d[i])*f; d[i+1]+=(193-d[i+1])*f; d[i+2]+=(74-d[i+2])*f; } x2.putImageData(img,0,0); }
 /* =====================================================================
    ICE SHOP (from iceshop.html): the wooden hut on a stone base, the old keeper behind the open counter, the sign,
    lanterns, barrels; the Frost Coat item icon; the coat worn on a ninja. Drawn with rect/px in PIX space (1 unit = 2 px).
@@ -9046,7 +9040,7 @@ function drawFx2Air(c){ const t=G.time; c.save(); c.scale(PIX,PIX); g=c; drawBol
    RENDER — characters, effects, world, HUD, controls
    ===================================================================== */
 /* ---------- characters and enemies are the pixel models (shadow centre at the entity's feet) ---------- */
-function tintFor(e){ if(e.flash>0) return 'rgba(255,255,255,.85)'; const t=tintOf(e); if(t) return hexA(t,.45); if(e.rankTint) return e.rankTint; if(e.status&&e.status.poison) return 'rgba(74,222,128,.22)'; if(e.d&&e.d.tint) return e.d.tint; return null; }   // poisoned: faint green
+function tintFor(e){ if(e.flash>0) return 'rgba(255,255,255,.85)'; const t=tintOf(e); if(t) return hexA(t,.45); if(e.status&&e.status.poison) return 'rgba(74,222,128,.22)'; if(e.d&&e.d.tint) return e.d.tint; return null; }   // poisoned: faint green
 function animOf(e){ if(e.jumpT>0) return 'jump'; if(e.attackT>0||(e.ai&&['tele','combo','aim','slam','cleaver','tail','stomp','bite','spit','barrage','barraging'].includes(e.ai.state))) return 'attack'; return Math.hypot((e.vx||0)+(e.kvx||0),(e.vy||0)+(e.kvy||0))>25?'walk':'idle'; }
 /* body motion on top of the model's own walk frames: step bounce, lean into the run, tiny squash — the pixel data itself is untouched */
 function gait(e,t,spd){ const v=Math.hypot((e.vx||0)+(e.kvx||0),(e.vy||0)+(e.kvy||0)), run=v>25, ph=(e.animT||0)*8*Math.PI; return {run, bounce:run?Math.abs(Math.sin(ph))*1.6:Math.sin(t*2.5)*.6, lean:run?clamp(((e.vx||0)+(e.kvx||0))/spd,-1,1)*.04:0, squash:run?Math.abs(Math.sin(ph))*.015:0}; }
