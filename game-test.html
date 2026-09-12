@@ -7460,7 +7460,7 @@ function crow(anim,t,cx,cy,ph2){
 /* ===== the ring waves: the witch's ringPx verbatim, black palette ===== */
 const BC={ deep:'#0a0810', mid:'#1c1a26', light:'#3a3648', foam:'#6a6480', white:'#a8a2c0' };
 function ringPxB(cx,cy,r,p,t,w){
-  const n=Math.round(r*4.2);
+  const n=Math.min(1500,Math.round(r*4.2));   /* the only change to the kit: the sample count is capped so the far-out ring stays cheap on a phone */
   for(let i=0;i<n;i++){
     const a=i/n*Math.PI*2;
     const wob=Math.sin(a*6+t*4+w)*1.1+Math.sin(a*13+t*7)*0.5;
@@ -7552,7 +7552,7 @@ return {A,BC,draw,death,knife,ringPxB,crow};
 })();
 
 /* ===================== the Crow Warrior in the game ===================== */
-const CROW={knifeTele:.7,knifeCd:1.7,stormWind:2.5,stormGap:.9,stormCd:6.4,waveDur:4.5,waveWind:.9,waves:3,waveCd:14,lift:22,liftT:2.8,ringR0:26,ringMax:470};
+const CROW={knifeTele:.7,knifeCd:1.7,stormWind:2.5,stormGap:.9,stormCd:6.4,waveDur:4.5,waveWind:.9,waves:3,waveCd:14,lift:22,liftT:2.8,ringR0:26,ringSpd:148,ringLife:7.1,ringMax:26+148*7.1};   /* the ring: 20% faster than before (148 px/s) and it lives 3.5 s longer (7.1 s), so it runs to ~1076 px */
 function drawCrow(c,e,t){ const a=e.ai, s=e.d.scale, face=Math.cos(e.face)>=0?1:-1, mv=Math.hypot((e.vx||0)+(e.kvx||0),(e.vy||0)+(e.kvy||0))>40, tt=t+(e.animT||0); let anim=mv?'fly':'idle', tArg=tt;
   if(a.state==='knives'){ anim='knives'; tArg=Math.min(1.59,a.st/1.6*1.6); } else if(a.state==='storm'){ anim='storm'; tArg=Math.min(6.39,a.st/2.5*2.56); } else if(a.state==='waves'){ anim='waves'; tArg=(a.st%CROW.waveDur); } else if(a.state==='summon'){ anim='summon'; tArg=Math.min(3.39,a.st); } else if(a.phase2&&!mv) anim='phase2';
   c.save(); if(e.spawnT>0) c.globalAlpha=Math.max(0,1-e.spawnT/.6); const fl=e.flinch>0?Math.sin(G.time*70)*2:0; W3S=1;
@@ -7564,7 +7564,7 @@ function crowKnife(e,x,y,ang,v,life,dmg){ proj({type:'bolt',w4:true,knife:true,x
 function crowKnives(e,p,P2){ const face=Math.cos(e.face)>=0?1:-1, s=e.d.scale, dmg=Math.round(tierDmg(e,'light')*P2); for(const [dx,side] of [[-6,-1],[18,1]]){ const hx=e.x+face*dx*s, hy=e.y+e.r*.9-31*s; const base=Math.atan2(p.y-8-hy,p.x-hx); for(let i=0;i<2;i++){ const a=base-0.34+i*0.68+side*0.12; crowKnife(e,hx,hy,a,335,1.7,dmg); } } SFX.shot&&SFX.shot(); burst(e.x,e.y+e.r*.9-40*s,['#f0d478','#3a3846'],8,120,.3,3,0,true); }
 function crowStormWave(e,wv,P2){ const s=e.d.scale, cx=e.x, cy=e.y+e.r*.9-32*s, dmg=Math.round(tierDmg(e,'ultimate')*P2); for(let i=0;i<5;i++){ const a=i/5*TAU+wv*0.42+(e.ai.stormA||0); crowKnife(e,cx,cy,a,290,2.0,dmg); } SFX.shot&&SFX.shot(); shake(3); burst(cx,cy,['#f0d478','#3a3846','#ffffff'],12,160,.35,3,0,true); }
 /* one black ring: 0.9 s of wind-up already happened; it expands for 3.6 s and rises and falls every 1.8 s */
-function crowRing(e,P2){ const dmg=Math.round(tierDmg(e,'heavy')*P2), s=e.d.scale; proj({type:'ring',w4:true,black:true,x:e.x,y:e.y+e.r*.9,r:CROW.ringR0,life:12,spd:(CROW.ringMax-CROW.ringR0)/3.6,max:CROW.ringMax,delay:0,owner:e,dmg,hit:[],flat:true,age:0,lift:0,seed:Math.random()*6}); shake(8); vibrate(80); noise(.2,.28); tone(60,.35,'sine',.35,-30); burst(e.x,e.y+e.r*.9,['#1c1a26','#3a3648','#6a6480'],26,220,.6,4,-20,true); }
+function crowRing(e,P2){ const dmg=Math.round(tierDmg(e,'heavy')*P2), s=e.d.scale; proj({type:'ring',w4:true,black:true,x:e.x,y:e.y+e.r*.9,r:CROW.ringR0,life:12,spd:CROW.ringSpd,max:CROW.ringMax,delay:0,owner:e,dmg,hit:[],flat:true,age:0,lift:0,seed:Math.random()*6}); shake(8); vibrate(80); noise(.2,.28); tone(60,.35,'sine',.35,-30); burst(e.x,e.y+e.r*.9,['#1c1a26','#3a3648','#6a6480'],26,220,.6,4,-20,true); }
 /* the call: four Gold Sentinels descend around him in pillars of light */
 function crowSummon(e){ shake(12); vibrate(140); SFX.roar(); G.ring={x:e.x,y:e.y,r:0,max:220,t:0,col:'#f0d478'}; const SC=WORLD.arena&&WORLD.arena.spawns; [[-160,-60],[160,-60],[-120,110],[120,110]].forEach(([dx,dy],i)=>{ let x=e.x+dx, y=e.y+dy; if(SC&&SC[i]){ x=SC[i][0]; y=SC[i][1]; } const m=makeEnemy('sentinel',x,y); m.spawnT=1; m.summoned=true; m.noLoot=!!WORLD.arena; m.biome=null; m.ai.state='summonIn'; m.ai.st=0; m.ai.home={x:m.x,y:m.y}; collide(m); G.chasers++; G.w4fx=G.w4fx||[]; G.w4fx.push({kind:'pillar',x:m.x,y:m.y+m.r*.9,t:0,life:1.4}); burst(m.x,m.y-20,['#fff4c8','#f0d478','#ffffff'],14,150,.6,3,-40,true); }); floatText(e.x,e.y-120,'4 GOLD SENTINELS','#fff0b8',true); }
 AI.crow=function(e,p,dt){ const a=e.ai, d=dist(e,p), rt=a.phase2?1.2:1, P2=a.phase2?1.2:1; a.t-=dt; e.abCd-=dt*rt; a.atkT-=dt*rt; a.st=(a.st||0)+dt; a.stormCd=(a.stormCd===undefined?4:a.stormCd)-dt*rt; a.waveCd=(a.waveCd===undefined?8:a.waveCd)-dt*rt; const safe=inSafeZone(p.x,p.y);
