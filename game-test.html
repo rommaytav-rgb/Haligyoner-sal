@@ -8252,7 +8252,22 @@ function templeReady(){ return templeReadyMs()<=0; }
 function templeStateText(){ const ms=templeReadyMs(); return ms<=0?'READY':'OPENS IN '+caveClock(ms); }
 function templeSignLines(){ const S=templeSave(); return ['GOLDEN TEMPLE','RANK '+templeRank()+'  ·  FLOOR '+(S.reached||0)+' / 10  ·  '+templeStateText()]; }
 /* the temple's gem table: better than any boss table, rising with the rank */
-function templeGemTable(rank){ const k=Math.pow(1.05,rank-1), t={orange:Math.min(30,16*k),purple:Math.min(30,4*k),red:Math.min(30,1.2*k),gold:Math.min(30,.15*k)}; let rest=100; for(const r in t) rest-=t[r]; t.grey=rest*45/78; t.green=rest*33/78; return t; }
+/* ---------- the temple's chest and gem system (prompt-temple-gems-2.md): eleven chests, one per floor reached, chest 11 for a full clear ---------- */
+function templeChestNo(floor,full){ return full?11:clamp(floor|0,1,10); }
+/* the top-four curve of chest 11: orange / purple / red / gold, interpolated between six anchors and normalised to 100 */
+const GEM_ANCHORS=[[1,56.5,42.0,1.35,0.15],[5,52.5,45.0,2.25,0.25],[20,43.0,50.5,6.00,0.50],[30,38.3,52.0,9.00,0.70],[40,34.5,52.0,12.60,0.90],[55,30.0,51.0,17.65,1.35]];
+function topFour(rank){ rank=clamp(rank||1,1,55); let a=GEM_ANCHORS[0], b=GEM_ANCHORS[GEM_ANCHORS.length-1]; for(let i=0;i<GEM_ANCHORS.length-1;i++){ if(rank>=GEM_ANCHORS[i][0]&&rank<=GEM_ANCHORS[i+1][0]){ a=GEM_ANCHORS[i]; b=GEM_ANCHORS[i+1]; break; } }
+  const q=b[0]===a[0]?0:(rank-a[0])/(b[0]-a[0]), v=[1,2,3,4].map(i=>a[i]+(b[i]-a[i])*q), sum=v[0]+v[1]+v[2]+v[3]; return {o:v[0]/sum*100,p:v[1]/sum*100,r:v[2]/sum*100,g:v[3]/sum*100}; }
+/* the table of a chest at a rank: chest 11 is clean; every other chest keeps grey and green (never under 18%) and throttles purple, red and gold */
+function gemTable(chest,rank){ const {o,p,r,g}=topFour(rank); if(chest>=11) return {grey:0,green:0,orange:o,purple:p,red:r,gold:g};
+  let s=(11-chest)/10; s=s*(1-(rank-1)/54*0.45); s=Math.max(s,0.22); const grey=52*s, green=30*s, keep=100-grey-green;
+  const raw={orange:o*1.00,purple:p*0.80,red:r*0.45,gold:g*0.25}, rs=raw.orange+raw.purple+raw.red+raw.gold, k=keep/rs;
+  return {grey,green,orange:raw.orange*k,purple:raw.purple*k,red:raw.red*k,gold:raw.gold*k}; }
+function gemCount(chest,rank){ const base=rank<16?1:rank<36?2:3; return chest>=11?base:Math.max(1,base-1); }
+function templeGemTable(rank){ return gemTable(11,rank); }   /* kept for the spec printout */
+/* console: the chest of a floor at a rank, its gem count, the six percentages and the gold / XP payout */
+function templeChest(floor,rank){ rank=clamp(rank||1,1,TEMPLE.RANK_MAX); const full=floor>=11||floor==='full', chest=templeChestNo(full?10:floor,full), T=gemTable(chest,rank), n=gemCount(chest,rank), pay=full?1:TEMPLE.payout(clamp(floor|0,1,10)), f=v=>+v.toFixed(2);
+  const out={chest,name:W4CHEST.T[chest-1].n,gems:n,grey:f(T.grey),green:f(T.green),orange:f(T.orange),purple:f(T.purple),red:f(T.red),gold:f(T.gold),payout:Math.round(pay*100)+'%',goldPay:Math.round(TEMPLE.gold(rank)*pay),xpPay:Math.round(TEMPLE.xp(rank)*pay)}; console.log(JSON.stringify(out)); return out; }
 /* every creature inside reads the same class row against the rank's base — fresh each run, nothing cached */
 function templeTune(e){ const F=G.arena; if(!F||!F.temple) return e; const d=e.d, B=templeBase(F.rank), C=CLASSES[d.cls]; let hp=B.hp*C.hp, dmg=B.dmg*C.dmg; if(!d.elite) for(const m of d.mods||[]){ const M=MODIFIERS[m]; hp*=M.hp||1; dmg*=M.dmg||1; } const mult=(NET.on&&NET.host&&G.p2)?2:1; e.hp=e.maxHp=Math.round(hp)*mult; e.dmg=Math.round(dmg)*mult; e.noLoot=true; e.summoned=true; e.biome=null; e.leash=99999; e.arena=true; e.engaged=true; e.cave=true; e.lair={x:WORLD.arena.center.x,y:WORLD.arena.center.y}; return e; }
 function templeSetRank(r){ templeSave().rank=clamp(r|0,1,TEMPLE.RANK_MAX); save(); return templeRank(); }
@@ -8352,7 +8367,8 @@ function templeBossDown(e){ const F=G.arena; e.deadT=3.2; if(G.boss===e) G.boss=
 function templeWin(){ const F=G.arena; if(F.over) return; F.over='win'; F.overT=0; G.banner=null; F.phase='over'; F.overStamp=performance.now(); G.slowmo=.8; for(const q of G.projs) if(q.alive&&q.owner&&q.owner.kind!=='player') q.alive=false; save(); }
 function templeGrant(){ const F=G.arena; if(F.granted) return; F.granted=true; const S=templeSave(), rank=F.rank, full=F.over==='win', pay=full?1:TEMPLE.payout(Math.max(1,F.floor));
   const r={gold:Math.round(TEMPLE.gold(rank)*pay),xp:Math.round(TEMPLE.xp(rank)*pay),chi:Math.floor(TEMPLE.chi(rank)*pay),gems:[],full,pay,rankUp:false};
-  if(full){ for(let i=0;i<3;i++){ const rar=gemRoll(templeGemTable(rank)); if(rar) r.gems.push(rar); } if(rank<TEMPLE.RANK_MAX){ S.rank=rank+1; r.rankUp=true; } S.clears=(S.clears||0)+1; S.cleared=TEMPLE.FLOORS; }
+  const chest=templeChestNo(F.floor,full), n=gemCount(chest,rank), T=gemTable(chest,rank); for(let i=0;i<n;i++){ const rar=gemRoll(T); if(rar) r.gems.push(rar); } r.chest=chest;
+  if(full){ if(rank<TEMPLE.RANK_MAX){ S.rank=rank+1; r.rankUp=true; } S.clears=(S.clears||0)+1; S.cleared=TEMPLE.FLOORS; }
   /* the chest itself: one tap per reward — gold, then Chi, then XP, then each gem */
   const items=[{k:'gold',n:r.gold}]; if(r.chi>0) items.push({k:'chi',n:r.chi}); items.push({k:'xp',n:r.xp}); for(const rar of r.gems) items.push({k:'gem',rar,type:Math.random()<.5?'atk':'hp'});
   F.chest={items,i:0,open:false,pops:[],done:[]}; save(); F.rewards=r; SFX.drum(0);
@@ -8399,7 +8415,7 @@ function templeOverlay(c){ const F=G.arena, t=G.time; c.save(); c.textAlign='cen
 function templeIcon(c,it,x,y,s){ const C=G.arena.chest; C.icons=C.icons||{}; if(it.k==='gold'){ if(COIN_IMG.complete&&COIN_IMG.naturalWidth) c.drawImage(COIN_IMG,x-s/2,y-s/2,s,s); } else if(it.k==='chi'){ c.save(); c.translate(x-s/2,y-s/2); c.scale(s/16,s/16); const og=g; g=c; chiOrb(8,5,G.time); g=og; c.restore(); } else if(it.k==='xp'){ const ic=C.icons.xp||(C.icons.xp=rewardIcon('xp',22)); c.drawImage(ic,x-s/2,y-s/2,s,s); } else { const key='gem_'+it.rar+'_'+it.type, ic=C.icons[key]||(C.icons[key]=gemCanvas(GEM_RAR[GEM_RI[it.rar]],it.type,48,false,.3)); c.drawImage(ic,x-s/2,y-s/2,s,s); } }
 function templeLabel(it){ return it.k==='gold'?'+'+fmtN(it.n)+' GOLD':it.k==='chi'?'+'+it.n+' CHI':it.k==='xp'?'+'+fmtN(it.n)+' XP':it.rar.toUpperCase()+' GEM'; }
 function templeChestDraw(c,dim){ const F=G.arena, C=F.chest, t=G.time; if(!C) return; const cx=SW/2, cy=SH*.62, k=clamp((F.overT-1.6)/.4,0,1), left=C.i<C.items.length; c.save(); c.globalAlpha=k;
-  const bob=left?Math.sin(t*4)*3:0, ti=F.over==='win'?10:clamp(F.cleared|0,0,10), D=W4CHEST.T[ti]; C.openK=C.open?Math.min(1,(C.openK||0)+1/40):0;   /* the chest of this climb: one of eleven, by the floors cleared */
+  const bob=left?Math.sin(t*4)*3:0, ti=templeChestNo(F.floor,F.over==='win')-1, D=W4CHEST.T[ti]; C.openK=C.open?Math.min(1,(C.openK||0)+1/40):0;   /* the chest of this climb: one of eleven, by the floors cleared */
   c.save(); c.translate(cx,cy+bob); W4CHEST.bind(c,2.2*UK); W4CHEST.chest(ti,0,16,1.55,t,C.openK); c.restore();
   c.textAlign='center'; c.lineWidth=4; c.strokeStyle='rgba(0,0,0,.75)'; c.font='900 '+Math.round(12*UK)+'px Arial'; const pulse=.75+.25*Math.sin(t*5); const lbl=left?(C.open?D.n+'  ·  TAP AGAIN  ·  '+(C.items.length-C.i)+' MORE INSIDE':D.n+'  ·  TAP THE CHEST'):(NET.guest?'THE HOST LEADS THE WAY OUT':D.n+'  ·  EMPTY  ·  TAP TO LEAVE'); c.globalAlpha=k*(left?pulse:1); c.strokeText(lbl,cx,cy+58*UK); c.fillStyle=left?D.gl:dim; c.fillText(lbl,cx,cy+58*UK); c.globalAlpha=k;
   /* what has come out so far: a row of icons with their amounts */
