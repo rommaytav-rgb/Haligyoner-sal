@@ -2917,7 +2917,7 @@ const RIG_C=document.createElement('canvas'), RIG_X=RIG_C.getContext('2d');
 /* draw a rig into the shared offscreen canvas (box w×h, 1 unit = 1 px), tint only its own pixels, then blit it scaled */
 /* the rig cache: pixel-by-pixel rigs are the dearest thing on screen, so a creature is rasterized at most RIG_FPS times a second (or at once when its pose, tint or size changes) into its own small canvas and blitted from there between refreshes. Callers name the creature and its pose with rigCache(e,key) right before rigBlit. */
 const RIG_CACHE={e:null,key:''}, RIG_FPS=20;
-function rigCache(e,key){ RIG_CACHE.e=e; RIG_CACHE.key=key; }
+function rigCache(e,key){ RIG_CACHE.e=e; RIG_CACHE.key=key+'|t'+(e.skinTier||0); }
 function rigCached(w,h,draw,tint){ const ce=RIG_CACHE.e; if(!ce) return null; RIG_CACHE.e=null; const key=RIG_CACHE.key+'|'+w+'x'+h+'|'+(tint||''), now=performance.now(); let cv=ce.rigCv; if(!cv||cv.width!==w||cv.height!==h){ cv=ce.rigCv=document.createElement('canvas'); cv.width=w; cv.height=h; ce.rigKey=''; ce.rigAt=-1e9; }
   if(ce.rigKey!==key||now-ce.rigAt>=1000/RIG_FPS){ const x2=cv.getContext('2d'); x2.setTransform(1,0,0,1,0,0); x2.globalCompositeOperation='source-over'; x2.clearRect(0,0,w,h); const og=g; g=x2; draw(); g=og; if(tint){ x2.globalCompositeOperation='source-atop'; x2.fillStyle=tint; x2.fillRect(0,0,w,h); x2.globalCompositeOperation='source-over'; } ce.rigKey=key; ce.rigAt=now; } return cv; }
 function rigBlit(c,w,h,draw,tint,x,y,sx,sy,ox,oy){ const cv=rigCached(w,h,draw,tint); if(cv){ c.save(); c.translate(x,y); c.scale(sx,sy); c.imageSmoothingEnabled=false; c.drawImage(cv,ox,oy); c.restore(); return; }
@@ -6011,11 +6011,11 @@ function eliteDeathDraw(A,e,t){ const {R,P}=A, k=(t%2.4)/2.4, cx=62, cy=52; R(cx
 const ELITE_S=2.1;   /* world px per art px: 37–43 art px → bigger than a common enemy, smaller than a boss */
 function eliteAnimOf(e){ const a=e.ai, s=a.state, mv=Math.hypot((e.vx||0),(e.vy||0))>25; if(s==='basicTele'||s==='basicHit') return {anim:'basic',t:clamp((a.basicT||0)/1.05,0,.99)*1.5}; if(s==='ultPrep'||s==='ult') return {anim:'ult',t:Math.min(3.19,a.ultT||0)}; return {anim:mv?'walk':'idle',t:G.time+(e.animT||0)}; }
 const ELITE_C=document.createElement('canvas'), ELITE_X=ELITE_C.getContext('2d'); ELITE_C.width=160; ELITE_C.height=130;
-function drawEliteEnemy(c,e,t){ const E=ELITE_BY[e.type], B=E.build, face=Math.cos(e.face)>=0?1:-1, {anim,t:at}=eliteAnimOf(e); const ox=52+B.w/2, oy=34+B.h+B.leg, X=ELITE_X;
+function drawEliteEnemy(c,e,t){ const E=eliteSkin(e), B=E.build, face=Math.cos(e.face)>=0?1:-1, {anim,t:at}=eliteAnimOf(e); const ox=52+B.w/2, oy=34+B.h+B.leg, X=ELITE_X;
   const emit=(ax,ay,n,pw,col)=>{ const wx=e.x+(ax-ox)*ELITE_S*face, wy=e.y+e.r*.6+(ay-oy)*ELITE_S; for(let i=0;i<n;i++) part(wx,wy,(Math.random()-.5)*pw*20,-Math.random()*pw*12-40,col,.5,3,300,true); };
   /* through the rig cache like every other rig: rasterized at most 20 times a second, the temple's goldening applied there */
   c.save(); if(e.spawnT>0) c.globalAlpha=Math.max(0,1-e.spawnT/.7); const fl=e.flinch>0?Math.sin(G.time*70)*2:0; rigCache(e,anim); rigBlit(c,ELITE_C.width,ELITE_C.height,()=>{ g.translate(20,20); eliteDraw(caveArt(g),E,anim,at,emit); },e.flash>0?'rgba(255,255,255,.85)':null,e.x+fl,e.y+e.r*.6,ELITE_S*face,ELITE_S,-(ox+20),-(oy+20)); c.restore(); }
-function drawEliteDead(c,e){ const E=ELITE_BY[e.type], B=E.build, face=Math.cos(e.face)>=0?1:-1, k=clamp(1-e.deadT/1.4,0,1); c.save(); c.translate(e.x,e.y+e.r*.6); c.scale(ELITE_S*face,ELITE_S); c.translate(-62,-(52+26)); eliteDeathDraw(caveArt(c),E,k*2.4); c.restore(); }
+function drawEliteDead(c,e){ const E=eliteSkin(e), B=E.build, face=Math.cos(e.face)>=0?1:-1, k=clamp(1-e.deadT/1.4,0,1); c.save(); c.translate(e.x,e.y+e.r*.6); c.scale(ELITE_S*face,ELITE_S); c.translate(-62,-(52+26)); eliteDeathDraw(caveArt(c),E,k*2.4); c.restore(); }
 /* ---------- elite AI: a readable basic, a committed ultimate every ~9 s with a 0.8 s telegraph ---------- */
 const ELITE_ULT_CD={reaper:6,lancer:6,breaker:8,bulwark:7,warden:7};
 function eliteAI(e,p,dt){ const a=e.ai, d=dist(e,p), K=e.type, F=G.arena, A=WORLD.arena; a.t-=dt; a.atkT-=dt; e.abCd-=dt; if(a.basicT!==undefined) a.basicT+=dt; if(a.ultT!==undefined) a.ultT+=dt;
@@ -8632,12 +8632,41 @@ function chest(ti,cx,cy,sc,t,open){
 }
 return {T,chest,bind(ctx,scale){ c=ctx; S=scale; }}; })();
 
-/* ===================================================================== the look of a rank: tiered stars beside the boss's name on the health bar ===================================================================== */
+/* ===================================================================== the look of a rank: tiered stars on the health bar, and the temple rank skins ===================================================================== */
 let TEMPLE_RANK_FX={4:true};
 /* the star tiers: one star per rank, five per tier, then the next metal */
 const STAR_TIERS=[['BRONZE','#c07a3a','#f0b078'],['SILVER','#c8d0da','#ffffff'],['GOLD','#e8c14a','#fff8d8'],['DIAMOND','#7ad8ff','#ffffff'],['RUBY','#ff5a6a','#ffd0d4'],['EMERALD','#4ce07a','#d0ffe0'],['SAPPHIRE','#5a8aff','#d0e0ff'],['AMETHYST','#c47aff','#eedcff'],['OBSIDIAN','#6a5a8a','#d0c4ea'],['CELESTIAL','#ffffff','#ffeeb0'],['MYTHIC','#ff9a2a','#fff0b8']];
 function templeStars(r){ r=Math.max(1,r|0); const tier=Math.min(STAR_TIERS.length-1,Math.floor((r-1)/5)), n=((r-1)%5)+1, T=STAR_TIERS[tier]; return {n,tier,name:T[0],col:T[1],hi:T[2]}; }
-function templeRankUnder(c,e,t){ }
+
+/* ---------- temple rank skins (prompt-rank-skins.md): the same sprites, a palette swapped in at draw time, one step every five ranks; only inside the temple ---------- */
+const TIER=[
+ {nm:'GILDED',     gl:'#e8c14a', g0:'#ffeeb0', g1:'#e8cc72', g2:'#c8a442', g3:'#96782c', g4:'#645018', acc:'#ffd86a', eye:'#ff2a2a', aura:.08},
+ {nm:'POLISHED',   gl:'#ffd06a', g0:'#fff4cc', g1:'#f2d88a', g2:'#d8b04e', g3:'#a88630', g4:'#705818', acc:'#ffe28a', eye:'#ff3a2a', aura:.16},
+ {nm:'BURNISHED',  gl:'#ff9a3a', g0:'#ffe0b0', g1:'#f0b060', g2:'#d08a34', g3:'#a06422', g4:'#6a4012', acc:'#ff9a3a', eye:'#ff5a2a', aura:.25},
+ {nm:'SCORCHED',   gl:'#ff7a2a', g0:'#ffd8a8', g1:'#f09a4a', g2:'#d07024', g3:'#9a4a16', g4:'#602c0c', acc:'#ff6a1a', eye:'#ff7a2a', aura:.34},
+ {nm:'EMBERED',    gl:'#ff4a4a', g0:'#ffd0c0', g1:'#f08060', g2:'#d04a3a', g3:'#9a2a22', g4:'#601410', acc:'#ff2a2a', eye:'#ff8a4a', aura:.43},
+ {nm:'BLOODFORGED',gl:'#e02a5a', g0:'#ffc8d8', g1:'#e86a90', g2:'#c02a52', g3:'#8a1636', g4:'#54081e', acc:'#ff4a7a', eye:'#ff2a5a', aura:.52},
+ {nm:'ARCANE',     gl:'#a04aff', g0:'#e8ccff', g1:'#b878f0', g2:'#8a44d0', g3:'#5e2a9a', g4:'#36145e', acc:'#c07aff', eye:'#e04aff', aura:.61},
+ {nm:'VOIDTOUCHED',gl:'#b060ff', g0:'#e8d0ff', g1:'#b078e8', g2:'#8a4ac8', g3:'#5e2a92', g4:'#36145a', acc:'#d8a0ff', eye:'#ff2aff', aura:.70},
+ {nm:'ASTRAL',     gl:'#5ab0ff', g0:'#d8ecff', g1:'#8ac8f8', g2:'#4a92d8', g3:'#2a5e9a', g4:'#14325e', acc:'#a0d8ff', eye:'#4adcff', aura:.79},
+ {nm:'RADIANT',    gl:'#8affd8', g0:'#e8fff4', g1:'#a8f0d8', g2:'#6ad0b0', g3:'#3a9a80', g4:'#1a5e4a', acc:'#b0ffe8', eye:'#6affd0', aura:.89},
+ {nm:'ASCENDANT',  gl:'#ffffff', g0:'#ffffff', g1:'#f0ecd8', g2:'#d8d0b0', g3:'#a8a084', g4:'#6e6a54', acc:'#ffffff', eye:'#ffffff', aura:1.0}];
+function tierIndex(rank){ return clamp(Math.floor(((rank||1)-1)/5),0,TIER.length-1); }
+function tierFor(rank){ return TIER[tierIndex(rank)]; }
+/* which creatures wear the skins, and the kit whose palette is swapped for each */
+const SKIN_KIT={crow:()=>W4CROW,serpentlord:()=>W4LORD,hammerking:()=>W4KING,sentinel:()=>W4SENT,serpent:()=>W4SERP,scorpion:()=>W4SCORP,reaper:1,lancer:1,breaker:1,bulwark:1,warden:1};
+/* the tier a creature is drawn at: the temple's rank tier; the open map and the daily cave are always tier 0 */
+function templeTierOf(e){ const F=G.arena; if(!F||!F.temple||!SKIN_KIT[e.type]) return 0; return tierIndex(e.rankView||F.rank||1); }
+const SKIN_KEYS=['g0','g1','g2','g3','g4','eye'];
+/* tier 0 swaps nothing, so rank 1 and the open map are the original art pixel for pixel; a higher tier writes its shades into the kit's palette for the draw and restores them after */
+function skinBegin(e){ const ti=templeTierOf(e); e.skinTier=ti; if(!ti) return null; const kit=SKIN_KIT[e.type]; if(typeof kit!=='function') return null; const A=kit().A, D=TIER[ti], saved={}; for(const k of SKIN_KEYS){ if(A[k]!==undefined){ saved[k]=A[k]; A[k]=D[k]; } } return {A,saved}; }
+function skinEnd(s){ if(s) Object.assign(s.A,s.saved); }
+/* the cave elites: their metal, blade edges, eyes and glow take the tier's shades; skin and cloth stay theirs */
+const ELITE_SKINS=new Map();
+function eliteSkin(e){ const E=ELITE_BY[e.type], ti=templeTierOf(e); e.skinTier=ti; if(!ti) return E; const key=e.type+'|'+ti; let S=ELITE_SKINS.get(key); if(!S){ const D=TIER[ti]; S=Object.assign({},E,{metal:D.g2,metalD:D.g3,edge:D.g0,eye:D.eye,glow:D.gl}); ELITE_SKINS.set(key,S); } return S; }
+/* the glow: three thin rings hugging the silhouette, pulsing slowly, drawn under the creature; nothing orbits, floats or trails */
+function templeRankUnder(c,e,t){ const ti=e.skinTier=templeTierOf(e); if(!ti) return; const D=TIER[ti], rx=e.r*2.6, ry=rx*.72, cx=e.x, cy=e.y+e.r*.9-e.r*1.5, pulse=.85+Math.sin(t*2)*.15;
+  c.save(); c.fillStyle=D.gl; for(let ring=0;ring<3;ring++){ const rr=rx*(.34+ring*.10)*pulse, n=Math.round(rr*1.6); c.globalAlpha=D.aura*(.16-ring*.04); for(let i=0;i<n;i++){ const a=i/n*TAU; c.fillRect(Math.round(cx+Math.cos(a)*rr)-1,Math.round(cy+Math.sin(a)*rr*(ry/rx))-1,2,2); } } c.restore(); }
 function templeRankOver(c,e,t){ }
 /* =====================================================================
    ICE SHOP (from iceshop.html): the wooden hut on a stone base, the old keeper behind the open counter, the sign,
@@ -9046,12 +9075,12 @@ function drawNinja(c,ch,e,t){ if(e.dunk>0){ c.save(); c.translate(0,12); c.globa
 let VIG=null;
 function drawBerserk(c,e,t){ if(!(e.boss&&e.ai.phase2&&e.alive)) return; const k=.5+.5*Math.sin(t*9), R=e.r*1.6; c.save();
   c.translate(e.x,e.y+e.r*.8); c.fillStyle=gradAt0(c,'bz'+R,R*.2,R,[[0,'rgba(239,68,68,1)'],[1,'rgba(239,68,68,0)']]); c.globalAlpha=.22+.14*k; c.beginPath(); c.ellipse(0,0,R,R*.5,0,0,TAU); c.fill(); c.globalAlpha=1; if(G.state==='PLAYING'&&Math.random()<.4) part(e.x+rnd(-e.r,e.r),e.y+rnd(-e.r,e.r*.6),rnd(-15,15),rnd(-70,-30),Math.random()<.5?'#ef4444':'#fca5a5',.6,3,0,true); c.restore(); }   /* the berserk aura: red pulse and rising embers */
-function drawEnemy(c,e,t){ drawBerserk(c,e,t); if(e.type==='lord') return drawLord(c,e,t); if(e.d.rig){ templeRankUnder(c,e,t); drawRigEnemy(c,e,t); templeRankOver(c,e,t); return; } const d=e.d, face=Math.cos(e.face)>=0?1:-1, g=gait(e,t,e.spd||130); c.save(); if(e.spawnT>0){ c.globalAlpha=Math.max(0,1-e.spawnT/.6); c.translate(0,e.spawnT*60); } c.translate(e.x,e.y+e.r*.9); if(e.flinch>0) c.translate(Math.sin(G.time*70)*2.5,0); c.rotate(g.lean*(e.boss?.4:1)); c.scale(1+g.squash*.5,1-g.squash*.8); drawSprite(c,ENEMIES[d.sprite],animOf(e),e.animT,face,d.scale,0,-g.bounce*(e.boss?.6:1),tintFor(e)); c.restore(); }
+function drawEnemy(c,e,t){ drawBerserk(c,e,t); if(e.type==='lord') return drawLord(c,e,t); if(e.d.rig){ templeRankUnder(c,e,t); const sk=skinBegin(e); drawRigEnemy(c,e,t); skinEnd(sk); templeRankOver(c,e,t); return; } const d=e.d, face=Math.cos(e.face)>=0?1:-1, g=gait(e,t,e.spd||130); c.save(); if(e.spawnT>0){ c.globalAlpha=Math.max(0,1-e.spawnT/.6); c.translate(0,e.spawnT*60); } c.translate(e.x,e.y+e.r*.9); if(e.flinch>0) c.translate(Math.sin(G.time*70)*2.5,0); c.rotate(g.lean*(e.boss?.4:1)); c.scale(1+g.squash*.5,1-g.squash*.8); drawSprite(c,ENEMIES[d.sprite],animOf(e),e.animT,face,d.scale,0,-g.bounce*(e.boss?.6:1),tintFor(e)); c.restore(); }
 /* spawners are painted into the terrain; here: ambient life + refill bar */
 function drawSpawner(c,sp,t){ const S=SPAWN[sp.k], mx=sp.max||S.max; if(sp.count>=mx&&sp.refill>0){ c.fillStyle='rgba(239,68,68,.7)'; c.fillRect(sp.x-16,sp.y+18,32*(1-sp.refill/S.refill),3); }
   if(G.state!=='PLAYING'||sp.alive>=mx) return; if(sp.k==='mist'&&Math.random()<.08){ part(sp.x+rnd(-18,18),sp.y+rnd(-4,4),rnd(-6,6),-22,'#8dff7a',1.1,2.5,-8,true); return; } if((sp.k==='bones'||sp.k==='askel')&&Math.random()<.05){ part(sp.x+rnd(-14,14),sp.y+rnd(-4,4),rnd(-4,4),-16,'#4dfa42',1,2.5,-6,true); return; } if(sp.k==='sent'&&Math.random()<.06) part(sp.x+rnd(-14,14),sp.y-6,rnd(-4,4),-24,'#fff4c8',1,2.5,-8,true); else if(sp.k==='serp'&&Math.random()<.05) part(sp.x+rnd(-16,16),sp.y+rnd(-2,4),rnd(-6,6),-14,'#7ae86a',.8,2.5,-4,true); else if(sp.k==='scorp'&&Math.random()<.04) part(sp.x+rnd(-14,14),sp.y+2,rnd(-8,8),-10,'#c8a442',.9,2.5,-4); else if(sp.k==='mush'&&Math.random()<.04) part(sp.x+rnd(-16,16),sp.y-4,rnd(-6,6),-18,'#f2ead6',1,2.5,-8,true); else if(sp.k==='nest'&&Math.random()<.05){ const b=part(sp.x+rnd(-10,10),sp.y+rnd(-4,4),rnd(-40,40),rnd(-20,20),'#1c1c22',.8,2.5,0); if(b) b.beetle=true; } else if(sp.k==='wreck'&&Math.random()<.03) part(sp.x+rnd(-20,20),sp.y-10,rnd(-8,8),-14,'#c9c0a6',1.2,2.5,0); }
 /* what stays on the ground for a moment after a common enemy dies */
-function drawRemains(c,e){ if(e.type==='lord'){ drawLordDead(c,e); return; } if(e.d.rig){ drawRigDead(c,e); return; } if(e.boss){ const k=clamp(e.deadT/3,0,1); c.save(); c.globalAlpha=k; c.translate(0,(1-k)*40); drawSprite(c,ENEMIES[e.d.sprite],'idle',e.animT,Math.cos(e.face)>=0?1:-1,e.d.scale,e.x,e.y+e.r*.9,Math.floor(G.time*12)%2?'rgba(255,255,255,.7)':'rgba(40,10,10,.5)'); c.restore(); if(G.state==='PLAYING'&&Math.random()<.4) part(e.x+rnd(-40,40),e.y+rnd(-60,20),rnd(-30,30),rnd(-80,-20),Math.random()<.5?'#fde047':'#ffffff',.8,4,0,true); return; }   // boss: long collapse
+function drawRemains(c,e){ if(e.type==='lord'){ drawLordDead(c,e); return; } if(e.d.rig){ const sk=skinBegin(e); drawRigDead(c,e); skinEnd(sk); return; } if(e.boss){ const k=clamp(e.deadT/3,0,1); c.save(); c.globalAlpha=k; c.translate(0,(1-k)*40); drawSprite(c,ENEMIES[e.d.sprite],'idle',e.animT,Math.cos(e.face)>=0?1:-1,e.d.scale,e.x,e.y+e.r*.9,Math.floor(G.time*12)%2?'rgba(255,255,255,.7)':'rgba(40,10,10,.5)'); c.restore(); if(G.state==='PLAYING'&&Math.random()<.4) part(e.x+rnd(-40,40),e.y+rnd(-60,20),rnd(-30,30),rnd(-80,-20),Math.random()<.5?'#fde047':'#ffffff',.8,4,0,true); return; }   // boss: long collapse
   const k=clamp(e.deadT/1.4,0,1); c.save(); c.globalAlpha=k; c.translate(e.x,e.y);
   if((e.d.base||e.type)==='mush'){ c.fillStyle='#4a2f60'; c.beginPath(); c.ellipse(0,4,14,6,0,0,TAU); c.fill(); c.fillStyle='#8a5acc'; for(let i=0;i<5;i++){ c.beginPath(); c.arc(-8+i*4,2+(i%2)*3,1.6,0,TAU); c.fill(); } c.fillStyle='#8ac06a'; c.fillRect(-12,1,3,2); c.fillRect(10,4,3,2); }
   else if((e.d.base||e.type)==='priest'){ c.fillStyle='#2f6b52'; roundRect(c,-8,-4,16,11,3); c.fill(); c.fillStyle='#e8e0c8'; c.fillRect(-5,-1,3,3); c.fillRect(2,-1,3,3); c.strokeStyle='#1c1c22'; c.lineWidth=1.5; c.beginPath(); c.moveTo(-1,-4); c.lineTo(1,1); c.lineTo(-2,7); c.stroke(); }
