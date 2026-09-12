@@ -2917,8 +2917,8 @@ const RIG_C=document.createElement('canvas'), RIG_X=RIG_C.getContext('2d');
 /* the rig cache: pixel-by-pixel rigs are the dearest thing on screen, so a creature is rasterized at most RIG_FPS times a second (or at once when its pose, tint or size changes) into its own small canvas and blitted from there between refreshes. Callers name the creature and its pose with rigCache(e,key) right before rigBlit. */
 const RIG_CACHE={e:null,key:''}, RIG_FPS=20;
 function rigCache(e,key){ RIG_CACHE.e=e; RIG_CACHE.key=key; }
-function rigCached(w,h,draw,tint){ const ce=RIG_CACHE.e; if(!ce) return null; RIG_CACHE.e=null; const gk=ce.goldK||0, key=RIG_CACHE.key+'|'+w+'x'+h+'|'+(tint||'')+'|'+gk.toFixed(2), now=performance.now(); let cv=ce.rigCv; if(!cv||cv.width!==w||cv.height!==h){ cv=ce.rigCv=document.createElement('canvas'); cv.width=w; cv.height=h; ce.rigKey=''; ce.rigAt=-1e9; }
-  if(ce.rigKey!==key||now-ce.rigAt>=1000/RIG_FPS){ const x2=cv.getContext('2d'); x2.setTransform(1,0,0,1,0,0); x2.globalCompositeOperation='source-over'; x2.clearRect(0,0,w,h); const og=g; g=x2; draw(); g=og; if(gk>0) rigGolden(x2,w,h,gk); if(tint){ x2.globalCompositeOperation='source-atop'; x2.fillStyle=tint; x2.fillRect(0,0,w,h); x2.globalCompositeOperation='source-over'; } ce.rigKey=key; ce.rigAt=now; } return cv; }
+function rigCached(w,h,draw,tint){ const ce=RIG_CACHE.e; if(!ce) return null; RIG_CACHE.e=null; const key=RIG_CACHE.key+'|'+w+'x'+h+'|'+(tint||''), now=performance.now(); let cv=ce.rigCv; if(!cv||cv.width!==w||cv.height!==h){ cv=ce.rigCv=document.createElement('canvas'); cv.width=w; cv.height=h; ce.rigKey=''; ce.rigAt=-1e9; }
+  if(ce.rigKey!==key||now-ce.rigAt>=1000/RIG_FPS){ const x2=cv.getContext('2d'); x2.setTransform(1,0,0,1,0,0); x2.globalCompositeOperation='source-over'; x2.clearRect(0,0,w,h); const og=g; g=x2; draw(); g=og; if(tint){ x2.globalCompositeOperation='source-atop'; x2.fillStyle=tint; x2.fillRect(0,0,w,h); x2.globalCompositeOperation='source-over'; } ce.rigKey=key; ce.rigAt=now; } return cv; }
 function rigBlit(c,w,h,draw,tint,x,y,sx,sy,ox,oy){ const cv=rigCached(w,h,draw,tint); if(cv){ c.save(); c.translate(x,y); c.scale(sx,sy); c.imageSmoothingEnabled=false; c.drawImage(cv,ox,oy); c.restore(); return; }
   if(RIG_C.width!==w||RIG_C.height!==h){ RIG_C.width=w; RIG_C.height=h; } RIG_X.setTransform(1,0,0,1,0,0); RIG_X.globalCompositeOperation='source-over'; RIG_X.clearRect(0,0,w,h); const og=g; g=RIG_X; draw(); g=og; if(tint){ RIG_X.globalCompositeOperation='source-atop'; RIG_X.fillStyle=tint; RIG_X.fillRect(0,0,w,h); RIG_X.globalCompositeOperation='source-over'; } c.save(); c.translate(x,y); c.scale(sx,sy); c.imageSmoothingEnabled=false; c.drawImage(RIG_C,ox,oy); c.restore(); }
 function drawBossRig(c,e,t){ const face=Math.cos(e.face)>=0?1:-1, {anim,k,o}=bossRigOpts(e), s=e.d.scale; c.save(); if(e.spawnT>0){ c.globalAlpha=Math.max(0,1-e.spawnT/.6); } let lift=0; if(e.airborne) lift=300; else if(e.ai.state==='leapAir'){ const q=clamp(1-e.ai.t/(e.ai.leap?e.ai.leap.dur:1),0,1); lift=Math.sin(q*Math.PI)*260; }   /* the arc follows the real leap length (a fixed 1.0 s here drew him underground for the longer leap) */
@@ -6011,11 +6011,9 @@ const ELITE_S=2.1;   /* world px per art px: 37–43 art px → bigger than a co
 function eliteAnimOf(e){ const a=e.ai, s=a.state, mv=Math.hypot((e.vx||0),(e.vy||0))>25; if(s==='basicTele'||s==='basicHit') return {anim:'basic',t:clamp((a.basicT||0)/1.05,0,.99)*1.5}; if(s==='ultPrep'||s==='ult') return {anim:'ult',t:Math.min(3.19,a.ultT||0)}; return {anim:mv?'walk':'idle',t:G.time+(e.animT||0)}; }
 const ELITE_C=document.createElement('canvas'), ELITE_X=ELITE_C.getContext('2d'); ELITE_C.width=160; ELITE_C.height=130;
 function drawEliteEnemy(c,e,t){ const E=ELITE_BY[e.type], B=E.build, face=Math.cos(e.face)>=0?1:-1, {anim,t:at}=eliteAnimOf(e); const ox=52+B.w/2, oy=34+B.h+B.leg, X=ELITE_X;
-  X.setTransform(1,0,0,1,0,0); X.globalCompositeOperation='source-over'; X.clearRect(0,0,ELITE_C.width,ELITE_C.height); X.translate(20,20);
   const emit=(ax,ay,n,pw,col)=>{ const wx=e.x+(ax-ox)*ELITE_S*face, wy=e.y+e.r*.6+(ay-oy)*ELITE_S; for(let i=0;i<n;i++) part(wx,wy,(Math.random()-.5)*pw*20,-Math.random()*pw*12-40,col,.5,3,300,true); };
-  eliteDraw(caveArt(X),E,anim,at,emit);
-  if(e.flash>0){ X.setTransform(1,0,0,1,0,0); X.globalCompositeOperation='source-atop'; X.fillStyle='rgba(255,255,255,.85)'; X.fillRect(0,0,ELITE_C.width,ELITE_C.height); X.globalCompositeOperation='source-over'; }   /* the same white hit flash as every rig */
-  c.save(); if(e.spawnT>0) c.globalAlpha=Math.max(0,1-e.spawnT/.7); const fl=e.flinch>0?Math.sin(G.time*70)*2:0; c.translate(e.x+fl,e.y+e.r*.6); c.scale(ELITE_S*face,ELITE_S); c.imageSmoothingEnabled=false; c.drawImage(ELITE_C,-(ox+20),-(oy+20)); c.restore(); }
+  /* through the rig cache like every other rig: rasterized at most 20 times a second, the temple's goldening applied there */
+  c.save(); if(e.spawnT>0) c.globalAlpha=Math.max(0,1-e.spawnT/.7); const fl=e.flinch>0?Math.sin(G.time*70)*2:0; rigCache(e,anim); rigBlit(c,ELITE_C.width,ELITE_C.height,()=>{ g.translate(20,20); eliteDraw(caveArt(g),E,anim,at,emit); },e.flash>0?'rgba(255,255,255,.85)':null,e.x+fl,e.y+e.r*.6,ELITE_S*face,ELITE_S,-(ox+20),-(oy+20)); c.restore(); }
 function drawEliteDead(c,e){ const E=ELITE_BY[e.type], B=E.build, face=Math.cos(e.face)>=0?1:-1, k=clamp(1-e.deadT/1.4,0,1); c.save(); c.translate(e.x,e.y+e.r*.6); c.scale(ELITE_S*face,ELITE_S); c.translate(-62,-(52+26)); eliteDeathDraw(caveArt(c),E,k*2.4); c.restore(); }
 /* ---------- elite AI: a readable basic, a committed ultimate every ~9 s with a 0.8 s telegraph ---------- */
 const ELITE_ULT_CD={reaper:6,lancer:6,breaker:8,bulwark:7,warden:7};
@@ -8633,18 +8631,13 @@ function chest(ti,cx,cy,sc,t,open){
 }
 return {T,chest,bind(ctx,scale){ c=ctx; S=scale; }}; })();
 
-/* ===================================================================== the look of a rank: small marks on the temple's bosses and elites that grow with the rank ===================================================================== */
-/* both approved: 4 tiered stars on the health bar (five bronze, then five silver, gold, diamond ...); 8 their black turns gold a little more with every rank, all gold by rank 11 */
-let TEMPLE_RANK_FX={4:true,8:true};
+/* ===================================================================== the look of a rank: tiered stars beside the boss's name on the health bar ===================================================================== */
+let TEMPLE_RANK_FX={4:true};
 /* the star tiers: one star per rank, five per tier, then the next metal */
 const STAR_TIERS=[['BRONZE','#c07a3a','#f0b078'],['SILVER','#c8d0da','#ffffff'],['GOLD','#e8c14a','#fff8d8'],['DIAMOND','#7ad8ff','#ffffff'],['RUBY','#ff5a6a','#ffd0d4'],['EMERALD','#4ce07a','#d0ffe0'],['SAPPHIRE','#5a8aff','#d0e0ff'],['AMETHYST','#c47aff','#eedcff'],['OBSIDIAN','#6a5a8a','#d0c4ea'],['CELESTIAL','#ffffff','#ffeeb0'],['MYTHIC','#ff9a2a','#fff0b8']];
 function templeStars(r){ r=Math.max(1,r|0); const tier=Math.min(STAR_TIERS.length-1,Math.floor((r-1)/5)), n=((r-1)%5)+1, T=STAR_TIERS[tier]; return {n,tier,name:T[0],col:T[1],hi:T[2]}; }
-function templeRankOf(e){ const F=G.arena; if(!F||!F.temple||!(e.boss||e.elite)||!e.alive) return 0; return e.rankView||F.rank||1; }
-function templeRankUnder(c,e,t){ const r=templeRankOf(e), V=TEMPLE_RANK_FX; e.goldK=0; if(r<2) return; if(V[8]) e.goldK=Math.min(1,(r-1)/10); }
+function templeRankUnder(c,e,t){ }
 function templeRankOver(c,e,t){ }
-/* the goldening: every dark pixel of the cached rig is blended toward gold by goldK (0..1); light and gold pixels stay as they are */
-/* dark pixels become real gold shades: the darkest turn deep gold, the lighter darks a brighter gold, so the shading of the art survives; k blends from the original to that gold */
-function rigGolden(x2,w,h,k){ const img=x2.getImageData(0,0,w,h), d=img.data, G0=[124,92,26], G1=[240,200,84]; for(let i=0;i<d.length;i+=4){ if(d[i+3]<8) continue; const lum=(d[i]*.3+d[i+1]*.59+d[i+2]*.11); if(lum>=110) continue; const q=lum/110; for(let ch=0;ch<3;ch++){ const tgt=G0[ch]+(G1[ch]-G0[ch])*q; d[i+ch]+=(tgt-d[i+ch])*k; } } x2.putImageData(img,0,0); }
 /* =====================================================================
    ICE SHOP (from iceshop.html): the wooden hut on a stone base, the old keeper behind the open counter, the sign,
    lanterns, barrels; the Frost Coat item icon; the coat worn on a ninja. Drawn with rect/px in PIX space (1 unit = 2 px).
