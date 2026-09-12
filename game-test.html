@@ -2920,7 +2920,7 @@ const RIG_CACHE={e:null,key:''}, RIG_FPS=20;
 function rigCache(e,key){ RIG_CACHE.e=e; RIG_CACHE.key=key; }
 function rigCached(w,h,draw,tint){ const ce=RIG_CACHE.e; if(!ce) return null; RIG_CACHE.e=null; const key=RIG_CACHE.key+'|'+w+'x'+h+'|'+(tint||''), now=performance.now(); let cv=ce.rigCv; if(!cv||cv.width!==w||cv.height!==h){ cv=ce.rigCv=document.createElement('canvas'); cv.width=w; cv.height=h; ce.rigKey=''; ce.rigAt=-1e9; }
   if(ce.rigKey!==key||now-ce.rigAt>=1000/RIG_FPS){ const x2=cv.getContext('2d'); x2.setTransform(1,0,0,1,0,0); x2.globalCompositeOperation='source-over'; x2.clearRect(0,0,w,h); const og=g; g=x2; draw(); g=og; if(tint){ x2.globalCompositeOperation='source-atop'; x2.fillStyle=tint; x2.fillRect(0,0,w,h); x2.globalCompositeOperation='source-over'; } ce.rigKey=key; ce.rigAt=now; } return cv; }
-function rigBlit(c,w,h,draw,tint,x,y,sx,sy,ox,oy){ const cv=rigCached(w,h,draw,tint); if(cv){ c.save(); c.translate(x,y); c.scale(sx,sy); c.imageSmoothingEnabled=false; c.drawImage(cv,ox,oy); c.restore(); return; }
+function rigBlit(c,w,h,draw,tint,x,y,sx,sy,ox,oy){ const ce=RIG_CACHE.e, cv=rigCached(w,h,draw,tint); if(cv){ ce.rigXf=[x,y,sx,sy,ox,oy]; c.save(); c.translate(x,y); c.scale(sx,sy); c.imageSmoothingEnabled=false; c.drawImage(cv,ox,oy); c.restore(); return; }
   if(RIG_C.width!==w||RIG_C.height!==h){ RIG_C.width=w; RIG_C.height=h; } RIG_X.setTransform(1,0,0,1,0,0); RIG_X.globalCompositeOperation='source-over'; RIG_X.clearRect(0,0,w,h); const og=g; g=RIG_X; draw(); g=og; if(tint){ RIG_X.globalCompositeOperation='source-atop'; RIG_X.fillStyle=tint; RIG_X.fillRect(0,0,w,h); RIG_X.globalCompositeOperation='source-over'; } c.save(); c.translate(x,y); c.scale(sx,sy); c.imageSmoothingEnabled=false; c.drawImage(RIG_C,ox,oy); c.restore(); }
 function drawBossRig(c,e,t){ const face=Math.cos(e.face)>=0?1:-1, {anim,k,o}=bossRigOpts(e), s=e.d.scale; c.save(); if(e.spawnT>0){ c.globalAlpha=Math.max(0,1-e.spawnT/.6); } let lift=0; if(e.airborne) lift=300; else if(e.ai.state==='leapAir'){ const q=clamp(1-e.ai.t/(e.ai.leap?e.ai.leap.dur:1),0,1); lift=Math.sin(q*Math.PI)*260; }   /* the arc follows the real leap length (a fixed 1.0 s here drew him underground for the longer leap) */
   const fl=e.flinch>0?Math.sin(G.time*70)*3:0; rigCache(e,anim+'|'+(k>0?1:0)); rigBlit(c,104,94,()=>{ if(e.type==='titan') rigTitan(anim,t,k,o); else rigYeti(anim,t,k,o); },tintFor(e),e.x+fl,e.y+e.r*.9-lift,s*face,s,-46,-76); c.restore(); }
@@ -8635,20 +8635,19 @@ function chest(ti,cx,cy,sc,t,open){
 return {T,chest,bind(ctx,scale){ c=ctx; S=scale; }}; })();
 
 /* ===================================================================== the look of a rank: small marks on the temple's bosses and elites that grow with the rank ===================================================================== */
-/* the variants (1 ring under the feet, 2 growing tint, 3 sparks, 4 stars on the health bar, 5 elite adornments, 6 glowing shadow); only the approved ones are on */
+/* variants: 4 stars on the health bar (approved, on); 7 the gold shines more with every rank; 8 they are painted more gold with every rank (both proposals, off until approved) */
 let TEMPLE_RANK_FX={4:true};
 function templeRankOf(e){ const F=G.arena; if(!F||!F.temple||!(e.boss||e.elite)||!e.alive) return 0; return e.rankView||F.rank||1; }
-function templeHeadY(e){ const s=e.d.scale||1, y=e.y+e.r*.9; return e.type==='crow'?y-140:e.type==='serpentlord'?y-120:e.type==='hammerking'?y-85:y-70; }
-function templeRankUnder(c,e,t){ const r=templeRankOf(e), V=TEMPLE_RANK_FX; e.rankTint=null; if(r<2) return; const x=e.x, y=e.y+e.r*.9;
-  if(V[2]) e.rankTint=r>=11?'rgba(220,40,60,.30)':r>=6?'rgba(255,248,216,.28)':'rgba(232,193,74,.22)';
-  if(V[6]&&r>=4){ c.save(); const pulse=r>=7?.32+.18*Math.sin(t*4):.32; c.fillStyle='rgba(232,193,74,'+pulse+')'; c.beginPath(); c.ellipse(x,y+2,e.r*2.3,e.r*.95,0,0,TAU); c.fill(); if(r>=7){ c.fillStyle='rgba(255,248,216,'+(.22+.16*Math.sin(t*4))+')'; c.beginPath(); c.ellipse(x,y+2,e.r*1.4,e.r*.55,0,0,TAU); c.fill(); } c.restore(); }
-  if(V[1]){ c.save(); c.strokeStyle='#e8c14a'; c.lineWidth=2; c.beginPath(); c.ellipse(x,y+3,e.r*2.6,e.r*1.05,0,0,TAU); c.stroke(); if(r>=4){ c.strokeStyle='#ffe89a'; c.lineWidth=1.5; c.beginPath(); c.ellipse(x,y+3,e.r*3.1,e.r*1.25,0,0,TAU); c.stroke(); } if(r>=6){ c.fillStyle='#fff8d8'; for(let i=0;i<6;i++){ const a=i/6*TAU+t*.6, dx=x+Math.cos(a)*e.r*3.1, dy=y+3+Math.sin(a)*e.r*1.25; c.fillRect(dx-2,dy-2,4,4); } } c.restore(); } }
-function templeRankOver(c,e,t){ const r=templeRankOf(e), V=TEMPLE_RANK_FX; if(r<2) return; const x=e.x, hy=templeHeadY(e);
-  if(V[3]){ const n=Math.min(16,Math.round(r*1.6)); c.save(); for(let i=0;i<n;i++){ const a=i/n*TAU+t*(1.2+i*.05), rr=e.r*1.6+Math.sin(t*3+i)*6, sx=x+Math.cos(a)*rr, sy=(hy+e.y+e.r*.9)/2+Math.sin(a)*rr*.5+Math.sin(t*2+i)*8; c.fillStyle=i%3?'#ffe89a':'#ffffff'; c.globalAlpha=.6+.4*Math.sin(t*6+i); c.fillRect(sx-1.5,sy-1.5,3,3); } c.restore(); }
-  if(V[5]&&e.elite){ c.save(); c.translate(x,hy-6); const u=3;
-    const crown=(cy,w)=>{ c.fillStyle='#a8862a'; c.fillRect(-w*u/2,cy,w*u,u*2); c.fillStyle='#e8c14a'; c.fillRect(-w*u/2,cy,w*u,u); for(let i=0;i<w;i+=2){ const h=i===Math.floor(w/2)?3:2; c.fillStyle='#e8c14a'; c.fillRect(-w*u/2+i*u,cy-h*u,u,h*u); c.fillStyle='#fff8d8'; c.fillRect(-w*u/2+i*u,cy-h*u,u,u); } c.fillStyle='#ff6a6a'; c.fillRect(-u/2,cy+u*.5,u,u); };
-    if(r>=8){ crown(-u*8,7); crown(0,5); } else if(r>=5){ crown(0,5); } else if(r>=3){ c.fillStyle='#a8862a'; c.fillRect(-u/2,-u*6,u,u*7); c.fillStyle='#e8c14a'; c.fillRect(u/2,-u*6,u*4,u*3); c.fillStyle='#fff8d8'; c.fillRect(u/2,-u*6,u*4,u); }
-    c.restore(); } }
+function templeRankUnder(c,e,t){ const r=templeRankOf(e), V=TEMPLE_RANK_FX; e.rankTint=null; if(r<2) return;
+  if(V[8]) e.rankTint='rgba(232,193,74,'+Math.min(.72,(r-1)*.07).toFixed(2)+')'; }   /* painted more gold every rank: 7% per rank, solid gold by rank 11 */
+const RANK_OV=document.createElement('canvas'), RANK_OX=RANK_OV.getContext('2d');
+function templeRankOver(c,e,t){ const r=templeRankOf(e), V=TEMPLE_RANK_FX; if(r<2) return;
+  if(V[7]&&e.rigCv&&e.rigXf){ /* the shine: a diagonal band of light and sparkles, masked to the creature's own pixels, brighter with every rank */
+    const cv=e.rigCv, w=cv.width, h=cv.height, [x,y,sx,sy,ox,oy]=e.rigXf; if(RANK_OV.width!==w||RANK_OV.height!==h){ RANK_OV.width=w; RANK_OV.height=h; }
+    const X=RANK_OX; X.setTransform(1,0,0,1,0,0); X.globalCompositeOperation='source-over'; X.globalAlpha=1; X.clearRect(0,0,w,h); X.drawImage(cv,0,0); X.globalCompositeOperation='source-in';
+    const k=Math.min(1,(r-1)/9), band=((t*70)%(w+h*2))-h, bw=8+Math.round(k*14); X.fillStyle='rgba(255,255,255,'+(.3+k*.6).toFixed(2)+')'; for(let j=0;j<h;j+=2){ const bx=band-j*.6; X.fillRect(bx,j,bw,2); X.fillRect(bx-bw-8,j,Math.max(2,bw/2),2); }
+    const n=Math.round(4+k*26); X.fillStyle='#ffffff'; for(let i=0;i<n;i++){ const q=(t*.7+i*.137)%1, px=(i*37+Math.floor(t*3)*11)%w, py=(i*53+Math.floor(t*2)*7)%h; if(q<.55){ X.fillRect(px,py,2,2); X.fillRect(px-2,py,6,2); X.fillRect(px,py-2,2,6); } }
+    c.save(); c.translate(x,y); c.scale(sx,sy); c.imageSmoothingEnabled=false; c.drawImage(RANK_OV,ox,oy); c.restore(); } }
 /* =====================================================================
    ICE SHOP (from iceshop.html): the wooden hut on a stone base, the old keeper behind the open counter, the sign,
    lanterns, barrels; the Frost Coat item icon; the coat worn on a ninja. Drawn with rect/px in PIX space (1 unit = 2 px).
