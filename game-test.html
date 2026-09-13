@@ -5696,7 +5696,7 @@ for(const el of ELITES){ EN[el.key]={cls:'elite',world:1,mods:[el.mod],spd:el.mo
 /* ---------- save + timers ---------- */
 function caveSave(){ if(!SAVE.cave||typeof SAVE.cave!=='object') SAVE.cave={chestAt:{},rank:{}}; if(!SAVE.cave.rank||typeof SAVE.cave.rank!=='object') SAVE.cave.rank={}; if(!SAVE.cave.chestAt||typeof SAVE.cave.chestAt!=='object') SAVE.cave.chestAt={}; return SAVE.cave; }
 /* each cave has its own rank, like the temple: every clear raises it by one, and every rank adds a level to its creatures (and to the chest) */
-const CAVE_RANK_MAX=30;
+const CAVE_RANK_MAX=55;   /* cave-gem-table-4.html: the ranks run to 55 */
 function caveRank(w){ return clamp((caveSave().rank[w]|0)||1,1,CAVE_RANK_MAX); }
 function caveRankUp(w){ const S=caveSave(), r=Math.min(CAVE_RANK_MAX,caveRank(w)+1); S.rank[w]=r; save(); return r; }
 function caveSetRank(w,r){ caveSave().rank[w]=clamp(r|0,1,CAVE_RANK_MAX); save(); return caveRank(w); }   /* console */
@@ -5710,6 +5710,13 @@ function caveStatus(w){ const ms=caveChestMs(w); return {k:'ready',chest:ms<=0,l
 function caveStateText(w){ const ms=caveChestMs(w); return ms<=0?'CHEST READY':'NEXT CHEST IN '+caveClock(ms); }
 function caveTimerText(){ return 'NEW CAVE IN '+caveClock(caveMsToMidnight()); }
 function caveSignText(w){ return (w?'RANK '+caveRank(w)+' · ':'')+caveStateText(w)+' · '+caveTimerText(); }
+/* ---------- the cave's gems (cave-gem-table-4.html, as is): score = world×2 + (rank−1)×0.5, four anchors slide with the score, red opens at rank 20, gold at rank 30, every world adds 16% to the rares; 10 worlds supported ---------- */
+const CAVE_GEM_A=[[1,66,28,5.5,0.50],[6,59,32,8.0,1.00],[12,50,36,12.0,2.00],[20,41,38,17.0,3.40],[30,32,38,24.0,5.60],[45,22,36,32.0,9.50],[60,15,32,38.0,14.00]];
+function caveGemRaw(score){ score=Math.max(1,Math.min(60,score)); const A=CAVE_GEM_A; for(let i=0;i<A.length-1;i++){ const a=A[i], b=A[i+1]; if(score>=a[0]&&score<=b[0]){ const f=(score-a[0])/(b[0]-a[0]); return [1,2,3,4].map(k=>a[k]+(b[k]-a[k])*f); } } return [A[0][1],A[0][2],A[0][3],A[0][4]]; }
+function caveGemScore(w,rank){ return w*2+(Math.min(rank,CAVE_RANK_MAX)-1)*0.5; }
+function caveGemTable(w,rank){ rank=Math.min(rank,CAVE_RANK_MAX); const v=caveGemRaw(caveGemScore(w,rank)), wb=1+(w-1)*0.16, red=rank<20?0:Math.min(7.5,(0.35+(rank-20)*0.0850)*wb), gold=rank<30?0:Math.min(1.35,(0.045+(rank-30)*0.0165)*wb); const arr=[v[0],v[1],v[2],v[3],red,gold], s=arr.reduce((x,y)=>x+y,0), t={}; ['grey','green','orange','purple','red','gold'].forEach((k,i)=>t[k]=arr[i]*100/s); return t; }
+function caveGemCount(rank){ return rank<15?1:2; }
+function caveChest(w,rank){ w=clamp(w|0,1,10); rank=clamp(rank||1,1,CAVE_RANK_MAX); const T=caveGemTable(w,rank), f=v=>+v.toFixed(2), out={world:w,rank,score:caveGemScore(w,rank),gems:caveGemCount(rank),grey:f(T.grey),green:f(T.green),orange:f(T.orange),purple:f(T.purple),red:f(T.red),gold:f(T.gold)}; console.log(JSON.stringify(out)); return out; }   /* console: the chest's odds for a world and a rank */
 /* ---------- the day's roll: tier, elite and the exact enemy behind every class slot, the same for every player ---------- */
 let CAVE_DAY=null;
 function caveToday(){ const day=new Date().toDateString(); if(CAVE_DAY&&CAVE_DAY.day===day) return CAVE_DAY; const R=dailySeed(day+'|cave'); let x=R(), tier='hard'; for(const [k,w] of CAVE.weights){ if(x<w){ tier=k; break; } x-=w; } const elite=ELITES[Math.floor(R()*ELITES.length)].key, picks={}; for(const w of [1,2,3]){ picks[w]={}; for(const cls of ['weak','normal','strong','fast']){ const pool=CAVE.pools[w][cls]; picks[w][cls]=pool[Math.floor(R()*pool.length)]; } } CAVE_DAY={day,tier,elite,picks}; return CAVE_DAY; }
@@ -5873,7 +5880,7 @@ function caveUpdate(dt){ const F=G.arena, p=G.player; if(F.over) return; F.t+=dt
 function caveWin(){ const F=G.arena; if(F.over) return; F.over='win'; F.overT=0; F.phase='over'; F.overStamp=performance.now(); if(!NET.guest){ F.newRank=caveRankUp(F.w); if(NET.host&&NET.on) netEv({k:'cave',rankW:F.w,rank:F.newRank}); } G.slowmo=.8; for(const q of G.projs) if(q.alive&&q.owner&&q.owner.kind!=='player') q.alive=false; F.rings.length=0; F.rocks.length=0; save(); }
 function caveGrant(){ const F=G.arena; if(F.granted) return; F.granted=true; const S=caveSave();
   if(!caveChestLeft(F.w)){ F.rewards=null; F.empty=true; F.chest={items:[],i:0,open:false,pops:[],done:[]}; return; }   /* this cave's chest was taken less than a day ago: the run counts (the rank rose), the chest stays shut */
-  const r=caveRewardFor(F.w,F.tier,F.lvl), gems=[], n=1+(F.tier==='hard'?1:0); for(let i=0;i<n;i++){ const rar=gemRoll(gemTableCommon(F.w)); if(rar) gems.push(rar); }
+  const r=caveRewardFor(F.w,F.tier,F.lvl), gems=[], rk=F.rank||1, T=caveGemTable(F.w,rk), n=caveGemCount(rk); for(let i=0;i<n;i++) gems.push(gemRoll(T)||'grey');   /* the cave's gem table by world and the rank it was fought at: every chest holds gems, two from rank 15 */
   S.chestAt[F.w]=Date.now(); F.rewards=Object.assign(r,{gems});
   /* the chest itself, the temple's way: one tap per reward — gold, then Chi, then XP, then each gem (templeChestTap hands them over) */
   const items=[{k:'gold',n:r.gold}]; if(r.chi>0) items.push({k:'chi',n:r.chi}); items.push({k:'xp',n:r.xp}); for(const rar of gems) items.push({k:'gem',rar,type:Math.random()<.5?'atk':'hp'});
