@@ -1226,7 +1226,7 @@ function roundRect(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x
    SAVE
    ===================================================================== */
 const SAVE_KEY='elemental_ninjas_world_v3';
-const DEFAULT_SAVE=()=>({gold:0,levels:{SHADE:1,BOREAS:1,APOLLO:1,BECK:1,CLAY:1,VOLT:1},unlocked:{SHADE:true},selected:'SHADE',kills:0,w3kills:0,presetStamp:'',shakeDefaultOff:0,shopGems:null,trade:null,w3:null,cave:null,xp:0,xpTotal:0,chi:0,keys:0,pity:0,playTime:0,chiChests:{},bossFightCleared:{},bossFightBestTime:{},bossFightAttempts:{},bossFightFirstClearClaimed:{},bossFightStars:{},chests:{},golden:{},secret:{},bosses:{hippo:0,croc:0,lord:0,titan:0,yeti:0},killsBy:{},ready:{},secrets:{},secretsBonus:{},maps:{bone_shore:true},hints:{},settings:{sound:true,vibrate:true,music:true,dmgNums:true,shake:false},player:{name:''},daily:null,equipment:{owned:[],next:1},equipped:{},gems:{owned:[],next:1,found:{}},gemSlots:{}});
+const DEFAULT_SAVE=()=>({enchant:{atk:[0,0,0,0,0],hp:[0,0,0,0,0]},   /* the Enchanter's ten deposit banks */ gold:0,levels:{SHADE:1,BOREAS:1,APOLLO:1,BECK:1,CLAY:1,VOLT:1},unlocked:{SHADE:true},selected:'SHADE',kills:0,w3kills:0,presetStamp:'',shakeDefaultOff:0,shopGems:null,trade:null,w3:null,cave:null,xp:0,xpTotal:0,chi:0,keys:0,pity:0,playTime:0,chiChests:{},bossFightCleared:{},bossFightBestTime:{},bossFightAttempts:{},bossFightFirstClearClaimed:{},bossFightStars:{},chests:{},golden:{},secret:{},bosses:{hippo:0,croc:0,lord:0,titan:0,yeti:0},killsBy:{},ready:{},secrets:{},secretsBonus:{},maps:{bone_shore:true},hints:{},settings:{sound:true,vibrate:true,music:true,dmgNums:true,shake:false},player:{name:''},daily:null,equipment:{owned:[],next:1},equipped:{},gems:{owned:[],next:1,found:{}},gemSlots:{}});
 let SAVE=DEFAULT_SAVE();
 /* a returning player: skips the tutorial hints and starts with the map already revealed */
 function isVeteran(){ return (SAVE.kills||0)>=15||(SAVE.playTime||0)>240||Object.values(SAVE.bosses||{}).some(v=>v>0); }
@@ -1836,7 +1836,7 @@ let WORLD={w:3200,h:2000,land:{x0:100,y0:100,x1:2900,y1:1900},corner:220,
     fences:[], safeR:330,
     dummies:[[1735,1000],[1760,1030]], flags:[[1395,790],[1805,790],[1395,1210],[1805,1210]], campfires:[[1600,1060]]},
   secret:{x:230,y:150,r:130},
-  ancient:{x:2350,y:760,r:30,cr:98}, shrine:{x:1500,y:530}, shipwreck:{x:2690,y:1010}, rockform:{x:450,y:900}, waterfall:{x:150},
+  ancient:{x:2350,y:760,r:30,cr:98}, shrine:{x:1500,y:530}, shipwreck:{x:2690,y:1010}, enchant:{x:2610,y:1430}, rockform:{x:450,y:900}, waterfall:{x:150},   /* the Enchanter: the eastern beach, south of the wreck, past the treeline */
   landmarks:[{x:1600,y:1000,name:'Ninja Village',icon:'⛩'},{x:1500,y:530,name:'Ruined Shrine',icon:'🏯'},{x:2690,y:1010,name:'Shipwreck',icon:'⛵'},{x:2350,y:760,name:'Ancient Tree',icon:'🌳'},{x:450,y:900,name:'Giant Rocks',icon:'🪨'},{x:170,y:340,name:'Waterfall',icon:'💧'},{x:1100,y:330,name:'Broken Bridge',icon:'🌉'}],
   /* biome spawners: k = mush (forest mushroom cluster) / nest (swamp insect nest) / wreck (beach rowboat + crates + campfire) */
   spawners:[[1100,1200],[320,1380],[2340,1070],[2240,400],[450,1090],[740,1220],[860,200],[230,830],[2020,1390],[1020,850],[2080,890],[1670,460],[2530,1310],[540,200]].map(([x,y])=>({x,y,k:'mush'}))
@@ -1872,6 +1872,7 @@ function buildWorld(seed){
   WORLD=WORLD_CUR=WORLD_MAIN; const W=WORLD, R=mulberry(seed), L=W.land;
   const wp=(pts,jit)=>{ const out=[]; for(let i=0;i<pts.length-1;i++){ const a=pts[i], b=pts[i+1], n=6; for(let k=0;k<n;k++){ const t=k/n; out.push({x:lerp(a[0],b[0],t)+(k?(R()-.5)*jit:0),y:lerp(a[1],b[1],t)+(k?(R()-.5)*jit:0)}); } } out.push({x:pts[pts.length-1][0],y:pts[pts.length-1][1]}); return out; };
   W.paths=[wp([[1600,900],[1600,600],[1520,430],[1500,330]],50), wp([[1600,1100],[1620,1400],[1560,1560],[1500,1700],[1750,1850]],70), wp([[1750,1000],[2100,980],[2450,1000],[2650,940]],70), wp([[1450,1000],[1100,1040],[700,980],[420,700],[420,330]],70), wp([[420,330],[420,240]],10), wp([[2300,330],[2300,600],[2450,760]],50), wp([[300,1560],[600,1620],[1000,1560],[1300,1720],[1750,1850],[2100,1700],[2450,1780],[2700,1680]],60), wp([[1600,600],[1900,700],[2250,760]],60), wp([[900,470],[900,330],[900,240]],10), wp([[2050,470],[2050,330],[2050,240]],10)];
+  W.paths.push(wp([[2610,1478],[2622,1590],[2660,1690]],30));   /* a stone path from the Enchanter's door down to the south road */
   W.pathGrid=new Uint8Array(Math.ceil(W.w/W.PG)*Math.ceil(W.h/W.PG)); const gw=Math.ceil(W.w/W.PG);
   for(const path of W.paths) for(let i=0;i<path.length-1;i++){ const a=path[i], b=path[i+1], n=Math.ceil(Math.hypot(b.x-a.x,b.y-a.y)/8); for(let k=0;k<=n;k++){ const x=lerp(a.x,b.x,k/n), y=lerp(a.y,b.y,k/n); for(let yy=-1;yy<=1;yy++) for(let xx=-1;xx<=1;xx++){ const gx=Math.floor(x/W.PG)+xx, gy=Math.floor(y/W.PG)+yy; if(gx>=0&&gy>=0&&gx<gw&&gy*gw+gx<W.pathGrid.length) W.pathGrid[gy*gw+gx]=1; } } }
   W.patches=[]; for(let i=0;i<120;i++) W.patches.push({x:R()*W.w,y:R()*W.h,r:80+R()*180,l:R()<.5});
@@ -1879,7 +1880,7 @@ function buildWorld(seed){
   W.riverRocks=[]; for(let i=0;i<60;i++){ const x=L.x0+R()*(seaX(300)-L.x0), y=riverY(x)+(R()-.5)*riverHW(x)*1.4; if(!onBridge(x,y)) W.riverRocks.push({x,y,r:4+R()*7,s:R()}); }
   W.planks=[]; for(let i=0;i<26;i++){ const x=L.x0+80+R()*(W.w-400), y=swampY(x)+60+R()*260; if(!isWater(x,y)) W.planks.push({x,y,a:(R()-.5)*1.2,s:R()}); }
   W.pirateLairs=[[W.shipwreck.x-30,W.shipwreck.y+90],[seaX(470)-190,470],[seaX(1330)-170,1330]]; W.pier={x:seaX(1330)-60,y:1330};   /* the Pirate Lord's beach lairs: wreck hull, rock outcrop, pier */
-  const keep=[...W.spawners.map(s=>[s.x,s.y]),...W.chiChests,...W.chests,...W.golden,...W.hippoLairs,...W.crocLairs,...W.pirateLairs,[W.secret.x,W.secret.y],[W.playerSpawn.x,W.playerSpawn.y],[W.shrine.x,W.shrine.y],[W.shipwreck.x,W.shipwreck.y],[W.ancient.x,W.ancient.y]];
+  const keep=[...W.spawners.map(s=>[s.x,s.y]),...W.chiChests,...W.chests,...W.golden,...W.hippoLairs,...W.crocLairs,...W.pirateLairs,[W.secret.x,W.secret.y],[W.playerSpawn.x,W.playerSpawn.y],[W.shrine.x,W.shrine.y],[W.shipwreck.x,W.shipwreck.y],[W.ancient.x,W.ancient.y],[W.enchant.x,W.enchant.y]];
   const clear=(x,y,r)=>{ for(const o of keep) if(Math.hypot(x-o[0],y-o[1])<r) return false; for(const l of W.hippoLairs) if(Math.hypot(x-l[0],y-l[1])<260) return false; for(const l of W.crocLairs) if(Math.hypot(x-l[0],y-l[1])<230) return false; for(const l of W.pirateLairs) if(Math.hypot(x-l[0],y-l[1])<200) return false; return true; };
   const free=(x,y,r,keepPaths)=>{ if(isWater(x,y)||isWater(x+r,y)||isWater(x-r,y)||isWater(x,y+r)||isWater(x,y-r)||isShallow(x,y)) return false; if(inVillage(x,y,r+40)) return false; if(!clear(x,y,r+70)) return false; if(keepPaths&&onPath(x,y)) return false; if(Math.abs(y-riverY(x))<riverHW(x)+r+24) return false; for(const o of W.rocks) if(Math.hypot(x-o.x,y-o.y)<o.r+r+10) return false; for(const t of W.trees) if(Math.hypot(x-t.x,y-t.y)<t.cr*.7+r) return false; for(const g of W.logs) if(Math.hypot(x-g.x,y-g.y)<40+r) return false; return true; };
   // giant rock formation (landmark) + scattered rocks
@@ -1895,6 +1896,7 @@ function buildWorld(seed){
   W.logs=[]; tries=0; while(W.logs.length<30&&tries++<4000){ const x=L.x0+60+R()*(L.x1-L.x0-120), y=L.y0+60+R()*(L.y1-L.y0-120); const z=zoneOf(x,y); if(z==='village') continue; if(free(x,y,22,true)) W.logs.push({x,y,a:R()*Math.PI,s:R(),drift:z==='beach'}); }
   W.bushes=[]; for(let i=0;i<170;i++){ const x=L.x0+30+R()*(L.x1-L.x0-60), y=L.y0+30+R()*(L.y1-L.y0-60); if(isWater(x,y)||onPath(x,y)||Math.abs(y-riverY(x))<riverHW(x)+20) continue; const z=zoneOf(x,y); if(z==='beach'&&R()<.7) continue; W.bushes.push({x,y,r:12+R()*12,s:R(),dark:z==='swamp',village:z==='village'}); }
   W.campfires=[...W.village.campfires.map(([x,y])=>({x,y,big:true})),...W.spawners.filter(s=>s.k==='wreck').map(s=>({x:s.x+50,y:s.y+14,big:false}))];   // pirates camp by a fire next to their wreck
+  { /* the Enchanter's yard: no props around the shop */ const E=W.enchant, far=(o,r)=>Math.hypot(o.x-E.x,o.y-(E.y-20))>r; W.trees=W.trees.filter(t=>far(t,140)); W.rocks=W.rocks.filter(o=>far(o,100)); W.bushes=W.bushes.filter(o=>far(o,90)); W.logs=W.logs.filter(o=>far(o,100)); for(const k of ['pebbles','shells','flowers','deadPlants','planks','reeds']) if(W[k]) W[k]=W[k].filter(o=>far(o,70)); }
   // collision grid: rocks, trunks, logs, props, shrine pillars, wreck hull
   W.colliders=[]; const add=(x,y,r,extra)=>W.colliders.push(Object.assign({x,y,r},extra||null));
   for(const o of W.rocks) add(o.x,o.y,o.r,o.r>=26?{crash:true}:null);   /* big rocks stop a charging hippo and stun it, like the arena boulders */ for(const t of W.trees) add(t.x,t.y,t.r); for(const g of W.logs){ add(g.x+Math.cos(g.a)*16,g.y+Math.sin(g.a)*16*.6,9); add(g.x-Math.cos(g.a)*16,g.y-Math.sin(g.a)*16*.6,9); }
@@ -1902,6 +1904,7 @@ function buildWorld(seed){
   for(const f of v.fences){ const n=Math.ceil(Math.hypot(f[2]-f[0],f[3]-f[1])/24); for(let i=0;i<=n;i++) add(lerp(f[0],f[2],i/n),lerp(f[1],f[3],i/n),7); }
   const sh=W.shrine; [[-70,-30],[70,-30],[-70,50],[70,50]].forEach(([dx,dy])=>add(sh.x+dx,sh.y+dy,12)); add(sh.x-40,sh.y-90,7); add(sh.x+40,sh.y-90,7);
   const wk=W.shipwreck; [[-50,0],[0,0],[50,0]].forEach(([dx,dy])=>add(wk.x+dx,wk.y+dy+6,26));
+  { const E=W.enchant; for(const dx of [-39,-13,13,39]) add(E.x+dx,E.y-26,26); add(E.x-70,E.y-10,11); add(E.x+75,E.y-7,11); }   /* the Enchanter's walls, the barrel and the crate */
   for(const cf of W.campfires) add(cf.x,cf.y,cf.big?16:12);
   for(const sp of W.spawners) if(sp.k==='wreck'){ add(sp.x+4,sp.y,18); add(sp.x-28,sp.y+14,9); }   // boat hull + crate (crates also stop pellets)
   W.reeds=[]; for(let i=0;i<260;i++){ const x=L.x0+R()*(L.x1-L.x0); const side=R()<.5?-1:1; const y=riverY(x)+side*(riverHW(x)+10+R()*14); if(!isWater(x,y)&&!onBridge(x,y)&&!onPath(x,y)) W.reeds.push({x,y,s:R()}); }
@@ -2766,7 +2769,7 @@ function worldUpdate(dt){
   if(G.haz&&!WORLD.arena) m2HazUpdate(dt);
   if(WORLD.frost&&!WORLD.arena) shopUpdate(p,dt); if(WORLD.w3==='under') traderUpdate(p,dt);
   if(WORLD.w3){ const before=WORLD; w3Update(dt); if(WORLD!==before) return; w3TrailUpdate(dt); }
-  if(WORLD.w4) w4Update(dt);   /* World 4: the sealed temple's entry circle */ w4FxUpdate(dt);   /* World 3: area transitions, the bar gate, the axe trails */
+  if(WORLD.enchant&&!WORLD.arena) enchWorldUpdate(dt);   /* World 1: the Enchanter's entry circle */ if(WORLD.w4) w4Update(dt);   /* World 4: the sealed temple's entry circle */ w4FxUpdate(dt);   /* World 3: area transitions, the bar gate, the axe trails */
   if(WORLD.arena){ arenaUpdate(dt); G.enemies=G.enemies.filter(e=>e.alive||(e.deadT!==undefined&&e.deadT>0)); G.chasers=0; for(const e of G.enemies) enemyUpdate(e,dt,p); return; }
   if(G.announce){ G.announce.t-=dt; shake(2); const a=G.announce; if(a.type==='croc'&&Math.random()<.6) part(a.x+rnd(-60,60),a.y+rnd(-30,30),0,-40,'#7aa050',.9,5,0,true); if(a.type==='lord') lordAnnounceFx(a,dt); if(a.t<=0){ G.announce=null; if(G.haz) G.haz.lastBossSpawn=G.time; const e=makeEnemy(a.type,a.x,a.y); e.spawnT=0; e.lair={x:a.x,y:a.y}; collide(e); G.banner={text:BOSS_ANN[a.type].b,sub:BOSS_ANN[a.type].sub+' — SEE THE MAP',t:3.2}; SFX.roar(); shake(14); burst(e.x,e.y,BOSS_ANN[a.type].cols,60,340,1,8,300); } }
      /* under-levelled on the beach: a warning, not a wall */
@@ -8684,6 +8687,557 @@ function templeRankUnder(c,e,t){ const ti=e.skinTier=templeTierOf(e); if(!ti) re
   c.save(); c.fillStyle=D.gl; for(let ring=0;ring<3;ring++){ const rr=rx*(.34+ring*.10)*pulse, n=Math.round(rr*1.6); c.globalAlpha=D.aura*(.16-ring*.04); for(let i=0;i<n;i++){ const a=i/n*TAU; c.fillRect(Math.round(cx+Math.cos(a)*rr)-1,Math.round(cy+Math.sin(a)*rr*(ry/rx))-1,2,2); } } c.restore(); }
 function templeRankOver(c,e,t){ }
 /* =====================================================================
+   THE ENCHANTER — a gem refinery in World 1 (prompt-enchanter.md). Art imported as is from enchanter-shop.html: the dark master
+   on his balcony, the shop, the menu with the deposit banks, the cosmic fusion with the pill SKIP. Ten banks live in SAVE.enchant.
+   ===================================================================== */
+const ENCH_ART=(()=>{ let c=null, S=1, VW=170, VH=118;
+const R=(x,y,w,h,col,a)=>{ if(!col) return; c.globalAlpha=a===undefined?1:a; c.fillStyle=col;
+  c.fillRect(Math.round(x)*S,Math.round(y)*S,Math.max(1,Math.round(w))*S,Math.max(1,Math.round(h))*S); c.globalAlpha=1; };
+const P=(x,y,col,a)=>R(x,y,1,1,col,a);
+const rnd=s=>{s=Math.sin(s*127.1)*43758.5453;return s-Math.floor(s);};
+/* the gem palettes, from the game's own GEM_RAR */
+const RAR=GEM_RAR.map(r=>({key:r.key,name:r.name,glow:r.glow,o:r.pal.o,d:r.pal.d,m:r.pal.m,l:r.pal.l,h:r.pal.h}));
+const REC=[{from:0,to:1,n:10},{from:1,to:2,n:15},{from:2,to:3,n:30},{from:3,to:4,n:40},{from:4,to:5,n:100}];
+function gem(x,y,sc,r,t,glow,type){
+  type=type||'atk';
+  const SH=GEM_SHAPE[type];
+  const PAL={o:r.o,d:r.d,m:r.m,l:r.l,h:r.h,s:'#ffffff'};
+  if(glow){
+    const pulse=.5+.5*Math.sin(t*2.4);
+    for(let i=0;i<20;i++){ const a=i/20*6.28, rr=(13+pulse*2)*sc;
+      P(x+12*sc+Math.cos(a)*rr, y+12*sc+Math.sin(a)*rr*.92, r.glow, .16+pulse*.15); }
+  }
+  for(let j=0;j<24;j++) for(let i=0;i<24;i++){
+    const ch=SH[j][i]; if(ch==='.') continue;
+    R(x+i*sc, y+j*sc, sc, sc, PAL[ch]||r.m);
+  }
+}
+const BITS=[];
+function emit(x,y,n,pw,col){ for(let i=0;i<n;i++) BITS.push({x:x,y:y,vx:(Math.random()-.5)*pw,vy:-Math.random()*pw*.6-1,l:1,c:col}); }
+function bits(dt){ for(let i=BITS.length-1;i>=0;i--){ const b=BITS[i];
+  b.l-=dt*1.5; b.x+=b.vx*dt*20; b.y+=b.vy*dt*20; b.vy+=dt*14;
+  if(b.l<=0){BITS.splice(i,1);continue;} P(b.x,b.y,b.l>.5?'#fff':b.c,b.l); } }
+
+/* ================= המזקק — מאסטר אפל בכובע סגול ================= */
+function alchemist(x,y,t,working,sitting){
+  const bob = sitting ? 0 : (Math.sin(t*1.5)>0?0:1);
+  const Y=y+bob;
+  const M={
+    rb:'#241c34', rbD:'#150f22', rbL:'#362a4c',        // גלימה סגולה־שחורה
+    in:'#3e3050', inL:'#56446e',
+    sash:'#6a2a8a', sashD:'#421858', sashL:'#9a4ac0',
+    hat:'#5f2aa8', hatD:'#3a1466', hatL:'#8a44d8', hatH:'#c090ff',  // כובע מאסטר סגול
+    beard:'#e8e4d8', beardD:'#b8b2a2', beardL:'#ffffff',
+    skin:'#c8b0a0', skinD:'#a08a7a',
+    g0:'#ffeeb0', g1:'#e8cc72', g2:'#c8a442', g3:'#96782c',
+    eye:'#a860ff', eyeHot:'#d8b0ff', eyeGlow:'#8a44d8'
+  };
+  if(!sitting) R(x+1,y+34,16,3,'rgba(0,0,0,.3)');
+
+  /* ---- רגליים ---- */
+  if(sitting){
+    // יושב על קצה — ירך אופקית ואז שוק שמשתלשלת
+    [[1,0],[8,1]].forEach(function(d){
+      const lx=x+d[0], sw2=Math.round(Math.sin(t*1.3+d[1]*2)*1.2);
+      // ירך קדימה
+      R(lx+1,Y+22,7,4,M.in); R(lx+1,Y+22,7,1,M.inL);
+      // ברך
+      R(lx+7,Y+23,3,3,M.rbD);
+      // שוק משתלשלת ומתנדנדת
+      R(lx+7+sw2,Y+26,4,7,M.in); R(lx+7+sw2,Y+26,1,7,M.inL);
+      R(lx+7+sw2,Y+33,4,2,'#e8e4d8');
+      R(lx+6+sw2,Y+35,6,3,'#4a3420'); R(lx+6+sw2,Y+35,6,1,'#6b4a2e'); });
+  } else {
+    [[3],[9]].forEach(function(d){
+      const lx=x+d[0];
+      R(lx,Y+25,4,5,M.in); R(lx,Y+25,1,5,M.inL);
+      R(lx,Y+30,4,2,'#e8e4d8');
+      R(lx-1,Y+32,6,3,'#4a3420'); R(lx-1,Y+32,6,1,'#6b4a2e'); });
+  }
+
+  /* ---- גלימה ---- */
+  const RH = sitting? 11 : 14;
+  for(let j=0;j<RH;j++){
+    const w = 12 + Math.round(j*0.34);
+    const wob = sitting?0:Math.sin(j*0.5+t*1.4)*0.8*(j/RH);
+    R(x+9-w/2+wob, Y+12+j, w,1, j<2?M.rbL:(j>RH-3?M.rbD:M.rb));
+  }
+  if(sitting){
+    // שולי הגלימה נשפכים מעבר לקצה
+    for(let j=0;j<7;j++){ const w=13-Math.round(j*0.9);
+      R(x+3+Math.round(Math.sin(j*.5+t*1.1)*0.8), Y+23+j, w,1, j<2?M.rb:M.rbD); }
+    for(let i=0;i<4;i++) R(x+3+i*3, Y+30, 2, 1+((i*3)%2), M.rbD);
+  }
+  if(!sitting) for(let i=0;i<6;i++) R(x+3+i*2.2, Y+26, 2, 1+((i*3)%2), M.rbD);
+  // צווארון V עם בטנה
+  for(let j=0;j<8;j++){ const w=Math.max(1,5-j);
+    R(x+9-w/2, Y+13+j, w,1, M.in); P(x+9-w/2, Y+13+j, M.inL); }
+  // דשים
+  for(let j=0;j<9;j++){ R(x+3+Math.round(j*.18), Y+13+j, 3,1, M.rbL);
+                        R(x+12-Math.round(j*.18), Y+13+j, 3,1, M.rbD); }
+  // אבנט
+  R(x+2,Y+20,15,3,M.sash); R(x+2,Y+20,15,1,M.sashL); R(x+2,Y+22,15,1,M.sashD);
+  R(x+7,Y+19,4,5,M.sash); R(x+7,Y+19,4,1,M.sashL);
+  for(let j=0;j<4;j++) R(x+7+Math.round(Math.sin(t*2+j)*0.5), Y+24+j, 2,1, M.sashD);
+  R(x+8,Y+20,3,3,M.g2); P(x+9,Y+21,M.g0);
+
+  /* ---- כתפיים ---- */
+  const ln = sitting? -1 : 0;
+  R(x+1+ln,Y+11,16,4,M.rbL); R(x+1+ln,Y+11,16,1,'#42345a');
+  R(x+ln,Y+13,3,7,M.rb); R(x+16+ln,Y+13,3,7,M.rb);
+
+  /* ---- זרועות ---- */
+  const lift = working? Math.round(6+Math.sin(t*6)*2) : 0;
+  [[-2,-1],[16,1]].forEach(function(A){
+    const sx=x+A[0]+ln, sgn=A[1];
+    if(sitting&&sgn>0){
+      // יד ימין נחה על הברך
+      for(let j=0;j<7;j++) R(sx-1+j*0.5, Y+14+j, 4,1, j<2?M.rbL:M.rb);
+      R(sx+2, Y+21, 3,3, M.skin);
+      return;
+    }
+    for(let j=0;j<9;j++){ const w=5-Math.round(j*0.2);
+      R(sx+(5-w)/2, Y+14+j-lift*(j/9), w,1, j<2?M.rbL:M.rb); }
+    R(sx+1, Y+22-lift, 3,3, M.skin);
+    if(working){ for(let i=0;i<5;i++) P(sx+2+sgn*i, Y+21-lift-i*0.7, M.hatH, 1-i/5); } });
+  // בזמן עבודה — קרני אור סגולות יוצאות מהמשקפיים
+  if(working){
+    for(let s2=0;s2<2;s2++){
+      const ex=x+5+s2*5, ey=Y+6;
+      for(let d=0;d<7;d++) P(ex+1, ey+1+d*1.1, M.eye, (1-d/7)*.6); } }
+
+  /* ---- ראש ---- */
+  const hx=x+3+ln, hy=Y+2;
+  R(hx+1,hy+2,9,7,M.skin); R(hx+1,hy+2,9,1,'#d8c0b0'); R(hx+1,hy+8,9,1,M.skinD);
+  // גבות לבנות
+  R(hx+1,hy+3,4,1,M.beard); R(hx+6,hy+3,4,1,M.beard);
+  // ---- משקפיים עגולים עם עיניים סגולות זוהרות ----
+  for(let s2=0;s2<2;s2++){
+    const ex=hx+2+s2*5, ey=hy+4;
+    // הילה סגולה סביב העדשה
+    for(let i=0;i<10;i++){ const a=i/10*6.28;
+      P(ex+1+Math.cos(a)*3.6, ey+1+Math.sin(a)*3.4, M.eyeGlow, .22+Math.sin(t*2.6)*.10); }
+    // מסגרת זהב
+    for(let i=0;i<10;i++){ const a=i/10*6.28;
+      P(ex+1+Math.cos(a)*2.2, ey+1+Math.sin(a)*2.2, M.g2); }
+    // עדשה כהה ועין סגולה בוערת בפנים
+    R(ex,ey,3,3,'#1a0c2e');
+    R(ex,ey,2,2,M.eye);
+    P(ex,ey,M.eyeHot);
+    // הבהוב סגול
+    if(Math.sin(t*3+s2)>0.45) P(ex+1,ey+1,M.eyeHot);
+  }
+  R(hx+5,hy+5,2,1,M.g2);                      // גשר
+  P(hx+1,hy+5,M.g2); P(hx+10,hy+5,M.g2);      // זרועות המשקפיים
+  // ---- שפם וזקן ----
+  R(hx+2,hy+7,7,1,M.beard);
+  for(let j=0;j<9;j++){
+    const w=Math.max(3, 8-Math.floor(j/2.2));
+    const wob=sitting?0:Math.round(Math.sin(j*.45+t*1.6)*0.9*(j/9));
+    R(hx+5-w/2+wob, hy+8+j, w,1, j<2?M.beardL:(j<6?M.beard:M.beardD));
+  }
+  /* ---- כובע מאסטר סגול ---- */
+  for(let j=0;j<5;j++){
+    const w = 19 - j*2.8;
+    R(hx+5-w/2, hy-j, w, 1, j<2?M.hatD:(j<4?M.hat:M.hatL));
+  }
+  R(hx-5,hy,21,3,M.hat); R(hx-5,hy,21,1,M.hatL); R(hx-5,hy+2,21,1,M.hatD);
+  R(hx-6,hy+1,2,2,M.hatD); R(hx+15,hy+1,2,2,M.hatD);
+  for(let i=0;i<5;i++) P(hx-3+i*4, hy-1, M.hatD);
+  for(let i=0;i<4;i++) P(hx-1+i*4, hy-3, M.hatD);
+  R(hx+4,hy-6,3,2,M.hatL); P(hx+5,hy-6,M.hatH);
+  // סרט זהב על הכובע
+  R(hx-5,hy-1,21,1,M.g2,.8);
+}
+
+function shopExterior(cx,base,t){   /* the reference had cx=85, base=78: the anchor now comes from the world */
+  const W={gr:'#3f6a32',grL:'#4f7d3d',grD:'#2e5124',
+           wd:'#8a6a3a',wdL:'#b08a54',wdD:'#5a4426',
+           rf:'#c85a4a',rfL:'#e07a68',rfD:'#8a3a30',
+           st:'#8a8478',stL:'#a8a294',stD:'#5e594e'};
+  // ---- מבנה החנות: אותו סגנון כמו שאר החנויות ----
+  R(cx-30,base+2,60,3,'rgba(0,0,0,.3)');
+  // קירות עץ
+  for(let j=0;j<26;j++) R(cx-26,base-26+j,52,1, j%5===0?W.wdD:(j<3?W.wdL:W.wd));
+  for(let i=0;i<7;i++) R(cx-24+i*8,base-26,1,26,W.wdD,.6);
+  // בסיס אבן
+  R(cx-28,base-4,56,5,W.st); R(cx-28,base-4,56,1,W.stL); R(cx-28,base,56,1,W.stD);
+  // גג רעפים משופע
+  for(let j=0;j<11;j++){ const w=60-j*3;
+    R(cx-w/2, base-26-j, w,1, j<2?W.rfL:(j<7?W.rf:W.rfD)); }
+  for(let i=0;i<9;i++) R(cx-28+i*7, base-34, 4,7, W.rfD,.45);
+  R(cx-32,base-27,64,3,W.wdD); R(cx-32,base-27,64,1,W.wdL);
+  // ארובה
+  R(cx+16,base-42,7,10,W.st); R(cx+16,base-42,7,1,W.stL);
+  for(let i=0;i<4;i++){ const q=(t*.4+i*.25)%1; P(cx+19, base-43-q*14, '#d8d4c8', (1-q)*.5); }
+  // חלונות מוארים
+  [[-16],[9]].forEach(function(d){
+    const wx=cx+d[0];
+    R(wx,base-20,8,9,'#4a3a20'); R(wx+1,base-19,6,7,'#ffd86a',.9);
+    R(wx+4,base-19,1,7,'#4a3a20'); R(wx+1,base-16,6,1,'#4a3a20');
+    for(let i=0;i<7;i++){ const a2=i/7*6.28; P(wx+4+Math.cos(a2)*8, base-15+Math.sin(a2)*8, '#ffd86a', .12); } });
+  // דלת
+  R(cx-6,base-16,13,16,'#5a4426'); R(cx-6,base-16,13,1,W.wdL);
+  for(let j=0;j<16;j+=4) R(cx-6,base-16+j,13,1,'#3e2e18');
+  R(cx+4,base-9,2,2,'#e8c14a');
+  // שלט תלוי מעל הדלת
+  R(cx-1,base-24,2,3,'#3e2e18');
+  R(cx-22,base-24,44,10,'#3e2e18'); R(cx-21,base-23,42,8,'#6a5030');
+  R(cx-21,base-23,42,1,'#8a6a3a');
+  c.fillStyle='#ffeeb0'; c.font='bold '+(5*S)+'px monospace'; c.textAlign='center';
+  c.fillText('THE ENCHANTER',cx*S,(base-17)*S); c.textAlign='left';
+  // אבן זוהרת על השלט
+  for(let i=0;i<9;i++){ const a2=i/9*6.28+t*1.4; P(cx-26+Math.cos(a2)*3, base-19+Math.sin(a2)*3, '#a860ff', .5); }
+  R(cx-27,base-20,3,3,'#5f2aa8'); R(cx-27,base-20,2,2,'#a860ff');
+  // ---- עיגול הכניסה — כמו כל החנויות ----
+  const pulse=.5+.5*Math.sin(t*2.4);
+  for(let ring=0;ring<3;ring++){ const rr=13-ring*4, n=Math.round(rr*3.2);
+    for(let i=0;i<n;i++){ const a2=i/n*6.28+(ring%2?-t*.6:t*.6);
+      P(cx+Math.cos(a2)*rr, base+14+Math.sin(a2)*rr*.42,
+        ring===0?'#d8b0ff':(ring===1?'#a860ff':'#5f2aa8'), .35+pulse*.45); } }
+  for(let i=0;i<7;i++){ const q=(t*.5+i*.14)%1;
+    P(cx-8+((i*3)%17), base+12-q*16, '#a860ff', (1-q)*.6); }
+  // כיתוב מתחת לעיגול
+  c.fillStyle='#d8b0ff'; c.font='bold '+(4*S)+'px monospace'; c.textAlign='center';
+  c.fillText('STAND HERE',cx*S,(base+24)*S); c.textAlign='left';
+  // ---- מרפסת קטנה שיוצאת מהגג ----
+  const bx0=cx-34, by0=base-33;
+  // קורות תמיכה אלכסוניות אל הקיר
+  for(let d=0;d<9;d++) R(bx0+16+d, by0+4+d, 2,2, W.wdD);
+  for(let d=0;d<7;d++) R(bx0+4+d, by0+6+d*0.9, 2,2, W.wdD);
+  // רצפת המרפסת
+  R(bx0,by0,26,3,W.wd); R(bx0,by0,26,1,W.wdL); R(bx0,by0+2,26,1,W.wdD);
+  for(let i=0;i<6;i++) P(bx0+2+i*4, by0+1, W.wdD);
+  // מעקה נמוך בקצה
+  R(bx0-1,by0-5,2,6,W.wdD); R(bx0+24,by0-5,2,6,W.wdD);
+  R(bx0-1,by0-5,27,2,W.wd); R(bx0-1,by0-5,27,1,W.wdL);
+  // כרית סגולה על הרצפה
+  R(bx0+5,by0-3,15,3,'#5f2aa8'); R(bx0+5,by0-3,15,1,'#8a44d8'); R(bx0+5,by0-1,15,1,'#3a1466');
+  for(let i=0;i<3;i++) P(bx0+8+i*5, by0-2, '#c090ff');
+  // פנס תלוי בקצה המרפסת
+  R(bx0+24,by0-9,1,5,'#3e2e18');
+  R(bx0+22,by0-13,5,5,'#4a3a20'); R(bx0+23,by0-12,3,3,'#c090ff');
+  for(let i=0;i<7;i++){ const a2=i/7*6.28; P(bx0+24.5+Math.cos(a2)*6, by0-10.5+Math.sin(a2)*6, '#a860ff', .16); }
+  // ספר פתוח לידו
+  R(bx0+1,by0-4,7,4,'#d8d0b8'); R(bx0+1,by0-4,7,1,'#f0e8d0');
+  R(bx0+4,by0-4,1,4,'#8a8270');
+  for(let i=0;i<2;i++){ R(bx0+2,by0-3+i,2,1,'#8a8270',.6); R(bx0+5,by0-3+i,2,1,'#8a8270',.6); }
+  // המזקק יושב על הכרית, רגליים משתלשלות מעבר למעקה
+  alchemist(bx0+7, by0-31, t, false, true);
+
+  // חביות ותיבות ליד הכניסה
+  R(cx-40,base-10,10,11,W.wd); R(cx-40,base-10,10,1,W.wdL);
+  for(let j=0;j<11;j+=4) R(cx-40,base-10+j,10,1,'#4a3a20');
+  R(cx+32,base-8,11,9,W.wdD); R(cx+32,base-8,11,1,W.wd);
+  // פנסים משני צדי הדלת
+  [[-14],[11]].forEach(function(d){
+    const lx=cx+d[0];
+    R(lx,base-30,2,8,'#3e2e18');
+    R(lx-2,base-34,6,5,'#4a3a20'); R(lx-1,base-33,4,3,'#ffd86a');
+    for(let i=0;i<7;i++){ const a2=i/7*6.28; P(lx+1+Math.cos(a2)*6, base-31+Math.sin(a2)*6, '#ffd86a', .15); } });
+}
+
+/* ================= 2. התפריט — עם בנק הפקדה ================= */
+/* מצב לדוגמה: כמה הופקד בכל מתכון, לכל סוג */
+/* DEPOT / OWNED / WORN come from the game (enchData) */
+let DEPOT={atk:[0,0,0,0,0],hp:[0,0,0,0,0]}, OWNED={atk:[0,0,0,0,0,0],hp:[0,0,0,0,0,0]}, WORN={atk:[0,0,0,0,0,0],hp:[0,0,0,0,0,0]};
+
+function menuScene(t,sel,gtype){
+  gtype=gtype||'atk';
+  const px=6, py=5, pw=VW-12, ph=VH-10;
+  R(px,py,pw,ph,'#1c1a28'); R(px,py,pw,2,'#4e4664'); R(px,py+ph-3,pw,3,'#0c0a14');
+  R(px,py,2,ph,'#3e3650'); R(px+pw-2,py,2,ph,'#0c0a14');
+
+  /* ---- כותרת ---- */
+  R(px,py,pw,13,'#2a2438'); R(px,py+12,pw,1,'#e8c14a');
+  c.fillStyle='#ffeeb0'; c.font='bold '+(6*S)+'px monospace'; c.textAlign='center';
+  c.fillText('THE ENCHANTER',(px+pw/2)*S,(py+9)*S);
+  R(px+pw-12,py+3,8,7,'#3e3650');
+  c.fillStyle='#c0b8a0'; c.font='bold '+(4.5*S)+'px monospace';
+  c.fillText('X',(px+pw-8)*S,(py+9)*S); c.textAlign='left';
+
+  /* ---- שני טאבים: התקפה / הגנה ---- */
+  const tw=(pw-10)/2;
+  [['atk','ATTACK'],['hp','DEFENSE']].forEach(function(T,i){
+    const tx=px+5+i*tw, on=(T[0]===gtype);
+    R(tx,py+15,tw-3,12, on?'#3a2e52':'#221f30');
+    R(tx,py+15,tw-3,1, on?'#a860ff':'#33304a');
+    if(on) R(tx,py+26,tw-3,1,'#a860ff');
+    gem(tx+3, py+16.5, 0.38, RAR[3], t, false, T[0]);
+    c.fillStyle= on?'#ffffff':'#6a6480'; c.font='bold '+(5*S)+'px monospace'; c.textAlign='left';
+    c.fillText(T[1],(tx+14)*S,(py+23)*S);
+  });
+
+  /* ---- חמש שורות מתכון ---- */
+  const dep=DEPOT[gtype], own=OWNED[gtype], worn=WORN[gtype];
+  REC.forEach(function(r,i){
+    const ry=py+30+i*15, on=(i===sel);
+    const A=RAR[r.from], B=RAR[r.to];
+    const have=own[r.from]-worn[r.from];    // free in the inventory (deposited gems already left it)
+    const inBank=dep[i], need=r.n, full=inBank>=need;
+
+    R(px+4,ry,pw-8,13, on?'#2e2844':'#232030');
+    R(px+4,ry,pw-8,1, full?'#8dfab5':(on?'#8a44d8':'#33304a'));
+    if(on){ R(px+4,ry,1,13,'#a860ff'); R(px+pw-5,ry,1,13,'#a860ff'); }
+
+    // אבן מקור → יעד
+    gem(px+7, ry+1.5, 0.42, A, t, false, gtype);
+    c.fillStyle= full?'#8dfab5':'#c0b8a0'; c.font='bold '+(4.5*S)+'px monospace'; c.textAlign='left';
+    c.fillText(inBank+'/'+need,(px+19)*S,(ry+9)*S);
+    c.fillStyle='#5a5468'; c.font='bold '+(5*S)+'px monospace';
+    c.fillText('>',(px+37)*S,(ry+9)*S);
+    gem(px+43, ry+1.5, 0.42, B, t, full, gtype);
+
+    // פס התקדמות
+    const bx=px+56, bw=pw-106;
+    R(bx,ry+4,bw,5,'#141220'); R(bx,ry+4,bw,1,'#0c0a14');
+    const fw=Math.round(bw*Math.min(1,inBank/need));
+    if(fw>0){ R(bx,ry+4,fw,5, full?'#3aa84e':A.d); R(bx,ry+4,fw,1, full?'#8dfab5':A.l);
+      if(full) for(let q=0;q<3;q++) P(bx+2+q*4+((t*14)%bw), ry+6, '#ffffff', .6); }
+    // סימני חלוקה
+    for(let q=1;q<4;q++) P(bx+Math.round(bw*q/4), ry+6, '#2a2838');
+
+    // ---- שני כפתורים: +1 ו-MAX ----
+    const kx=px+pw-46;
+    if(full){
+      R(kx,ry+2,42,9,'#1f7a34'); R(kx,ry+2,42,1,'#3aa84e');
+      if(Math.sin(t*4)>0) R(kx,ry+2,42,1,'#8dfab5');
+      c.fillStyle='#ffffff'; c.font='bold '+(4.5*S)+'px monospace'; c.textAlign='center';
+      c.fillText('REFINE',(kx+21)*S,(ry+9)*S);
+    } else if(have>0){
+      const room=need-inBank, addMax=Math.min(have,room);
+      // +1
+      R(kx,ry+2,15,9,'#5f2aa8'); R(kx,ry+2,15,1,'#a860ff');
+      c.fillStyle='#ffffff'; c.font='bold '+(5*S)+'px monospace'; c.textAlign='center';
+      c.fillText('+1',(kx+7.5)*S,(ry+9)*S);
+      // MAX
+      R(kx+17,ry+2,25,9,'#3e2068'); R(kx+17,ry+2,25,1,'#8a44d8');
+      c.fillStyle='#d8b0ff'; c.font='bold '+(4*S)+'px monospace';
+      c.fillText('MAX '+addMax,(kx+29.5)*S,(ry+9)*S);
+    } else {
+      R(kx,ry+2,42,9,'#252230'); R(kx,ry+2,42,1,'#33304a');
+      c.fillStyle='#5a5468'; c.font='bold '+(4*S)+'px monospace'; c.textAlign='center';
+      c.fillText('NONE LEFT',(kx+21)*S,(ry+9)*S);
+    }
+    c.textAlign='left';
+  });
+
+  /* ---- שורת מלאי ---- */
+  const iy=py+ph-19;
+  R(px+4,iy,pw-8,16,'#232030'); R(px+4,iy,pw-8,1,'#33304a');
+  c.fillStyle='#8a8496'; c.font=(3.8*S)+'px monospace'; c.textAlign='left';
+  c.fillText(gtype==='atk'?'ATTACK GEMS':'DEFENSE GEMS',(px+8)*S,(iy+7)*S);
+  c.fillStyle='#5a5468'; c.font=(3.2*S)+'px monospace';
+  c.fillText('free · worn',(px+8)*S,(iy+13)*S);
+  for(let i=0;i<6;i++){
+    const gx=px+48+i*16;
+    const bank = i<5 ? dep[i] : 0;
+    const free = own[i]-worn[i];
+    gem(gx, iy+1, 0.42, RAR[i], t, false, gtype);
+    c.fillStyle=RAR[i].glow; c.font='bold '+(4*S)+'px monospace'; c.textAlign='center';
+    c.fillText(free,(gx+5)*S,(iy+14)*S);
+    if(worn[i]>0){ R(gx+9,iy+1,4,4,'#3a3648'); R(gx+10,iy+2,2,2,'#8a8496'); }
+    c.textAlign='left';
+  }
+}
+
+/* ================= מסך ההתכה — רקע קוסמי ================= */
+function cosmicBg(t,from,to,phase){
+  // ערפילית עמוקה
+  for(let j=0;j<VH;j+=2) for(let i=0;i<VW;i+=2){
+    const d=Math.hypot(i-VW/2,(j-56)*1.25);
+    const n=Math.sin(i*0.07+t*0.3)*Math.cos(j*0.09-t*0.22);
+    let col='#0a0814';
+    if(n>0.55) col='#151028';
+    if(n>0.75) col='#1e1438';
+    if(d<52&&n>0.35) col='#221a42';
+    R(i,j,2,2,col);
+  }
+  // שתי זרועות ערפילית בצבעי האבנים
+  for(let arm=0;arm<2;arm++){
+    const col = arm? to.glow : from.glow;
+    for(let k=0;k<70;k++){
+      const f=k/70;
+      const a=arm*3.14 + f*3.4 + t*0.12;
+      const r=8+f*(VW*0.46);
+      const x=VW/2+Math.cos(a)*r, y=56+Math.sin(a)*r*0.52;
+      const w=Math.max(1,Math.round((1-f)*4));
+      R(x-w/2,y-w/2,w,w, col, (0.10+ (1-f)*0.12)*(1+phase*0.5));
+    }
+  }
+  // כוכבים
+  for(let i=0;i<70;i++){
+    const sx=(i*37+11)%VW, sy=(i*53+7)%VH;
+    const tw=Math.sin(t*1.6+i*0.7);
+    P(sx,sy, tw>0.7?'#ffffff':(tw>0.2?'#c8c0e8':'#6a6490'), 0.25+Math.max(0,tw)*0.55);
+    if(i%11===0&&tw>0.8){ P(sx-1,sy,'#ffffff',.4); P(sx+1,sy,'#ffffff',.4);
+                          P(sx,sy-1,'#ffffff',.4); P(sx,sy+1,'#ffffff',.4); }
+  }
+  // אבק שנע
+  for(let i=0;i<26;i++){
+    const q=(t*0.16+i*0.038)%1;
+    P((i*29+q*40)%VW, (i*47)%VH, i%2?from.glow:to.glow, (1-q)*0.3);
+  }
+  // ויניית
+  for(let j=0;j<VH;j+=2) for(let i=0;i<VW;i+=2){
+    const d=Math.max(0,1-Math.hypot(i-VW/2,(j-56)*1.2)/(VW*0.62));
+    if(d<0.24&&(i+j)%4===0) P(i,j,'#000',.55);
+  }
+}
+
+function fuseScene(t,sel){
+  const from=RAR[sel.from], to=RAR[sel.to], N=sel.n, TY=sel.type||'atk';
+  const CYC=6.0, tt=Math.min(CYC-0.001,t);
+  const cx=VW/2, cy=50;
+  const show=Math.min(10,N);
+  const skip = sel.skip||false;            // מצב דילוג
+  const phase = tt<2.0?0 : (tt<3.6?(tt-2.0)/1.6 : 1);
+
+  cosmicBg(t, from, to, skip?1:phase);
+
+  if(skip){
+    /* ---- מצב דילוג: רק היהלום ---- */
+    const q=Math.min(1,(t%2.2)/0.5);
+    const sc=0.85*(1+Math.max(0,1-q*4)*0.5);
+    gem(cx-12*sc, cy-12*sc, sc, to, t, true, TY);
+    for(let i=0;i<14;i++){ const qq=(t*1.2+i*.07)%1;
+      P(cx-12+((i*4)%24), cy-14-qq*26, to.glow, (1-qq)*.8); }
+    c.fillStyle=to.glow; c.font='bold '+(8*S)+'px monospace'; c.textAlign='center';
+    c.fillText(to.name,(cx)*S,(cy+28)*S);
+    c.fillStyle='#ffffff'; c.font='bold '+(5*S)+'px monospace';
+    c.fillText('×1',(cx)*S,(cy+37)*S); c.textAlign='left';
+    return;
+  }
+
+  // מעגל הכשף
+  for(let ring=0;ring<2;ring++){ const rr=44-ring*7, n=Math.round(rr*2.2);
+    for(let i=0;i<n;i++){ const a=i/n*6.28+(ring%2?-t*.4:t*.4);
+      P(cx+Math.cos(a)*rr, cy+26+Math.sin(a)*rr*.30, ring?from.glow:'#a860ff', .3+phase*.25); } }
+
+  if(tt<2.0){
+    const q=tt/2.0;
+    alchemist(cx-9, cy-10, t, false);
+    for(let i=0;i<show;i++){
+      const a=i/show*6.28 - t*0.9, rr=40-q*6;
+      gem(cx+Math.cos(a)*rr-3.6, cy+10+Math.sin(a)*rr*.5-3.6, 0.30, from, t, false, TY); }
+    if(N>show){ c.fillStyle=from.glow; c.font='bold '+(5*S)+'px monospace'; c.textAlign='center';
+      c.fillText('×'+N,(cx)*S,(cy+44)*S); c.textAlign='left'; }
+  } else if(tt<3.6){
+    const q=(tt-2.0)/1.6;
+    alchemist(cx-9, cy-10, t, true);
+    for(let i=0;i<show;i++){
+      const a=i/show*6.28 - t*1.6;
+      const rr=34*(1-q)+4, sc=0.30*(1-q*0.55);
+      gem(cx+Math.cos(a)*rr-12*sc, cy+10+Math.sin(a)*rr*.5-12*sc, sc, from, t, false, TY);
+      for(let d=1;d<4;d++)
+        P(cx+Math.cos(a)*(rr+d*4), cy+10+Math.sin(a)*(rr+d*4)*.5, from.glow, (1-d/4)*.5*q); }
+    for(let i=0;i<Math.round(q*22);i++){ const a=i/22*6.28+t*4, rr=3+q*7;
+      P(cx+Math.cos(a)*rr, cy+10+Math.sin(a)*rr*.8, i%2?'#ffffff':from.glow, q); }
+    for(let sgn=-1;sgn<=1;sgn+=2)
+      for(let d=0;d<9;d++) P(cx+sgn*(11-d), cy+4+d*0.7, '#ffffff', q*(1-d/9)*.8);
+  } else if(tt<4.2){
+    const q=(tt-3.6)/0.6;
+    alchemist(cx-9, cy-10, t, true);
+    const rr=4+q*52;
+    for(let i=0;i<Math.round(rr*2.4);i++){ const a=i/Math.round(rr*2.4)*6.28;
+      P(cx+Math.cos(a)*rr, cy+10+Math.sin(a)*rr*.7, '#ffffff', 1-q); }
+    for(let i=0;i<Math.round(26*(1-q));i++){ const a=Math.random()*6.28, r2=Math.random()*(6+q*40);
+      P(cx+Math.cos(a)*r2, cy+10+Math.sin(a)*r2*.7, i%2?'#ffffff':to.glow, 1-q); }
+    if(q<.2) emit(cx,cy+10,20,14,to.glow);
+  } else {
+    const q=(tt-4.2)/1.8;
+    alchemist(cx-9, cy-10, t, false);
+    const rise=Math.min(1,q*2.4);
+    const sc=0.62*(1+Math.max(0,1-q*5)*0.6);
+    const gy=cy+10-rise*20;
+    gem(cx-12*sc, gy-12*sc, sc, to, t, true, TY);
+    for(let i=0;i<10;i++){ const qq=(t*1.1+i*.1)%1;
+      P(cx-8+((i*4)%18), gy-10-qq*20, to.glow, (1-qq)*.8); }
+    if(q>.3){ c.fillStyle=to.glow; c.font='bold '+(6*S)+'px monospace'; c.textAlign='center';
+      c.fillText(to.name,(cx)*S,(gy-20)*S); c.textAlign='left'; }
+  }
+
+  /* ---- כפתור SKIP — גלולה קטנה, גוף ומסגרת באותה צורה ---- */
+  {
+    const bw=28, bh=12, bx=VW-bw-14, by=10;
+    const hov=0.75+Math.sin(t*2.6)*0.25;
+    // רוחב הקיצוץ לכל שורה — נגזר ממעגל, אותו חישוב לכל שכבה
+    function cut(j,h){
+      const r=h/2, dy=(j+0.5)-r;
+      return Math.round(r - Math.sqrt(Math.max(0,r*r - dy*dy)));
+    }
+    // צל
+    for(let j=0;j<bh;j++) R(bx+cut(j,bh)+1, by+j+2, bw-cut(j,bh)*2, 1, '#000', .35);
+    // מסגרת — שכבה חיצונית בגובה +2, אותה עקומה
+    for(let j=0;j<bh+2;j++) R(bx-1+cut(j,bh+2), by-1+j, bw+2-cut(j,bh+2)*2, 1, '#8a44d8', .9);
+    // גוף — אותה עקומה בדיוק, פיקסל אחד פנימה
+    for(let j=0;j<bh;j++){
+      const e=cut(j,bh), f=j/bh;
+      R(bx+e, by+j, bw-e*2, 1, f<0.40?'#342a56':'#221a3e');
+    }
+    // ברק עליון פנימי
+    for(let j=0;j<3;j++) R(bx+cut(j,bh)+1, by+j, bw-(cut(j,bh)+1)*2, 1, '#4a3c72', .5-j*.14);
+    // טקסט
+    c.fillStyle='#efe8ff'; c.font='bold '+(4.5*S)+'px monospace'; c.textAlign='center';
+    c.fillText('SKIP',(bx+10)*S,(by+8.5)*S); c.textAlign='left';
+    // חצים
+    for(let k=0;k<2;k++)
+      for(let d=0;d<4;d++){
+        const w=Math.max(1, 4-Math.abs(d-1.5)*1.6);
+        R(bx+19+k*4, by+4+d-w/2, 1, w, '#c898ff', hov);
+      }
+  }
+  bits(1/60);
+}
+
+return {RAR,REC,alchemist,shopExterior,menuScene,cosmicBg,fuseScene,gem,
+  bind(ctx,scale,vw,vh){ c=ctx; S=scale; if(vw) VW=vw; if(vh) VH=vh; },
+  setData(dep,own,worn){ DEPOT=dep; OWNED=own; WORN=worn; },
+  get VW(){ return VW; }, get VH(){ return VH; }};
+})();
+
+/* ---------- the shop in World 1: the deposit banks, the menu, the fusion ---------- */
+const ENCH_CX=85, ENCH_BASE=78;   /* the reference's anchor: the door's ground line; the world anchor W.enchant sits there */
+function enchInit(){ if(!SAVE.enchant||!SAVE.enchant.atk||!SAVE.enchant.hp) SAVE.enchant={atk:[0,0,0,0,0],hp:[0,0,0,0,0]}; }
+/* the free gems of a type and rarity: owned, not worn by any ninja */
+function enchFree(type,ri){ gemInit(); const key=GEM_RAR[ri].key; return SAVE.gems.owned.filter(g=>g.type===type&&g.rar===key&&!gemWearer(g.id)); }
+function enchData(type){ enchInit(); gemInit(); const own=[0,0,0,0,0,0], worn=[0,0,0,0,0,0]; for(const g of SAVE.gems.owned){ if(g.type!==type) continue; const i=GEM_RI[g.rar]; own[i]++; if(gemWearer(g.id)) worn[i]++; } return {dep:SAVE.enchant[type].slice(),own,worn}; }
+/* a deposit commits gems: they leave the inventory and sit in that recipe's bank; worn gems are never taken; attack and defence never mix */
+function enchDeposit(type,i,n){ enchInit(); const R=ENCH_ART.REC[i], room=R.n-SAVE.enchant[type][i], free=enchFree(type,R.from); n=Math.min(n,room,free.length); if(n<=0) return 0; const ids=new Set(free.slice(0,n).map(g=>g.id)); SAVE.gems.owned=SAVE.gems.owned.filter(g=>!ids.has(g.id)); SAVE.enchant[type][i]+=n; save(); return n; }
+function enchRefine(type,i){ enchInit(); const R=ENCH_ART.REC[i]; if(SAVE.enchant[type][i]<R.n) return null; SAVE.enchant[type][i]-=R.n; const g=gemAdd(type,GEM_RAR[R.to].key); save(); return g; }
+/* console: the ten banks and the free / worn counts */
+function enchStatus(){ const out={}; for(const t of ['atk','hp']){ const D=enchData(t); out[t]=ENCH_ART.REC.map((r,i)=>GEM_RAR[r.from].key+'>'+GEM_RAR[r.to].key+' '+D.dep[i]+'/'+r.n+' free '+(D.own[r.from]-D.worn[r.from])+' worn '+D.worn[r.from]); } console.log(JSON.stringify(out)); return out; }
+
+const ENCHUI={tab:'atk',sel:-1,t0:0,fuse:null,near:false};
+function enchWorldUpdate(dt){ const W=WORLD, en=W.enchant; if(!en||W.arena||NET.guest||G.state!=='PLAYING'||G.mapT<1) return; const p=G.player; if(!p||!p.alive) return;
+  const d=Math.hypot(p.x-en.x,(p.y-(en.y+14*PIX))/.42); if(d<=13*PIX+4){ if(!ENCHUI.near){ ENCHUI.near=true; enchOpen(); } } else if(d>70) ENCHUI.near=false; }
+function enchOpen(){ ENCHUI.sel=-1; ENCHUI.t0=performance.now(); setState('ENCHANT'); }
+function enchClose(){ setState('PLAYING'); }
+const ENCH_MENU_H=134;   /* the reference panel was 118 tall and its fifth row sat under the inventory strip; a little more height shows all five */
+function enchMenuGeom(){ const S=Math.min(SW/170,SH/ENCH_MENU_H), ox=Math.round((SW-170*S)/2), oy=Math.round((SH-ENCH_MENU_H*S)/2); return {S,ox,oy}; }
+function enchDrawMenu(c){ const {S,ox,oy}=enchMenuGeom(); c.save(); c.setTransform(DPR,0,0,DPR,0,0); c.fillStyle='rgba(0,0,0,.66)'; c.fillRect(0,0,SW,SH); c.translate(ox,oy);
+  const A=enchData('atk'), H=enchData('hp'); ENCH_ART.setData({atk:A.dep,hp:H.dep},{atk:A.own,hp:H.own},{atk:A.worn,hp:H.worn}); ENCH_ART.bind(c,S,170,ENCH_MENU_H); ENCH_ART.menuScene((performance.now()-ENCHUI.t0)/1000,ENCHUI.sel,ENCHUI.tab); c.restore(); }
+/* a tap on the menu, in art px */
+function enchMenuTap(ax,ay){ const px=6, py=5, pw=158, tw=(pw-10)/2;
+  if(ax>=px+pw-16&&ax<=px+pw&&ay>=py&&ay<=py+14){ enchClose(); return; }
+  if(ay>=py+14&&ay<=py+28){ const i=ax<px+5+tw?0:1; ENCHUI.tab=i?'hp':'atk'; ENCHUI.sel=-1; SFX.ui&&SFX.ui(); return; }
+  for(let i=0;i<5;i++){ const ry=py+30+i*15; if(ay<ry||ay>ry+13) continue; ENCHUI.sel=i; const type=ENCHUI.tab, D=enchData(type), R=ENCH_ART.REC[i], inBank=D.dep[i], have=D.own[R.from]-D.worn[R.from], full=inBank>=R.n, kx=px+pw-46;
+    if(ax<kx-2) return;
+    if(full){ if(ax<=kx+42){ const g=enchRefine(type,i); if(g){ enchStartFuse(type,i); } } return; }
+    if(have<=0) return;
+    if(ax<=kx+15){ if(enchDeposit(type,i,1)) SFX.pop&&SFX.pop(); }
+    else if(ax>=kx+17&&ax<=kx+42){ const n=enchDeposit(type,i,Math.min(have,R.n-inBank)); if(n) SFX.pop&&SFX.pop(); }
+    return; } }
+function enchStartFuse(type,i){ const R=ENCH_ART.REC[i]; ENCHUI.fuse={from:R.from,to:R.to,n:R.n,type,skip:false,t0:performance.now()}; SFX.chestOpen&&SFX.chestOpen(); setState('FUSE'); }
+function enchFuseGeom(){ const S=SH/118, VW=Math.ceil(SW/S); return {S,VW}; }
+function enchDrawFuse(c){ const F=ENCHUI.fuse; if(!F){ setState('ENCHANT'); return; } const {S,VW}=enchFuseGeom(); c.save(); c.setTransform(DPR,0,0,DPR,0,0); c.fillStyle='#0a0814'; c.fillRect(0,0,SW,SH); ENCH_ART.bind(c,S,VW,118); const t=(performance.now()-F.t0)/1000; ENCH_ART.fuseScene(t,F); c.restore();
+  if((!F.skip&&t>6.5)||(F.skip&&t>2.0)){ ENCHUI.fuse=null; ENCHUI.t0=performance.now(); SFX.key&&SFX.key(); setState('ENCHANT'); } }
+function enchFuseTap(ax,ay){ const F=ENCHUI.fuse; if(!F||F.skip) return; const {VW}=enchFuseGeom(); const bx=VW-28-14, by=10; if(ax>=bx-8&&ax<=bx+36&&ay>=by-8&&ay<=by+20){ F.skip=true; F.t0=performance.now(); SFX.ui&&SFX.ui(); } }
+addEventListener('pointerdown',e=>{ if(G.state==='ENCHANT'){ const {S,ox,oy}=enchMenuGeom(); enchMenuTap((e.clientX-ox)/S,(e.clientY-oy)/S); } else if(G.state==='FUSE'){ const {S}=enchFuseGeom(); enchFuseTap(e.clientX/S,e.clientY/S); } },{capture:true,passive:true});
+/* the shop in the world (a y-sorted pseudo-sprite) and its map icons */
+function drawEnchanter(c,en,t){ c.save(); c.translate(en.x-ENCH_CX*PIX,en.y-ENCH_BASE*PIX); ENCH_ART.bind(c,PIX,170,118); ENCH_ART.shopExterior(ENCH_CX,ENCH_BASE,t); c.restore(); }
+function drawEnchMapIcon(c,x,y,s){ c.save(); c.fillStyle='#a860ff'; c.strokeStyle='#2a0f4a'; c.lineWidth=1; c.beginPath(); c.moveTo(x,y-s); c.lineTo(x+s,y); c.lineTo(x,y+s); c.lineTo(x-s,y); c.closePath(); c.fill(); c.stroke(); c.fillStyle='#ffffff'; c.fillRect(x-1,y-s*.5,1.5,1.5); c.restore(); }
+/* =====================================================================
    ICE SHOP (from iceshop.html): the wooden hut on a stone base, the old keeper behind the open counter, the sign,
    lanterns, barrels; the Frost Coat item icon; the coat worn on a ninja. Drawn with rect/px in PIX space (1 unit = 2 px).
    ===================================================================== */
@@ -9149,7 +9703,7 @@ function drawAim(c,p){
 }
 function render(){
   const c=ctx; c.setTransform(DPR,0,0,DPR,0,0); c.fillStyle=(WORLD.arena&&(WORLD.arena.temple||WORLD.arena.gold))?'#12100c':WORLD.w4?'#dff2fa':(WORLD.w3||(WORLD.arena&&(WORLD.arena.witch||WORLD.arena.cave)))?'#080c09':'#1c6bb5'; c.fillRect(0,0,SW,SH);   /* beyond the walls: sea in worlds 1–2, the dark in the underworld */
-  const inGame=G.player&&(G.state==='PLAYING'||G.state==='PAUSED'||G.state==='DEAD');
+  const inGame=G.player&&(G.state==='PLAYING'||G.state==='PAUSED'||G.state==='DEAD'||G.state==='ENCHANT'||G.state==='FUSE');
   if(!inGame){ drawMenuBg(c); return; }
   const ZOOM=ZOOM_BASE*(G.zoomPulse||1)*(G.camZoom||1); const p=G.player, vw=SW/ZOOM, vh=SH/ZOOM, ox=CAM.x-vw/2+CAM.sx, oy=CAM.y-vh/2+CAM.sy;
   c.save(); c.scale(ZOOM,ZOOM); c.translate(-ox,-oy); drawTerrain(c,ox,oy,vw,vh); drawWorldFx(c,ox,oy,vw,vh,G.time);
@@ -9170,10 +9724,10 @@ function render(){
   drawGroundFx(c); drawChis(c); drawGems(c);
   for(const cn of G.coins){ c.fillStyle='rgba(0,0,0,.25)'; c.beginPath(); c.ellipse(cn.x,cn.y+8,7,3,0,0,TAU); c.fill(); c.save(); c.translate(cn.x,cn.y); c.scale(Math.max(.15,Math.abs(Math.cos(G.time*7+cn.x))),1); c.shadowColor='#fde047'; c.shadowBlur=8; c.drawImage(COIN_IMG,-9,-9,18,18); c.restore(); }
   // sprites sorted by y
-  const list=G.enemies.filter(e=>vis(e.x,e.y,120)); list.push(p); if(G.p2) list.push(G.p2); if(WORLD.cave&&vis(WORLD.cave.x,WORLD.cave.y,320)) list.push({caveEnt:WORLD.cave,x:WORLD.cave.x,y:WORLD.cave.y-14}); if(WORLD.temple&&vis(WORLD.temple.x,WORLD.temple.y,700)) list.push({temple:WORLD.temple,x:WORLD.temple.x,y:WORLD.temple.y-8}); for(const n of WORLD.village.npcs) if(vis(n.x,n.y,80)) list.push({npc:n,x:n.x,y:n.y}); list.sort((a,b)=>a.y-b.y);
+  const list=G.enemies.filter(e=>vis(e.x,e.y,120)); list.push(p); if(G.p2) list.push(G.p2); if(WORLD.cave&&vis(WORLD.cave.x,WORLD.cave.y,320)) list.push({caveEnt:WORLD.cave,x:WORLD.cave.x,y:WORLD.cave.y-14}); if(WORLD.temple&&vis(WORLD.temple.x,WORLD.temple.y,700)) list.push({temple:WORLD.temple,x:WORLD.temple.x,y:WORLD.temple.y-8}); if(WORLD.enchant&&!WORLD.arena&&vis(WORLD.enchant.x,WORLD.enchant.y,420)) list.push({enchant:WORLD.enchant,x:WORLD.enchant.x,y:WORLD.enchant.y-2}); for(const n of WORLD.village.npcs) if(vis(n.x,n.y,80)) list.push({npc:n,x:n.x,y:n.y}); list.sort((a,b)=>a.y-b.y);
   for(const e of list){
     if(e.npc){ drawNPC(c,e.npc,G.time); continue; }
-    if(e.caveEnt){ drawCaveEntrance(c,e.caveEnt,G.time); continue; } if(e.temple){ drawTemple(c,e.temple,G.time); continue; }
+    if(e.caveEnt){ drawCaveEntrance(c,e.caveEnt,G.time); continue; } if(e.temple){ drawTemple(c,e.temple,G.time); continue; } if(e.enchant){ drawEnchanter(c,e.enchant,G.time); continue; }
     if(e.kind==='enemy'&&!e.alive){ drawRemains(c,e); continue; }
     if(e.kind==='enemy'&&e.hidden) continue;
     if(e.kind==='player'){ if(e.alive){ if(e.spin&&e.spin.state&&e.spin.state!=='RECOVER') drawSpinPlayer(c,e); else drawNinja(c,e.ch,e,G.time); } if(NET.on) drawNetTag(c,e); continue; }
@@ -9208,6 +9762,7 @@ function render(){
   c.fillStyle=VIG.g; c.fillRect(0,0,SW,SH); if(G.announce&&G.announce.type==='lord'){ c.fillStyle='rgba(12,6,32,'+(.42*Math.min(1,(3.4-G.announce.t)/.7))+')'; c.fillRect(0,0,SW,SH); }   /* the sky darkens when the black sail is sighted */
   if(p.flash>0&&p.alive){ c.fillStyle='rgba(239,68,68,.18)'; c.fillRect(0,0,SW,SH); }
   if(p.spin&&p.spin.state==='FLASH'){ c.fillStyle='rgba(0,0,12,'+(.3*Math.min(1,(.5-p.spin.t)/.2+.4))+')'; c.fillRect(0,0,SW,SH); }
+  if(G.state==='ENCHANT'){ enchDrawMenu(c); return; } if(G.state==='FUSE'){ enchDrawFuse(c); return; }   /* the Enchanter: the menu over the frozen world, the fusion edge to edge */
   drawHUD(c,p); if(G.state==='PLAYING'&&!G.fullMap) drawControls(c,p); if(G.fullMap) drawFullMap(c,p); if(G.levelFx) drawLevelText(c,G.levelFx); if(WORLD.arena) drawArenaOverlay(c);
 }
 /* ---------- level-up moment ---------- */
@@ -9255,6 +9810,7 @@ function drawHUD(c,p){
     for(const e of G.enemies) if(e.alive&&!e.d.arm&&inside(e.x,e.y)&&(e.boss||isExplored(e.x,e.y))){ const [x,y]=M(e.x,e.y); c.fillStyle=e.boss?'#a855f7':e.type==='ghost'?'#b6ffae':'#ef4444'; c.beginPath(); c.arc(x,y,e.boss?5:2,0,TAU); c.fill(); }
     for(const lm of WORLD.landmarks) if(inside(lm.x,lm.y)&&isExplored(lm.x,lm.y)){ const [x,y]=M(lm.x,lm.y); c.fillStyle='#fde68a'; c.beginPath(); c.arc(x,y,2.5,0,TAU); c.fill(); }
     if(WORLD.cave&&inside(WORLD.cave.x,WORLD.cave.y)&&isExplored(WORLD.cave.x,WORLD.cave.y)){ const [x,y]=M(WORLD.cave.x,WORLD.cave.y); drawCaveMapIcon(c,x,y,4,CAVE.worlds[WORLD.cave.w].color); }
+    if(WORLD.enchant&&!WORLD.arena&&inside(WORLD.enchant.x,WORLD.enchant.y)&&isExplored(WORLD.enchant.x,WORLD.enchant.y)){ const [x,y]=M(WORLD.enchant.x,WORLD.enchant.y); drawEnchMapIcon(c,x,y,4.5); }
     for(const ch of G.chests) if(ch.kind==='chi'&&!ch.open&&inside(ch.x,ch.y)&&(!ch.hidden||SAVE.secrets[M2.id+'_'+ch.sn])){ const [x,y]=M(ch.x,ch.y); c.fillStyle='#22d3ee'; c.beginPath(); c.arc(x,y,3,0,TAU); c.fill(); }
     const bm=G.bossMark||(G.boss&&G.boss.alive?G.boss:null); if(bm&&!inside(bm.x,bm.y)){ const a=Math.atan2(bm.y-p.y,bm.x-p.x), cx=mx+mw/2, cy=my+mh/2, k=Math.min((mw/2-8)/Math.abs(Math.cos(a)||1e-6),(mh/2-8)/Math.abs(Math.sin(a)||1e-6)); const ax=cx+Math.cos(a)*k, ay=cy+Math.sin(a)*k; c.save(); c.translate(ax,ay); c.rotate(a); c.fillStyle=Math.floor(G.time*4)%2?'#c084fc':'#7e22ce'; c.beginPath(); c.moveTo(7,0); c.lineTo(-5,-5); c.lineTo(-5,5); c.closePath(); c.fill(); c.restore(); }
     c.fillStyle='#4ade80'; c.beginPath(); c.arc(mx+mw/2,my+mh/2,3.5,0,TAU); c.fill(); c.restore(); c.strokeStyle='rgba(255,255,255,.25)'; c.lineWidth=1; roundRect(c,mx,my,mw,mh,7); c.stroke(); }
@@ -9297,6 +9853,7 @@ function drawFullMap(c,p){
   for(const ch of G.chests) if(!ch.open&&isExplored(ch.x,ch.y)) dot(ch.x,ch.y,ch.kind==='golden'?'#fde047':ch.kind==='secret'?'#a855f7':'#d9a34a',4);
   for(const sp of G.spawners) if(isExplored(sp.x,sp.y)) dot(sp.x,sp.y,spawnerCol(sp.k),3);
   if(WORLD.cave&&isExplored(WORLD.cave.x,WORLD.cave.y)){ drawCaveMapIcon(c,mx+WORLD.cave.x*sc,my+WORLD.cave.y*sc,6,CAVE.worlds[WORLD.cave.w].color); c.font='800 10px Arial'; c.textAlign='center'; c.lineWidth=3; c.strokeStyle='rgba(0,0,0,.8)'; c.strokeText(CAVE.worlds[WORLD.cave.w].tag,mx+WORLD.cave.x*sc,my+WORLD.cave.y*sc+18); c.fillStyle=CAVE.worlds[WORLD.cave.w].color; c.fillText(CAVE.worlds[WORLD.cave.w].tag,mx+WORLD.cave.x*sc,my+WORLD.cave.y*sc+18); }
+  if(WORLD.enchant&&!WORLD.arena&&isExplored(WORLD.enchant.x,WORLD.enchant.y)){ const x=mx+WORLD.enchant.x*sc, y=my+WORLD.enchant.y*sc; drawEnchMapIcon(c,x,y,7); c.font='800 10px Arial'; c.textAlign='center'; c.lineWidth=3; c.strokeStyle='rgba(0,0,0,.8)'; c.strokeText('THE ENCHANTER',x,y+20); c.fillStyle='#d8b0ff'; c.fillText('THE ENCHANTER',x,y+20); }
   for(const lm of WORLD.landmarks) if(isExplored(lm.x,lm.y)){ c.font='16px Arial'; c.textAlign='center'; c.fillText(lm.icon,mx+lm.x*sc,my+lm.y*sc+6); c.font='800 10px Arial'; c.lineWidth=3; c.strokeStyle='rgba(0,0,0,.8)'; c.strokeText(lm.name,mx+lm.x*sc,my+lm.y*sc+20); c.fillStyle='#fde68a'; c.fillText(lm.name,mx+lm.x*sc,my+lm.y*sc+20); }
   for(const ch of G.chests) if(ch.kind==='chi'&&(!ch.hidden||SAVE.secrets[M2.id+'_'+ch.sn])) dot(ch.x,ch.y,ch.open?'#1e3a8a':'#22d3ee',4);
   for(const e of G.enemies) if(e.alive&&!e.boss&&!e.d.arm&&isExplored(e.x,e.y)) dot(e.x,e.y,e.type==='ghost'?'#b6ffae':'#ef4444',2.5);
@@ -9756,7 +10313,7 @@ function uiLoop(now){ if(!UIK.on) return; requestAnimationFrame(uiLoop); const t
   UIK.bgT=(UIK.bgT||0)+dt; if(UIK.bgT>=1/30){ UIK.bgT=0; uiBgFrame(t); } UIK.iconT+=dt; if(UIK.iconT>.08){ UIK.iconT=0; uiPaintIcons(t); }
   if(G.state==='MENU') uiHero($('heroCv'),CH[SAVE.selected],t,5);
   if(G.state==='CHARACTERS'&&VIEW) uiHero($('charCv'),CH[VIEW],t,5,!SAVE.unlocked[VIEW]); }
-function uiState(s){ const bg=$('uibg'); if(s==='PLAYING'){ UIK.on=false; bg.classList.remove('on'); return; } bg.classList.add('on'); if(!UIK.on){ UIK.on=true; UIK.last=0; requestAnimationFrame(uiLoop); } if(s==='MENU') menuRefresh(); if(s==='SETTINGS') $('setName').textContent=(playerName()||'NINJA')+'  ›'; }
+function uiState(s){ const bg=$('uibg'); if(s==='PLAYING'||s==='ENCHANT'||s==='FUSE'){ UIK.on=false; bg.classList.remove('on'); return; } bg.classList.add('on'); if(!UIK.on){ UIK.on=true; UIK.last=0; requestAnimationFrame(uiLoop); } if(s==='MENU') menuRefresh(); if(s==='SETTINGS') $('setName').textContent=(playerName()||'NINJA')+'  ›'; }
 function uiHero(cv,ch,t,s,locked){ if(!cv) return; const w=Math.round(34*s), h=Math.round(46*s); if(cv.width!==w||cv.height!==h){ cv.width=w; cv.height=h; } const c=cv.getContext('2d'); c.clearRect(0,0,w,h); drawSprite(c,CHARS[ch.sprite],'idle',t*.9,1,s,w/2,h-4*s,locked?'rgba(0,0,0,.85)':null); }
 /* ---------- toasts: one component for every message; five variants; three at once; the same title is not repeated within four seconds ---------- */
 function toast(kind,title,sub,icon){ if(!title) return; const box=$('toasts'); if(!box) return; const now=performance.now(); if(UIK.lastToast[title]&&now-UIK.lastToast[title]<4000) return; UIK.lastToast[title]=now;
