@@ -3862,7 +3862,9 @@ const W3={ id:'underworld', sizes:{surface:{w:230,h:180},bar:{w:210,h:150},under
   pillars:[[32,48],[178,48],[32,132],[178,132]], arch:{x:300,y:240}, safe:{x:300,y:240,r:55},
   camps:[[70,70],[220,70],[380,70],[600,205],[70,330],[550,330],[70,420],[210,420],[390,420],[550,420],[230,100],[360,100]],
   sentries:[[120,200],[490,200],[120,290],[490,290],[230,400],[380,80],[200,180],[400,310],[230,60],[380,430]], land3:null,
-  mists:[[150,60,3],[470,60,2],[60,180,3],[560,180,2],[150,420,3],[470,420,2],[300,120,1],[160,240,1],[450,240,1]] };   /* six mist patches of 2–3 ghosts, three lone drifters by the lanes */
+  mists:[[150,60,3],[470,60,2],[60,180,3],[560,180,2],[150,420,3],[470,420,2],[300,120,1],[160,240,1],[450,240,1]],
+  /* the underworld's chests beyond the four landmarks' own: seven more plain chests, four golden (one a day each), three Chi chests (a Chi key each; they refill) — on clear ground, off the camps, the sentries and the mists */
+  chests:[[181,81],[437,73],[100,150],[520,150],[171,448],[437,433],[363,307]], golden:[[236,180],[408,191],[236,300],[373,283]], chiChests:[[31,82],[586,420],[292,452]] };   /* six mist patches of 2–3 ghosts, three lone drifters by the lanes */
 const w3px=u=>u*W3U;
 function w3OnLane(x,y){ if(Math.abs(y-150)<26) return true; if(Math.abs(y-340)<26) return true; if(Math.abs(x-160)<26) return true; if(Math.abs(x-450)<26) return true; if(Math.hypot(x-300,(y-240)*1.25)<76) return true; return false; }   /* underworld lanes, in units */
 function buildWorld3(area){ area=area||'surface'; W3U=W3.upx[area]; const sz=W3.sizes[area], w=w3px(sz.w), h=w3px(sz.h);
@@ -3938,6 +3940,7 @@ function buildWorld3(area){ area=area||'surface'; W3U=W3.upx[area]; const sz=W3.
     /* SOUTH — the Ooze Lake: one wide pool you must wade through (30% slower) to reach the bone island and its chest */
     { const [x,y]=L.lake; prop('ooze',x,y,{r:36}); prop('island',x,y); for(const [dx,dy] of [[-44,-4],[44,-4],[0,-26],[0,22]]) prop('torch',x+dx,y+dy); W.chests.push([w3px(x),w3px(y-2)]); }
     W.chests.push([w3px(560),w3px(60)]);
+    for(const [x,y] of W3.chests) W.chests.push([w3px(x),w3px(y)]); for(const [x,y] of W3.golden) W.golden.push([w3px(x),w3px(y)]); for(const [x,y] of W3.chiChests) W.chiChests.push([w3px(x),w3px(y)]);
     /* lane crossings: a pair of torches marks each one */
     for(const [x,y] of [[160,150],[450,150],[160,340],[450,340]]){ prop('torch',x-16,y-14); prop('torch',x+10,y-14); }
     /* spawners: bone camps (3–5 skeletons, 40% with an armoured one beside), armoured sentries by the lanes */
@@ -6311,7 +6314,11 @@ const W4={ id:'golden_temple', w:3200, h:2000, border:40,              /* the cl
   statues:[[88,150],[270,128],[356,128],[418,428],[704,176]],
   pools:[[470,442,14],[740,290,12],[520,160,15]],
   torii:[454,302],
-  spawn:{x:150,y:334} };
+  spawn:{x:150,y:334},
+  /* the chests of the open map, like Bone Shore's and Frost & Ember's: twelve plain chests, five golden (one a day each), three Chi chests (a Chi key each; they refill) — all on clear ground, away from the nests, roosts, mounds and the crow's lairs */
+  chests:[[318,250],[428,154],[601,171],[730,410],[200,100],[60,110],[386,400],[286,440],[503,363],[700,60],[480,60],[330,290]],
+  golden:[[689,442],[81,442],[70,60],[745,140],[400,362]],
+  chiChests:[[312,80],[645,444],[180,200]] };
 const w4u=v=>v*W4U;
 function buildWorld4(){ const T=W4.temple, w=W4.w, h=W4.h, K=W4ART;
   const W={w,h,land:{x0:w4u(W4.border),y0:w4u(W4.border),x1:w-w4u(W4.border),y1:h-w4u(W4.border)},corner:0,frost:false,w3:null,w4:true,id:W4.id,
@@ -6352,6 +6359,7 @@ function buildWorld4(){ const T=W4.temple, w=W4.w, h=W4.h, K=W4ART;
   for(const [x,y] of W4.nests){ prop('nest',x,y); W.spawners.push({x:w4u(x),y:w4u(y),k:'serp',max:4}); }
   for(const [x,y] of W4.mounds){ prop('mound',x,y); W.spawners.push({x:w4u(x),y:w4u(y),k:'scorp',max:1}); }
   W.crowLairs=W4.lairs.map(([x,y])=>[w4u(x),w4u(y)]);
+  W.chests=W4.chests.map(([x,y])=>[w4u(x),w4u(y)]); W.golden=W4.golden.map(([x,y])=>[w4u(x),w4u(y)]); W.chiChests=W4.chiChests.map(([x,y])=>[w4u(x),w4u(y)]);
   prop('brazier',T.x-10,T.y+8); add(T.x-6,T.y+20,4); prop('brazier',T.x+82,T.y+8); add(T.x+86,T.y+20,4);
   rect(T.x-6,T.y-120,T.x+78,T.y-5);
   W.temple={x:w4u(T.x),y:w4u(T.y),scale:T.scale,near:false};
@@ -9873,8 +9881,8 @@ function drawCropped(c,img,sx,sy,sw,sh,dx,dy,dw,dh){ const x0=Math.max(0,sx), y0
 function fogImage(a){ const W=WORLD; if(FOG_C.width!==W.ex||FOG_C.height!==W.ey){ FOG_C.width=W.ex; FOG_C.height=W.ey; FOG_IMG=FOG_X.createImageData(W.ex,W.ey); } const d=FOG_IMG.data, al=Math.round(a*255); for(let i=0;i<W.explored.length;i++){ d[i*4]=6; d[i*4+1]=8; d[i*4+2]=20; d[i*4+3]=W.explored[i]?0:al; } FOG_X.putImageData(FOG_IMG,0,0); }
 function drawFog(c,mx,my,mw,mh,a){ const W=WORLD; if(FOG_C.width!==W.ex||FOG_C.height!==W.ey){ FOG_C.width=W.ex; FOG_C.height=W.ey; FOG_IMG=FOG_X.createImageData(W.ex,W.ey); } const d=FOG_IMG.data, al=Math.round(a*255); for(let i=0;i<W.explored.length;i++){ d[i*4]=6; d[i*4+1]=8; d[i*4+2]=20; d[i*4+3]=W.explored[i]?0:al; } FOG_X.putImageData(FOG_IMG,0,0); c.drawImage(FOG_C,mx,my,mw,mh); }
 /* one legend per world; the dots mean the same thing everywhere: purple/green/yellow spawners as named, red common enemies, a big purple boss */
-const MAP_LEGEND={bone_shore:'🟠 chests · 🔵 Chi chests · 🟣 mushrooms · 🟢 insect nests · 🟡 pirate wrecks · 🔴 enemies · 🟪 boss',frost_ember:'🟠 chests · 🔵 Chi chests · 🟣 golem cairns · 🟢 wolf dens · 🟡 frozen dens · 🔴 enemies · 🟪 boss',underworld:'🟠 chests · 💰 trader · 🟢 bone camps · 🟡 armoured sentries · ⚪ ghost mist · 🔴 enemies · 🟪 boss'};
-function spawnerCol(k){ return (k==='mush'||k==='ember')?'#c084fc':(k==='nest'||k==='frost'||k==='bones')?'#a3e635':k==='mist'?'#d8ffcf':'#fbbf24'; }
+const MAP_LEGEND={bone_shore:'🟠 chests · 🔵 Chi chests · 🟣 mushrooms · 🟢 insect nests · 🟡 pirate wrecks · 🔴 enemies · 🟪 boss',frost_ember:'🟠 chests · 🔵 Chi chests · 🟣 golem cairns · 🟢 wolf dens · 🟡 frozen dens · 🔴 enemies · 🟪 boss',underworld:'🟠 chests · 🟡 golden · 🔵 Chi chests · 💰 trader · 🟢 bone camps · 🟣 armoured sentries · ⚪ ghost mist · 🔴 enemies · 🟪 boss',golden_temple:'🟠 chests · 🟡 golden · 🔵 Chi chests · 🟢 nests · 🟣 roosts · 🟤 mounds · 🔴 enemies · 🟪 boss'};
+function spawnerCol(k){ return (k==='mush'||k==='ember'||k==='askel'||k==='sent')?'#c084fc':(k==='nest'||k==='frost'||k==='bones'||k==='serp')?'#a3e635':k==='mist'?'#d8ffcf':k==='scorp'?'#a16207':'#fbbf24'; }   /* the golden chests own the yellow: sentries and roosts are purple, nests green, scorpion mounds brown */
 function drawFullMap(c,p){
   c.fillStyle='rgba(4,6,16,.88)'; c.fillRect(0,0,SW,SH); const sc=Math.min((SW-40)/WORLD.w,(SH-90)/WORLD.h), mw=WORLD.w*sc, mh=WORLD.h*sc, mx=(SW-mw)/2, my=56;
   c.save(); roundRect(c,mx,my,mw,mh,10); c.clip(); c.drawImage(WORLD.mini,mx,my,mw,mh); drawFog(c,mx,my,mw,mh,.9); c.restore(); c.strokeStyle='rgba(255,255,255,.3)'; c.lineWidth=2; roundRect(c,mx,my,mw,mh,10); c.stroke();
