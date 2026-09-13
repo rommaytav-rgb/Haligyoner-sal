@@ -9828,7 +9828,7 @@ function drawHUD(c,p){
   c.restore();
   // gold + wave
   c.font='900 13px Arial'; const gw=c.measureText(String(SAVE.gold)).width, kx=bwS+50+gw+10, pw=Math.min(kx+34-(bwS+20),UI.pause().x-24-(bwS+20)); c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,bwS+20,10,pw,26,13); c.fill(); c.drawImage(COIN_IMG,bwS+26,13,20,20); c.textAlign='left'; c.fillStyle='#fde68a'; c.fillText(String(SAVE.gold),bwS+50,28); c.font='12px Arial'; c.fillText('🔑',kx,29); c.font='900 12px Arial'; c.fillStyle=(SAVE.keys||0)>0?'#fde047':'rgba(255,255,255,.45)'; c.fillText(String(SAVE.keys||0),kx+17,28);   // Chi keys right after the gold, clear of the pause button
-  if(!arena){ c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,bwS+20,40,120,22,11); c.fill(); c.font='800 11px Arial'; c.fillStyle='#e2e8f0'; c.fillText(G.map.name.toUpperCase()+'   ☠ '+G.kills,bwS+32,55); }
+  if(!arena){ const txt=G.map.name.toUpperCase()+'   ☠ '+G.kills; c.font='800 11px Arial'; const pw=Math.max(120,Math.ceil(c.measureText(txt).width)+24); c.fillStyle='rgba(8,10,24,.6)'; roundRect(c,bwS+20,40,pw,22,11); c.fill(); c.fillStyle='#e2e8f0'; c.fillText(txt,bwS+32,55); }   /* the pill grows with the map's name and the kill count, so the count always sits inside it */
   // pause button
   const pb=UI.pause(); c.fillStyle='rgba(8,10,24,.55)'; roundRect(c,pb.x-20,8,40,28,10); c.fill(); c.fillStyle='rgba(255,255,255,.75)'; c.fillRect(pb.x-8,14,5,16); c.fillRect(pb.x+3,14,5,16);
   // boss bar
