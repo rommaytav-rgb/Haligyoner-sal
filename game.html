@@ -3205,8 +3205,9 @@ AI.imp=function(e,p,dt){ const a=e.ai; a.t-=dt; a.atkT-=dt;
   const d=dist(e,p);
   if(a.state==='claw'){ e.vx*=.5; e.vy*=.5; if(a.t<=0){ a.state='chase'; a.atkT=e.d.atk; a.tele=null; if(p.alive&&inArc(p,e.x,e.y,e.face,e.d.range+16,1.2)&&p.jumpT<=0){ damage(p,e.dmg,e,{kb:140}); addStatus(p,'burn',3,{dps:tierDmg(e,'dot')*(p.name==='APOLLO'?.5:1)}); burst(p.x,p.y-10,[LIP.hot,LIP.glassL,LIP.white],10,120,.5,3,-40,true); } } return; }
   /* lava creatures: they never leave the lava side. If the ninja steps off it (or the imp drifts off), the imp turns back to its birthplace and prowls there */
-  if(WORLD.frost&&m2Biome(e.x,e.y)!=='lava'){ moveToward(e,a.home.x,a.home.y,dt,1); e.face=Math.atan2(a.home.y-e.y,a.home.x-e.x); return; }
-  if(!p.alive||inSafeZone(p.x,p.y)||p.hidden||m2Biome(p.x,p.y)!=='lava'){ wander(e,dt,90,.7); return; }
+  const lava=(x,y)=>!!WORLD.arena||m2Biome(x,y)==='lava';   /* inside a cave or an arena the whole floor is the imp's ground: it hunts everywhere */
+  if(WORLD.frost&&!lava(e.x,e.y)){ moveToward(e,a.home.x,a.home.y,dt,1); e.face=Math.atan2(a.home.y-e.y,a.home.x-e.x); return; }
+  if(!p.alive||inSafeZone(p.x,p.y)||p.hidden||!lava(p.x,p.y)){ wander(e,dt,90,.7); return; }
   moveToward(e,p.x,p.y,dt,1); faceTo(e,p); if(Math.random()<.35) part(e.x+rnd(-6,6),e.y+10,rnd(-10,10),rnd(-40,-15),Math.random()<.5?LIP.hot:LIP.ember,.4,2,-30,true);
   if(d<e.d.range+8&&a.atkT<=0){ a.state='claw'; a.t=.2; telegraph(e,{s:'line',a:e.face,l:44,w:16},.2); } };
 /* ---------- Ice Fox: dens, pairs, circling, bite, pounce ---------- */
